@@ -1,0 +1,5 @@
+.env
+selfsigned.cert
+selfsigned.key
+*.so
+.idea
