@@ -1,9 +1,8 @@
 package server
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/jinzhu/gorm"
@@ -16,7 +15,19 @@ var database *gorm.DB
 func New() (router chi.Router, err error) {
 	r := chi.NewRouter()
 
-	r.Use(cors.Handler(cors.Options{
+	database, err = NewDatabase()
+	if err != nil {
+		return r, err
+	}
+
+	r.Use(databaseContext)
+	r.Use(corsHeaders())
+
+	return r, err
+}
+
+func corsHeaders() func(next http.Handler) http.Handler {
+	return cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
@@ -25,45 +36,38 @@ func New() (router chi.Router, err error) {
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
+	})
+}
 
-	database, err = NewDatabase()
-	if err != nil {
-		return r, err
-	}
+func routeModel(model interface{}, router chi.Router) {
+	// registerModel(model)
+	path := fmt.Sprintf("/%s", database.NewScope(model).TableName())
+	router.Route(path, func(r chi.Router) {
 
-	// Inject Database context reference
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "DB", database)
-			next.ServeHTTP(w, r.WithContext(ctx))
+		r.Post("/", func(writer http.ResponseWriter, request *http.Request) {
+			req, db := NewRequest(writer, request)
+			err := req.DecodeModel(&model)
+			if err != nil {
+				req.JSON(model, http.StatusBadRequest)
+			}
+
+			err = db.Model(model).Create(model).Error
+			if err != nil {
+				req.JSON(err, http.StatusBadRequest)
+				return
+			}
+			req.JSON(model, http.StatusOK)
 		})
 	})
-
-	return r, err
 }
 
-func RegisterType(model interface{}) {
+func databaseContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), "DB", database)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func RegisterModel(model interface{}) {
 	database.AutoMigrate(model)
-}
-
-func DecodeJson(r *http.Request, model interface{}) error {
-	var buf bytes.Buffer
-
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(buf.Bytes(), model)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func DbContext(r *http.Request) *gorm.DB {
-	db := r.Context().Value("DB").(*gorm.DB)
-	return db
 }

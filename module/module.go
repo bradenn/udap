@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+type AModule struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Version     string `json:"version"`
+	Author      string `json:"author"`
+}
+
 var modules map[string]Module
 
 type Error struct {
@@ -21,9 +28,16 @@ func (e Error) Error() string {
 	return e.error
 }
 
+func List() (m []Module, err error) {
+	for _, module := range modules {
+		m = append(m, module)
+	}
+	return m, err
+}
+
 func Get(identifier string) (Module, error) {
 	if modules[identifier] == nil {
-		return nil, NewError("unknown module")
+		return nil, NewError(fmt.Sprintf("Could not find module '%s'", identifier))
 	}
 	return modules[identifier], nil
 }
@@ -39,7 +53,7 @@ type Module interface {
 
 func init() {
 	var err error
-	modules, err = loadModules("./")
+	modules, err = loadModules("./plugins")
 	if err != nil {
 		panic(err)
 	}
@@ -53,8 +67,9 @@ func loadModules(path string) (modules map[string]Module, err error) {
 	}
 
 	for _, entry := range dir {
-		if strings.HasSuffix(entry.Name(), ".so") {
-			module, err := loadModule(entry.Name())
+		if entry.IsDir() {
+			filename := fmt.Sprintf("./plugins/%s/%s.so", entry.Name(), entry.Name())
+			module, err := loadModule(filename)
 			if err != nil {
 				return modules, err
 			}

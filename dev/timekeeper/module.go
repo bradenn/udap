@@ -1,11 +1,15 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 type Function func(...interface{}) interface{}
 
 type module struct {
 	functions map[string]Function
+	name      string
+	desc      string
 }
 
 func (m *module) Functions() (functions []string) {
@@ -19,22 +23,6 @@ func (m *module) emplace(name string, function Function) {
 	m.functions[name] = function
 }
 
-func (m module) Description() string {
-	return "The keeper of all time"
-}
-
-func (m module) Get() {
-	panic("implement me")
-}
-
-func (m module) Pub() {
-	panic("implement me")
-}
-
-func (m module) Name() string {
-	return "TimeKeeper"
-}
-
 func (m module) Run(name string, payload ...interface{}) interface{} {
 	return m.functions[name](payload)
 }
@@ -42,9 +30,11 @@ func (m module) Run(name string, payload ...interface{}) interface{} {
 var Module module
 
 func init() {
+
 	Module = module{
 		functions: map[string]Function{},
 	}
+
 	Module.emplace("timekeeper.local", GetLocalTime)
 }
 

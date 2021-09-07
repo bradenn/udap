@@ -3,3 +3,4 @@ selfsigned.cert
 selfsigned.key
 *.so
 .idea
+private-key.pem

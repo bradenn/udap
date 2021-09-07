@@ -1,15 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/jinzhu/gorm"
 	"udap/module"
 )
 
 type Function struct {
 	Persistent
-	Name       string `json:"name" gorm:"unique"`
-	Identifier string `json:"identifier" gorm:"unique"`
-	Module     string `json:"module"`
+	Name       string      `json:"name" gorm:"unique"`
+	Identifier string      `json:"identifier" gorm:"unique"`
+	Module     string      `json:"module"`
+	Payload    interface{} `json:"payload" gorm:"type:varchar"`
 }
 
 func (f *Function) BeforeCreate(tx *gorm.DB) (err error) {
@@ -17,6 +19,14 @@ func (f *Function) BeforeCreate(tx *gorm.DB) (err error) {
 	if err != nil {
 		return err
 	}
+
+	marshal, err := json.Marshal(f.Payload)
+	if err != nil {
+		return err
+	}
+
+	f.Payload = string(marshal)
+
 	return nil
 }
 
