@@ -1,21 +1,19 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
 	"net/http"
 	"udap/server"
 )
 
+//type EndpointToken struct {
+//	Id        uuid.UUID `json:"id"`
+//	CreatedAt time.Time `json:"createdAt"`
+//}
+
 type Endpoint struct {
 	Persistent
-	Name    string  `json:"name" gorm:"unique"`
-	Token   string  `json:"token"`
-	Enabled bool    `json:"enabled"`
-	Groups  []Group `json:"groups" gorm:"many2many:endpointGroup;"`
-}
-
-func (e *Endpoint) BeforeCreate(tx *gorm.DB) error {
-	return nil
+	Name    string `json:"name" gorm:"unique"`
+	Enabled bool   `json:"enabled"`
 }
 
 func (e *Endpoint) FindAll(writer http.ResponseWriter, request *http.Request) {
