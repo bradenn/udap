@@ -53,6 +53,30 @@ func (r *Request) DecodeModel(model interface{}) error {
 	return nil
 }
 
+type RejectError struct {
+	Error interface{} `json:"error"`
+}
+
+func (r *Request) Reject(payload interface{}, status int) {
+
+	errPayload := RejectError{Error: payload}
+
+	marshal, err := json.Marshal(errPayload)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	writeCors(r.writer)
+
+	r.writer.Header().Set("Content-Type", "application/json")
+	r.writer.WriteHeader(status)
+
+	_, err = r.writer.Write(marshal)
+	if err != nil {
+		return
+	}
+}
+
 func (r *Request) JSON(payload interface{}, status int) {
 	marshal, err := json.Marshal(payload)
 	if err != nil {

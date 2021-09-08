@@ -5,7 +5,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"net/http"
@@ -35,16 +34,6 @@ func New(models ...interface{}) (router chi.Router, err error) {
 	}
 
 	return r, err
-}
-
-func ProtectedRoutes(r chi.Router, f func(r chi.Router)) {
-	r.Group(func(r chi.Router) {
-		r.Use(jwtauth.Verifier(tokenAuth))
-
-		r.Use(jwtauth.Authenticator)
-
-		r.Group(f)
-	})
 }
 
 func corsHeaders() func(next http.Handler) http.Handler {

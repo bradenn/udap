@@ -3,44 +3,43 @@ package main
 import (
 	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/jwtauth/v5"
 	"log"
 	"net/http"
 	"udap/config"
 	"udap/module"
 	"udap/server"
+	"udap/server/auth"
 )
 
 func main() {
 	var err error
 	config.Init()
 
-	a := server.WriteJwt(map[string]interface{}{"hello": "hi"})
-	fmt.Println(a)
-
-	p := server.CheckJwt(a)
-
-	fmt.Println(p)
-
-	s, err := server.New(Endpoint{}, Function{}, Entity{}, Group{})
+	router, err := server.New(Endpoint{}, Function{}, Entity{}, Group{})
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	s.Route("/auth", func(r chi.Router) {
-		r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
-			req, _ := server.NewRequest(writer, request)
+	// Routes required a valid JWT token
+	router.Group(func(r chi.Router) {
+		// Seek, verify and validate JWT tokens
 
-			req.JSON("", http.StatusOK)
+		r.Use(auth.VerifyToken())
+		r.Use(auth.RequireAuth)
+
+		r.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
+			_, claims, _ := jwtauth.FromContext(r.Context())
+			w.Write([]byte(fmt.Sprintf("protected area. hi %v", claims["id"])))
 		})
 	})
 
-	server.ProtectedRoutes(s, func(r chi.Router) {
-		r.Get("/status", func(writer http.ResponseWriter, request *http.Request) {
-			writer.Write([]byte("pong"))
-		})
+	// Unsecured, public routes
+	router.Group(func(r chi.Router) {
+
 	})
 
-	s.Route("/modules", func(r chi.Router) {
+	router.Route("/modules", func(r chi.Router) {
 		r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
 			req, _ := server.NewRequest(writer, request)
 
@@ -67,7 +66,7 @@ func main() {
 		})
 	})
 
-	s.Route("/groups", func(r chi.Router) {
+	router.Route("/groups", func(r chi.Router) {
 		r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
 			req, db := server.NewRequest(writer, request)
 
@@ -79,31 +78,37 @@ func main() {
 		})
 	})
 
-	s.Route("/endpoints", func(r chi.Router) {
-		r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
-			req, db := server.NewRequest(writer, request)
+	router.Route("/endpoints", func(r chi.Router) {
 
-			var model []Endpoint
+		end := Endpoint{}
+		r.Post("/", end.Create)
 
-			db.Model(&model).Preload("Groups").Find(&model)
+		r.Group(func(t chi.Router) {
 
-			req.JSON(model, http.StatusOK)
-		})
+			r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
+				req, db := server.NewRequest(writer, request)
 
-		r.Get("/{id}", func(writer http.ResponseWriter, request *http.Request) {
-			req, db := server.NewRequest(writer, request)
+				var model []Endpoint
 
-			var model Endpoint
+				db.Model(&model).Find(&model)
 
-			id := req.Param("id")
+				req.JSON(model, http.StatusOK)
+			})
+			r.Get("/{id}", func(writer http.ResponseWriter, request *http.Request) {
+				req, db := server.NewRequest(writer, request)
 
-			db.Model(&model).Preload("Groups").Where("id = ?", id).First(&model)
+				var model Endpoint
 
-			req.JSON(model, http.StatusOK)
+				id := req.Param("id")
+
+				db.Model(&model).Preload("Groups").Where("id = ?", id).First(&model)
+
+				req.JSON(model, http.StatusOK)
+			})
 		})
 	})
 
-	err = http.ListenAndServe("0.0.0.0:3020", s)
+	err = http.ListenAndServe("0.0.0.0:3020", router)
 	if err != nil {
 		log.Fatalln(err)
 	}
