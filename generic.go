@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+type Object map[string]interface{}
+
 type Persistent struct {
 	createdAt time.Time
 	updatedAt time.Time

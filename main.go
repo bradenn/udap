@@ -16,6 +16,7 @@ func main() {
 	}
 	// Begin routes requiring jwt authentication
 	srv.RouteSecure("/endpoints", &Endpoint{})
+	srv.RouteSecure("/instances", &Instance{})
 	// Run the server indefinitely
 	err = srv.Run()
 	if err != nil {
