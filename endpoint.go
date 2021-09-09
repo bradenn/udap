@@ -46,11 +46,8 @@ func createEndpoint(writer http.ResponseWriter, request *http.Request) {
 
 func findEndpoints(writer http.ResponseWriter, request *http.Request) {
 	req, db := server.NewRequest(writer, request)
-
 	var model []Endpoint
-
 	db.Model(&model).Find(&model)
-
 	req.Resolve(model, http.StatusOK)
 }
 
@@ -58,14 +55,12 @@ func findEndpoint(writer http.ResponseWriter, request *http.Request) {
 	req, db := server.NewRequest(writer, request)
 
 	var model Endpoint
-
 	id := req.Param("id")
-
 	db.Model(&model).Where("id = ?", id).Preload("Groups")
 
 	err := db.Find(&model).Error
 	if err != nil {
-		req.Resolve(err, http.StatusNotFound)
+		req.Reject(err, http.StatusNotFound)
 		return
 	}
 
