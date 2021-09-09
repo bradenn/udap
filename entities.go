@@ -51,10 +51,3 @@ func findInstances(w http.ResponseWriter, r *http.Request) {
 	db.Model(&model).Find(&model)
 	req.Resolve(model, http.StatusOK)
 }
-
-type Permission struct {
-	Persistent
-	Name        string `json:"name"  gorm:"unique"`
-	Identifier  string `json:"identifier"  gorm:"unique"`
-	Description string `json:"description"`
-}
