@@ -5,9 +5,11 @@ import (
 	"time"
 )
 
+type Object map[string]interface{}
+
 type Persistent struct {
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"deletedAt" sql:"index"`
+	createdAt time.Time
+	updatedAt time.Time
+	deletedAt *time.Time `sql:"index"`
 	Id        uuid.UUID  `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 }

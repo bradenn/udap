@@ -1,72 +1,68 @@
 package main
 
 import (
-	"fmt"
-	"github.com/golang-jwt/jwt"
-	"github.com/jinzhu/gorm"
-	"io/ioutil"
+	"github.com/go-chi/chi"
+	"net/http"
+	"udap/server"
 )
 
 type Endpoint struct {
 	Persistent
-	Name  string `json:"name" gorm:"unique"`
-	Token string `json:"token"`
-
-	Groups []Group `json:"groups" gorm:"many2many:endpointGroup;"`
+	Name    string `json:"name" gorm:"unique"`
+	Enabled bool   `json:"enabled"`
 }
 
-type tokenClaims struct {
-	*jwt.RegisteredClaims
-	Token string
-	Id    string
+func (e *Endpoint) Route(router chi.Router) {
+	router.Post("/", createEndpoint)
+	router.Get("/", findEndpoints)
+	router.Get("/{id}", findEndpoint)
 }
 
-func (e *Endpoint) BeforeCreate(tx *gorm.DB) error {
+func createEndpoint(writer http.ResponseWriter, request *http.Request) {
+	req, db := server.NewRequest(writer, request)
 
-	return nil
+	var err error
+	var model Endpoint
+
+	req.DecodeModel(&model)
+	model.Enabled = false
+
+	err = db.Create(&model).Error
+	if err != nil {
+		req.Reject(err.Error(), http.StatusConflict)
+		return
+	}
+
+	jwt, err := server.SignUUID(model.Id)
+	if err != nil {
+		req.Reject("Internal Error", http.StatusInternalServerError)
+		return
+	}
+
+	resolve := map[string]interface{}{"token": jwt}
+
+	req.Resolve(resolve, http.StatusOK)
 }
 
-func init() {
-	claims := tokenClaims{
-		&jwt.RegisteredClaims{
-			Issuer:    "",
-			Subject:   "",
-			Audience:  nil,
-			ExpiresAt: nil,
-			NotBefore: nil,
-			IssuedAt:  nil,
-			ID:        "",
-		},
-		"Test",
-		"Crest",
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+func findEndpoints(writer http.ResponseWriter, request *http.Request) {
+	req, db := server.NewRequest(writer, request)
+	var model []Endpoint
+	db.Model(&model).Find(&model)
+	req.Resolve(model, http.StatusOK)
+}
 
-	keyFile, err := ioutil.ReadFile("jwtRS512.pem")
+func findEndpoint(writer http.ResponseWriter, request *http.Request) {
+	req, db := server.NewRequest(writer, request)
+
+	var model Endpoint
+	id := req.Param("id")
+	db.Model(&model).Where("id = ?", id).Preload("Groups")
+
+	err := db.Find(&model).Error
 	if err != nil {
-		fmt.Println(err)
+		req.Reject(err, http.StatusNotFound)
+		return
 	}
 
-	signedString, err := token.SignedString(keyFile)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(signedString)
-
-	// pubFile, err := ioutil.ReadFile("jwtRS512.pub")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	token, err = jwt.ParseWithClaims(signedString, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// since we only use the one private key to sign the tokens,
-		// we also only use its public counter part to verify
-		return keyFile, nil
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(token, "Hmm")
-
+	req.Resolve(model, http.StatusOK)
 }

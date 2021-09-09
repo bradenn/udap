@@ -2,7 +2,7 @@ package module
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
 	"plugin"
 	"strings"
 )
@@ -61,7 +61,8 @@ func init() {
 
 func loadModules(path string) (modules map[string]Module, err error) {
 	modules = map[string]Module{}
-	dir, err := os.ReadDir(path)
+
+	dir, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
