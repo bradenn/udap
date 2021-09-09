@@ -1,11 +1,11 @@
-package auth
+package server
 
 import (
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"net/http"
 	"os"
-	"udap/server"
 )
 
 var tokenAuth *jwtauth.JWTAuth
@@ -22,7 +22,7 @@ func VerifyToken() func(http.Handler) http.Handler {
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, _, err := jwtauth.FromContext(r.Context())
-		req, _ := server.NewRequest(w, r)
+		req, _ := NewRequest(w, r)
 
 		if err != nil {
 			req.Reject(err.Error(), http.StatusBadRequest)
@@ -39,8 +39,12 @@ func RequireAuth(next http.Handler) http.Handler {
 	})
 }
 
-// SignKey will generate and sign a JWT key with a set of claims. Use wisely.
-func SignKey(claims map[string]interface{}) (string, error) {
+type Claims map[string]interface{}
+
+// SignUUID will generate and sign a JWT key with a set of claims. Use wisely.
+func SignUUID(uuid uuid.UUID) (string, error) {
+	claims := Claims{}
+	claims["id"] = uuid
 	_, s, err := tokenAuth.Encode(claims)
 	if err != nil {
 		return s, err

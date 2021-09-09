@@ -10,30 +10,64 @@ import (
 	"net/http"
 )
 
-func New(models ...interface{}) (router chi.Router, err error) {
-	// Generate a new Mux
-	r := chi.NewRouter()
+type Routable interface {
+	Route(router chi.Router)
+}
 
+type Server struct {
+	router   chi.Router
+	database *gorm.DB
+}
+
+func New() (s Server, err error) {
+	// Generate a new Mux
+	router := chi.NewRouter()
 	// Establish a database connection
 	database, err := NewDatabase()
 	if err != nil {
-		return r, err
+		return s, err
 	}
-
 	// Default Middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	// Status Middleware
+	router.Use(middleware.Heartbeat("/status"))
 	// Custom Middleware
-	r.Use(databaseContext(database))
-	r.Use(corsHeaders())
+	router.Use(databaseContext(database))
+	router.Use(corsHeaders())
+	// Seek, verify and validate JWT tokens
+	router.Use(VerifyToken())
+	return Server{router: router, database: database}, nil
+}
 
-	// Emplace and generate ambiguous tables
-	for _, model := range models {
-		database.AutoMigrate(model)
+func (s *Server) RouteSecure(path string, routable Routable) {
+	s.database.AutoMigrate(routable)
+	s.router.Group(func(r chi.Router) {
+		// Enforce tokens
+		r.Use(RequireAuth)
+		// Begin integration of authorized routes
+		r.Route(path, routable.Route)
+	})
+}
+
+func (s *Server) RoutePublic(path string, routable Routable) {
+	s.database.AutoMigrate(routable)
+	s.router.Group(func(r chi.Router) {
+		// Begin integration of unauthorized routes
+		r.Route(path, routable.Route)
+	})
+}
+
+func (s *Server) Register(routable Routable) {
+	s.database.AutoMigrate(routable)
+}
+
+func (s *Server) Run() error {
+	err := http.ListenAndServe("0.0.0.0:3020", s.router)
+	if err != nil {
+		return err
 	}
-
-	return r, err
+	return nil
 }
 
 func corsHeaders() func(next http.Handler) http.Handler {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/jinzhu/gorm"
 	"net/http"
 )
@@ -14,6 +15,10 @@ type Request struct {
 	request *http.Request
 }
 
+type RejectError struct {
+	Error interface{} `json:"error"`
+}
+
 func NewRequest(writer http.ResponseWriter, request *http.Request) (*Request, *gorm.DB) {
 	req := &Request{
 		writer:  writer,
@@ -21,6 +26,16 @@ func NewRequest(writer http.ResponseWriter, request *http.Request) (*Request, *g
 	}
 	db := dbContext(request)
 	return req, db
+}
+
+func (r *Request) JWTClaim(key string) interface{} {
+	_, claims, err := jwtauth.FromContext(r.request.Context())
+
+	if err != nil {
+		return ""
+	}
+
+	return claims[key]
 }
 
 func (r *Request) Param(key string) string {
@@ -38,23 +53,17 @@ func (r *Request) Body() string {
 
 }
 
-func (r *Request) DecodeModel(model interface{}) error {
+func (r *Request) DecodeModel(model interface{}) {
 	var buffer bytes.Buffer
 	_, err := buffer.ReadFrom(r.request.Body)
 	if err != nil {
-		return err
+		r.Reject(err.Error(), http.StatusInternalServerError)
+		return
 	}
-
 	err = json.Unmarshal(buffer.Bytes(), model)
 	if err != nil {
-		return err
+		r.Reject(err.Error(), http.StatusBadRequest)
 	}
-
-	return nil
-}
-
-type RejectError struct {
-	Error interface{} `json:"error"`
 }
 
 func (r *Request) Reject(payload interface{}, status int) {
@@ -77,7 +86,7 @@ func (r *Request) Reject(payload interface{}, status int) {
 	}
 }
 
-func (r *Request) JSON(payload interface{}, status int) {
+func (r *Request) Resolve(payload interface{}, status int) {
 	marshal, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Println(err)

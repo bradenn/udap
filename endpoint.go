@@ -1,16 +1,10 @@
 package main
 
 import (
+	"github.com/go-chi/chi"
 	"net/http"
-	"time"
 	"udap/server"
-	"udap/server/auth"
 )
-
-type EndpointResolve struct {
-	Token     string    `json:"token"`
-	CreatedAt time.Time `json:"createdAt"`
-}
 
 type Endpoint struct {
 	Persistent
@@ -18,18 +12,19 @@ type Endpoint struct {
 	Enabled bool   `json:"enabled"`
 }
 
-func (e *Endpoint) Create(writer http.ResponseWriter, request *http.Request) {
+func (e *Endpoint) Route(router chi.Router) {
+	router.Post("/", createEndpoint)
+	router.Get("/", findEndpoints)
+	router.Get("/{id}", findEndpoint)
+}
+
+func createEndpoint(writer http.ResponseWriter, request *http.Request) {
 	req, db := server.NewRequest(writer, request)
 
 	var err error
 	var model Endpoint
 
-	err = req.DecodeModel(&model)
-	if err != nil {
-		req.Reject(err.Error(), http.StatusBadRequest)
-		return
-	}
-
+	req.DecodeModel(&model)
 	model.Enabled = false
 
 	err = db.Create(&model).Error
@@ -38,32 +33,28 @@ func (e *Endpoint) Create(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	tokenBody := map[string]interface{}{}
-	tokenBody["id"] = model.Id.String()
-
-	jwt, err := auth.SignKey(tokenBody)
+	jwt, err := server.SignUUID(model.Id)
 	if err != nil {
 		req.Reject("Internal Error", http.StatusInternalServerError)
 		return
 	}
-	resolve := EndpointResolve{
-		Token:     jwt,
-		CreatedAt: time.Now(),
-	}
-	req.JSON(resolve, http.StatusOK)
+
+	resolve := map[string]interface{}{"token": jwt}
+
+	req.Resolve(resolve, http.StatusOK)
 }
 
-func (e *Endpoint) FindAll(writer http.ResponseWriter, request *http.Request) {
+func findEndpoints(writer http.ResponseWriter, request *http.Request) {
 	req, db := server.NewRequest(writer, request)
 
 	var model []Endpoint
 
 	db.Model(&model).Find(&model)
 
-	req.JSON(model, http.StatusOK)
+	req.Resolve(model, http.StatusOK)
 }
 
-func (e *Endpoint) FindOne(writer http.ResponseWriter, request *http.Request) {
+func findEndpoint(writer http.ResponseWriter, request *http.Request) {
 	req, db := server.NewRequest(writer, request)
 
 	var model Endpoint
@@ -74,9 +65,9 @@ func (e *Endpoint) FindOne(writer http.ResponseWriter, request *http.Request) {
 
 	err := db.Find(&model).Error
 	if err != nil {
-		req.JSON(err, http.StatusNotFound)
+		req.Resolve(err, http.StatusNotFound)
 		return
 	}
 
-	req.JSON(model, http.StatusOK)
+	req.Resolve(model, http.StatusOK)
 }
