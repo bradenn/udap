@@ -86,6 +86,18 @@ func (r *Request) Reject(payload interface{}, status int) {
 	}
 }
 
+func (r *Request) ResolveRaw(payload string, status int) {
+	writeCors(r.writer)
+
+	r.writer.Header().Set("Content-Type", "application/json")
+	r.writer.WriteHeader(status)
+
+	_, err := r.writer.Write([]byte(payload))
+	if err != nil {
+		return
+	}
+}
+
 func (r *Request) Resolve(payload interface{}, status int) {
 	marshal, err := json.Marshal(payload)
 	if err != nil {

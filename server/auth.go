@@ -10,7 +10,7 @@ import (
 
 var tokenAuth *jwtauth.JWTAuth
 
-func init() {
+func Init() {
 	privateKey := os.Getenv("private")
 	tokenAuth = jwtauth.New("HS512", []byte(privateKey), nil)
 }

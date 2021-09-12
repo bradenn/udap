@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -20,6 +20,8 @@ type Server struct {
 }
 
 func New() (s Server, err error) {
+	// Load Authenticate
+	Init()
 	// Generate a new Mux
 	router := chi.NewRouter()
 	// Establish a database connection

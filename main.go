@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"udap/config"
 	"udap/server"
@@ -14,9 +16,14 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	jwt, err := server.SignUUID(uuid.New())
+	fmt.Println(jwt)
 	// Begin routes requiring jwt authentication
 	srv.RouteSecure("/endpoints", &Endpoint{})
 	srv.RouteSecure("/instances", &Instance{})
+	srv.RouteSecure("/modules", &Module{})
+	// Begin routes not requiring authorization
+	srv.RouteSecure("/auth", &Instance{})
 	// Run the server indefinitely
 	err = srv.Run()
 	if err != nil {
