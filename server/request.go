@@ -2,11 +2,13 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/jinzhu/gorm"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 )
 
@@ -19,13 +21,13 @@ type RejectError struct {
 	Error interface{} `json:"error"`
 }
 
-func NewRequest(writer http.ResponseWriter, request *http.Request) (*Request, *gorm.DB) {
-	req := &Request{
+func NewRequest(writer http.ResponseWriter, request *http.Request, model string) (req *Request, ctx context.Context, db *mongo.Collection) {
+	req = &Request{
 		writer:  writer,
 		request: request,
 	}
-	db := dbContext(request)
-	return req, db
+
+	return req, context.Background(), Collection(model)
 }
 
 func (r *Request) JWTClaim(key string) interface{} {
@@ -42,6 +44,14 @@ func (r *Request) Param(key string) string {
 	return chi.URLParam(r.request, key)
 }
 
+func (r *Request) ParamObjectId(key string) (primitive.ObjectID, error) {
+	id := r.Param(key)
+	if !primitive.IsValidObjectID(id) {
+		return primitive.ObjectID{}, fmt.Errorf("invalid objectId")
+	}
+	return primitive.ObjectIDFromHex(id)
+}
+
 func (r *Request) Body() string {
 	var buffer bytes.Buffer
 	_, err := buffer.ReadFrom(r.request.Body)
@@ -50,7 +60,6 @@ func (r *Request) Body() string {
 	}
 
 	return buffer.String()
-
 }
 
 func (r *Request) DecodeModel(model interface{}) {
@@ -89,10 +98,21 @@ func (r *Request) Reject(payload interface{}, status int) {
 func (r *Request) ResolveRaw(payload string, status int) {
 	writeCors(r.writer)
 
+	response := struct {
+		Data string `json:"data"`
+	}{
+		Data: payload,
+	}
+
 	r.writer.Header().Set("Content-Type", "application/json")
 	r.writer.WriteHeader(status)
 
-	_, err := r.writer.Write([]byte(payload))
+	marshal, err := json.Marshal(response)
+	if err != nil {
+		return
+	}
+
+	_, err = r.writer.Write(marshal)
 	if err != nil {
 		return
 	}
@@ -117,9 +137,4 @@ func (r *Request) Resolve(payload interface{}, status int) {
 
 func writeCors(writer http.ResponseWriter) {
 	writer.Header().Set("Access-Control-Allow-Headers", "X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method")
-}
-
-func dbContext(request *http.Request) *gorm.DB {
-	db := request.Context().Value("DB").(*gorm.DB)
-	return db
 }

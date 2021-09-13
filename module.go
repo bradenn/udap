@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/go-chi/chi"
-	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"plugin"
 	"udap/server"
@@ -12,19 +12,22 @@ import (
 )
 
 type Module struct {
-	Persistent
+	Id          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Environment string             `json:"environment"`
+	Functions   []string           `json:"functions"`
+	Path        string             `json:"path"`
 	template.Metadata
-	Environment string   `json:"environment"`
-	Functions   []string `json:"functions" gorm:"-"`
-	Path        string   `json:"path"`
 }
 
-func (m *Module) valid() bool {
-	_, err := m.load()
+// Module interface operations
+
+func (m *Module) Initialize(instanceId string) (*template.Module, error) {
+	module, err := m.load()
 	if err != nil {
-		return false
+		return &template.Module{}, err
 	}
-	return true
+	module.Configure([]byte(m.Environment), instanceId)
+	return module, nil
 }
 
 func (m *Module) load() (*template.Module, error) {
@@ -40,24 +43,18 @@ func (m *Module) load() (*template.Module, error) {
 	return lookup.(*template.Module), nil
 }
 
-func (m *Module) Initialize(instanceId uuid.UUID) (*template.Module, error) {
-	module, err := m.load()
+func (m *Module) valid() bool {
+	_, err := m.load()
 	if err != nil {
-		return &template.Module{}, err
+		fmt.Println(err)
+		return false
 	}
-	module.Configure([]byte(m.Environment), instanceId)
-	return module, nil
+	return true
 }
 
-func (m *Module) AfterFind(_ *gorm.DB) error {
-	load, err := m.load()
-	if err != nil {
-		return err
-	}
-	m.Functions = load.Functions()
-	return nil
-}
-func (m *Module) BeforeCreate(_ *gorm.DB) error {
+// Hooks
+
+func (m *Module) BeforeCreate() error {
 	if !m.valid() {
 		return fmt.Errorf("module does not exist")
 	}
@@ -69,6 +66,17 @@ func (m *Module) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
+func (m *Module) AfterFind() error {
+	load, err := m.load()
+	if err != nil {
+		return err
+	}
+	m.Functions = load.Functions()
+	return nil
+}
+
+// API
+
 func (m *Module) Route(router chi.Router) {
 	router.Post("/", createModule)
 	router.Get("/{id}", findModule)
@@ -76,15 +84,22 @@ func (m *Module) Route(router chi.Router) {
 }
 
 func findModule(w http.ResponseWriter, r *http.Request) {
-	req, db := server.NewRequest(w, r)
+	req, ctx, db := server.NewRequest(w, r, "modules")
+
+	id, err := req.ParamObjectId("id")
+	if err != nil {
+		return
+	}
 
 	var model Module
-
-	id := req.Param("id")
-
-	err := db.Where("id = ?", id).First(&model).Error
+	err = db.FindOne(ctx, bson.M{"_id": id}).Decode(&model)
 	if err != nil {
 		req.Reject(err.Error(), http.StatusNotFound)
+		return
+	}
+
+	err = model.AfterFind()
+	if err != nil {
 		return
 	}
 
@@ -92,15 +107,27 @@ func findModule(w http.ResponseWriter, r *http.Request) {
 }
 
 func createModule(w http.ResponseWriter, r *http.Request) {
-	req, db := server.NewRequest(w, r)
+	req, ctx, db := server.NewRequest(w, r, "modules")
 
 	var model Module
-
 	req.DecodeModel(&model)
 
-	err := db.Create(&model).Error
+	err := model.BeforeCreate()
 	if err != nil {
 		req.Reject(err.Error(), http.StatusConflict)
+		return
+	}
+
+	result, err := db.InsertOne(ctx, &model)
+	if err != nil {
+		req.Reject(err.Error(), http.StatusNotFound)
+		return
+	}
+
+	model.Id = result.InsertedID.(primitive.ObjectID)
+
+	err = model.AfterFind()
+	if err != nil {
 		return
 	}
 
@@ -108,14 +135,22 @@ func createModule(w http.ResponseWriter, r *http.Request) {
 }
 
 func findModules(w http.ResponseWriter, r *http.Request) {
-	req, db := server.NewRequest(w, r)
+	req, ctx, db := server.NewRequest(w, r, "modules")
 
 	var model []Module
 
-	err := db.Model(&model).Find(&model).Error
+	results, err := db.Find(ctx, bson.D{})
 	if err != nil {
 		req.Reject(err.Error(), http.StatusConflict)
-		return
+	}
+
+	for results.Next(ctx) {
+		mod := Module{}
+		err = results.Decode(&mod)
+		if err != nil {
+			return
+		}
+		model = append(model, mod)
 	}
 
 	req.Resolve(model, http.StatusOK)

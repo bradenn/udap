@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"udap/config"
 	"udap/server"
@@ -16,8 +14,6 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	jwt, err := server.SignUUID(uuid.New())
-	fmt.Println(jwt)
 	// Begin routes requiring jwt authentication
 	srv.RouteSecure("/endpoints", &Endpoint{})
 	srv.RouteSecure("/instances", &Instance{})

@@ -42,7 +42,7 @@ func Configure() {
 
 	config := Export.GetConfig()
 
-	instance := Export.GetInstance().String()
+	instance := Export.GetInstance()
 
 	if !config.IsSet(instance) {
 		spotify = SpotifyApi{}
@@ -58,27 +58,15 @@ func Configure() {
 }
 
 func CurrentSong(_ string) (string, error) {
-	request, err := authenticatedRequest("PUT", "me/player/currently-playing")
-	if err != nil {
-		return "", err
-	}
-	return request, nil
-}
-
-func Pause(_ string) (string, error) {
-	request, err := authenticatedRequest("PUT", "me/player/pause")
-	if err != nil {
-		return "", err
-	}
-	return request, nil
+	return authenticatedRequest("GET", "me/player/currently-playing")
 }
 
 func Play(_ string) (string, error) {
-	request, err := authenticatedRequest("PUT", "me/player/play")
-	if err != nil {
-		return "", err
-	}
-	return request, nil
+	return authenticatedRequest("PUT", "me/player/play")
+}
+
+func Pause(_ string) (string, error) {
+	return authenticatedRequest("PUT", "me/player/pause")
 }
 
 func authenticatedRequest(method string, path string) (string, error) {

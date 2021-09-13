@@ -3,7 +3,6 @@ package template
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -139,7 +138,7 @@ type Module struct {
 	functions  map[string]Function
 	config     Config
 	onEnable   func()
-	instanceId uuid.UUID
+	instanceId string
 }
 
 func NewModule(metadata Metadata, functions map[string]Function, onEnable func()) Module {
@@ -152,7 +151,7 @@ func (m *Module) Metadata() Metadata {
 	return m.metadata
 }
 
-func (m *Module) GetInstance() uuid.UUID {
+func (m *Module) GetInstance() string {
 	return m.instanceId
 }
 
@@ -164,7 +163,7 @@ func (m *Module) Run(s string) (string, error) {
 	return m.functions[s](s)
 }
 
-func (m *Module) Configure(data []byte, instanceId uuid.UUID) {
+func (m *Module) Configure(data []byte, instanceId string) {
 	m.instanceId = instanceId
 	raw := map[string]string{}
 	err := json.Unmarshal(data, &raw)

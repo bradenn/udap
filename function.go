@@ -1,7 +1,9 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
+	"context"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"udap/server"
 )
 
 type Function struct {
@@ -12,7 +14,12 @@ type Function struct {
 	Payload    interface{} `json:"payload" gorm:"type:varchar"`
 }
 
-func (f *Function) BeforeCreate(tx *gorm.DB) (err error) {
+func (f *Function) Create() string {
 
-	return nil
+	col := server.Collection("endpoints")
+	one, err := col.InsertOne(context.Background(), f)
+	if err != nil {
+		return ""
+	}
+	return one.InsertedID.(primitive.ObjectID).String()
 }

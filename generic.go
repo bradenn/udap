@@ -1,15 +1,17 @@
 package main
 
 import (
-	"github.com/google/uuid"
-	"time"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Object map[string]interface{}
 
+type ObjectId primitive.ObjectID
+
 type Persistent struct {
-	createdAt time.Time
-	updatedAt time.Time
-	deletedAt *time.Time `sql:"index"`
-	Id        uuid.UUID  `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Id string `json:"id" bson:"_id"`
+}
+
+func ParseObjectId(id interface{}) string {
+	return id.(primitive.ObjectID).Hex()
 }

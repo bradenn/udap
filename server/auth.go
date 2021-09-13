@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"net/http"
 	"os"
@@ -22,7 +21,7 @@ func VerifyToken() func(http.Handler) http.Handler {
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, _, err := jwtauth.FromContext(r.Context())
-		req, _ := NewRequest(w, r)
+		req, _, _ := NewRequest(w, r, "nil")
 
 		if err != nil {
 			req.Reject(err.Error(), http.StatusBadRequest)
@@ -42,9 +41,9 @@ func RequireAuth(next http.Handler) http.Handler {
 type Claims map[string]interface{}
 
 // SignUUID will generate and sign a JWT key with a set of claims. Use wisely.
-func SignUUID(uuid uuid.UUID) (string, error) {
+func SignUUID(id string) (string, error) {
 	claims := Claims{}
-	claims["id"] = uuid
+	claims["id"] = id
 	_, s, err := tokenAuth.Encode(claims)
 	if err != nil {
 		return s, err

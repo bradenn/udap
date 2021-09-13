@@ -2,42 +2,38 @@ package main
 
 import (
 	"time"
+	"udap/template"
 )
 
-type Function func(...interface{}) interface{}
-
-type module struct {
-	functions map[string]Function
-	name      string
-	desc      string
-}
-
-func (m *module) Functions() (functions []string) {
-	for s := range m.functions {
-		functions = append(functions, s)
-	}
-	return functions
-}
-
-func (m *module) emplace(name string, function Function) {
-	m.functions[name] = function
-}
-
-func (m module) Run(name string, payload ...interface{}) interface{} {
-	return m.functions[name](payload)
-}
-
-var Module module
+var Export template.Module
 
 func init() {
 
-	Module = module{
-		functions: map[string]Function{},
+	functions := map[string]template.Function{}
+
+	functions["localTime"] = LocalTime
+
+	metadata := template.Metadata{
+		Name:        "Timekeeper",
+		Description: "Get various time related information.",
+		Version:     "1.0.0",
+		Author:      "Braden Nicholson",
 	}
 
-	Module.emplace("timekeeper.local", GetLocalTime)
+	module := template.NewModule(metadata, functions, Configure)
+
+	Export = module
+
 }
 
-func GetLocalTime(b ...interface{}) interface{} {
-	return time.Now().String()
+func Configure() {
+
+	// config := Export.GetConfig()
+	//
+	// instance := Export.GetInstance().String()
+
+}
+
+func LocalTime(_ string) (string, error) {
+	return time.Now().String(), nil
 }

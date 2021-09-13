@@ -1,18 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-chi/chi"
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"udap/server"
 )
 
 type Instance struct {
-	Persistent
-	Name        string    `json:"name" gorm:"unique"`
-	Description string    `json:"description"`
-	ModuleId    uuid.UUID `json:"moduleId"`
-	Module      Module    `json:"module"`
+	Id          primitive.ObjectID `json:"id" bson:"_id,omitempty" `
+	Module      primitive.ObjectID `json:"module" bson:"module"`
+	Permission  string             `json:"permission" bson:"permission"`
+	Name        string             `json:"name" gorm:"unique"`
+	Description string             `json:"description"`
 }
 
 func (i *Instance) Route(router chi.Router) {
@@ -22,27 +24,51 @@ func (i *Instance) Route(router chi.Router) {
 	router.Get("/", findInstances)
 }
 
+func (i *Instance) AfterFind() error {
+	return nil
+}
+
 func runFunction(w http.ResponseWriter, r *http.Request) {
-	req, db := server.NewRequest(w, r)
+	req, ctx, db := server.NewRequest(w, r, "instances")
 
-	var model Instance
-
-	id := req.Param("id")
-
-	err := db.Where("id = ?", id).Preload("Module").First(&model).Error
+	id, err := req.ParamObjectId("id")
 	if err != nil {
-		req.Reject(err.Error(), http.StatusNotFound)
 		return
 	}
 
-	module, err := model.Module.Initialize(model.Id)
+	result := db.FindOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var instance Instance
+	err = result.Decode(&instance)
+	if err != nil {
+		return
+	}
+
+	result = server.Collection("modules").FindOne(ctx, bson.M{"_id": instance.Module})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	var module Module
+	err = result.Decode(&module)
+	if err != nil {
+		return
+	}
+
+	mod, err := module.Initialize(instance.Id.Hex())
 	if err != nil {
 		return
 	}
 
 	function := req.Param("function")
+	if err != nil {
+		return
+	}
 
-	run, err := module.Run(function)
+	run, err := mod.Run(function)
 	if err != nil {
 		return
 	}
@@ -51,15 +77,21 @@ func runFunction(w http.ResponseWriter, r *http.Request) {
 }
 
 func findInstance(w http.ResponseWriter, r *http.Request) {
-	req, db := server.NewRequest(w, r)
+	req, ctx, db := server.NewRequest(w, r, "instances")
+
+	id, err := req.ParamObjectId("id")
+	if err != nil {
+		return
+	}
+
+	result := db.FindOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
 	var model Instance
-
-	id := req.Param("id")
-
-	err := db.Where("id = ?", id).Preload("Module").First(&model).Error
+	err = result.Decode(&model)
 	if err != nil {
-		req.Reject(err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -67,23 +99,45 @@ func findInstance(w http.ResponseWriter, r *http.Request) {
 }
 
 func createInstance(w http.ResponseWriter, r *http.Request) {
-	req, db := server.NewRequest(w, r)
+	req, ctx, db := server.NewRequest(w, r, "instances")
+
 	var model Instance
 
 	req.DecodeModel(&model)
 
-	err := db.Create(&model).Error
+	result, err := db.InsertOne(ctx, &model)
 	if err != nil {
-		req.Reject(err.Error(), http.StatusConflict)
+		req.Reject(err.Error(), http.StatusNotFound)
 		return
 	}
+
+	model.Id = result.InsertedID.(primitive.ObjectID)
 
 	req.Resolve(model, http.StatusOK)
 }
 
 func findInstances(w http.ResponseWriter, r *http.Request) {
-	req, db := server.NewRequest(w, r)
-	var model []Instance
-	db.Model(&model).Preload("Module").Find(&model)
-	req.Resolve(model, http.StatusOK)
+	req, ctx, db := server.NewRequest(w, r, "instances")
+
+	var models []Instance
+	cursor, err := db.Find(ctx, bson.M{})
+	if err != nil {
+		req.Reject(err.Error(), http.StatusNotFound)
+		return
+	}
+
+	for cursor.Next(ctx) {
+		var instance Instance
+		if err = cursor.Decode(&instance); err != nil {
+			return
+		}
+
+		if err = instance.AfterFind(); err != nil {
+			return
+		}
+
+		models = append(models, instance)
+	}
+
+	req.Resolve(models, http.StatusOK)
 }
