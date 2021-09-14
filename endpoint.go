@@ -22,7 +22,7 @@ func (e *Endpoint) instances() error {
 
 	ctx := context.Background()
 
-	find, err := server.Collection("instances").Find(ctx, bson.M{"permission": bson.M{"$in": e.Permissions}})
+	find, err := server.From("instances").Find(ctx, bson.M{"permission": bson.M{"$in": e.Permissions}})
 	if err != nil {
 		return nil
 	}
@@ -45,7 +45,7 @@ func (e *Endpoint) BeforeCreate() error {
 	return nil
 }
 
-func (e *Endpoint) Route(router chi.Router) {
+func RouteEndpoints(router chi.Router) {
 	router.Post("/", createEndpoint)
 	router.Get("/", findEndpoints)
 	router.Get("/{id}", findEndpoint)

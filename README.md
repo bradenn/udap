@@ -13,20 +13,3 @@ Modules can be configured to control computer settings, lights, music, media, or
 ##### Provide a clean, robust, and reliable, centralization for controlling complex or simple items.
 
 Create endpoint from diagnostic -> use join code on new endpoint -> get jwt
-
-```yaml
-user:
-  - groups
-endpoint:
-  - enabled
-  - groups
-entity:
-  - name
-  - module
-component:
-  - entity
-  - module
-  - config
-  - functions
-
-```

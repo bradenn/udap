@@ -160,6 +160,9 @@ func (m *Module) GetConfig() Config {
 }
 
 func (m *Module) Run(s string) (string, error) {
+	if m.functions[s] == nil {
+		return "", fmt.Errorf("function does not exist")
+	}
 	return m.functions[s](s)
 }
 

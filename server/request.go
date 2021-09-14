@@ -27,7 +27,7 @@ func NewRequest(writer http.ResponseWriter, request *http.Request, model string)
 		request: request,
 	}
 
-	return req, context.Background(), Collection(model)
+	return req, context.Background(), From(model)
 }
 
 func (r *Request) JWTClaim(key string) interface{} {

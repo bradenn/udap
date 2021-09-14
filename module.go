@@ -77,7 +77,7 @@ func (m *Module) AfterFind() error {
 
 // API
 
-func (m *Module) Route(router chi.Router) {
+func RouteModules(router chi.Router) {
 	router.Post("/", createModule)
 	router.Get("/{id}", findModule)
 	router.Get("/", findModules)

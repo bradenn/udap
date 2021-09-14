@@ -15,11 +15,9 @@ func main() {
 		log.Fatalln(err)
 	}
 	// Begin routes requiring jwt authentication
-	srv.RouteSecure("/endpoints", &Endpoint{})
-	srv.RouteSecure("/instances", &Instance{})
-	srv.RouteSecure("/modules", &Module{})
-	// Begin routes not requiring authorization
-	srv.RouteSecure("/auth", &Instance{})
+	srv.RouteSecure("/endpoints", RouteEndpoints)
+	srv.RouteSecure("/instances", RouteInstances)
+	srv.RouteSecure("/modules", RouteModules)
 	// Run the server indefinitely
 	err = srv.Run()
 	if err != nil {

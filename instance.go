@@ -1,12 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-chi/chi"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"udap/server"
+)
+
+const (
+	instanceIdentifier = "instances"
 )
 
 type Instance struct {
@@ -17,15 +23,54 @@ type Instance struct {
 	Description string             `json:"description"`
 }
 
-func (i *Instance) Route(router chi.Router) {
-	router.Post("/", createInstance)
-	router.Get("/{id}", findInstance)
-	router.Get("/{id}/func/{function}", runFunction)
-	router.Get("/", findInstances)
+func (i *Instance) db() *mongo.Collection {
+	return server.From("instances")
+}
+
+func (i *Instance) GetModule() (module Module, err error) {
+
+	result := server.From("modules").FindOne(context.Background(), bson.M{"_id": i.Module})
+	if err != nil {
+		return module, err
+	}
+
+	if err = result.Decode(&module); err != nil {
+		return module, err
+	}
+
+	return module, nil
+}
+
+func (i *Instance) Create() (err error) {
+
+	if err = i.BeforeCreate(); err != nil {
+		return err
+	}
+
+	result, err := i.db().InsertOne(context.Background(), i)
+	if err != nil {
+		return err
+	}
+
+	id := result.InsertedID.(primitive.ObjectID)
+	i.Id = id
+
+	return nil
 }
 
 func (i *Instance) AfterFind() error {
 	return nil
+}
+
+func (i *Instance) BeforeCreate() error {
+	return nil
+}
+
+func RouteInstances(router chi.Router) {
+	router.Post("/", createInstance)
+	router.Get("/{id}", findInstance)
+	router.Get("/{id}/func/{function}", runFunction)
+	router.Get("/", findInstances)
 }
 
 func runFunction(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +92,7 @@ func runFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = server.Collection("modules").FindOne(ctx, bson.M{"_id": instance.Module})
+	result = server.From("modules").FindOne(ctx, bson.M{"_id": instance.Module})
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -65,11 +110,13 @@ func runFunction(w http.ResponseWriter, r *http.Request) {
 
 	function := req.Param("function")
 	if err != nil {
+
 		return
 	}
 
 	run, err := mod.Run(function)
 	if err != nil {
+		req.Reject(err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -99,19 +146,16 @@ func findInstance(w http.ResponseWriter, r *http.Request) {
 }
 
 func createInstance(w http.ResponseWriter, r *http.Request) {
-	req, ctx, db := server.NewRequest(w, r, "instances")
+	req, _, _ := server.NewRequest(w, r, "instances")
 
 	var model Instance
-
 	req.DecodeModel(&model)
 
-	result, err := db.InsertOne(ctx, &model)
+	err := model.Create()
 	if err != nil {
 		req.Reject(err.Error(), http.StatusNotFound)
 		return
 	}
-
-	model.Id = result.InsertedID.(primitive.ObjectID)
 
 	req.Resolve(model, http.StatusOK)
 }

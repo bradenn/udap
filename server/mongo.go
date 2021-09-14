@@ -11,7 +11,7 @@ import (
 
 var database *mongo.Database
 
-func Connect() {
+func connect() error {
 	// The credentials are retrieved from the OS environment
 	dbUser := os.Getenv("dbUser")
 	dbPass := os.Getenv("dbPass")
@@ -28,11 +28,17 @@ func Connect() {
 	clientOptions := options.Client().ApplyURI(urlString)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	database = client.Database(dbName)
+
+	return nil
 }
 
-func Collection(collection string) *mongo.Collection {
+type Persistent interface {
+	Identifier() string
+}
+
+func From(collection string) *mongo.Collection {
 	return database.Collection(collection)
 }

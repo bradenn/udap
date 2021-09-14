@@ -21,7 +21,10 @@ func New() (s Server, err error) {
 	// Generate a new Mux
 	router := chi.NewRouter()
 	// Establish a database connection
-	Connect()
+	err = connect()
+	if err != nil {
+		return Server{}, err
+	}
 	// Default Middleware
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
@@ -34,12 +37,12 @@ func New() (s Server, err error) {
 	return Server{router: router}, nil
 }
 
-func (s *Server) RouteSecure(path string, routable Routable) {
+func (s *Server) RouteSecure(path string, handler func(r chi.Router)) {
 	s.router.Group(func(r chi.Router) {
 		// Enforce tokens
 		r.Use(RequireAuth)
 		// Begin integration of authorized routes
-		r.Route(path, routable.Route)
+		r.Route(path, handler)
 	})
 }
 
