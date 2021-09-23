@@ -11,14 +11,11 @@ import (
 	"udap/server"
 )
 
-const (
-	instanceIdentifier = "instances"
-)
-
 type Instance struct {
 	Id          primitive.ObjectID `json:"id" bson:"_id,omitempty" `
 	Module      primitive.ObjectID `json:"module" bson:"module"`
 	Permission  string             `json:"permission" bson:"permission"`
+	Functions   []string           `json:"functions" bson:"-"`
 	Name        string             `json:"name" gorm:"unique"`
 	Description string             `json:"description"`
 }
@@ -35,6 +32,11 @@ func (i *Instance) GetModule() (module Module, err error) {
 	}
 
 	if err = result.Decode(&module); err != nil {
+		return module, err
+	}
+
+	err = module.AfterFind()
+	if err != nil {
 		return module, err
 	}
 

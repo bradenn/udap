@@ -13,3 +13,27 @@ Modules can be configured to control computer settings, lights, music, media, or
 ##### Provide a clean, robust, and reliable, centralization for controlling complex or simple items.
 
 Create endpoint from diagnostic -> use join code on new endpoint -> get jwt
+
+```json
+{
+  "data": {
+    "id": "id",
+    "name": "EndpointName",
+    "description": "An endpoint...",
+    "modules": [
+      {
+        "id": "id",
+        "name": "Module 1",
+        "description": "This is a module",
+        "functions": [
+          {
+            "id": "id",
+            "name": "Light Switch 1",
+            "type": "toggle"
+          }
+        ]
+      }
+    ]
+  }
+}
+```

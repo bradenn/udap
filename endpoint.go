@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
+	"udap/cloud"
 	"udap/server"
 )
 
@@ -16,6 +17,36 @@ type Endpoint struct {
 	Instances   []Instance         `json:"instances"`
 	Enabled     bool               `json:"enabled"`
 }
+
+func (e *Endpoint) Collection() string {
+	return "endpoints"
+}
+
+func (e *Endpoint) Create() error {
+	e.Enabled = false
+
+	c, err := cloud.New()
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Insert(e)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *Endpoint) Update() error {
+	return nil
+}
+
+func (e *Endpoint) Delete() error {
+	return nil
+}
+
+// FindById, FindMany, CreateOne, FindAndUpdate
 
 func (e *Endpoint) instances() error {
 	var instances []Instance
@@ -32,6 +63,11 @@ func (e *Endpoint) instances() error {
 		if err = find.Decode(&instance); err != nil {
 			return nil
 		}
+		module, err := instance.GetModule()
+		if err != nil {
+			return err
+		}
+		instance.Functions = module.Functions
 		instances = append(instances, instance)
 	}
 
@@ -49,6 +85,7 @@ func RouteEndpoints(router chi.Router) {
 	router.Post("/", createEndpoint)
 	router.Get("/", findEndpoints)
 	router.Get("/{id}", findEndpoint)
+	router.Get("/poll", pollEndpoint)
 }
 
 func (e *Endpoint) AfterFind() error {
@@ -120,14 +157,34 @@ func findEndpoints(writer http.ResponseWriter, request *http.Request) {
 func findEndpoint(writer http.ResponseWriter, request *http.Request) {
 	req, ctx, db := server.NewRequest(writer, request, "endpoints")
 
-	id, err := req.ParamObjectId("id")
+	id := req.Param("id")
+
+	var model Endpoint
+
+	if err := db.FindOne(ctx, bson.M{"_id": id}).Decode(&model); err != nil {
+		req.Reject(err.Error(), http.StatusNotFound)
+		return
+	}
+
+	err := model.AfterFind()
+	if err != nil {
+		return
+	}
+	req.Resolve(model, http.StatusOK)
+}
+
+func pollEndpoint(writer http.ResponseWriter, request *http.Request) {
+	req, ctx, db := server.NewRequest(writer, request, "endpoints")
+
+	id := req.JWTClaim("id").(string)
+	hex, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return
 	}
 
 	var model Endpoint
 
-	if err = db.FindOne(ctx, bson.M{"_id": id}).Decode(&model); err != nil {
+	if err := db.FindOne(ctx, bson.M{"_id": hex}).Decode(&model); err != nil {
 		req.Reject(err.Error(), http.StatusNotFound)
 		return
 	}

@@ -46,11 +46,15 @@ func (s *Server) RouteSecure(path string, handler func(r chi.Router)) {
 	})
 }
 
-func (s *Server) RoutePublic(path string, routable Routable) {
+func (s *Server) RoutePublic(path string, handler func(r chi.Router)) {
 	s.router.Group(func(r chi.Router) {
 		// Begin integration of unauthorized routes
-		r.Route(path, routable.Route)
+		r.Route(path, handler)
 	})
+}
+
+func (s *Server) Router() chi.Router {
+	return s.router
 }
 
 func (s *Server) Run() error {

@@ -98,21 +98,10 @@ func (r *Request) Reject(payload interface{}, status int) {
 func (r *Request) ResolveRaw(payload string, status int) {
 	writeCors(r.writer)
 
-	response := struct {
-		Data string `json:"data"`
-	}{
-		Data: payload,
-	}
-
 	r.writer.Header().Set("Content-Type", "application/json")
 	r.writer.WriteHeader(status)
 
-	marshal, err := json.Marshal(response)
-	if err != nil {
-		return
-	}
-
-	_, err = r.writer.Write(marshal)
+	_, err := r.writer.Write([]byte(payload))
 	if err != nil {
 		return
 	}
