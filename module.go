@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/go-chi/chi"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gorm.io/gorm"
 	"net/http"
 	"plugin"
 	"udap/server"
@@ -12,10 +11,10 @@ import (
 )
 
 type Module struct {
-	Id          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Environment string             `json:"environment"`
-	Functions   []string           `json:"functions"`
-	Path        string             `json:"path"`
+	Persistent
+	Environment string   `json:"environment"`
+	Functions   []string `json:"functions"`
+	Path        string   `json:"path"`
 	template.Metadata
 }
 
@@ -54,7 +53,7 @@ func (m *Module) valid() bool {
 
 // Hooks
 
-func (m *Module) BeforeCreate() error {
+func (m *Module) BeforeCreate(_ *gorm.DB) error {
 	if !m.valid() {
 		return fmt.Errorf("module does not exist")
 	}
@@ -66,7 +65,7 @@ func (m *Module) BeforeCreate() error {
 	return nil
 }
 
-func (m *Module) AfterFind() error {
+func (m *Module) AfterFind(_ *gorm.DB) error {
 	load, err := m.load()
 	if err != nil {
 		return err
@@ -84,22 +83,16 @@ func RouteModules(router chi.Router) {
 }
 
 func findModule(w http.ResponseWriter, r *http.Request) {
-	req, ctx, db := server.NewRequest(w, r, "modules")
+	req, db := server.NewRequest(w, r)
 
-	id, err := req.ParamObjectId("id")
-	if err != nil {
-		return
-	}
+	id := req.Param("id")
 
 	var model Module
-	err = db.FindOne(ctx, bson.M{"_id": id}).Decode(&model)
-	if err != nil {
-		req.Reject(err.Error(), http.StatusNotFound)
-		return
-	}
 
-	err = model.AfterFind()
-	if err != nil {
+	db.Where("id = ?", id).First(&model)
+
+	if err := db.Error; err != nil {
+		req.Reject(err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -107,27 +100,16 @@ func findModule(w http.ResponseWriter, r *http.Request) {
 }
 
 func createModule(w http.ResponseWriter, r *http.Request) {
-	req, ctx, db := server.NewRequest(w, r, "modules")
+
+	req, db := server.NewRequest(w, r)
 
 	var model Module
+
 	req.DecodeModel(&model)
+	db.Create(&model)
 
-	err := model.BeforeCreate()
-	if err != nil {
-		req.Reject(err.Error(), http.StatusConflict)
-		return
-	}
-
-	result, err := db.InsertOne(ctx, &model)
-	if err != nil {
+	if err := db.Error; err != nil {
 		req.Reject(err.Error(), http.StatusNotFound)
-		return
-	}
-
-	model.Id = result.InsertedID.(primitive.ObjectID)
-
-	err = model.AfterFind()
-	if err != nil {
 		return
 	}
 
@@ -135,23 +117,15 @@ func createModule(w http.ResponseWriter, r *http.Request) {
 }
 
 func findModules(w http.ResponseWriter, r *http.Request) {
-	req, ctx, db := server.NewRequest(w, r, "modules")
+	req, db := server.NewRequest(w, r)
+	var models []Module
 
-	var model []Module
+	db.Find(&models)
 
-	results, err := db.Find(ctx, bson.D{})
-	if err != nil {
-		req.Reject(err.Error(), http.StatusConflict)
+	if err := db.Error; err != nil {
+		req.Reject(err.Error(), http.StatusNotFound)
+		return
 	}
 
-	for results.Next(ctx) {
-		mod := Module{}
-		err = results.Decode(&mod)
-		if err != nil {
-			return
-		}
-		model = append(model, mod)
-	}
-
-	req.Resolve(model, http.StatusOK)
+	req.Resolve(models, http.StatusOK)
 }

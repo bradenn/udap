@@ -1,9 +1,11 @@
 package server
 
 import (
+	"context"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -12,7 +14,8 @@ type Routable interface {
 }
 
 type Server struct {
-	router chi.Router
+	router   chi.Router
+	database *gorm.DB
 }
 
 func New() (s Server, err error) {
@@ -21,7 +24,7 @@ func New() (s Server, err error) {
 	// Generate a new Mux
 	router := chi.NewRouter()
 	// Establish a database connection
-	err = connect()
+	db, err := NewGormDB()
 	if err != nil {
 		return Server{}, err
 	}
@@ -34,7 +37,25 @@ func New() (s Server, err error) {
 	router.Use(corsHeaders())
 	// Seek, verify and validate JWT tokens
 	router.Use(VerifyToken())
-	return Server{router: router}, nil
+	// Inject gorm DB context
+	router.Use(databaseContext(db))
+	return Server{router: router, database: db}, nil
+}
+
+func databaseContext(database *gorm.DB) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "DB", database)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+func (s *Server) Migrate(inf interface{}) {
+	err := s.database.AutoMigrate(inf)
+	if err != nil {
+		return
+	}
 }
 
 func (s *Server) RouteSecure(path string, handler func(r chi.Router)) {

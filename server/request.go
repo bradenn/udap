@@ -2,13 +2,12 @@ package server
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/jwtauth/v5"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -21,13 +20,14 @@ type RejectError struct {
 	Error interface{} `json:"error"`
 }
 
-func NewRequest(writer http.ResponseWriter, request *http.Request, model string) (req *Request, ctx context.Context, db *mongo.Collection) {
+func NewRequest(writer http.ResponseWriter, request *http.Request) (req *Request, db *gorm.DB) {
 	req = &Request{
 		writer:  writer,
 		request: request,
 	}
 
-	return req, context.Background(), From(model)
+	db = request.Context().Value("DB").(*gorm.DB)
+	return req, db
 }
 
 func (r *Request) JWTClaim(key string) interface{} {

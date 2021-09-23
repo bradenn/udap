@@ -21,7 +21,7 @@ func VerifyToken() func(http.Handler) http.Handler {
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, _, err := jwtauth.FromContext(r.Context())
-		req, _, _ := NewRequest(w, r, "nil")
+		req, _ := NewRequest(w, r)
 
 		if err != nil {
 			req.Reject(err.Error(), http.StatusBadRequest)
