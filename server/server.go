@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/cors"
 	"gorm.io/gorm"
 	"net/http"
+	"udap/logger"
 )
 
 type Routable interface {
@@ -29,7 +30,7 @@ func New() (s Server, err error) {
 		return Server{}, err
 	}
 	// Default Middleware
-	router.Use(middleware.Logger)
+	router.Use(logger.Middleware)
 	router.Use(middleware.Recoverer)
 	// Status Middleware
 	router.Use(middleware.Heartbeat("/status"))
@@ -54,7 +55,7 @@ func databaseContext(database *gorm.DB) func(next http.Handler) http.Handler {
 func (s *Server) Migrate(inf interface{}) {
 	err := s.database.AutoMigrate(inf)
 	if err != nil {
-		return
+		logger.Error(err.Error())
 	}
 }
 
@@ -72,6 +73,10 @@ func (s *Server) RoutePublic(path string, handler func(r chi.Router)) {
 		// Begin integration of unauthorized routes
 		r.Route(path, handler)
 	})
+}
+
+func (s *Server) Database() *gorm.DB {
+	return s.database
 }
 
 func (s *Server) Router() chi.Router {

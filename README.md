@@ -14,55 +14,40 @@ Modules can be configured to control computer settings, lights, music, media, or
 
 Create endpoint from diagnostic -> use join code on new endpoint -> get jwt
 
-#### Websocket Request
+## Protocol
+
+### Websocket Request Format
 
 ```json
 {
-  "select": {
-    "analytic": "temperature"
-  },
-  "from": {
-    "instance": "InstanceId"
-  },
-  "at": {
-    "frequency": "1/60"
-  }
+  "token": "JWT Token",
+  "type": "enroll|action|configuration|diagnostic",
+  "payload": {}
 }
 ```
 
-#### Returns
+#### Enrollment Payload
 
 ```json
 {
-  "instances": [
-    {
-      "name": "c",
-      "id": "1234",
-      "components": [
-        {
-          "name": "Temperature Inside",
-          "type": "analytic",
-          "frequency": "watch",
-          "data": "78"
-        },
-        {
-          "name": "Mode",
-          "type": "state",
-          "frequency": "watch",
-          "data": "cool|off|heat|fan"
-        }
-      ]
-    }
-  ]
+  "instances": ["instanceId1", "instanceId2"]
 }
 ```
 
-#### No... Lets try something more ✨dyanamic✨
+#### Action Payload
+
 ```json
-
 {
-  "requests": ["thermostat.temp", "thermostat.fan"] 
+  "instance": "instanceId1",
+  "action": "actionName"
 }
-
 ```
 
+#### Diagnostic Payload
+
+```json
+{
+  "instance": "instanceId1",
+  "action": "actionName"
+}
+```

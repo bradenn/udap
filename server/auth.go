@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/lestrrat-go/jwx/jwt"
 	"net/http"
@@ -12,6 +13,22 @@ var tokenAuth *jwtauth.JWTAuth
 func Init() {
 	privateKey := os.Getenv("private")
 	tokenAuth = jwtauth.New("HS512", []byte(privateKey), nil)
+}
+
+func AuthToken(token string) (string, error) {
+	content, err := jwtauth.VerifyToken(tokenAuth, token)
+	if err != nil {
+		return "", err
+	}
+
+	val, ok := content.Get("id")
+	if !ok {
+		return "", fmt.Errorf("malformed jwt... This is a serious concern")
+	}
+
+	s := val.(string)
+
+	return s, nil
 }
 
 func VerifyToken() func(http.Handler) http.Handler {

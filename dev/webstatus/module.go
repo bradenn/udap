@@ -1,48 +1,63 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"udap/template"
 )
 
-var Export template.Module
+// Export Allows the parent process to read
+var Export WebStatus
 
 func init() {
+	Export = WebStatus{}
+}
 
-	functions := map[string]template.Function{}
+type WebStatus struct {
+}
 
-	functions["isDown"] = IsDown
+type Configuration struct {
+	Url string `json:"url"`
+}
 
-	metadata := template.Metadata{
+func (w *WebStatus) InitInstance() (string, error) {
+	sample := &Configuration{
+		Url: "https://google.com",
+	}
+	env, err := json.Marshal(sample)
+	if err != nil {
+		return "", err
+	}
+	return string(env), nil
+}
+
+func (w *WebStatus) Initialize(env string) {
+
+}
+
+func (w *WebStatus) Metadata() template.Metadata {
+	return template.Metadata{
 		Name:        "Web Status",
 		Description: "Determine whether a website is down or not",
 		Version:     "1.0.0",
 		Author:      "Braden Nicholson",
 	}
-
-	module := template.NewModule(metadata, functions, Configure)
-
-	Export = module
-
 }
 
-func Configure() {
-
-	// config := Export.GetConfig()
-	//
-	// instance := Export.GetInstance().String()
-
-}
-
-func IsDown(url string) (string, error) {
-	get, err := http.Get(url)
+func (w *WebStatus) Poll(v string) (string, error) {
+	conf := Configuration{}
+	err := json.Unmarshal([]byte(v), &conf)
 	if err != nil {
-		return "Down", err
+		return "", err
 	}
 
-	if get.StatusCode != http.StatusOK {
-		return get.Status, err
+	get, err := http.Get(conf.Url)
+	if err != nil {
+		return err.Error(), err
 	}
-
 	return get.Status, nil
+}
+
+func (w *WebStatus) Run(v string, action string) (string, error) {
+	return "", nil
 }
