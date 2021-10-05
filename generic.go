@@ -9,5 +9,6 @@ type Persistent struct {
 	createdAt time.Time
 	updatedAt time.Time
 	deletedAt *time.Time `sql:"index"`
-	Id        uuid.UUID  `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	// Id is primary key of the persistent type, represented as a UUIDv4
+	Id uuid.UUID `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
 }

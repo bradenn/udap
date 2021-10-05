@@ -11,7 +11,7 @@ import (
 func NewGormDB() (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(dbURL()), &gorm.Config{})
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 	return db, err
 }

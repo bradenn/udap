@@ -99,3 +99,7 @@ func Warn(format string, args ...interface{}) {
 func Error(format string, args ...interface{}) {
 	log(panic, format, args...)
 }
+
+func Err(err error) {
+	log(panic, err.Error())
+}

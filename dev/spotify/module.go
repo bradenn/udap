@@ -13,64 +13,81 @@ import (
 	"udap/template"
 )
 
-var Export template.Module
+var Export Spotify
 
-var spotify SpotifyApi
+type SpotifyEnv struct {
+	Client string `json:"client"`
+	Secret string `json:"secret"`
+}
 
-func init() {
+type Spotify struct {
+}
 
-	functions := map[string]template.Function{}
+func (s Spotify) InitInstance() (string, error) {
+	spotify := SpotifyApi{}
+	spotify.Authenticate()
 
-	functions["currentlyPlaying"] = CurrentSong
-	functions["pause"] = Pause
-	functions["play"] = Play
+	marshal, err := json.Marshal(spotify)
+	if err != nil {
+		return "", err
+	}
 
+	return string(marshal), nil
+}
+
+func (s Spotify) Initialize(env string) {
+	spotifyEnv := SpotifyEnv{}
+	err := json.Unmarshal([]byte(env), &spotifyEnv)
+	if err != nil {
+		return
+	}
+	err = os.Setenv("client", spotifyEnv.Client)
+	if err != nil {
+		return
+	}
+	err = os.Setenv("secret", spotifyEnv.Secret)
+	if err != nil {
+		return
+	}
+}
+
+func (s Spotify) Metadata() template.Metadata {
 	metadata := template.Metadata{
 		Name:        "Spotify",
 		Description: "Remote control for spotify",
 		Version:     "1.0.1",
 		Author:      "Braden Nicholson",
 	}
-
-	module := template.NewModule(metadata, functions, Configure)
-
-	Export = module
-
+	return metadata
 }
 
-func Configure() {
-
-	config := Export.GetConfig()
-
-	instance := Export.GetInstance()
-
-	if !config.IsSet(instance) {
-		spotify = SpotifyApi{}
-		spotify.Authenticate()
-		config.Set(instance, spotify)
-	}
-
-	err := config.Get(instance, &spotify)
+func (s Spotify) Poll(v string) (string, error) {
+	spotifyApi := SpotifyApi{}
+	err := json.Unmarshal([]byte(v), &spotifyApi)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-
+	return spotifyApi.CurrentSong()
 }
 
-func CurrentSong(_ string) (string, error) {
-	return authenticatedRequest("GET", "me/player/currently-playing")
+func (s Spotify) Run(v string, action string) (string, error) {
+	return "", nil
 }
 
-func Play(_ string) (string, error) {
-	return authenticatedRequest("PUT", "me/player/play")
+func (s *SpotifyApi) CurrentSong() (string, error) {
+	return s.authenticatedRequest("GET", "me/player/currently-playing")
 }
 
-func Pause(_ string) (string, error) {
-	return authenticatedRequest("PUT", "me/player/pause")
+func (s *SpotifyApi) Play(_ string) (string, error) {
+	return s.authenticatedRequest("PUT", "me/player/play")
 }
 
-func authenticatedRequest(method string, path string) (string, error) {
-	access, _ := spotify.GetToken()
+func (s *SpotifyApi) Pause(_ string) (string, error) {
+	return s.authenticatedRequest("PUT", "me/player/pause")
+}
+
+func (s *SpotifyApi) authenticatedRequest(method string, path string) (string, error) {
+	access, _ := s.GetToken()
 	urlString := fmt.Sprintf("https://api.spotify.com/v1/%s", path)
 	request, _ := http.NewRequest(method, urlString, nil)
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", access))
@@ -106,27 +123,27 @@ type SpotifyApi struct {
 	Refresh   string    `json:"refresh"`
 }
 
-func (a *SpotifyApi) Authenticate() {
-	if a.Token == "" {
-		fmt.Printf("Please log into your spotify account here: %s", a.loginURL())
+func (s *SpotifyApi) Authenticate() {
+	if s.Token == "" {
+		fmt.Printf("Please log into your spotify account here: %s", s.loginURL())
 
 		e := make(chan string)
-		go a.beginListening(e)
+		go s.beginListening(e)
 		msg := <-e
-		a.requestToken(msg)
+		s.requestToken(msg)
 	}
 }
 
-func (a *SpotifyApi) GetToken() (string, error) {
-	if a.Token == "" {
+func (s *SpotifyApi) GetToken() (string, error) {
+	if s.Token == "" {
 		return "", fmt.Errorf("not authenticated")
-	} else if time.Now().After(a.ExpiresAt) {
-		a.refreshAccess()
+	} else if time.Now().After(s.ExpiresAt) {
+		s.refreshAccess()
 	}
-	return a.Token, nil
+	return s.Token, nil
 }
 
-func (a *SpotifyApi) beginListening(e chan string) {
+func (s *SpotifyApi) beginListening(e chan string) {
 
 	srv := http.Server{
 		Addr: "0.0.0.0:9966",
@@ -151,7 +168,7 @@ func (a *SpotifyApi) beginListening(e chan string) {
 	}
 }
 
-func (a *SpotifyApi) loginURL() string {
+func (s *SpotifyApi) loginURL() string {
 
 	scope := "user-modify-playback-state user-read-currently-playing"
 	clientId := os.Getenv("client")
@@ -163,14 +180,14 @@ func (a *SpotifyApi) loginURL() string {
 	return urlString
 }
 
-func (a *SpotifyApi) requestToken(code string) {
+func (s *SpotifyApi) requestToken(code string) {
 	values := url.Values{}
 
 	values.Set("grant_type", "authorization_code")
 	values.Set("code", code)
 	values.Set("redirect_uri", CALLBACK)
 
-	request, err := a.basicRequest("https://accounts.spotify.com/api/token", values)
+	request, err := s.basicRequest("https://accounts.spotify.com/api/token", values)
 	if err != nil {
 		return
 	}
@@ -180,17 +197,17 @@ func (a *SpotifyApi) requestToken(code string) {
 	if err != nil {
 		return
 	}
-	a.Token = callbackBody.AccessToken
-	a.Refresh = callbackBody.RefreshToken
-	a.ExpiresAt = time.Now().Add(time.Second * time.Duration(callbackBody.ExpiresIn))
+	s.Token = callbackBody.AccessToken
+	s.Refresh = callbackBody.RefreshToken
+	s.ExpiresAt = time.Now().Add(time.Second * time.Duration(callbackBody.ExpiresIn))
 }
 
-func (a *SpotifyApi) refreshAccess() {
+func (s *SpotifyApi) refreshAccess() {
 	values := url.Values{}
 
 	values.Set("grant_type", "refresh_token")
-	values.Set("refresh_token", a.Refresh)
-	request, err := a.basicRequest("https://accounts.spotify.com/api/token", values)
+	values.Set("refresh_token", s.Refresh)
+	request, err := s.basicRequest("https://accounts.spotify.com/api/token", values)
 	if err != nil {
 		return
 	}
@@ -200,8 +217,8 @@ func (a *SpotifyApi) refreshAccess() {
 	if err != nil {
 		return
 	}
-	a.Token = refresh.AccessToken
-	a.ExpiresAt = time.Now().Add(time.Second * time.Duration(refresh.ExpiresIn))
+	s.Token = refresh.AccessToken
+	s.ExpiresAt = time.Now().Add(time.Second * time.Duration(refresh.ExpiresIn))
 
 }
 
@@ -212,7 +229,7 @@ type SpotifyRefresh struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-func (a *SpotifyApi) basicRequest(path string, values url.Values) (string, error) {
+func (s *SpotifyApi) basicRequest(path string, values url.Values) (string, error) {
 
 	id := os.Getenv("client")
 	secret := os.Getenv("secret")

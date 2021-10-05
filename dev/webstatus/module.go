@@ -55,7 +55,19 @@ func (w *WebStatus) Poll(v string) (string, error) {
 	if err != nil {
 		return err.Error(), err
 	}
-	return get.Status, nil
+	returnStruct := struct {
+		Url    string `json:"url"`
+		Status string `json:"status"`
+	}{
+		Url:    conf.Url,
+		Status: get.Status,
+	}
+
+	marshal, err := json.Marshal(returnStruct)
+	if err != nil {
+		return "", err
+	}
+	return string(marshal), nil
 }
 
 func (w *WebStatus) Run(v string, action string) (string, error) {

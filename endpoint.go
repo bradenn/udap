@@ -74,9 +74,7 @@ func (e *Endpoint) Save(db *gorm.DB) error {
 }
 
 func RouteEndpoint(router chi.Router) {
-
 	router.Get("/register/{accessKey}", registerEndpoint)
-
 }
 
 func registerEndpoint(w http.ResponseWriter, r *http.Request) {
