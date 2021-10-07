@@ -106,7 +106,7 @@ func (r *Runtime) Begin(duration time.Duration) {
 
 func (r *Runtime) tick() {
 	for instanceId, endpointArray := range r.subscribers {
-		if len(endpointArray) >= 1 {
+		if len(endpointArray) >= 1 && instanceId != "" {
 			r.updateInstance(instanceId)
 		}
 	}
@@ -134,9 +134,6 @@ func (r *Runtime) discoverModules() {
 
 // Enroll adds an endpoint's websocket connection to the active update queue
 func (r *Runtime) Enroll(endpoint Endpoint, conn *websocket.Conn, payload json.RawMessage) error {
-	if r.enrolled(endpoint) {
-		return errors.New("endpoint is already enrolled")
-	}
 	// Initialize a structure to contain the Enrollment instances
 	data := EnrollmentPayload{}
 	// Attempt to parse the payload into the structure
@@ -144,9 +141,10 @@ func (r *Runtime) Enroll(endpoint Endpoint, conn *websocket.Conn, payload json.R
 	if err != nil {
 		return errors.New("invalid enrollment payload")
 	}
-	// Log the new state
-	logger.Info("Enrolled endpoint '%s'", endpoint.Name)
 	// Set a close handler to deactivate the endpoint when the connection is severed
+	if r.enrolled(endpoint) {
+		r.Unenroll(endpoint)
+	}
 	conn.SetCloseHandler(r.socketCloseHandler(endpoint))
 	// Generate a session struct, containing the websocket connection, and the requested watchlist
 	session := Session{
@@ -158,6 +156,8 @@ func (r *Runtime) Enroll(endpoint Endpoint, conn *websocket.Conn, payload json.R
 	}
 	// Enroll the endpoint via the private function
 	r.enroll(endpoint.Id.String(), session)
+	// Log the new state
+	logger.Info("Enrolled endpoint '%s'", endpoint.Name)
 	// Return a clean bill of health
 	err = r.Metadata(endpoint)
 	if err != nil {
@@ -213,7 +213,6 @@ func (r *Runtime) Unenroll(endpoint Endpoint) {
 	if session == nil {
 		return
 	}
-
 	for _, instance := range session.Instances {
 		r.unsubscribe(endpoint.Id.String(), instance)
 	}

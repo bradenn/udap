@@ -96,7 +96,6 @@ func (s *SpotifyApi) authenticatedRequest(method string, path string) (string, e
 	if err != nil {
 		return "", err
 	}
-
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(response.Body)
 	if err != nil {

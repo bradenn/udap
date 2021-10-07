@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 	"udap/config"
 	"udap/logger"
@@ -17,18 +16,6 @@ func main() {
 		logger.Err(err)
 		return
 	}
-
-	mod := Module{}
-	err = srv.Database().Model(&Module{}).Where("id = ?", "c9cdff54-025a-47dc-abc5-1dc627f43894").First(&mod).Error
-	if err != nil {
-		return
-	}
-
-	instance, err := mod.CreateInstance(srv.Database(), "Braden's Spotify")
-	if err != nil {
-		return
-	}
-	fmt.Println(instance)
 
 	// Migrate data structures to database
 	srv.Migrate(&Module{})
