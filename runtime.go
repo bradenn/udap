@@ -23,6 +23,7 @@ const (
 	METADATA = "metadata"
 	POLL     = "poll"
 	ACTION   = "action"
+	RESET    = "reset"
 )
 
 type Session struct {
@@ -59,8 +60,12 @@ type EnrollmentPayload struct {
 }
 
 type ActionPayload struct {
-	Instance string `json:"instances"`
+	Instance string `json:"instance"`
 	Action   string `json:"action"`
+}
+
+type ResetPayload struct {
+	Instance string `json:"instance"`
 }
 
 // Runtime manages the event-loop for all instances, as well as the websocket connections between UDAP and endpoints.
@@ -91,6 +96,7 @@ func NewRuntime(server server.Server) Runtime {
 			},
 		},
 	}
+	runtime.discoverModules()
 	server.Router().HandleFunc("/ws", runtime.EndpointHandler)
 	return runtime
 }
@@ -164,6 +170,10 @@ func (r *Runtime) Enroll(endpoint Endpoint, conn *websocket.Conn, payload json.R
 		return err
 	}
 	return nil
+}
+
+func (r *Runtime) liveUpdate(instanceId string, data string, err error) {
+	r.cache[instanceId] = data
 }
 
 func (r *Runtime) subscribe(endpointId string, instanceId string) {
@@ -285,6 +295,13 @@ func (r *Runtime) EndpointHandler(w http.ResponseWriter, req *http.Request) {
 				_ = c.Close()
 				return
 			}
+		case RESET:
+			_, err = r.Reset(endpoint, request.Payload)
+			if err != nil {
+				_ = c.WriteJSON(ErrorResponse(err.Error()))
+				_ = c.Close()
+				return
+			}
 		}
 	}
 }
@@ -328,7 +345,24 @@ func (r *Runtime) updateInstance(instanceId string) {
 		logger.Err(err)
 		return
 	}
-	r.cache[instanceId] = poll
+
+	polled := struct {
+		Type string `json:"type"`
+		Name string `json:"name"`
+		Data string `json:"data"`
+		Id   string `json:"id"`
+	}{
+		Type: i.Module.Path,
+		Name: i.Name,
+		Data: poll,
+		Id:   i.Id.String(),
+	}
+
+	marshal, err := json.Marshal(polled)
+	if err != nil {
+		return
+	}
+	r.cache[instanceId] = string(marshal)
 }
 
 func (r *Runtime) pushEndpoint(session *Session) {
@@ -376,13 +410,41 @@ func (r *Runtime) Action(endpoint Endpoint, payload json.RawMessage) (string, er
 	return run, nil
 }
 
+// Reset will reinitialize the module instance.
+func (r *Runtime) Reset(endpoint Endpoint, payload json.RawMessage) (string, error) {
+	// A variable to hold the payload is initialized
+	action := ResetPayload{}
+	// Attempt to parse the payload into the ActionPayload struct
+	err := json.Unmarshal(payload, &action)
+	if err != nil {
+		return "", err
+	}
+	// Find the instance defined in the payload, and authorize the endpoint
+	instance, err := endpoint.GetInstance(action.Instance, r.server.Database())
+	if err != nil {
+		return "", err
+	}
+	// Run the requested function
+	err = instance.Reset(r.server.Database())
+	if err != nil {
+		return "", err
+
+	}
+	return "", nil
+}
+
 func (r *Runtime) Metadata(endpoint Endpoint) error {
 	response := Response{
 		Type:    METADATA,
 		Payload: map[string]interface{}{},
 	}
 
+	var modules []Module
+
+	r.server.Database().Model(&Module{}).Find(&modules)
+
 	response.Payload["endpoint"] = endpoint
+	response.Payload["modules"] = modules
 
 	marshal, err := json.Marshal(response)
 	if err != nil {

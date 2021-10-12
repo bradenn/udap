@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
+	"reflect"
 )
 
 type Metadata struct {
@@ -27,60 +27,19 @@ type Mod interface {
 	Run(v string, action string) (string, error)
 }
 
-type Function func(string) (string, error)
-
-type Module struct {
-	metadata   Metadata
-	functions  map[string]Function
-	config     Config
-	onEnable   func()
-	instanceId string
-}
-
-func NewModule(metadata Metadata, functions map[string]Function, onEnable func()) Module {
-	configString := strings.ToLower(metadata.Name)
-	config := NewConfig(configString)
-	return Module{metadata: metadata, functions: functions, onEnable: onEnable, config: config}
-}
-
-func (m *Module) Metadata() Metadata {
-	return m.metadata
-}
-
-func (m *Module) GetInstance() string {
-	return m.instanceId
-}
-
-func (m *Module) GetConfig() Config {
-	return m.config
-}
-
-func (m *Module) Run(s string) (string, error) {
-	if m.functions[s] == nil {
-		return "", fmt.Errorf("function does not exist")
-	}
-	return m.functions[s](s)
-}
-
-func (m *Module) Configure(data []byte, instanceId string) {
-	m.instanceId = instanceId
-	raw := map[string]string{}
-	err := json.Unmarshal(data, &raw)
+func LoadEnvironment(env string, environment interface{}) error {
+	err := json.Unmarshal([]byte(env), &environment)
 	if err != nil {
-		return
+		return err
 	}
-	for s, message := range raw {
-		err := os.Setenv(s, message)
-		if err != nil {
-			return
-		}
-	}
-	m.onEnable()
-}
 
-func (m *Module) Functions() (functions []string) {
-	for s := range m.functions {
-		functions = append(functions, s)
+	of := reflect.ValueOf(environment)
+	for i := 0; i < of.NumField(); i++ {
+		err := os.Setenv(of.Field(i).String(), of.Field(i).Interface().(string))
+		if err != nil {
+			return err
+		}
+		fmt.Println(of.Field(i).String(), ": ", of.Field(i).Interface().(string))
 	}
-	return functions
+	return nil
 }

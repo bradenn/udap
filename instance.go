@@ -1,8 +1,11 @@
 package main
 
 import (
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"net/http"
+	"udap/server"
 )
 
 // Instance is a subclass of Module. Instance carries instance-related environment information.
@@ -19,15 +22,55 @@ type Instance struct {
 	ModuleId uuid.UUID `json:"moduleId"`
 	// Config holds instance related environment information in JSON format.
 	Config string `json:"config"`
+	// Rate determines the interval in which the module is polled.
+	Rate int `json:"rate"`
 	// Log refers to the STD output of the module
 	Log string `json:"log"`
+}
+
+func RouteInstances(router chi.Router) {
+	router.Post("/", createInstance)
+}
+
+func createInstance(w http.ResponseWriter, r *http.Request) {
+	req, db := server.NewRequest(w, r)
+
+	var model Instance
+
+	req.DecodeModel(&model)
+	if err := db.Create(&model).Error; err != nil {
+		req.Reject(err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var endpoint Endpoint
+	id := req.JWTClaim("id")
+	err := db.Model(&Endpoint{}).Where("id = ?", id).First(&endpoint).Error
+	if err != nil {
+		req.Reject(err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	endpoint.AddInstance(model)
+
+	err = endpoint.Save(db)
+	if err != nil {
+		req.Reject(err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	req.Resolve(model, http.StatusOK)
 }
 
 func (i *Instance) AfterFind(_ *gorm.DB) error {
 	return nil
 }
 
-func (i *Instance) BeforeCreate(_ *gorm.DB) error {
+func (i *Instance) BeforeCreate(db *gorm.DB) error {
+
+	var module Module
+	err := db.Model(&Module{}).Where("id = ?", i.ModuleId).First(&module).Error
+	i.Module = module
 
 	mod, err := i.Module.Initialize()
 	if err != nil {
@@ -40,6 +83,32 @@ func (i *Instance) BeforeCreate(_ *gorm.DB) error {
 	}
 
 	i.Config = instance
+
+	return nil
+}
+
+func (i *Instance) Reset(db *gorm.DB) error {
+
+	var module Module
+	err := db.Model(&Module{}).Where("id = ?", i.ModuleId).First(&module).Error
+	i.Module = module
+
+	mod, err := i.Module.Initialize()
+	if err != nil {
+		return err
+	}
+
+	instance, err := mod.InitInstance()
+	if err != nil {
+		return err
+	}
+
+	i.Config = instance
+
+	err = db.Model(&Instance{}).Where("id = ?", i.Id.String()).Save(i).Error
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

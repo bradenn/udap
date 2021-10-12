@@ -75,6 +75,7 @@ func (e *Endpoint) Save(db *gorm.DB) error {
 
 func RouteEndpoint(router chi.Router) {
 	router.Get("/register/{accessKey}", registerEndpoint)
+	// router.Get("/socket/{jwt}", handleWebsockets)
 }
 
 func registerEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -154,20 +155,3 @@ func registerEndpoint(w http.ResponseWriter, r *http.Request) {
 //
 // 	req.Resolve(model, http.StatusOK)
 // }
-
-func pollEndpoint(writer http.ResponseWriter, request *http.Request) {
-	req, db := server.NewRequest(writer, request)
-
-	id := req.JWTClaim("id").(string)
-
-	var model Endpoint
-
-	db.Where("id = ?", id).First(&model)
-
-	if err := db.Error; err != nil {
-		req.Reject(err.Error(), http.StatusNotFound)
-		return
-	}
-
-	req.Resolve(model, http.StatusOK)
-}

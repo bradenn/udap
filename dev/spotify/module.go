@@ -71,6 +71,17 @@ func (s Spotify) Poll(v string) (string, error) {
 }
 
 func (s Spotify) Run(v string, action string) (string, error) {
+	spotifyApi := SpotifyApi{}
+	err := json.Unmarshal([]byte(v), &spotifyApi)
+	if err != nil {
+		return "", err
+	}
+	switch action {
+	case "play":
+		return spotifyApi.Play()
+	case "pause":
+		return spotifyApi.Pause()
+	}
 	return "", nil
 }
 
@@ -78,11 +89,11 @@ func (s *SpotifyApi) CurrentSong() (string, error) {
 	return s.authenticatedRequest("GET", "me/player/currently-playing")
 }
 
-func (s *SpotifyApi) Play(_ string) (string, error) {
+func (s *SpotifyApi) Play() (string, error) {
 	return s.authenticatedRequest("PUT", "me/player/play")
 }
 
-func (s *SpotifyApi) Pause(_ string) (string, error) {
+func (s *SpotifyApi) Pause() (string, error) {
 	return s.authenticatedRequest("PUT", "me/player/pause")
 }
 
