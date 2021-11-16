@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"gorm.io/gorm"
 	"net/http"
-	"udap/logger"
+	"os"
+	"udap/config"
 )
 
 type Routable interface {
@@ -16,7 +18,7 @@ type Routable interface {
 
 type Server struct {
 	router   chi.Router
-	database *gorm.DB
+	Database *gorm.DB
 }
 
 func New() (s Server, err error) {
@@ -30,17 +32,17 @@ func New() (s Server, err error) {
 		return Server{}, err
 	}
 	// Default Middleware
-	router.Use(logger.Middleware)
+	router.Use(config.Middleware)
 	router.Use(middleware.Recoverer)
-	// Status Middleware
-	router.Use(middleware.Heartbeat("/status"))
 	// Custom Middleware
 	router.Use(corsHeaders())
+	// Status Middleware
+	router.Use(middleware.Heartbeat("/status"))
 	// Seek, verify and validate JWT tokens
 	router.Use(VerifyToken())
 	// Inject gorm DB context
 	router.Use(databaseContext(db))
-	return Server{router: router, database: db}, nil
+	return Server{router: router, Database: db}, nil
 }
 
 func databaseContext(database *gorm.DB) func(next http.Handler) http.Handler {
@@ -53,9 +55,9 @@ func databaseContext(database *gorm.DB) func(next http.Handler) http.Handler {
 }
 
 func (s *Server) Migrate(inf interface{}) {
-	err := s.database.AutoMigrate(inf)
+	err := s.Database.AutoMigrate(inf)
 	if err != nil {
-		logger.Error(err.Error())
+		config.Error(err.Error())
 	}
 }
 
@@ -75,16 +77,13 @@ func (s *Server) RoutePublic(path string, handler func(r chi.Router)) {
 	})
 }
 
-func (s *Server) Database() *gorm.DB {
-	return s.database
-}
-
 func (s *Server) Router() chi.Router {
 	return s.router
 }
 
 func (s *Server) Run() error {
-	err := http.ListenAndServe("0.0.0.0:3020", s.router)
+	host := fmt.Sprintf("%s:%s", os.Getenv("hostname"), os.Getenv("port"))
+	err := http.ListenAndServe(host, s.router)
 	if err != nil {
 		return err
 	}
@@ -94,8 +93,8 @@ func (s *Server) Run() error {
 func corsHeaders() func(next http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

@@ -9,6 +9,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
 	github.com/lestrrat-go/jwx v1.2.6
 	go.mongodb.org/mongo-driver v1.7.2

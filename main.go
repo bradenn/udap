@@ -1,10 +1,10 @@
 package main
 
 import (
-	"time"
 	"udap/config"
-	"udap/logger"
+	"udap/runtime"
 	"udap/server"
+	"udap/types"
 )
 
 func main() {
@@ -13,23 +13,23 @@ func main() {
 	// Establish server structure, connect to database
 	srv, err := server.New()
 	if err != nil {
-		logger.Err(err)
+		config.Err(err)
 		return
 	}
+	types.Load(srv.Database)
 	// Migrate data structures to database
-	srv.Migrate(&Module{})
-	srv.Migrate(&Instance{})
-	srv.Migrate(&Endpoint{})
+	srv.Migrate(&types.Module{})
+	srv.Migrate(&types.Instance{})
+	srv.Migrate(&types.Endpoint{})
+	srv.Migrate(&types.Entity{})
 	// Configure UDAP runtime agent
-	runtime := NewRuntime(srv)
-	runtime.Begin(time.Second * 5)
+	runtime.New(srv)
 	// Route Endpoint authentication
-	srv.RoutePublic("/endpoints", RouteEndpoint)
-	srv.RouteSecure("/instances", RouteInstances)
+	srv.RoutePublic("/endpoints", types.RouteEndpoint)
 	// Run http server indefinitely
 	err = srv.Run()
 	if err != nil {
-		logger.Err(err)
+		config.Err(err)
 	}
 	// If the http server exits, so too, will the websocket server and runtime agent.
 }

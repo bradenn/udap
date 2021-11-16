@@ -1,7 +1,9 @@
-package main
+package types
 
 import (
+	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 	"math/rand"
 	"net/http"
@@ -20,6 +22,9 @@ type Endpoint struct {
 	Enabled bool `json:"enabled"`
 	// Key is used to identify new endpoints
 	Key string `json:"key"`
+	//
+	Connection    *websocket.Conn `gorm:"-"`
+	Subscriptions []string        `gorm:"-"`
 }
 
 func randomSequence() string {
@@ -44,7 +49,7 @@ func (e *Endpoint) AfterFind(_ *gorm.DB) error {
 	return nil
 }
 
-func (e *Endpoint) GetInstance(instanceId string, db *gorm.DB) (Instance, error) {
+func (e *Endpoint) GetInstance(instanceId string) (Instance, error) {
 	instance := Instance{}
 	err := db.Model(&Instance{}).Preload("Module").Where("id = ?", instanceId).First(&instance).Error
 	if err != nil {
@@ -53,7 +58,48 @@ func (e *Endpoint) GetInstance(instanceId string, db *gorm.DB) (Instance, error)
 	return instance, nil
 }
 
-func (e *Endpoint) Find(db *gorm.DB) error {
+func (e *Endpoint) GrantInstance(instance Instance) error {
+	for _, candidate := range e.Instances {
+		if candidate.Id == instance.Id {
+			return fmt.Errorf("instance already granted")
+		}
+	}
+	e.Instances = append(e.Instances, instance)
+
+	err := db.Model(e).Association("Instances").Append(&instance)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *Endpoint) RevokeInstance(instanceId string) (err error) {
+	for i, instance := range e.Instances {
+		if instance.Id.String() == instanceId {
+			e.Instances = append(e.Instances[:i], e.Instances[i+1:]...)
+			break
+		}
+	}
+	for _, instance := range e.Instances {
+		fmt.Println(instance.Name, ":", instance.Id.String(), instance.Module.Name, instance.Module.Id)
+
+	}
+	err = db.Model(&e).Where("id = ?", e.Id.String()).Updates(&e).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *Endpoint) DeleteInstance(instanceId string) error {
+	err := e.RevokeInstance(instanceId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *Endpoint) Find() error {
 	err := db.Model(e).Where("id = ?", e.Id.String()).First(e).Error
 	if err != nil {
 		return err
@@ -65,7 +111,7 @@ func (e *Endpoint) AddInstance(instance Instance) {
 	e.Instances = append(e.Instances, instance)
 }
 
-func (e *Endpoint) Save(db *gorm.DB) error {
+func (e *Endpoint) Save() error {
 	err := db.Model(e).Where("id = ?", e.Id.String()).Save(e).Error
 	if err != nil {
 		return err
@@ -99,59 +145,3 @@ func registerEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	req.Resolve(resolve, http.StatusOK)
 }
-
-// func createEndpoint(writer http.ResponseWriter, request *http.Request) {
-// 	req, db := server.NewRequest(writer, request)
-//
-// 	var err error
-// 	var model Endpoint
-//
-// 	req.DecodeModel(&model)
-// 	db.Create(&model)
-//
-// 	if err := db.Error; err != nil {
-// 		req.Reject(err.Error(), http.StatusNotFound)
-// 		return
-// 	}
-//
-// 	jwt, err := server.SignUUID(model.Id.String())
-// 	if err != nil {
-// 		req.Reject("Internal Error", http.StatusInternalServerError)
-// 		return
-// 	}
-//
-// 	resolve := map[string]interface{}{"token": jwt}
-//
-// 	req.Resolve(resolve, http.StatusOK)
-// }
-//
-// func findEndpoints(writer http.ResponseWriter, request *http.Request) {
-// 	req, db := server.NewRequest(writer, request)
-// 	var models []Endpoint
-//
-// 	db.Find(&models)
-//
-// 	if err := db.Error; err != nil {
-// 		req.Reject(err.Error(), http.StatusNotFound)
-// 		return
-// 	}
-//
-// 	req.Resolve(models, http.StatusOK)
-// }
-//
-// func findEndpoint(writer http.ResponseWriter, request *http.Request) {
-// 	req, db := server.NewRequest(writer, request)
-//
-// 	id := req.Param("id")
-//
-// 	var model Endpoint
-//
-// 	db.Where("id = ?", id).First(&model)
-//
-// 	if err := db.Error; err != nil {
-// 		req.Reject(err.Error(), http.StatusNotFound)
-// 		return
-// 	}
-//
-// 	req.Resolve(model, http.StatusOK)
-// }
