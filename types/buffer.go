@@ -1,9 +1,6 @@
-package types
+// Copyright (c) 2021 Braden Nicholson
 
-type UpdateBuffer struct {
-	InstanceId string
-	Data       string
-}
+package types
 
 type CacheBuffer struct {
 	Data string

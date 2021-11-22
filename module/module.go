@@ -1,30 +1,78 @@
-package types
+// Copyright (c) 2021 Braden Nicholson
+
+package module
 
 import (
 	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
 	"plugin"
-	"udap/config"
+	"strings"
+	"udap/udap"
+	"udap/udap/db"
+	"udap/udap/store"
 )
+
+var modules map[string]*Module
+
+func init() {
+	modules = map[string]*Module{}
+}
+
+func Get(id string) (mod *Module, err error) {
+	mod = modules[id]
+	if mod == nil {
+
+		return nil, fmt.Errorf("module is nil")
+	}
+	return mod, nil
+}
 
 const (
 	pathFmt   = "./plugins"
 	pluginFmt = pathFmt + "/%s/%s.so"
 )
 
-type IModule interface {
-	Load(agent Agent) error
+func (m Module) path() string {
+	return fmt.Sprintf("modules.%s", strings.ToLower(m.Name))
+}
 
-	Create(agent Agent) error
+type Replicant struct {
+	config map[string]string
+}
 
-	Run(data string) (error, string)
-	// Metadata returns basic information about the module.
-	Metadata() Metadata
+type Plugin interface {
+	// Startup is called when the plugin is first loaded
+	Startup() (Metadata, error)
+	// Default returns the plugin's default instance config
+	Default() interface{}
+
+	Update(ctx Context) error
+	Run(ctx Context, data string) (string, error)
+}
+
+type Context struct {
+	update     chan UpdateBuffer
+	instanceId string
+}
+
+func (c *Context) Send(data interface{}) {
+	marshaled, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	c.update <- UpdateBuffer{
+		InstanceId: c.instanceId,
+		Data:       string(marshaled),
+	}
+}
+
+func (c *Context) Id() string {
+	return c.instanceId
 }
 
 type Module struct {
-	Persistent
+	udap.Persistent
 	// Metadata holds generic information about the module.
 	Metadata
 	// Environment holds persistent JSON environment information, api keys, ports, etc.
@@ -32,20 +80,30 @@ type Module struct {
 	// Path refers to the literal name of the module
 	Path string `json:"path"`
 
-	component IModule `gorm:"-"`
+	component Plugin `gorm:"-"`
 }
 
 // Emplace interface operations
 func (m *Module) Emplace() error {
+
 	component, err := m.getComponent()
 	if err != nil {
 		return err
 	}
 	// Populate the plugin's metadata field
 	m.component = component
-	m.Metadata = component.Metadata()
+	metadata, err := m.component.Startup()
+	if err != nil {
+		return err
+	}
+	m.Metadata = metadata
+	marshal, err := json.Marshal(m.Metadata)
+	if err != nil {
+		return err
+	}
+
 	// Find the module if it exists in the database
-	err = db.Model(&Module{}).Where("path = ?", m.Path).First(&m).Error
+	err = db.DB.Model(&Module{}).Where("path = ?", m.Path).First(&m).Error
 	if err != nil {
 		// If the module does not exist, create it
 		if err == gorm.ErrRecordNotFound {
@@ -54,37 +112,35 @@ func (m *Module) Emplace() error {
 			if err != nil {
 				return err
 			}
+
 		}
 		// Return any unhandled errors to be reported
 		return err
 	}
+	modules[m.Id] = m
+	err = store.PutLn(string(marshal), m.path(), "metadata")
+	if err != nil {
+		return err
+	}
 	// If the module has been loaded, or created announce it
-	config.Info("Loaded module '%s' v%s", m.Name, m.Version)
+	udap.Info("Loaded module '%s' v%s", m.Name, m.Version)
 	return nil
 }
 
 // Emplace interface operations
 func (m *Module) Run(data string) error {
 
-	err, state := m.component.Run(data)
+	_, err := m.component.Run(Context{}, data)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-
-	ent := Entity{}
-	err = json.Unmarshal([]byte(data), &ent)
-	if err != nil {
-		return err
-	}
-
-	db.Model(&Entity{}).Where("name = ?", ent.Name).Update("state", state)
 	return nil
 }
 
 // create inserts the current module into the database
 func (m *Module) create() error {
-	err := db.Create(m).Error
+	err := db.DB.Create(m).Error
 	// Report internal errors for later diagnostic
 	if err != nil {
 		return fmt.Errorf("failed to create module")
@@ -92,29 +148,7 @@ func (m *Module) create() error {
 	return nil
 }
 
-// Initialize loads the module under an instance
-func (m *Module) Initialize(agent Agent) (component IModule, err error) {
-	if m.component != nil {
-		return m.component, nil
-	}
-	component, err = m.getComponent()
-	if err != nil {
-		return nil, err
-	}
-	err = component.Load(agent)
-	if err != nil {
-		return nil, err
-	}
-	return component, nil
-}
-
-func (m *Module) rawComponent() (IModule, error) {
-	if m.component != nil {
-		return m.component, nil
-	}
-	return m.getComponent()
-}
-func (m *Module) getComponent() (IModule, error) {
+func (m *Module) getComponent() (Plugin, error) {
 
 	filename := fmt.Sprintf("./plugins/%s", m.Path)
 	p, err := plugin.Open(filename)
@@ -122,11 +156,11 @@ func (m *Module) getComponent() (IModule, error) {
 		return nil, fmt.Errorf("invalid or out-dated plugin '%s'", m.Path)
 	}
 
-	lookup, err := p.Lookup("IModule")
+	lookup, err := p.Lookup("Plugin")
 	if err != nil {
 		return nil, fmt.Errorf("plugin '%s' provides not exported accesspoint", m.Path)
 	}
-	return lookup.(IModule), nil
+	return lookup.(Plugin), nil
 }
 
 func (m *Module) valid() bool {
@@ -140,14 +174,7 @@ func (m *Module) valid() bool {
 // Hooks
 
 func (m *Module) BeforeCreate(_ *gorm.DB) error {
-	if !m.valid() {
-		return fmt.Errorf("module does not exist")
-	}
-	component, err := m.getComponent()
-	if err != nil {
-		return err
-	}
-	m.Metadata = component.Metadata()
+
 	return nil
 }
 

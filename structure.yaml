@@ -1,0 +1,8 @@
+udap:
+  - store:
+      - Put:
+      - Set:
+  - instance.{id}:
+      - path:
+      - run:
+      - update:

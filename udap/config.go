@@ -1,4 +1,6 @@
-package config
+// Copyright (c) 2021 Braden Nicholson
+
+package udap
 
 import (
 	"fmt"

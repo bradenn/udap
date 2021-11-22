@@ -1,3 +1,5 @@
+// Copyright (c) 2021 Braden Nicholson
+
 package main
 
 import (
@@ -5,16 +7,78 @@ import (
 	"fmt"
 	"github.com/jaedle/golang-tplink-hs100/pkg/configuration"
 	"github.com/jaedle/golang-tplink-hs100/pkg/hs100"
-
 	"time"
-	"udap/types"
+	"udap/module"
+	"udap/udap/store"
 )
 
-var IModule = HS100{}
+var Plugin = HS100{Metadata: module.Metadata{
+	Name:        "HS100",
+	Description: "Control TP-Link HS100 bulbs",
+	Version:     "0.0.1",
+	Author:      "Braden Nicholson",
+}}
 
 var context = map[string]*hs100.Hs100{}
 
 type HS100 struct {
+	Metadata module.Metadata
+}
+
+func (h *HS100) Startup() (module.Metadata, error) {
+	err := Plugin.discover()
+	if err != nil {
+		return module.Metadata{}, err
+	}
+	return h.Metadata, nil
+}
+
+func (h *HS100) Default() interface{} {
+	return Config{}
+}
+
+func (h *HS100) Load(ctx module.Context) error {
+	ctx.Send(fmt.Sprintf("Hello, from '%s.'", ctx.Id()))
+	return nil
+}
+
+func (h *HS100) Update(ctx module.Context) error {
+	panic("implement me")
+}
+
+func (h *HS100) Run(ctx module.Context, data string) (string, error) {
+	state := SetState{}
+	err := json.Unmarshal([]byte(data), &state)
+	if err != nil {
+		return "", err
+	}
+
+	device := context[state.Name]
+	if device == nil {
+		return "", fmt.Errorf("Shit -> FAN")
+	}
+
+	if state.State == "off" {
+		err = device.TurnOff()
+		if err != nil {
+			return "", err
+		}
+		err = store.Put(fmt.Sprintf("instance.%s.entity.%s.state", state.Id, state.Name), "off")
+		if err != nil {
+			return "", err
+		}
+		return "off", err
+	} else {
+		err = device.TurnOn()
+		if err != nil {
+			return "", err
+		}
+		err = store.Put(fmt.Sprintf("instance.%s.entity.%s.state", state.Id, state.Name), "on")
+		if err != nil {
+			return "", err
+		}
+		return "on", err
+	}
 }
 
 type Config struct {
@@ -22,53 +86,17 @@ type Config struct {
 	Devices []string `json:"devices"`
 }
 
-func init() {
-	err := IModule.discover()
-	if err != nil {
-		return
-	}
-}
-
-func (h *HS100) Load(agent types.Agent) error {
-	err := agent.Update(struct{ Msg string }{Msg: "Hello their trucker!"})
-	if err != nil {
-		return err
-	}
-	return h.Startup(agent)
-}
-
-func (h *HS100) Startup(agent types.Agent) error {
-	// err := h.discover(agent)
-	//
-	// if err != nil {
-	// 	return err
+func (h *HS100) Configure(ctx module.Context) error {
+	// config := Config{
+	// 	Subnet:  "192.168.2.0/24",
+	// 	Devices: []string{},
 	// }
+	//
+	//
 	return nil
-}
-
-func (h *HS100) Create(agent types.Agent) error {
-	config := Config{
-		Subnet:  "192.168.2.0/24",
-		Devices: []string{},
-	}
-	err := agent.Store(config)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (h *HS100) Metadata() types.Metadata {
-	return types.Metadata{
-		Name:        "HS100",
-		Description: "Control TP-Link HS100 bulbs",
-		Version:     "0.0.1",
-		Author:      "Braden Nicholson",
-	}
 }
 
 func (h *HS100) discover() (err error) {
-	fmt.Println("HS100:", "discovering")
 	devices, err := hs100.Discover("192.168.2.0/24", configuration.Default().WithTimeout(time.Second))
 	if err != nil {
 		return err
@@ -79,7 +107,6 @@ func (h *HS100) discover() (err error) {
 			continue
 		}
 		context[name] = device
-		fmt.Println("HS100:", name)
 		if err != nil {
 			continue
 		}
@@ -88,33 +115,7 @@ func (h *HS100) discover() (err error) {
 }
 
 type SetState struct {
+	Id    string `json:"id"`
 	Name  string `json:"name"`
 	State string `json:"state"`
-}
-
-func (h *HS100) Run(data string) (error, string) {
-	state := SetState{}
-	err := json.Unmarshal([]byte(data), &state)
-	if err != nil {
-		return err, ""
-	}
-
-	device := context[state.Name]
-	if device == nil {
-		return fmt.Errorf("Shit -> FAN"), ""
-	}
-
-	if state.State == "off" {
-		err = device.TurnOff()
-		if err != nil {
-			return err, ""
-		}
-		return err, "off"
-	} else {
-		err = device.TurnOn()
-		if err != nil {
-			return err, ""
-		}
-		return err, "on"
-	}
 }

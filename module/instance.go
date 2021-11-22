@@ -1,14 +1,19 @@
-package types
+// Copyright (c) 2021 Braden Nicholson
+
+package module
 
 import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"udap/types"
+	"udap/udap"
+	"udap/udap/db"
 )
 
 // Instance is a subclass of Module. Instance carries instance-related environment information.
 type Instance struct {
-	Persistent
+	udap.Persistent
 	// Name refers to the name of the instance, not the name of the module.
 	Name string `json:"name" gorm:"unique"`
 	// Description briefly describe the nature of the instance, not the module.
@@ -20,6 +25,12 @@ type Instance struct {
 	Config      string `json:"config"`
 	Buffer      string
 	subscribers []string
+}
+
+func LoadInstance(id string) (instance *Instance, err error) {
+	err = db.DB.Model(&Instance{}).Preload("Module").Where("id = ?", id).First(instance).Error
+	udap.Info("Instance %s loaded.", id)
+	return instance, err
 }
 
 type ModifyInstance struct {
@@ -34,8 +45,8 @@ type CreateInstance struct {
 	ModuleId    string `json:"moduleId"`
 }
 
-func (i *Instance) Entities() (entities []Entity, err error) {
-	err = db.Model(&Entity{}).Where("instance_id = ?", i.Id.String()).Find(&entities).Error
+func (i *Instance) Entities() (entities []types.Entity, err error) {
+	err = db.DB.Model(&types.Entity{}).Where("instance_id = ?", i.Id).Find(&entities).Error
 	return entities, err
 }
 
@@ -52,21 +63,12 @@ func (i *Instance) Create(body json.RawMessage) (err error) {
 		return err
 	}
 	i.ModuleId = parse
-	err = db.Model(i).Create(i).Error
+	err = db.DB.Model(i).Create(i).Error
 	if err != nil {
 		return err
 	}
 
-	db.Model(i).Preload("Module").Where("id = ?", i.Id.String()).First(i)
-
-	component, err := i.Module.rawComponent()
-	if err != nil {
-		return err
-	}
-	err = component.Create(NewAgent(i.Id.String(), nil))
-	if err != nil {
-		return err
-	}
+	db.DB.Model(i).Preload("Module").Where("id = ?", i.Id).First(i)
 
 	return nil
 }
@@ -79,7 +81,7 @@ func (i *Instance) Modify(body json.RawMessage) (err error) {
 	}
 	i.Name = instanceBody.Name
 	i.Description = instanceBody.Description
-	err = db.Model(i).Save(i).Error
+	err = db.DB.Model(i).Save(i).Error
 	if err != nil {
 		return err
 	}
@@ -88,34 +90,34 @@ func (i *Instance) Modify(body json.RawMessage) (err error) {
 
 func (i *Instance) Reset() (err error) {
 	i.Config = ""
-	err = db.Model(i).Save(i).Error
+	err = db.DB.Model(i).Save(i).Error
 	if err != nil {
 		return err
 	}
-	db.Model(i).Preload("Module").Where("id = ?", i.Id.String()).First(i)
+	db.DB.Model(i).Preload("Module").Where("id = ?", i.Id).First(i)
 
-	component, err := i.Module.rawComponent()
-	if err != nil {
-		return err
-	}
-	err = component.Create(NewAgent(i.Id.String(), nil))
+	// component, err := i.Module.rawComponent()
+	// if err != nil {
+	// 	return err
+	// }
+	// err = component.Create(NewAgent(i.Id.String(), nil))
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (i *Instance) Delete(endpoint Endpoint) (err error) {
-	err = db.Model(&endpoint).Association("Instances").Delete(i)
-	if err != nil {
-		return err
-	}
-	err = db.Model(i).Delete(i).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func (i *Instance) Delete(endpoint endpoint.Endpoint) (err error) {
+// 	err = db.DB.Model(&endpoint).Association("Instances").Delete(i)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	err = db.DB.Model(i).Delete(i).Error
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func (i *Instance) Subscribers() []string {
 	return i.subscribers
@@ -139,27 +141,11 @@ func (i *Instance) Unsubscribe(endpointId string) {
 }
 
 func (i *Instance) Instantiate(instanceId string) (err error) {
-	err = db.Model(i).Preload("Module").Where("id = ?", instanceId).First(i).Error
+	err = db.DB.Model(i).Preload("Module").Where("id = ?", instanceId).First(i).Error
 	if err != nil {
 		return err
 	}
 	return err
-}
-
-func (i *Instance) Load(agent Agent) error {
-	var component IModule
-	var err error
-	component, err = i.Module.Initialize(agent)
-	if err != nil {
-		return err
-	}
-	if i.Config == "" {
-		err = component.Create(agent)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (i *Instance) Run(data string) error {
@@ -180,7 +166,7 @@ func (i *Instance) BeforeCreate(_ *gorm.DB) error {
 }
 
 func (i *Instance) Save() {
-	err := db.Model(&Instance{}).Where("id = ?", i.Id.String()).Save(i).Error
+	err := db.DB.Model(&Instance{}).Where("id = ?", i.Id).Save(i).Error
 	if err != nil {
 		return
 	}

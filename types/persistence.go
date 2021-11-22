@@ -1,3 +1,5 @@
+// Copyright (c) 2021 Braden Nicholson
+
 package types
 
 import "gorm.io/gorm"

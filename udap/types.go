@@ -1,9 +1,8 @@
 // Copyright (c) 2021 Braden Nicholson
 
-package types
+package udap
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
@@ -12,5 +11,9 @@ type Persistent struct {
 	updatedAt time.Time
 	deletedAt *time.Time `sql:"index"`
 	// Id is primary key of the persistent type, represented as a UUIDv4
-	Id uuid.UUID `json:"id" gorm:"primary_key;type:uuid;default:uuid_generate_v4()"`
+	Id string `json:"id" gorm:"primary_key;type:string;default:uuid_generate_v4()"`
+}
+
+func (e *Persistent) UUID() string {
+	return e.Id
 }

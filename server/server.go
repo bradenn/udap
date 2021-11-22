@@ -1,3 +1,5 @@
+// Copyright (c) 2021 Braden Nicholson
+
 package server
 
 import (
@@ -9,7 +11,8 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"os"
-	"udap/config"
+	"udap/udap"
+	"udap/udap/db"
 )
 
 type Routable interface {
@@ -17,8 +20,7 @@ type Routable interface {
 }
 
 type Server struct {
-	router   chi.Router
-	Database *gorm.DB
+	router chi.Router
 }
 
 func New() (s Server, err error) {
@@ -27,12 +29,8 @@ func New() (s Server, err error) {
 	// Generate a new Mux
 	router := chi.NewRouter()
 	// Establish a database connection
-	db, err := NewGormDB()
-	if err != nil {
-		return Server{}, err
-	}
 	// Default Middleware
-	router.Use(config.Middleware)
+	router.Use(udap.Middleware)
 	router.Use(middleware.Recoverer)
 	// Custom Middleware
 	router.Use(corsHeaders())
@@ -40,9 +38,8 @@ func New() (s Server, err error) {
 	router.Use(middleware.Heartbeat("/status"))
 	// Seek, verify and validate JWT tokens
 	router.Use(VerifyToken())
-	// Inject gorm DB context
-	router.Use(databaseContext(db))
-	return Server{router: router, Database: db}, nil
+
+	return Server{router: router}, nil
 }
 
 func databaseContext(database *gorm.DB) func(next http.Handler) http.Handler {
@@ -55,9 +52,9 @@ func databaseContext(database *gorm.DB) func(next http.Handler) http.Handler {
 }
 
 func (s *Server) Migrate(inf interface{}) {
-	err := s.Database.AutoMigrate(inf)
+	err := db.DB.AutoMigrate(inf)
 	if err != nil {
-		config.Error(err.Error())
+		udap.Error(err.Error())
 	}
 }
 

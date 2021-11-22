@@ -1,4 +1,6 @@
-package config
+// Copyright (c) 2021 Braden Nicholson
+
+package udap
 
 import (
 	"fmt"
@@ -47,12 +49,16 @@ const (
 	info = iota
 	warn
 	panic
+	module
 )
 
 func log(logType LogType, format string, args ...interface{}) {
 	var prefix string
 
 	switch logType {
+	case module:
+		prefix = fmt.Sprintf("%s[UDAP]%s", color.BoldGreen, color.Reset)
+		break
 	case info:
 		prefix = fmt.Sprintf("%s[INFO]%s", color.BoldBlue, color.Reset)
 		break
@@ -80,7 +86,7 @@ func Middleware(handler http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()
 		defer func() {
-			Info("%s%s %s'%s', %s", color.Green, r.Method, color.Reset, r.RequestURI, time.Since(t1))
+			Info("%s%s %s'%.16s', %s", color.Green, r.Method, color.Reset, r.RequestURI, time.Since(t1))
 		}()
 		handler.ServeHTTP(w, r)
 	}
@@ -90,6 +96,10 @@ func Middleware(handler http.Handler) http.Handler {
 
 func Info(format string, args ...interface{}) {
 	log(info, format, args...)
+}
+
+func Log(format string, args ...interface{}) {
+	log(module, format, args...)
 }
 
 func Warn(format string, args ...interface{}) {

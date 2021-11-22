@@ -1,3 +1,5 @@
+// Copyright (c) 2021 Braden Nicholson
+
 package types
 
 import (
@@ -20,22 +22,7 @@ type Entity struct {
 }
 
 func NewEntity(name string, entityType string, instanceId string) (err error) {
-	parse, err := uuid.Parse(instanceId)
-	if err != nil {
-		return
-	}
-	entity := Entity{
-		Name:       name,
-		Type:       entityType,
-		InstanceId: parse,
-	}
-	var cnt int64
-	db.Model(&Entity{}).Where("instance_id = ? AND name = ?", instanceId, name).Count(&cnt)
-	if cnt >= 1 {
-		return nil
-	}
-
-	return db.Create(&entity).Error
+	return nil
 }
 
 func (e *Entity) SetState(state string) (err error) {

@@ -1,35 +1,49 @@
+// Copyright (c) 2021 Braden Nicholson
+
 package main
 
 import (
-	"udap/config"
+	"udap/endpoint"
+	"udap/module"
 	"udap/runtime"
 	"udap/server"
 	"udap/types"
+	"udap/udap"
+	"udap/udap/db"
 )
 
 func main() {
+
 	// Load ENV variables from .env, or context
-	config.Init()
-	// Establish server structure, connect to database
-	srv, err := server.New()
+	udap.Init()
+	_, err := db.NewGormDB()
 	if err != nil {
-		config.Err(err)
 		return
 	}
-	types.Load(srv.Database)
+	// Establish server structure, connect to database
+
+	srv, err := server.New()
+	if err != nil {
+		udap.Err(err)
+		return
+	}
+	types.Load(db.DB)
+	udap.New()
 	// Migrate data structures to database
-	srv.Migrate(&types.Module{})
-	srv.Migrate(&types.Instance{})
-	srv.Migrate(&types.Endpoint{})
+	srv.Migrate(&module.Module{})
+	srv.Migrate(&module.Instance{})
+	srv.Migrate(&endpoint.Endpoint{})
 	srv.Migrate(&types.Entity{})
+	srv.Migrate(&endpoint.Subscription{})
+	srv.Migrate(&endpoint.Grant{})
 	// Configure UDAP runtime agent
 	runtime.New(srv)
 	// Route Endpoint authentication
-	srv.RoutePublic("/endpoints", types.RouteEndpoint)
+	srv.RoutePublic("/endpoints", endpoint.RouteEndpoint)
 	// Run http server indefinitely
 	err = srv.Run()
 	if err != nil {
-		config.Err(err)
+		udap.Err(err)
 	}
 	// If the http server exits, so too, will the websocket server and runtime agent.
 }

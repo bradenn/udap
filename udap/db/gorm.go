@@ -1,4 +1,6 @@
-package server
+// Copyright (c) 2021 Braden Nicholson
+
+package db
 
 import (
 	"fmt"
@@ -8,12 +10,14 @@ import (
 	"os"
 )
 
-func NewGormDB() (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(dbURL()), &gorm.Config{})
+var DB *gorm.DB
+
+func NewGormDB() (db *gorm.DB, err error) {
+	DB, err = gorm.Open(postgres.Open(dbURL()), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
-	return db, err
+	return DB, err
 }
 
 // dbURL returns a formatted postgresql connection string.
