@@ -28,7 +28,7 @@ type Endpoint struct {
 	// Type The specification of endpoint
 	Type string `json:"type"`
 	// Conn is the websocket connection with an endpoint
-	Conn *websocket.Conn `gorm:"-"`
+	Conn *websocket.Conn `gorm:"-" json:"-"`
 	// key is used to identify new endpoints
 	key string
 	// registered defines the state of the endpoint

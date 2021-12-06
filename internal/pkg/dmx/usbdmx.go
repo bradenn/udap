@@ -19,16 +19,19 @@ type Controller interface {
 
 // ControllerConfig configuration for controlling device
 type ControllerConfig struct {
-	OutputId int `toml:"outputId"`
-	Context  *gousb.Context
+	OutputId   int `toml:"outputId"`
+	Context    *gousb.Context
+	DebugLevel int
 }
 
 // NewConfig helper function for creating a new ControllerConfig
 func NewConfig(outputId int) ControllerConfig {
 	outputInterfaceID := flag.Int("output-id", outputId, "Output interface ID for device")
+	debugLevel := flag.Int("debug", 0, "Debug level for USB context")
 	flag.Parse()
 	return ControllerConfig{
-		OutputId: *outputInterfaceID,
+		OutputId:   *outputInterfaceID,
+		DebugLevel: *debugLevel,
 	}
 }
 
@@ -44,5 +47,5 @@ func ValidateDMXChannel(channel int) (err error) {
 // GetUSBContext gets a gousb/context for a given configuration
 func (c *ControllerConfig) GetUSBContext() {
 	c.Context = gousb.NewContext()
-	c.Context.Debug(0x00)
+	c.Context.Debug(c.DebugLevel)
 }

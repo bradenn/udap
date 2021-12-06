@@ -47,20 +47,38 @@ const (
 	panic
 	module
 	sherlock
+	in
+	out
+	partial
+	process
 )
 
 func log(logType LogType, format string, args ...interface{}) {
 	var prefix string
-
+	ln := true
 	switch logType {
 	case module:
 		prefix = fmt.Sprintf("%s[UDAP]%s", Reset+BoldBlue, Reset)
+		break
+	case process:
+		prefix = fmt.Sprintf("%s[UDAP]%s", Reset+BoldBlue, Reset)
+		ln = false
+		break
+	case partial:
+		prefix = fmt.Sprintf("%s", Green)
+		ln = false
 		break
 	case panic:
 		prefix = fmt.Sprintf("%s[UDAP]%s", Reset+BoldRed, Reset)
 		break
 	case sherlock:
 		prefix = fmt.Sprintf("%s[SRLK]%s", Reset+BoldCyan, Reset)
+		break
+	case in:
+		prefix = fmt.Sprintf("%s[<IN ]%s", Reset+BoldCyan, Reset)
+		break
+	case out:
+		prefix = fmt.Sprintf("%s[OUT>]%s", Reset+BoldCyan, Reset)
 		break
 	}
 	var body string
@@ -72,7 +90,20 @@ func log(logType LogType, format string, args ...interface{}) {
 	}
 
 	formatted := fmt.Sprintf("%s %s", prefix, body)
-	fmt.Println(formatted)
+	if ln {
+		fmt.Println(formatted)
+	} else {
+		fmt.Printf(formatted)
+	}
+
+}
+
+func LogIn(format string, args ...interface{}) {
+	log(in, format, args...)
+}
+
+func LogOut(format string, args ...interface{}) {
+	log(out, format, args...)
 }
 
 func Info(format string, args ...interface{}) {
@@ -91,6 +122,14 @@ func Sherlock(format string, args ...interface{}) {
 	log(sherlock, format, args...)
 }
 
+func Proc(format string, args ...interface{}) {
+	log(process, format, args...)
+}
+
+func Done() {
+	log(partial, "Done\n")
+}
+
 func Warn(format string, args ...interface{}) {
 	log(module, format, args...)
 }
@@ -104,5 +143,5 @@ func ErrF(err error, format string, args ...interface{}) {
 }
 
 func Err(err error) {
-	log(panic, err.Error(), "")
+	log(panic, err.Error())
 }

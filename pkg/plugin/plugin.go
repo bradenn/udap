@@ -2,6 +2,10 @@
 
 package plugin
 
+import (
+	"context"
+)
+
 // Metadata describes a plugin
 type Metadata struct {
 	Name        string `json:"name"`
@@ -13,10 +17,9 @@ type Metadata struct {
 
 // Event defines the parameters of an event channel request
 type Event struct {
-	Id        string `json:"id"`        // TargetId
-	Type      string `json:"type"`      // Module, Daemon, Agent, etc.
-	Operation string `json:"operation"` // state
-	Body      string `json:"body"`      // {state: "on"}
+	Type      string      `json:"type"`      // Module, Daemon, Agent, etc.
+	Operation string      `json:"operation"` // state
+	Body      interface{} `json:"body"`      // {state: "on"}
 }
 
 // Request contains the structure of a request channel payload
@@ -30,10 +33,27 @@ type Request struct {
 type Plugin interface {
 	// Startup is called when the plugin is first loaded
 	Startup() (Metadata, error)
-	// Metadata provides module-relevant data
-	Metadata() Metadata
 	// Connect is used to assign channels
 	Connect(chan Event) chan Request
-	// Cleanup is called before the plugin is unloaded
-	Cleanup()
+}
+
+// Device d
+type Device interface {
+	Name() string
+}
+
+type UdapInterface interface {
+	RegisterEntity(entity *Entity)
+}
+
+// UdapPlugin defines the functions of a plugin's exported variable
+type UdapPlugin interface {
+	// Setup is called when the plugin is first loaded
+	Setup() (Config, error)
+	// Connect c
+	Connect(*chan Event) (chan Request, error)
+	// Run provides module-relevant data
+	Run() error
+	// Update is used to assign channels
+	Update(ctx context.Context) error
 }

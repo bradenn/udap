@@ -3,135 +3,131 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/jaedle/golang-tplink-hs100/pkg/configuration"
 	"github.com/jaedle/golang-tplink-hs100/pkg/hs100"
-	"udap/internal/log"
-	"udap/pkg/plugin"
-
+	"strings"
 	"time"
+	"udap/internal/log"
+	"udap/internal/models"
+	"udap/pkg/plugin"
 )
 
-var Plugin = HS100{
-	metadata: plugin.Metadata{
-		Name:        "HS100",
+var Module HS100
+
+type HS100 struct {
+	plugin.Module
+	devices map[string]*hs100.Hs100
+}
+
+func init() {
+	config := plugin.Config{
+		Name:        "hs100",
 		Type:        "module",
 		Description: "Control TP-Link HS100 Outlets",
 		Version:     "1.3.1",
 		Author:      "Braden Nicholson",
-	}}
-
-type HS100 struct {
-	plugin.SDK
-	metadata plugin.Metadata
-	requests chan plugin.Request
-	buffer   chan plugin.Event
-}
-
-func (h *HS100) Startup() (plugin.Metadata, error) {
-	h.SDK = plugin.SDK{}
-	err := Plugin.discover()
-	if err != nil {
-		return plugin.Metadata{}, err
 	}
-	return h.metadata, nil
+
+	Module.Config = config
 }
 
-func (h *HS100) Connect(events chan plugin.Event) chan plugin.Request {
-	h.buffer = events
-	return nil
-}
-
-func (h *HS100) Metadata() plugin.Metadata {
-	return h.metadata
-}
-
-func (h *HS100) Request() chan plugin.Request {
-	return nil
-}
-
-func (h *HS100) Resolve(events chan plugin.Event) {
-
-}
-
-func (h *HS100) Cleanup() {
-	close(h.buffer)
-}
-
-func (h *HS100) Listen() {
-	for request := range h.requests {
-		fmt.Println(request.Operation)
+func cmp(bl bool, a string, b string) string {
+	if bl {
+		return a
 	}
+	return b
 }
 
-// func (h *HS100) Run(ctx module.Context, data string) (string, error) {
-// 	state := SetState{}
-// 	err := json.Unmarshal([]byte(data), &state)
-// 	if err != nil {
-// 		return "", err
-// 	}
-//
-// 	device := context[state.Name]
-// 	if device == nil {
-// 		return "", fmt.Errorf("Shit -> FAN")
-// 	}
-//
-// 	if state.State == "off" {
-// 		err = device.TurnOff()
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		err = store.Put(fmt.Sprintf("instance.%s.entity.%s.state", state.Id, state.Name), "off")
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		return "off", err
-// 	} else {
-// 		err = device.TurnOn()
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		err = store.Put(fmt.Sprintf("instance.%s.entity.%s.state", state.Id, state.Name), "on")
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		return "on", err
-// 	}
-// }
+// Setup is called once at the launch of the module
+func (h *HS100) Setup() (plugin.Config, error) {
+	h.devices = map[string]*hs100.Hs100{}
 
-func (h *HS100) discover() (err error) {
 	devices, err := hs100.Discover("192.168.2.0/24", configuration.Default().WithTimeout(time.Second))
 	if err != nil {
-		return err
+		return h.Config, err
+	}
+	if len(devices) == 0 {
+		fmt.Println("No devices")
 	}
 	for _, device := range devices {
-		var name string
-		name, err = device.GetName()
+		name, err := device.GetName()
 		if err != nil {
-			log.Log(err.Error())
+			return h.Config, err
+		}
+		h.devices[name] = device
+	}
+	return h.Config, nil
+}
+
+// Update is called every cycle
+func (h *HS100) Update(ctx context.Context) (err error) {
+	// for name, device := range h.devices {
+	// 	// setState := UpdateState(device)
+	// 	// Module.UpdateState(ctx, name, &setState)
+	// }
+	return nil
+}
+
+// Run is called after Setup, concurrent with Update
+func (h *HS100) Run() (err error) {
+	for _, device := range h.devices {
+		name, err := device.GetName()
+		if err != nil {
+			return err
+		}
+		on, err := device.IsOn()
+		if err != nil {
+			return err
 		}
 
-		err = h.SDK.CreateOrInitEntity(name, plugin.TOGGLE, EntityHandler(device))
+		newSwitch := models.NewSwitch(strings.ToLower(name), "hs100")
+
+		err = newSwitch.Emplace()
 		if err != nil {
-			continue
+			return err
 		}
+
+		log.Log("Registering")
+		sh := HandleState(device)
+		gs := GetState(device)
+		newSwitch.SetStateHandler(sh)
+		newSwitch.SetStateReceiver(gs)
+		h.RegisterEntity(newSwitch)
+
+		if on {
+		} else {
+			newSwitch.State = false
+		}
+
 	}
 	return nil
 }
 
-func EntityHandler(device *hs100.Hs100) plugin.EntityHandler {
-	return func(payload string) error {
-		if payload == "on" {
+func HandleState(device *hs100.Hs100) func(state interface{}) error {
+	return func(state interface{}) error {
+		if state.(bool) {
 			err := device.TurnOn()
 			if err != nil {
 				return err
 			}
-		} else if payload == "off" {
+		} else {
 			err := device.TurnOff()
 			if err != nil {
 				return err
 			}
 		}
 		return nil
+	}
+}
+
+func GetState(device *hs100.Hs100) func() interface{} {
+	return func() interface{} {
+		rm, err := device.IsOn()
+		if err != nil {
+			return false
+		}
+		return rm
 	}
 }

@@ -4,40 +4,90 @@ package udap
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"sync"
+	"time"
+	"udap/internal/cache"
 	"udap/internal/log"
 	"udap/internal/server"
+	"udap/internal/store"
 )
 
 const VERSION = "2.4.5"
 
-var udap *Udap
-
 type Udap struct {
-	services map[string]Service
-	runtime  *server.Runtime
+	services     map[string]Service
+	dependencies map[string]Dependency
+	ctx          context.Context
+	cache.Cache
+	store.Database
+	server.Server
+	server.Runtime
 }
 
-func New() *Udap {
+func Run() (*Udap, error) {
 	err := config()
+
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return &Udap{
-		services: map[string]Service{},
+
+	u := &Udap{
+		services:     map[string]Service{},
+		dependencies: map[string]Dependency{},
+		ctx:          context.Background(),
 	}
+
+	u.AddDependency(&u.Database, &u.Server, &u.Cache, &u.Runtime)
+	u.AddService(&u.Runtime, &u.Server)
+
+	u.ctx = context.WithValue(u.ctx, "runtime", &u.Runtime)
+	err = u.Go()
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
-func (u *Udap) Add(service ...Service) {
+func (u *Udap) AddService(service ...Service) {
 	for _, s := range service {
 		u.services[s.Name()] = s
+	}
+}
+
+func (u *Udap) AddDependency(dependencies ...Dependency) {
+	for _, s := range dependencies {
+		u.dependencies[s.Name()] = s
 	}
 }
 
 // Go is run to begin the program
 func (u *Udap) Go() (err error) {
 
+	dg := sync.WaitGroup{}
+	dg.Add(len(u.dependencies))
+	log.Proc("Loading dependencies: ")
+
+	for _, dep := range u.dependencies {
+		fmt.Printf("%s ", dep.Name())
+
+		go func(dependency Dependency) {
+			t := time.Now()
+			err := dependency.Load()
+			if err != nil {
+				log.Err(err)
+			}
+			u.ctx = context.WithValue(u.ctx, dependency.Name(), dependency)
+
+			log.Log("Dependency '%s' loaded. (%s)", dependency.Name(), time.Since(t).String())
+			dg.Done()
+		}(dep)
+	}
+	fmt.Println()
+	dg.Wait()
+	log.Log("All dependencies loaded")
 	// A wait group is made to prevent premature exit
 	wg := sync.WaitGroup{}
 	// Each service is given a slot in the wait group
@@ -52,24 +102,35 @@ func (u *Udap) Go() (err error) {
 	sort.Slice(services, func(i, j int) bool {
 		return services[i].Dependency() < services[j].Dependency()
 	})
-	var names []string
+	sg := sync.WaitGroup{}
+	sg.Add(len(services))
 	// Now each service runs, with the priorities 1 and 0 blocking
-	for _, service := range services {
-		names = append(names, service.Name())
-		level := service.Dependency()
-		if level == 0 || level == 1 {
-			goService(service, &wg)
-			log.Sherlock("Service '%s' loaded", service.Name())
-		} else {
-			go goService(service, &wg)
-			log.Sherlock("Service '%s' running", service.Name())
-		}
+	for _, s := range services {
+		go func(service Service) {
+			log.Log("Service '%s' running", service.Name())
+			sg.Done()
+			defer func() {
+				// We panicked. Don't Panic!
+				if r := recover(); r != nil {
+					log.Log("Panic Recovered: %x", r)
+				}
+			}()
+			err = service.Run(u.ctx)
+			if err != nil {
+				log.Err(err)
+				return
+			}
+			wg.Done()
+		}(s)
 
 	}
-	err = migrate()
+	err = u.migrate()
 	if err != nil {
 		return err
 	}
+
+	sg.Wait()
+	log.Log("Running.")
 	wg.Wait()
 	return nil
 }
@@ -77,27 +138,6 @@ func (u *Udap) Go() (err error) {
 func (u *Udap) load() (err error) {
 
 	return nil
-}
-
-func goService(service Service, wg *sync.WaitGroup) {
-	var err error
-	defer func() {
-		err = service.Cleanup()
-		if err != nil {
-			log.Err(err)
-		}
-		wg.Done()
-	}()
-	err = service.Load()
-	if err != nil {
-		log.Err(err)
-	}
-	ctx := context.Background()
-
-	err = service.Run(ctx)
-	if err != nil {
-		log.Err(err)
-	}
 }
 
 func (u *Udap) run() (err error) {
@@ -118,22 +158,19 @@ func (u *Udap) run() (err error) {
 	return nil
 }
 
-func (u *Udap) cleanup() (err error) {
-	for _, service := range u.services {
-		err = service.Cleanup()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+type Core interface {
+	Name() (name string)
+	Dependency() (level int)
+}
+
+type Dependency interface {
+	Core
+	Load() (err error)
 }
 
 type Service interface {
-	Name() (name string)
-	Load() (err error)
-	Dependency() (level int)
-	Run(ctx interface{}) (err error)
-	Cleanup() (err error)
+	Core
+	Run(ctx context.Context) (err error)
 }
 
 type DefaultService struct {

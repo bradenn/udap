@@ -8,7 +8,6 @@ import (
 	"os"
 	"udap/internal/log"
 	"udap/internal/models"
-	"udap/internal/store"
 )
 
 func config() error {
@@ -25,9 +24,8 @@ func config() error {
 	return nil
 }
 
-func migrate() (err error) {
-	err = store.DB.AutoMigrate(models.Endpoint{}, models.Entity{}, models.Module{},
-		models.Instance{}, models.Subscription{}, models.Grant{})
+func (u *Udap) migrate() (err error) {
+	err = u.AutoMigrate(models.Endpoint{}, models.Entity{}, models.Module{}, models.Subscription{}, models.Grant{})
 	if err != nil {
 		return err
 	}

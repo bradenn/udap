@@ -3,9 +3,7 @@
 package store
 
 import (
-	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/postgres"
 	_ "gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,55 +11,26 @@ import (
 )
 
 var DB *gorm.DB
-var client *redis.Client
 
 type Database struct {
-	database *gorm.DB
-	client   *redis.Client
+	*gorm.DB
 }
 
-// Dependency is the level at which this service needs to run
 func (d *Database) Dependency() (level int) {
-	return 0
+	return 1
 }
 
-// Name is the name of the struct
 func (d *Database) Name() (name string) {
 	return "database"
 }
 
-// Load configures and prepares the parent struct for running
 func (d *Database) Load() (err error) {
 	pg := postgres.Open(dbURL())
-	d.database, err = gorm.Open(pg, &gorm.Config{})
+	d.DB, err = gorm.Open(pg, &gorm.Config{})
+	DB = d.DB
 	if err != nil {
 		return err
 	}
-	d.client = redis.NewClient(&redis.Options{
-		Addr:      "localhost:6379",
-		Password:  "", // no password set
-		DB:        0,  // use default DB
-		OnConnect: d.redisConnect,
-	})
-	fmt.Println(d.client.Get(context.Background(), "apple"))
-	// Return no errors
-	return nil
-}
-
-// Run will begin the main-sequence activities of the parent struct
-func (d *Database) redisConnect(ctx context.Context, cn *redis.Conn) error {
-	client = d.client
-	return nil
-}
-
-func (d *Database) Run(interface{}) (err error) {
-	DB = d.database
-	return nil
-}
-
-// Cleanup will begin the main-sequence activities of the parent struct
-func (d *Database) Cleanup() (err error) {
-	d.database = nil
 	return nil
 }
 
