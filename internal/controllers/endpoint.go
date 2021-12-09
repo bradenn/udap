@@ -38,14 +38,14 @@ import (
 // 	s.Handle("endpoint/{id}/update", ec.update)
 // }
 
-type endpointController struct{}
+type EndpointController struct{}
 
 func EndpointRouter(router chi.Router) {
-	ec := endpointController{}
+	ec := EndpointController{}
 	router.Get("/register/{accessKey}", ec.register)
 }
 
-func (e *endpointController) register(w http.ResponseWriter, r *http.Request) {
+func (e *EndpointController) register(w http.ResponseWriter, r *http.Request) {
 	req, _ := server.NewRequest(w, r)
 	key := chi.URLParam(r, "accessKey")
 	endpoint := models.Endpoint{}

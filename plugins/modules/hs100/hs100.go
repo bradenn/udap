@@ -9,7 +9,6 @@ import (
 	"github.com/jaedle/golang-tplink-hs100/pkg/hs100"
 	"strings"
 	"time"
-	"udap/internal/log"
 	"udap/internal/models"
 	"udap/pkg/plugin"
 )
@@ -31,13 +30,6 @@ func init() {
 	}
 
 	Module.Config = config
-}
-
-func cmp(bl bool, a string, b string) string {
-	if bl {
-		return a
-	}
-	return b
 }
 
 // Setup is called once at the launch of the module
@@ -73,41 +65,32 @@ func (h *HS100) Update(ctx context.Context) (err error) {
 // Run is called after Setup, concurrent with Update
 func (h *HS100) Run() (err error) {
 	for _, device := range h.devices {
-		name, err := device.GetName()
+		var name string
+		name, err = device.GetName()
 		if err != nil {
 			return err
 		}
-		on, err := device.IsOn()
+		_, err = device.IsOn()
 		if err != nil {
 			return err
 		}
 
 		newSwitch := models.NewSwitch(strings.ToLower(name), "hs100")
-
-		err = newSwitch.Emplace()
+		err = newSwitch.Handlers(Tx(device), Rx(device))
 		if err != nil {
 			return err
 		}
 
-		log.Log("Registering")
-		sh := HandleState(device)
-		gs := GetState(device)
-		newSwitch.SetStateHandler(sh)
-		newSwitch.SetStateReceiver(gs)
 		h.RegisterEntity(newSwitch)
-
-		if on {
-		} else {
-			newSwitch.State = false
-		}
-
 	}
 	return nil
 }
 
-func HandleState(device *hs100.Hs100) func(state interface{}) error {
-	return func(state interface{}) error {
-		if state.(bool) {
+func Tx(device *hs100.Hs100) models.Tx {
+	return func(state models.State) error {
+		a := models.Mono{}
+		a.Unmarshal(state)
+		if a.Value > 0 {
 			err := device.TurnOn()
 			if err != nil {
 				return err
@@ -122,12 +105,18 @@ func HandleState(device *hs100.Hs100) func(state interface{}) error {
 	}
 }
 
-func GetState(device *hs100.Hs100) func() interface{} {
-	return func() interface{} {
+func Rx(device *hs100.Hs100) models.Rx {
+	return func() models.State {
+		a := models.Mono{}
 		rm, err := device.IsOn()
 		if err != nil {
-			return false
+			return []byte{}
 		}
-		return rm
+		if rm {
+			a.Value = 1.0
+		} else {
+			a.Value = 0
+		}
+		return a.Marshal()
 	}
 }

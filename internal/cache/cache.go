@@ -6,7 +6,6 @@ import (
 	"context"
 	"github.com/go-redis/redis/v8"
 	"strings"
-	"udap/internal/log"
 )
 
 var Mem Cache
@@ -45,7 +44,6 @@ func (c *Cache) WatchFn(key string, fn func(string) error) {
 	ch := ps.Channel()
 	go func() {
 		for message := range ch {
-			log.Log(message.String())
 			err = fn(message.String())
 			if err != nil {
 				return

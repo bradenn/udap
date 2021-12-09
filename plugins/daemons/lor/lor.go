@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 	"udap/internal/models"
@@ -21,6 +20,7 @@ type Lor struct {
 	dmx        ft232.DMXController
 	state      map[int]int
 	stateMutex sync.RWMutex
+	open       bool
 }
 
 func init() {
@@ -31,13 +31,13 @@ func init() {
 		Version:     "0.1.1",
 		Author:      "Braden Nicholson",
 	}
-
+	Module.open = false
 	Module.Config = config
 }
 
 func (s *Lor) Setup() (plugin.Config, error) {
 	config := dmx.NewConfig(0x02)
-
+	s.state = map[int]int{}
 	config.GetUSBContext()
 	// Since ft232 is a shitty module, it panics when USB can't be found.
 	defer func() {
@@ -47,83 +47,37 @@ func (s *Lor) Setup() (plugin.Config, error) {
 	s.dmx = ft232.NewDMXController(config)
 	if err := s.dmx.Connect(); err != nil {
 		fmt.Printf("failed to connect DMX Controller: %s\n", err)
+	} else {
+		Module.open = true
 	}
 	s.stateMutex = sync.RWMutex{}
 	s.state = map[int]int{}
-	//
-	// go func() {
-	// 	defer func() {
-	// 		err := controller.Close()
-	// 		if err != nil {
-	// 			return
-	// 		}
-	// 	}()
-	// 	var sequence []rune
-	//
-	// 	morseStr := "I LOVE YOU"
-	// 	// delay := 0
-	// 	log.Sherlock("Running Morse: '%s'", morseStr)
-	// 	// For each letter of the string
-	// 	for i := range morseStr {
-	// 		morse := morseSymbols[string(morseStr[i])]
-	// 		for _, symbol := range morse {
-	// 			sequence = append(sequence, symbol)
-	// 		}
-	// 	}
-	//
-	// 	fmt.Println(sequence)
-	//
-	// 	// place := 0
-	// 	for {
-	//
-	// 		var err error
-	//
-	// 		err = controller.SetChannel(1, byte(255))
-	// 		if err != nil {
-	// 			fmt.Println(err)
-	// 		}
-	//
-	// 		err = controller.Render()
-	// 		if err != nil {
-	// 			fmt.Println(err)
-	// 		}
-	//
-	// 		time.Sleep(time.Millisecond * 250)
-	// 		// _ = controller.Render()
-	// 		// switch r := sequence[place]; r {
-	// 		// case '.':
-	// 		// 	time.Sleep(time.Millisecond * 250)
-	// 		// 	break
-	// 		// case '-':
-	// 		// 	time.Sleep(time.Millisecond * 500)
-	// 		// 	break
-	// 		// case ' ':
-	// 		// 	time.Sleep(time.Millisecond * 250)
-	// 		// 	break
-	// 		// }
-	//
-	// 		// time.Sleep(time.Millisecond * 100)
-	//
-	// 	}
-	// }()
 
 	return s.Config, nil
 }
 
 func (s *Lor) Run() error {
 
+	if !s.open {
+		s.dmx = ft232.DMXController{}
+		return fmt.Errorf("squid is not connected")
+	}
+
 	defer func() {
 		err := s.dmx.Close()
 		if err != nil {
 			return
 		}
+
 	}()
 
 	for i := 1; i <= 16; i++ {
 		name := fmt.Sprintf("ch%d", i)
 		dimmer := models.NewDimmer(name, s.Name)
-		dimmer.SetStateHandler(s.HandleState(i))
-		dimmer.SetStateReceiver(s.ReadState(i))
+		err := dimmer.Handlers(s.HandleState(i), s.ReadState(i))
+		if err != nil {
+			return err
+		}
 		s.stateMutex.Lock()
 		s.state[i] = 0
 		s.stateMutex.Unlock()
@@ -144,35 +98,33 @@ func (s *Lor) Run() error {
 
 		time.Sleep(time.Millisecond * 20)
 	}
-
-	return nil
 }
 
-func (s *Lor) HandleState(channel int) func(state interface{}) error {
-	return func(state interface{}) error {
+func (s *Lor) HandleState(channel int) func(state models.State) error {
+	return func(state models.State) error {
 		s.stateMutex.Lock()
 		if state == nil {
 			s.state[channel] = 0
 		} else {
-
-			parseInt, err := strconv.ParseInt(state.(string), 10, 16)
-			if err != nil {
-				return err
-			}
-			s.state[channel] = int(parseInt)
+			mono := models.Mono{}
+			mono.Unmarshal(state)
+			out := int(mono.Value * 255)
+			s.state[channel] = out
 		}
 		s.stateMutex.Unlock()
 		return nil
 	}
 }
 
-func (s *Lor) ReadState(channel int) func() interface{} {
-	return func() interface{} {
+func (s *Lor) ReadState(channel int) func() models.State {
+	return func() models.State {
+		mono := models.Mono{}
 		out, err := s.dmx.GetChannel(int16(channel))
 		if err != nil {
-			return ""
+			return []byte{out}
 		}
-		return out
+		mono.Value = float64(out / 255)
+		return mono.Marshal()
 	}
 }
 

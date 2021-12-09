@@ -2,11 +2,6 @@
 
 package plugin
 
-import (
-	"fmt"
-	"udap/internal/log"
-)
-
 type Config struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"` // Module, Daemon, etc.
@@ -40,10 +35,4 @@ func (m *Module) RegisterEntity(entity interface{}) {
 		Body:      entity,
 	}
 	// cache.WatchFn(path, handleEntity)
-}
-
-func (m *Module) UpdateState(name string, state string) {
-	path := fmt.Sprintf("%s.%s.state", m.Name, name)
-	log.Log("Entity '%s' registered (%s)", name, path)
-
 }

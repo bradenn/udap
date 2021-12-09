@@ -14,7 +14,7 @@ import (
 	"udap/internal/store"
 )
 
-const VERSION = "2.4.5"
+const VERSION = "2.5.1"
 
 type Udap struct {
 	services     map[string]Service
@@ -111,9 +111,9 @@ func (u *Udap) Go() (err error) {
 			sg.Done()
 			defer func() {
 				// We panicked. Don't Panic!
-				if r := recover(); r != nil {
-					log.Log("Panic Recovered: %x", r)
-				}
+				// if r := recover(); r != nil {
+				// 	log.Log("Panic Recovered: %t", r)
+				// }
 			}()
 			err = service.Run(u.ctx)
 			if err != nil {
@@ -128,9 +128,12 @@ func (u *Udap) Go() (err error) {
 	if err != nil {
 		return err
 	}
-
 	sg.Wait()
 	log.Log("Running.")
+	for {
+		u.Runtime.Update()
+	}
+
 	wg.Wait()
 	return nil
 }

@@ -15,23 +15,19 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"udap/internal/cache"
 	"udap/internal/log"
 	"udap/internal/models"
-	plugin2 "udap/pkg/plugin"
+	"udap/pkg/plugin"
 )
-
-// Target: Entity
-// Id: EntityId
-// Payload to send: {StateChangePayload}
 
 // Runtime manages the event-loop for all instances, as well as the websocket connections between UDAP and endpoints.
 type Runtime struct {
-	resolver     chan plugin2.Event
-	plugins      map[string]*plugin2.Plugin
-	modules      map[string]*plugin2.UdapPlugin
-	entities     sync.Map
-	eventHandler chan plugin2.Event
-	ctx          context.Context
+	modules   Modules   // Key: "name"
+	entities  Entities  // Key: "module.name"
+	endpoints Endpoints // Key: "uuid"
+
+	eventHandler chan plugin.Event
 }
 
 // Dependency is the level at which this service needs to run
@@ -44,130 +40,196 @@ func (r *Runtime) Name() (name string) {
 }
 
 func (r *Runtime) Load() (err error) {
-	// The updater channel is called by modules, we initialize it to queue 16 at a time
-	r.modules = map[string]*plugin2.UdapPlugin{}
-	r.entities = sync.Map{}
-	ec := make(chan plugin2.Event, 2)
-	r.eventHandler = ec
+	// Initialize the module and entity poly buffers
+	r.modules = Modules{}
+	r.entities = Entities{}
+	r.endpoints = Endpoints{}
 
-	// return the runtime
+	// Initialize a bounded buffer for accepting module events
+	r.eventHandler = make(chan plugin.Event, 1)
+	// Launch the event resolution thread
 	go func() {
 		for event := range r.eventHandler {
 			switch event.Type {
 			case "entity":
-				entity := event.Body.(*models.Entity)
-				err = entity.Emplace()
+				err = r.entityEvent(event)
 				if err != nil {
 					return
 				}
-				r.entities.Store(entity.Path(), entity)
-				log.Log("Entity '%s' loaded", entity.Name)
 			}
 		}
 		close(r.eventHandler)
 	}()
 
-	r.buildModules()
+	err = r.buildModules()
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+// Update is called when the runtime is to begin accepting traffic
+func (r *Runtime) Update() {
+	// The state of each entity will be polled every 2 seconds
+	for _, s := range r.entities.Keys() {
+		// Get the entity from the mutex map
+		e := r.entities.Find(s)
+		// Attempt to poll it
+		err := e.Poll()
+		if err != nil {
+			return
+		}
+		// Save the state to the cache
+		err = cache.PutLn(e.State, e.Path(), "state")
+		if err != nil {
+			return
+		}
+	}
 }
 
 // Run is called when the runtime is to begin accepting traffic
 func (r *Runtime) Run(ctx context.Context) error {
-	// Set async listener for the updating from modules and daemons
+	r.endpoints.FetchAll()
+	// Attempt to get the server reference from context
 	srv := ctx.Value("server").(*Server)
+	// Use the server from context to handle endpoint socket connections
 	srv.Get("/socket/{token}", r.HandleSockets)
+	// Attempt to load the modules in the directory 'modules'
 	err := r.loadModulesDir("modules")
 	if err != nil {
 		return err
 	}
+	// Create a wait group so all plugins can init at the same time
 	wg := sync.WaitGroup{}
-	wg.Add(len(r.modules))
-
-	for _, udapPlugin := range r.modules {
-		go func(p plugin2.UdapPlugin) {
+	wg.Add(len(r.modules.Keys()))
+	// Run the full lifecycle of all plugins
+	for _, s := range r.modules.Keys() {
+		// Find the UdapPlugin module
+		pl := r.modules.Find(s)
+		// Run a go function to create a new thread
+		go func(p plugin.UdapPlugin) {
+			// Defer the wait group to complete at the end
+			defer wg.Done()
+			// Run module setup
 			_, err = p.Setup()
 			if err != nil {
 				log.Err(err)
+				return
 			}
-
+			// Attempt to connect to the module
 			_, err = p.Connect(&r.eventHandler)
 			if err != nil {
 				log.Err(err)
+				return
 			}
-
+			// Attempt to run the module
 			err = p.Run()
 			if err != nil {
 				log.Err(err)
+				return
 			}
-			wg.Done()
-		}(*udapPlugin)
+		}(pl)
 	}
-
+	// Wait for all modules to exit
 	wg.Wait()
+	return nil
+}
 
-	for {
-
-		time.Sleep(time.Second)
+func (r *Runtime) entityEvent(event plugin.Event) (err error) {
+	entity := event.Body.(*models.Entity)
+	err = entity.Emplace()
+	if err != nil {
+		return err
 	}
+	r.entities.register(entity.Path(), entity)
+	log.Log("Entity '%s' loaded", entity.Name)
 	return nil
 }
 
-func (r *Runtime) Cleanup() (err error) {
-	return nil
-}
-
-// discoverModules locates and initializes modules in the plugin directory
-func (r *Runtime) buildModules() {
+// buildModules locates and initializes modules in the plugin directory
+func (r *Runtime) buildModules() error {
 	// Try to load modules from the plugin folders
 	wg := sync.WaitGroup{}
-	r.buildModuleDir("modules", &wg)
+	err := r.buildModuleDir("modules", &wg)
+	if err != nil {
+		return err
+	}
 	wg.Wait()
+	return nil
 }
 
-func (r *Runtime) buildModuleDir(dir string, wg *sync.WaitGroup) {
-	files, err := filepath.Glob(fmt.Sprintf("./plugins/%s/*/*.go", dir))
+// buildModuleDir builds all potential modules in a directory
+func (r *Runtime) buildModuleDir(dir string, wg *sync.WaitGroup) error {
+	// Format the pattern for glob search
+	pattern := fmt.Sprintf("./plugins/%s/*/*.go", dir)
+	// Run the search for go files
+	files, err := filepath.Glob(pattern)
 	if err != nil {
-		log.Err(err)
-		return
+		return err
 	}
+	// Add all the potential files from the search
 	wg.Add(len(files))
-	for _, path := range files {
-		go r.buildFromSource(path, wg)
+	// Launch a go func to build each one
+	for _, p := range files {
+		// Run the function for this file
+		go func(path string) {
+			if err := r.buildFromSource(path, wg); err != nil {
+				// If an error occurs, print it to console
+				log.ErrF(err, "failed to build module candidate '%s'", path)
+			}
+		}(p)
 	}
+	return nil
 }
 
-func (r *Runtime) buildFromSource(path string, wg *sync.WaitGroup) {
-	out := strings.Replace(path, ".go", ".so", 3)
-	cmd := exec.Command(os.Getenv("goExec"), "build", "-v", "-buildmode=plugin", "-o",
-		out, path)
-	_, err := cmd.CombinedOutput()
+// buildFromSource will build an eligible plugin from sources if applicable
+func (r *Runtime) buildFromSource(path string, wg *sync.WaitGroup) error {
+	// Create output file by modifying input file extension
+	out := strings.Replace(path, ".go", ".so", 1)
+	// Create a timeout to prevent modules from taking too long to build
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*4)
+	// Cancel the timeout of it exits before the timeout is up
+	defer cancelFunc()
+	// Get the go executable from the environment
+	goExec := os.Getenv("goExec")
+	// Prepare the command arguments
+	args := []string{"build", "-v", "-buildmode=plugin", "-o", out, path}
+	// Initialize the command structure
+	cmd := exec.CommandContext(timeout, goExec, args...)
+	// Run and get the stdout and stderr from the output
+	err := cmd.Run()
 	if err != nil {
-		log.Err(err)
+		return err
 	}
-
+	// Mark this plugin as complete
 	wg.Done()
+	return nil
 }
 
+// loadModulesDir attempts to load each module
 func (r *Runtime) loadModulesDir(dir string) error {
-	files, err := filepath.Glob(fmt.Sprintf("./plugins/%s/*/*.so", dir))
+	path := fmt.Sprintf("./plugins/%s/*/*.so", dir)
+	files, err := filepath.Glob(path)
 	if err != nil {
 		return err
 	}
 	for _, file := range files {
-		p, err := plugin2.Load(file)
+		p, err := plugin.Load(file)
 		if err != nil {
 			log.Err(err)
 			continue
 		}
-		r.modules[file] = &p
+		name := strings.Replace(filepath.Base(file), ".so", "", 1)
+
+		r.modules.Set(name, p)
 
 	}
 	return nil
 }
 
-func (r *Runtime) Resolve() {
-
-	// close(r.resolver)
+// loadMutable attempts to load each module
+func (r *Runtime) loadMutable() error {
+	return nil
 }
 
 type Update struct {
@@ -190,8 +252,6 @@ type Response struct {
 	Body      map[string]interface{} `json:"body"`
 }
 
-// Load modules and instances
-
 // HandleSockets upgrades a http request and initiates a WebSocket session
 func (r *Runtime) HandleSockets(w http.ResponseWriter, req *http.Request) {
 	// Initialize an error to manage returns
@@ -204,6 +264,7 @@ func (r *Runtime) HandleSockets(w http.ResponseWriter, req *http.Request) {
 			return true
 		},
 	}
+	// Upgrade the https session to a web socket session
 	c, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Err(err)
@@ -223,8 +284,7 @@ func (r *Runtime) HandleSockets(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// Attempt to find the endpoint based on its UUID
-	sender := &models.Endpoint{}
-	sender.Id = id
+	sender := r.endpoints.Find(id)
 	err = sender.Fetch()
 	if err != nil {
 		return
@@ -281,17 +341,6 @@ func (r *Runtime) sendError(request RequestS, err error) {
 	return
 }
 
-// path : [namespace].[identifier].[inquiry]
-// { Action: "exit", Args: []string{"anal"} } => instance.appls23ddjskj
-// P("module.%s", moduleId)
-// { Command:}
-
-func (r *Runtime) RegisterEntity(entity *models.Entity) (err error) {
-	fmt.Println(fmt.Sprintf("%s.%s", entity.Module, entity.Name))
-
-	return nil
-}
-
 func (r *Runtime) routeRequests(request RequestS) (err error) {
 	switch t := request.Target; t {
 	case "endpoint":
@@ -311,9 +360,9 @@ func (r *Runtime) routeRequests(request RequestS) (err error) {
 }
 
 type EntityState struct {
-	Name   string      `json:"name"`   // EntityId
-	Module string      `json:"module"` // EntityId
-	State  interface{} `json:"state"`  // EntityId
+	Name   string          `json:"name"`   // EntityId
+	Module string          `json:"module"` // EntityId
+	State  json.RawMessage `json:"state"`  // EntityId
 
 }
 
@@ -326,25 +375,14 @@ func (r *Runtime) EntityRequest(request RequestS) (err error) {
 	entity := models.Entity{}
 	entity.Name = payload.Name
 	entity.Module = payload.Module
-	err = entity.Fetch()
-	if err != nil {
-		return err
-	}
-
-	entity.State = payload.State
 	switch t := request.Operation; t {
 	case "state":
-		m, _ := r.entities.Load(entity.Path())
-		e := m.(*models.Entity)
-		e.State = entity.State
-		err = e.SetState()
+		log.Log("%s", payload.State)
+		e := r.entities.Find(entity.Path())
+		err = e.Push(models.State(payload.State))
 		if err != nil {
 			return err
 		}
-	}
-	err = r.Metadata(request.Sender)
-	if err != nil {
-		return err
 	}
 	return nil
 }
@@ -397,70 +435,8 @@ func (r *Runtime) EndpointRequest(request RequestS) (err error) {
 			return err
 		}
 	}
-	err = r.Metadata(request.Sender)
-	if err != nil {
-		return err
-	}
 	return nil
 }
-
-type IdentifierBody struct {
-	Id string `json:"id"`
-}
-
-// func (r *Runtime) InstanceRequest(request RequestS) (err error) {
-// 	body := IdentifierBody{}
-// 	i := &models.Instance{}
-//
-// 	err = json.Unmarshal(request.Body, &body)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	if body.Id == "" {
-// 		switch t := request.Operation; t {
-// 		case "create":
-// 			err = i.Create(request.Body)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			// TODO Make it grant new ones to the endpoint it was made on.
-// 		default:
-// 			return fmt.Errorf("invalid operation '%s'; you may have forgotten to provice an Id", t)
-// 		}
-// 		return nil
-// 	}
-// 	i, err = models.GetInstance(body.Id)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	switch t := request.Operation; t {
-// 	case "modify":
-// 		err = i.Modify(request.Body)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	case "run":
-// 		err = i.Run(string(request.Body))
-// 		if err != nil {
-// 			return err
-// 		}
-// 	case "reset":
-// 		err = i.Reset()
-// 		if err != nil {
-// 			return err
-// 		}
-// 	case "delete":
-// 		err = i.Reset()
-// 		if err != nil {
-// 			return err
-// 		}
-// 	default:
-// 		return fmt.Errorf("invalid operation '%s'", t)
-// 	}
-//
-// 	return nil
-// }
 
 type Object map[string]interface{}
 
@@ -472,77 +448,33 @@ func (r *Runtime) Metadata(e *models.Endpoint) error {
 		Operation: "metadata",
 		Body:      Object{},
 	}
-	// Collect loaded modules
-	var modules []models.Module
-	// for _, module := range r.modules {
-	// 	modules = append(modules, module)
-	// }
 	// Find all active entities
-	entities, err := models.GetEntities()
-	if err != nil {
-		log.Err(err)
-	}
-	for i, entity := range entities {
-		load, ok := r.entities.Load(entity.Path())
-		if !ok {
-			continue
+	var entities []models.Entity
+	for _, entity := range r.entities.Keys() {
+		m := r.entities.Find(entity)
+		if m.Live() {
+			err := m.Poll()
+			if err != nil {
+				return err
+			}
 		}
-		m := load.(*models.Entity)
-		err = m.Poll()
-		if err != nil {
-			return err
-		}
-		entities[i] = *m
+		entities = append(entities, *m)
 	}
-
-	// // Get all active instances
-	// instances, err := models.GetInstances()
-	// if err != nil {
-	// 	log.Err(err)
-	// }
 	// Create and populate the response body
 	response.Body = Object{
 		"endpoint": e,
 		"entities": entities,
-		"modules":  modules,
 	}
 	// Convert the struct into json
 	marshal, err := json.Marshal(response)
 	if err != nil {
-		log.Err(err)
+		return err
 	}
 	// Send the JSON via the endpoints Conn pointer
 	err = e.Conn.WriteMessage(websocket.TextMessage, marshal)
 	if err != nil {
-		log.Error("write:", err)
-		log.Err(err)
+		return err
 	}
 	// Return no errors
 	return nil
-}
-
-// Push sends data to all enrolled endpoints
-func Push(e models.Endpoint, instances map[string]interface{}) {
-
-	response := Response{
-		Status:    "success",
-		Operation: "update",
-		Body:      map[string]interface{}{},
-	}
-
-	// for _, instance := range e.Subscriptions {
-	// 	response.Body[instance.UUID()] = instances[instance.UUID()]
-	// }
-
-	marshal, err := json.Marshal(response)
-	if err != nil {
-		return
-	}
-
-	err = e.Conn.WriteMessage(websocket.TextMessage, marshal)
-	if err != nil {
-		log.Error("write:", err)
-		return
-	}
-
 }

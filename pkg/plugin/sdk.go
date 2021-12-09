@@ -79,7 +79,6 @@ func Load(path string) (pl UdapPlugin, err error) {
 		return nil, fmt.Errorf("plugin '%s' does not define a Plugin interface", path)
 	}
 	pl = lookup.(UdapPlugin)
-
 	// Return no errors
 	return pl, nil
 }
