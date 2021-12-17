@@ -15,7 +15,7 @@ func NewEntityController(entity *models.Entity) EntityController {
 }
 
 func (e *EntityController) PushState(state models.State) error {
-	err := e.entity.Push(state)
+	err := e.entity.SetState(state)
 	if err != nil {
 		return err
 	}

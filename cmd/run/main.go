@@ -12,7 +12,7 @@ func main() {
 
 	_, err := udap.Run()
 	if err != nil {
-		log.ErrF(err, "udap exited due to an error:")
+		log.ErrF(err, "run exited due to an error:")
 	}
 	// Exit normally
 	os.Exit(0)

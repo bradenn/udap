@@ -15,6 +15,29 @@ Modules can be configured to control computer settings, lights, music, media, or
 endpoints.endpoint-a1.
 
 ```
+### Key Details
+
+#### Hostnames
+The udap module listens on 0.0.0.0, but more specifically on the udap transient & shadow networks, by the ip `10.0.2.2`
+
+The remaining network is as follows:
+```
+2.1 vyOS Router
+2.2 Udap (host server)
+2.3 Access Point 
+2.4 Access Point 
+2.5 - 2.32 Reserved (Future Network)
+2.33 - 2.100 Reserved (Wired Devices)
+2.101 - 2.201 Access Point Allocation Pool
+2.201 - 2.255 Transient Device DHCP Pool
+
+
+10.0.2.2
+
+```
+
+#### Port
+This udap module runs on the port `:3020` in development mode, and `:8327 (UDAP) ` in deployment
 
 ### Modules
 

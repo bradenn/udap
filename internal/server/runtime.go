@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -23,9 +24,9 @@ import (
 
 // Runtime manages the event-loop for all instances, as well as the websocket connections between UDAP and endpoints.
 type Runtime struct {
-	modules   Modules   // Key: "name"
-	entities  Entities  // Key: "module.name"
-	endpoints Endpoints // Key: "uuid"
+	modules   Modules    // Key: "name"
+	entities  *Entities  // Key: "module.name"
+	endpoints *Endpoints // Key: "uuid"
 
 	eventHandler chan plugin.Event
 }
@@ -42,9 +43,12 @@ func (r *Runtime) Name() (name string) {
 func (r *Runtime) Load() (err error) {
 	// Initialize the module and entity poly buffers
 	r.modules = Modules{}
-	r.entities = Entities{}
-	r.endpoints = Endpoints{}
-
+	err = r.buildModules()
+	if err != nil {
+		return err
+	}
+	r.entities = LoadEntities()
+	r.endpoints = LoadEndpoints()
 	// Initialize a bounded buffer for accepting module events
 	r.eventHandler = make(chan plugin.Event, 1)
 	// Launch the event resolution thread
@@ -61,10 +65,6 @@ func (r *Runtime) Load() (err error) {
 		close(r.eventHandler)
 	}()
 
-	err = r.buildModules()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -74,22 +74,42 @@ func (r *Runtime) Update() {
 	for _, s := range r.entities.Keys() {
 		// Get the entity from the mutex map
 		e := r.entities.Find(s)
+		if !e.Connected() {
+			continue
+		}
 		// Attempt to poll it
 		err := e.Poll()
 		if err != nil {
 			return
 		}
-		// Save the state to the cache
-		err = cache.PutLn(e.State, e.Path(), "state")
+
+		ln, err := cache.GetLn(e.Path(), "state")
 		if err != nil {
 			return
+		}
+		m := models.Mono{}
+		m.Unmarshal([]byte(ln.(string)))
+		m2 := models.Mono{}
+		m2.Unmarshal(e.State)
+
+		if m.Value != m2.Value && e.Locked {
+			err = e.SetState(m.Marshal())
+			if err != nil {
+				return
+			}
+		}
+		// Save the state to the cache
+		err = cache.PutLn(m.Marshal(), e.Path(), "state")
+		if err != nil {
+			return
+
 		}
 	}
 }
 
 // Run is called when the runtime is to begin accepting traffic
 func (r *Runtime) Run(ctx context.Context) error {
-	r.endpoints.FetchAll()
+
 	// Attempt to get the server reference from context
 	srv := ctx.Value("server").(*Server)
 	// Use the server from context to handle endpoint socket connections
@@ -109,7 +129,7 @@ func (r *Runtime) Run(ctx context.Context) error {
 		// Run a go function to create a new thread
 		go func(p plugin.UdapPlugin) {
 			// Defer the wait group to complete at the end
-			defer wg.Done()
+
 			// Run module setup
 			_, err = p.Setup()
 			if err != nil {
@@ -122,16 +142,28 @@ func (r *Runtime) Run(ctx context.Context) error {
 				log.Err(err)
 				return
 			}
+			wg.Done()
 			// Attempt to run the module
 			err = p.Run()
 			if err != nil {
 				log.Err(err)
 				return
 			}
+			// // Attempt to run the module
+			// err = p.Update()
+			// if err != nil {
+			// 	log.Err(err)
+			// 	return
+			// }
 		}(pl)
 	}
-	// Wait for all modules to exit
 	wg.Wait()
+	// Wait for all modules to exit
+	for {
+		r.Update()
+		time.Sleep(time.Millisecond * 200)
+	}
+
 	return nil
 }
 
@@ -141,7 +173,7 @@ func (r *Runtime) entityEvent(event plugin.Event) (err error) {
 	if err != nil {
 		return err
 	}
-	r.entities.register(entity.Path(), entity)
+	r.entities.Set(entity.Path(), Entity{Entity: entity})
 	log.Log("Entity '%s' loaded", entity.Name)
 	return nil
 }
@@ -176,6 +208,8 @@ func (r *Runtime) buildModuleDir(dir string, wg *sync.WaitGroup) error {
 			if err := r.buildFromSource(path, wg); err != nil {
 				// If an error occurs, print it to console
 				log.ErrF(err, "failed to build module candidate '%s'", path)
+			} else {
+				log.Log("Module '%s' built", filepath.Base(path))
 			}
 		}(p)
 	}
@@ -239,7 +273,7 @@ type Update struct {
 	Id   string `json:"id"`
 }
 
-type RequestS struct {
+type Request struct {
 	Target    string          `json:"target"`
 	Operation string          `json:"operation"`
 	Body      json.RawMessage `json:"body"`
@@ -285,16 +319,12 @@ func (r *Runtime) HandleSockets(w http.ResponseWriter, req *http.Request) {
 	}
 	// Attempt to find the endpoint based on its UUID
 	sender := r.endpoints.Find(id)
-	err = sender.Fetch()
-	if err != nil {
-		return
-	}
 	sender.Conn = c
-	// RequestS event loop, runs every time a message is received
+	// Request event loop, runs every time a message is received
 	for {
 		// Initialize the request structure
-		request := RequestS{
-			Sender: sender,
+		request := Request{
+			Sender: &sender,
 		}
 		// Wait for a request from the client, ReadJSON will halt this loop indefinitely if needed
 		err = c.ReadJSON(&request)
@@ -309,7 +339,7 @@ func (r *Runtime) HandleSockets(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = r.Metadata(sender)
+		err = r.Metadata(&sender)
 		if err != nil {
 			r.sendError(request, err)
 			return
@@ -317,7 +347,7 @@ func (r *Runtime) HandleSockets(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (r *Runtime) sendError(request RequestS, err error) {
+func (r *Runtime) sendError(request Request, err error) {
 	c := request.Sender.Conn
 	log.ErrF(err, "Endpoint '%s' disconnected due to an error", request.Sender.Name)
 	// Initialize error message response
@@ -341,7 +371,7 @@ func (r *Runtime) sendError(request RequestS, err error) {
 	return
 }
 
-func (r *Runtime) routeRequests(request RequestS) (err error) {
+func (r *Runtime) routeRequests(request Request) (err error) {
 	switch t := request.Target; t {
 	case "endpoint":
 		err = r.EndpointRequest(request)
@@ -366,7 +396,7 @@ type EntityState struct {
 
 }
 
-func (r *Runtime) EntityRequest(request RequestS) (err error) {
+func (r *Runtime) EntityRequest(request Request) (err error) {
 	var payload EntityState
 	err = json.Unmarshal(request.Body, &payload)
 	if err != nil {
@@ -377,17 +407,26 @@ func (r *Runtime) EntityRequest(request RequestS) (err error) {
 	entity.Module = payload.Module
 	switch t := request.Operation; t {
 	case "state":
-		log.Log("%s", payload.State)
+		log.Log("State requested: %s", models.State(payload.State))
 		e := r.entities.Find(entity.Path())
-		err = e.Push(models.State(payload.State))
+		err = e.SetState(models.State(payload.State))
 		if err != nil {
+			log.Err(err)
 			return err
 		}
+
+		e.State = models.State(payload.State)
+		// Save the state to the cache
+		err = cache.PutLn(e.State, e.Path(), "state")
+		if err != nil {
+			return
+		}
+		log.Log("State granted: %s", e.State)
 	}
 	return nil
 }
 
-func (r *Runtime) EndpointRequest(request RequestS) (err error) {
+func (r *Runtime) EndpointRequest(request Request) (err error) {
 	var reqBody models.RequestBody
 	err = json.Unmarshal(request.Body, &reqBody)
 	if err != nil {
@@ -449,21 +488,24 @@ func (r *Runtime) Metadata(e *models.Endpoint) error {
 		Body:      Object{},
 	}
 	// Find all active entities
-	var entities []models.Entity
-	for _, entity := range r.entities.Keys() {
-		m := r.entities.Find(entity)
-		if m.Live() {
-			err := m.Poll()
-			if err != nil {
-				return err
-			}
-		}
-		entities = append(entities, *m)
+	var entities []Entity
+	entities, err := r.entities.Compile()
+	if err != nil {
+		return err
 	}
+	var endpoints []models.Endpoint
+	endpoints, err = r.endpoints.Compile()
+	if err != nil {
+		return err
+	}
+	sort.Slice(entities, func(i, j int) bool {
+		return entities[i].Name < entities[j].Name
+	})
 	// Create and populate the response body
 	response.Body = Object{
-		"endpoint": e,
-		"entities": entities,
+		"endpoint":  e,
+		"entities":  entities,
+		"endpoints": endpoints,
 	}
 	// Convert the struct into json
 	marshal, err := json.Marshal(response)

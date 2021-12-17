@@ -20,7 +20,7 @@ func (c *Cache) Name() (name string) {
 }
 
 func (c *Cache) Dependency() (level int) {
-	return 1
+	return 0
 }
 
 // Load will begin the main-sequence activities of the parent struct

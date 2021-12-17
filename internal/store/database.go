@@ -17,7 +17,7 @@ type Database struct {
 }
 
 func (d *Database) Dependency() (level int) {
-	return 1
+	return 0
 }
 
 func (d *Database) Name() (name string) {

@@ -1,0 +1,8 @@
+
+services:
+  backend:
+    image: bradenn/udap
+    env_file:
+      - ./.env
+    ports:
+      - "3020:3020"

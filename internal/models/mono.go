@@ -7,11 +7,11 @@ import (
 )
 
 type Mono struct {
-	Value float64 `json:"value"`
+	Value float32 `json:"value"`
 }
 
 func (m *Mono) Marshal() []byte {
-	marshal, err := json.Marshal(*m)
+	marshal, err := json.Marshal(m)
 	if err != nil {
 		return nil
 	}
@@ -26,10 +26,14 @@ func (m *Mono) Unmarshal(data []byte) {
 }
 
 func NewDimmer(name string, module string) *Entity {
+	mono := Mono{
+		Value: 0,
+	}
 	e := Entity{
 		Name:   name,
 		Type:   "dimmer",
 		Module: module,
+		State:  mono.Marshal(),
 	}
 	return &e
 }

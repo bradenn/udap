@@ -4,7 +4,6 @@ package udap
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -42,7 +41,6 @@ func Run() (*Udap, error) {
 	u.AddDependency(&u.Database, &u.Server, &u.Cache, &u.Runtime)
 	u.AddService(&u.Runtime, &u.Server)
 
-	u.ctx = context.WithValue(u.ctx, "runtime", &u.Runtime)
 	err = u.Go()
 	if err != nil {
 		return nil, err
@@ -65,27 +63,29 @@ func (u *Udap) AddDependency(dependencies ...Dependency) {
 
 // Go is run to begin the program
 func (u *Udap) Go() (err error) {
-
+	var dependencies []Dependency
+	// We pull the services from the map
+	for _, dependency := range u.dependencies {
+		dependencies = append(dependencies, dependency)
+	}
+	// Next we sort the services by their priorities
+	sort.Slice(dependencies, func(i, j int) bool {
+		return dependencies[i].Dependency() < dependencies[j].Dependency()
+	})
 	dg := sync.WaitGroup{}
 	dg.Add(len(u.dependencies))
-	log.Proc("Loading dependencies: ")
 
-	for _, dep := range u.dependencies {
-		fmt.Printf("%s ", dep.Name())
-
-		go func(dependency Dependency) {
-			t := time.Now()
-			err := dependency.Load()
-			if err != nil {
-				log.Err(err)
-			}
-			u.ctx = context.WithValue(u.ctx, dependency.Name(), dependency)
-
-			log.Log("Dependency '%s' loaded. (%s)", dependency.Name(), time.Since(t).String())
-			dg.Done()
-		}(dep)
+	for _, dep := range dependencies {
+		t := time.Now()
+		err := dep.Load()
+		if err != nil {
+			log.Err(err)
+		}
+		u.ctx = context.WithValue(u.ctx, dep.Name(), dep)
+		log.Log("Dependency '%s' loaded. (%s)", dep.Name(), time.Since(t).String())
+		dg.Done()
 	}
-	fmt.Println()
+
 	dg.Wait()
 	log.Log("All dependencies loaded")
 	// A wait group is made to prevent premature exit
@@ -94,6 +94,7 @@ func (u *Udap) Go() (err error) {
 	wg.Add(len(u.services))
 	// This array will contain a list of services
 	var services []Service
+
 	// We pull the services from the map
 	for _, service := range u.services {
 		services = append(services, service)
@@ -109,12 +110,6 @@ func (u *Udap) Go() (err error) {
 		go func(service Service) {
 			log.Log("Service '%s' running", service.Name())
 			sg.Done()
-			defer func() {
-				// We panicked. Don't Panic!
-				// if r := recover(); r != nil {
-				// 	log.Log("Panic Recovered: %t", r)
-				// }
-			}()
 			err = service.Run(u.ctx)
 			if err != nil {
 				log.Err(err)
@@ -124,15 +119,13 @@ func (u *Udap) Go() (err error) {
 		}(s)
 
 	}
+	GetMem()
 	err = u.migrate()
 	if err != nil {
 		return err
 	}
 	sg.Wait()
 	log.Log("Running.")
-	for {
-		u.Runtime.Update()
-	}
 
 	wg.Wait()
 	return nil

@@ -13,7 +13,7 @@ import (
 //
 // type endpointSocket struct{}
 //
-// func (e *endpointSocket) create(request server.Request) {
+// func (e *endpointSocket) create(request server.Req) {
 // 	// body := request.Body()
 // 	// Make sure the name is unique
 // 	// Make sure the endpoint callers is a allowed
@@ -23,11 +23,11 @@ import (
 // 	request.Resolve(models.Endpoint{})
 // }
 //
-// func (e *endpointSocket) delete(request server.Request) {
+// func (e *endpointSocket) delete(request server.Req) {
 //
 // }
 //
-// func (e *endpointSocket) update(request server.Request) {
+// func (e *endpointSocket) update(request server.Req) {
 //
 // }
 //

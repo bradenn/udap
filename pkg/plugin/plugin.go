@@ -2,10 +2,6 @@
 
 package plugin
 
-import (
-	"context"
-)
-
 // Metadata describes a plugin
 type Metadata struct {
 	Name        string `json:"name"`
@@ -55,5 +51,5 @@ type UdapPlugin interface {
 	// Run provides module-relevant data
 	Run() error
 	// Update is used to assign channels
-	Update(ctx context.Context) error
+	Update() error
 }

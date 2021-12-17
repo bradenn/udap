@@ -43,7 +43,7 @@ func AllOfType(key string) (string, error) {
 }
 
 func PutLn(value []byte, path ...string) error {
-	err := Mem.Publish(memCtx, strings.ToLower(strings.Join(path, ".")), value).Err()
+	err := Mem.Set(memCtx, strings.ToLower(strings.Join(path, ".")), value, 0).Err()
 	if err != nil {
 		log.Err(err)
 	}

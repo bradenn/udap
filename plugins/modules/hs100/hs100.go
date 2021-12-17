@@ -3,12 +3,11 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"github.com/jaedle/golang-tplink-hs100/pkg/configuration"
 	"github.com/jaedle/golang-tplink-hs100/pkg/hs100"
 	"strings"
 	"time"
+	"udap/internal/log"
 	"udap/internal/models"
 	"udap/pkg/plugin"
 )
@@ -35,55 +34,47 @@ func init() {
 // Setup is called once at the launch of the module
 func (h *HS100) Setup() (plugin.Config, error) {
 	h.devices = map[string]*hs100.Hs100{}
-
-	devices, err := hs100.Discover("192.168.2.0/24", configuration.Default().WithTimeout(time.Second))
-	if err != nil {
-		return h.Config, err
-	}
-	if len(devices) == 0 {
-		fmt.Println("No devices")
-	}
-	for _, device := range devices {
-		name, err := device.GetName()
-		if err != nil {
-			return h.Config, err
-		}
-		h.devices[name] = device
-	}
 	return h.Config, nil
 }
 
 // Update is called every cycle
-func (h *HS100) Update(ctx context.Context) (err error) {
-	// for name, device := range h.devices {
-	// 	// setState := UpdateState(device)
-	// 	// Module.UpdateState(ctx, name, &setState)
-	// }
-	return nil
+func (h *HS100) Update() (err error) {
+	for {
+		devices, err := hs100.Discover("192.168.2.0/24", configuration.Default().WithTimeout(time.Second*1))
+		if err != nil {
+			log.Err(err)
+		}
+		for len(devices) == 0 {
+			time.Sleep(time.Second * 5)
+			continue
+		}
+		for _, device := range devices {
+			name, err := device.GetName()
+			if err != nil {
+				return err
+			}
+
+			if h.devices[name] != nil {
+				continue
+			}
+
+			h.devices[name] = device
+			newSwitch := models.NewSwitch(strings.ToLower(name), "hs100")
+			err = newSwitch.Handlers(Tx(device), Rx(device))
+			if err != nil {
+				continue
+			}
+
+			h.RegisterEntity(newSwitch)
+		}
+		time.Sleep(time.Second * 5)
+	}
 }
 
 // Run is called after Setup, concurrent with Update
 func (h *HS100) Run() (err error) {
-	for _, device := range h.devices {
-		var name string
-		name, err = device.GetName()
-		if err != nil {
-			return err
-		}
-		_, err = device.IsOn()
-		if err != nil {
-			return err
-		}
 
-		newSwitch := models.NewSwitch(strings.ToLower(name), "hs100")
-		err = newSwitch.Handlers(Tx(device), Rx(device))
-		if err != nil {
-			return err
-		}
-
-		h.RegisterEntity(newSwitch)
-	}
-	return nil
+	return h.Update()
 }
 
 func Tx(device *hs100.Hs100) models.Tx {

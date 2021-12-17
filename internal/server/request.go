@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-type Request struct {
+type Req struct {
 	writer  http.ResponseWriter
 	request *http.Request
 }
@@ -22,8 +22,8 @@ type RejectError struct {
 	Error interface{} `json:"error"`
 }
 
-func NewRequest(writer http.ResponseWriter, request *http.Request) (req *Request, db *gorm.DB) {
-	req = &Request{
+func NewRequest(writer http.ResponseWriter, request *http.Request) (req *Req, db *gorm.DB) {
+	req = &Req{
 		writer:  writer,
 		request: request,
 	}
@@ -32,7 +32,7 @@ func NewRequest(writer http.ResponseWriter, request *http.Request) (req *Request
 	return req, db
 }
 
-func (r *Request) JWTClaim(key string) interface{} {
+func (r *Req) JWTClaim(key string) interface{} {
 	_, claims, err := jwtauth.FromContext(r.request.Context())
 
 	if err != nil {
@@ -42,11 +42,11 @@ func (r *Request) JWTClaim(key string) interface{} {
 	return claims[key]
 }
 
-func (r *Request) Param(key string) string {
+func (r *Req) Param(key string) string {
 	return chi.URLParam(r.request, key)
 }
 
-func (r *Request) ParamObjectId(key string) (primitive.ObjectID, error) {
+func (r *Req) ParamObjectId(key string) (primitive.ObjectID, error) {
 	id := r.Param(key)
 	if !primitive.IsValidObjectID(id) {
 		return primitive.ObjectID{}, fmt.Errorf("invalid objectId")
@@ -54,7 +54,7 @@ func (r *Request) ParamObjectId(key string) (primitive.ObjectID, error) {
 	return primitive.ObjectIDFromHex(id)
 }
 
-func (r *Request) Body() string {
+func (r *Req) Body() string {
 	var buffer bytes.Buffer
 	_, err := buffer.ReadFrom(r.request.Body)
 	if err != nil {
@@ -64,7 +64,7 @@ func (r *Request) Body() string {
 	return buffer.String()
 }
 
-func (r *Request) DecodeModel(model interface{}) {
+func (r *Req) DecodeModel(model interface{}) {
 	var buffer bytes.Buffer
 	_, err := buffer.ReadFrom(r.request.Body)
 	if err != nil {
@@ -77,7 +77,7 @@ func (r *Request) DecodeModel(model interface{}) {
 	}
 }
 
-func (r *Request) Reject(payload interface{}, status int) {
+func (r *Req) Reject(payload interface{}, status int) {
 
 	errPayload := RejectError{Error: payload}
 
@@ -97,7 +97,7 @@ func (r *Request) Reject(payload interface{}, status int) {
 	}
 }
 
-func (r *Request) ResolveRaw(payload string, status int) {
+func (r *Req) ResolveRaw(payload string, status int) {
 	writeCors(r.writer)
 
 	r.writer.Header().Set("Content-Type", "application/json")
@@ -109,7 +109,7 @@ func (r *Request) ResolveRaw(payload string, status int) {
 	}
 }
 
-func (r *Request) Resolve(payload interface{}, status int) {
+func (r *Req) Resolve(payload interface{}, status int) {
 	marshal, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Println(err)
@@ -127,5 +127,5 @@ func (r *Request) Resolve(payload interface{}, status int) {
 }
 
 func writeCors(writer http.ResponseWriter) {
-	writer.Header().Set("Access-Control-Allow-Headers", "X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-RequestS-Method")
+	writer.Header().Set("Access-Control-Allow-Headers", "X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method")
 }
