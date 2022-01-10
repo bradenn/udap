@@ -2,6 +2,10 @@
 
 package plugin
 
+import (
+	"udap/internal/bond"
+)
+
 // Metadata describes a plugin
 type Metadata struct {
 	Name        string `json:"name"`
@@ -13,15 +17,15 @@ type Metadata struct {
 
 // Event defines the parameters of an event channel request
 type Event struct {
-	Type      string      `json:"type"`      // Module, Daemon, Agent, etc.
-	Operation string      `json:"operation"` // state
-	Body      interface{} `json:"body"`      // {state: "on"}
+	Type      string `json:"type"`      // Module, Daemon, Agent, etc.
+	Operation string `json:"operation"` // state
+	Body      any    `json:"body"`      // {state: "on"}
 }
 
 // Request contains the structure of a request channel payload
 type Request struct {
 	Id        string `json:"id"`        // InstanceId
-	Operation string `json:"operation"` // Update, Run, Poll
+	Operation string `json:"operation"` // Update, Run, Pull
 	Body      string `json:"body"`
 }
 
@@ -33,21 +37,12 @@ type Plugin interface {
 	Connect(chan Event) chan Request
 }
 
-// Device d
-type Device interface {
-	Name() string
-}
-
-type UdapInterface interface {
-	RegisterEntity(entity *Entity)
-}
-
 // UdapPlugin defines the functions of a plugin's exported variable
 type UdapPlugin interface {
 	// Setup is called when the plugin is first loaded
 	Setup() (Config, error)
 	// Connect c
-	Connect(*chan Event) (chan Request, error)
+	Connect(*bond.Bond) error
 	// Run provides module-relevant data
 	Run() error
 	// Update is used to assign channels

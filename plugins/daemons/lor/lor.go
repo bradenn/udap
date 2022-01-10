@@ -56,10 +56,10 @@ func (s *Lor) Update() error {
 }
 
 func (s *Lor) Run() error {
+
 	defer func() {
 		recover()
-	}()
-	defer func() {
+
 		if s.open {
 			err := s.dmx.Close()
 			if err != nil {
@@ -71,6 +71,7 @@ func (s *Lor) Run() error {
 	s.dmx = ft232.NewDMXController(s.dmxConf)
 	if err := s.dmx.Connect(); err != nil {
 		fmt.Printf("failed to connect DMX Controller: %s\n", err)
+		return fmt.Errorf("squid is not connected")
 	} else {
 		Module.open = true
 	}
@@ -87,7 +88,10 @@ func (s *Lor) Run() error {
 		if err != nil {
 			continue
 		}
-		s.RegisterEntity(dimmer)
+		_, err = s.Send("entity", "register", dimmer)
+		if err != nil {
+			return err
+		}
 	}
 
 	for {

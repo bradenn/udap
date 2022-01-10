@@ -9,10 +9,9 @@ import (
 )
 
 func main() {
-
-	_, err := udap.Run()
+	err := udap.Run()
 	if err != nil {
-		log.ErrF(err, "run exited due to an error:")
+		log.ErrF(err, "UDAP exited due to an unknown error:")
 	}
 	// Exit normally
 	os.Exit(0)

@@ -51,6 +51,7 @@ const (
 	out
 	partial
 	process
+	event
 )
 
 func log(logType LogType, format string, args ...interface{}) {
@@ -62,6 +63,10 @@ func log(logType LogType, format string, args ...interface{}) {
 		break
 	case process:
 		prefix = fmt.Sprintf("%s[UDAP]%s", Reset+BoldBlue, Reset)
+		ln = false
+		break
+	case event:
+		prefix = fmt.Sprintf("%s[CHAN]%s", Reset+BoldGreen, Reset)
 		ln = false
 		break
 	case partial:
@@ -98,44 +103,16 @@ func log(logType LogType, format string, args ...interface{}) {
 
 }
 
-func LogIn(format string, args ...interface{}) {
-	log(in, format, args...)
-}
-
-func LogOut(format string, args ...interface{}) {
-	log(out, format, args...)
-}
-
-func Info(format string, args ...interface{}) {
-	log(module, format, args...)
-}
-
-func LogF(format string, args ...interface{}) {
-	log(module, format, args...)
-}
-
 func Log(format string, args ...interface{}) {
+	log(module, format, args...)
+}
+
+func Event(format string, args ...interface{}) {
 	log(module, format, args...)
 }
 
 func Sherlock(format string, args ...interface{}) {
 	log(sherlock, format, args...)
-}
-
-func Proc(format string, args ...interface{}) {
-	log(process, format, args...)
-}
-
-func Done() {
-	log(partial, "Done\n")
-}
-
-func Warn(format string, args ...interface{}) {
-	log(module, format, args...)
-}
-
-func Error(format string, args ...interface{}) {
-	log(panic, format, args...)
 }
 
 func ErrF(err error, format string, args ...interface{}) {

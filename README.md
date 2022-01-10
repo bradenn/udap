@@ -15,12 +15,15 @@ Modules can be configured to control computer settings, lights, music, media, or
 endpoints.endpoint-a1.
 
 ```
+
 ### Key Details
 
 #### Hostnames
+
 The udap module listens on 0.0.0.0, but more specifically on the udap transient & shadow networks, by the ip `10.0.2.2`
 
 The remaining network is as follows:
+
 ```
 2.1 vyOS Router
 2.2 Udap (host server)
@@ -36,7 +39,38 @@ The remaining network is as follows:
 
 ```
 
+```yaml
+
+UDAP:
+  dependencies:
+    store:
+    cache:
+    server:
+    runtime:
+  services:
+    server:
+    runtime:
+      network:
+        - device
+      modules:
+        - module
+        - device
+        - entity
+      endpoints:
+        - module
+        - device
+        - endpoint
+      homekit:
+        - entiy
+      voiceRecognition:
+        - entity
+      computerVision:
+        - device
+        - entity
+```
+
 #### Port
+
 This udap module runs on the port `:3020` in development mode, and `:8327 (UDAP) ` in deployment
 
 ### Modules

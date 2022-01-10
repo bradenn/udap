@@ -8,30 +8,37 @@ import (
 	_ "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"os"
+	"time"
 )
 
-var DB *gorm.DB
+var DB Database
+
+type Persistent struct {
+	CreatedAt time.Time  `json:"created"`
+	UpdatedAt time.Time  `json:"updated"`
+	deletedAt *time.Time `sql:"index"`
+	// Id is primary key of the persistent type, represented as a UUIDv4
+	Id string `json:"id" gorm:"primary_key;type:string;default:uuid_generate_v4()"`
+}
+
+func (e *Persistent) UUID() string {
+	return e.Id
+}
 
 type Database struct {
 	*gorm.DB
 }
 
-func (d *Database) Dependency() (level int) {
-	return 0
-}
-
-func (d *Database) Name() (name string) {
-	return "database"
-}
-
-func (d *Database) Load() (err error) {
+func NewDatabase() (Database, error) {
 	pg := postgres.Open(dbURL())
-	d.DB, err = gorm.Open(pg, &gorm.Config{})
-	DB = d.DB
+	db, err := gorm.Open(pg, &gorm.Config{})
 	if err != nil {
-		return err
+		return Database{}, err
 	}
-	return nil
+
+	DB.DB = db
+
+	return DB, nil
 }
 
 // dbURL returns a formatted postgresql connection string.

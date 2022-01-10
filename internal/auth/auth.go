@@ -1,11 +1,10 @@
-// Copyright (c) 2021 Braden Nicholson
+// Copyright (c) 2022 Braden Nicholson
 
-package server
+package auth
 
 import (
 	"fmt"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/lestrrat-go/jwx/jwt"
 	"net/http"
 	"os"
 )
@@ -33,28 +32,8 @@ func AuthToken(token string) (string, error) {
 	return s, nil
 }
 
-func verifyToken() func(http.Handler) http.Handler {
+func VerifyToken() func(http.Handler) http.Handler {
 	return jwtauth.Verifier(tokenAuth)
-}
-
-func RequireAuth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, _, err := jwtauth.FromContext(r.Context())
-		req, _ := NewRequest(w, r)
-
-		if err != nil {
-			req.Reject(err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if token == nil || jwt.Validate(token) != nil {
-			req.Reject(err, http.StatusUnauthorized)
-			return
-		}
-
-		// Token is authenticated, pass it through
-		next.ServeHTTP(w, r)
-	})
 }
 
 type Claims map[string]interface{}

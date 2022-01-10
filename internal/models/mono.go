@@ -38,6 +38,39 @@ func NewDimmer(name string, module string) *Entity {
 	return &e
 }
 
+type Rgbw struct {
+	R   int `json:"r"`
+	G   int `json:"g"`
+	B   int `json:"b"`
+	CCT int `json:"cct"`
+}
+
+func (r *Rgbw) Unmarshal(data []byte) {
+	err := json.Unmarshal(data, r)
+	if err != nil {
+		return
+	}
+}
+
+func (r *Rgbw) Marshal() []byte {
+	marshal, err := json.Marshal(r)
+	if err != nil {
+		return nil
+	}
+	return marshal
+}
+
+func NewWildcardDevice(name string, module string, state State) *Entity {
+
+	e := Entity{
+		Name:   name,
+		Type:   "wildcard",
+		Module: module,
+		State:  json.RawMessage(state),
+	}
+	return &e
+}
+
 func NewSwitch(name string, module string) *Entity {
 	mono := Mono{
 		Value: 0,

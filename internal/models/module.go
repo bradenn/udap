@@ -5,6 +5,7 @@ package models
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"time"
 	"udap/internal/store"
 	"udap/pkg/plugin"
 )
@@ -72,5 +73,15 @@ func (m *Module) BeforeCreate(_ *gorm.DB) error {
 
 func (m *Module) AfterFind(_ *gorm.DB) error {
 
+	return nil
+}
+
+// Emplace gets a module from its path
+func (m *Module) Emplace() (err error) {
+	m.UpdatedAt = time.Now()
+	err = store.DB.Model(&Module{}).Where("path = ?", m.Path).FirstOrCreate(&m).Error
+	if err != nil {
+		return err
+	}
 	return nil
 }

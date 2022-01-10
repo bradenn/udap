@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/jaedle/golang-tplink-hs100/pkg/configuration"
 	"github.com/jaedle/golang-tplink-hs100/pkg/hs100"
 	"strings"
@@ -40,7 +41,7 @@ func (h *HS100) Setup() (plugin.Config, error) {
 // Update is called every cycle
 func (h *HS100) Update() (err error) {
 	for {
-		devices, err := hs100.Discover("192.168.2.0/24", configuration.Default().WithTimeout(time.Second*1))
+		devices, err := hs100.Discover("10.0.1.1/24", configuration.Default().WithTimeout(time.Second*4))
 		if err != nil {
 			log.Err(err)
 		}
@@ -64,10 +65,12 @@ func (h *HS100) Update() (err error) {
 			if err != nil {
 				continue
 			}
-
-			h.RegisterEntity(newSwitch)
+			_, err = h.Send("entity", "register", newSwitch)
+			if err != nil {
+				return err
+			}
 		}
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 30)
 	}
 }
 
@@ -79,9 +82,13 @@ func (h *HS100) Run() (err error) {
 
 func Tx(device *hs100.Hs100) models.Tx {
 	return func(state models.State) error {
-		a := models.Mono{}
-		a.Unmarshal(state)
-		if a.Value > 0 {
+		a := models.LightState{}
+		err := json.Unmarshal(state, &a)
+		if err != nil {
+			return err
+		}
+
+		if a.Power == "on" {
 			err := device.TurnOn()
 			if err != nil {
 				return err
@@ -98,16 +105,20 @@ func Tx(device *hs100.Hs100) models.Tx {
 
 func Rx(device *hs100.Hs100) models.Rx {
 	return func() models.State {
-		a := models.Mono{}
+		a := models.LightState{}
 		rm, err := device.IsOn()
 		if err != nil {
 			return []byte{}
 		}
 		if rm {
-			a.Value = 1.0
+			a.Power = "on"
 		} else {
-			a.Value = 0
+			a.Power = "off"
 		}
-		return a.Marshal()
+		marshal, err := json.Marshal(a)
+		if err != nil {
+			return nil
+		}
+		return marshal
 	}
 }
