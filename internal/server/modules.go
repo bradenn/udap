@@ -12,24 +12,27 @@ import (
 	"sync"
 	"time"
 	"udap/internal/bond"
+	"udap/internal/controller"
 	"udap/internal/log"
 	"udap/pkg/plugin"
 )
 
 type Modules struct {
 	modules map[string]plugin.UdapPlugin
+	ctrl    *controller.Controller
 	bond    *bond.Bond
 }
 
-// buildModules locates and initializes modules in the plugin directory
+func (m *Modules) Name() string {
+	return "modules"
+}
+
 func (m *Modules) buildModules() error {
 	// Try to load modules from the plugin folders
-	wg := sync.WaitGroup{}
-	err := m.buildModuleDir("modules", &wg)
+	err := m.buildModuleDir("modules")
 	if err != nil {
 		return err
 	}
-	wg.Wait()
 	return nil
 }
 
@@ -40,7 +43,8 @@ func (m *Modules) values() (pls []plugin.UdapPlugin, err error) {
 	return pls, nil
 }
 
-func (m *Modules) Setup(bond *bond.Bond) error {
+func (m *Modules) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
+	m.ctrl = ctrl
 	m.bond = bond
 	m.modules = map[string]plugin.UdapPlugin{}
 	err := m.buildModules()
@@ -53,6 +57,7 @@ func (m *Modules) Setup(bond *bond.Bond) error {
 func (m *Modules) Update() error {
 	return nil
 }
+
 func (m *Modules) Run() error {
 	// Attempt to load the modules in the directory 'modules'
 	err := m.loadModulesDir("modules")
@@ -79,17 +84,20 @@ func (m *Modules) Run() error {
 
 			// Defer the wait group to complete at the end
 			// Attempt to connect to the module
-			err = p.Connect(m.bond)
+			err = p.Connect(m.ctrl, m.bond)
 			if err != nil {
 				log.Err(err)
 				return
 			}
 			// Run module setup
-			_, err = p.Setup()
+			c := plugin.Config{}
+			c, err = p.Setup()
 			if err != nil {
 				log.Err(err)
 				return
 			}
+
+			log.Log("Module '%s' v%s running.", c.Name, c.Version)
 			// Attempt to run the module
 			err = p.Run()
 			if err != nil {
@@ -104,7 +112,7 @@ func (m *Modules) Run() error {
 }
 
 // buildModuleDir builds all potential modules in a directory
-func (m *Modules) buildModuleDir(dir string, wg *sync.WaitGroup) error {
+func (m *Modules) buildModuleDir(dir string) error {
 	// Format the pattern for glob search
 	pattern := fmt.Sprintf("./plugins/%s/*/*.go", dir)
 	// Run the search for go files
@@ -113,12 +121,14 @@ func (m *Modules) buildModuleDir(dir string, wg *sync.WaitGroup) error {
 		return err
 	}
 	// Add all the potential files from the search
+	wg := &sync.WaitGroup{}
 	wg.Add(len(files))
 	// Launch a go func to build each one
 	for _, p := range files {
 		// Run the function for this file
 		go func(path string) {
-			if err := m.buildFromSource(path, wg); err != nil {
+			defer wg.Done()
+			if err = m.buildFromSource(path); err != nil {
 				// If an error occurs, print it to console
 				log.ErrF(err, "failed to build module candidate '%s'", path)
 			} else {
@@ -126,18 +136,19 @@ func (m *Modules) buildModuleDir(dir string, wg *sync.WaitGroup) error {
 			}
 		}(p)
 	}
+	wg.Wait()
 	return nil
 }
 
 // buildFromSource will build an eligible plugin from sources if applicable
-func (m *Modules) buildFromSource(path string, wg *sync.WaitGroup) error {
+func (m *Modules) buildFromSource(path string) error {
 	// Create output file by modifying input file extension
 	out := strings.Replace(path, ".go", ".so", 1)
 	// Create a timeout to prevent modules from taking too long to build
 	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
 	// Cancel the timeout of it exits before the timeout is up
 	defer cancelFunc()
-	// Get the go executable from the environment
+	// get the go executable from the environment
 	goExec := os.Getenv("goExec")
 	// Prepare the command arguments
 	args := []string{"build", "-v", "-buildmode=plugin", "-o", out, path}
@@ -148,8 +159,6 @@ func (m *Modules) buildFromSource(path string, wg *sync.WaitGroup) error {
 	if err != nil {
 		return err
 	}
-	// Mark this plugin as complete
-	wg.Done()
 	return nil
 }
 

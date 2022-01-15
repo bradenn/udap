@@ -22,21 +22,13 @@ func (d *Devices) Handle(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (d *Devices) register(event bond.Msg) (res any, err error) {
-	device := event.Body.(*models.Device)
-	err = device.Emplace()
-	if err != nil {
-		return nil, err
+func (d *Devices) Compile() (es []models.Device, err error) {
+	var devices []models.Device
+	for _, s := range d.Keys() {
+		device := d.Find(s)
+		devices = append(devices, *device)
 	}
-	d.Set(device.Id, device)
-	return nil, nil
-}
-
-func LoadDevices() (m *Devices) {
-	m = &Devices{}
-	m.raw = map[string]any{}
-	m.FetchAll()
-	return m
+	return es, err
 }
 
 func (d *Devices) FetchAll() {
@@ -47,7 +39,17 @@ func (d *Devices) FetchAll() {
 	}
 }
 
-// Pull is the level at which this service needs to run
+func (d *Devices) Find(name string) *models.Device {
+	return d.get(name).(*models.Device)
+}
+
+func LoadDevices() (m *Devices) {
+	m = &Devices{}
+	m.raw = map[string]any{}
+	m.FetchAll()
+	return m
+}
+
 func (d *Devices) Pull() {
 	for _, k := range d.Keys() {
 		err := d.get(k)
@@ -57,27 +59,26 @@ func (d *Devices) Pull() {
 	}
 }
 
-func (d *Devices) Compile() (es []models.Device, err error) {
-	for _, k := range d.Keys() {
-		ea := d.get(k).(*models.Device)
-		es = append(es, *ea)
+func (d *Devices) Register(device *models.Device) (res *models.Device, err error) {
+	err = device.Emplace()
+	if err != nil {
+		return nil, err
 	}
-	return es, err
-}
-
-func (d *Devices) compile(msg bond.Msg) (res any, err error) {
-	var devices []models.Device
-	for _, s := range d.Keys() {
-		device := d.Find(s)
-		devices = append(devices, *device)
-	}
-	return devices, nil
-}
-
-func (d *Devices) Find(name string) *models.Device {
-	return d.get(name).(*models.Device)
+	d.Set(device.Id, device)
+	return nil, nil
 }
 
 func (d *Devices) Set(id string, entity *models.Device) {
 	d.set(id, entity)
+}
+
+// Bond
+
+func (d *Devices) compile(msg bond.Msg) (res any, err error) {
+	return d.Compile()
+}
+
+func (d *Devices) register(event bond.Msg) (res any, err error) {
+	device := event.Body.(*models.Device)
+	return d.Register(device)
 }

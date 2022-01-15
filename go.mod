@@ -4,24 +4,19 @@ go 1.18
 
 require (
 	github.com/Ullaakut/nmap/v2 v2.2.0
-	github.com/brutella/hc v1.2.4
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-chi/jwtauth/v5 v5.0.1
 	github.com/go-redis/redis/v8 v8.11.4
-	github.com/google/gousb v1.1.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
-	github.com/lestrrat-go/jwx v1.2.6
 	github.com/patrikeh/go-deep v0.0.0-20191210195838-b811ffc4083e
-	go.mongodb.org/mongo-driver v1.7.2
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15
 )
 
 require (
-	github.com/brutella/dnssd v1.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -41,8 +36,9 @@ require (
 	github.com/lestrrat-go/blackmagic v1.0.0 // indirect
 	github.com/lestrrat-go/httpcc v1.0.0 // indirect
 	github.com/lestrrat-go/iter v1.0.1 // indirect
+	github.com/lestrrat-go/jwx v1.2.6 // indirect
 	github.com/lestrrat-go/option v1.0.0 // indirect
-	github.com/miekg/dns v1.1.4 // indirect
+	github.com/miekg/dns v1.1.25 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tadglines/go-pkgs v0.0.0-20140924210655-1f86682992f1 // indirect
 	github.com/xiam/to v0.0.0-20191116183551-8328998fc0ed // indirect

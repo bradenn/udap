@@ -9,11 +9,11 @@ import (
 )
 
 type Msg struct {
-	Target    string          `json:"target"`    // Module, Daemon, Agent, etc.
-	Operation string          `json:"operation"` // state
-	Id        string          `json:"id"`        // {state: "on"}
-	Body      any             `json:"body"`      // {state: "on"}
-	Payload   json.RawMessage `json:"payload"`   // {state: "on"}
+	Target    string `json:"target"`    // Module, Daemon, Agent, etc.
+	Operation string `json:"operation"` // state
+	Id        string `json:"id"`        // {state: "on"}
+	Body      any    `json:"body"`      // {state: "on"}
+	Payload   string `json:"payload"`   // {state: "on"}
 	resolved  bool
 	Resp      chan Resp
 }
@@ -106,6 +106,14 @@ func (b *Bond) send(target Msg) (any, error) {
 	}
 }
 
+func (b *Bond) SendIdJSON(target string, operation string, id string, body string) (any, error) {
+	return b.send(Msg{
+		Target:    target,
+		Operation: operation,
+		Id:        id,
+		Payload:   body,
+	})
+}
 func (b *Bond) SendId(target string, operation string, id string, body any) (any, error) {
 	return b.send(Msg{
 		Target:    target,

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 	"udap/internal/log"
 	"udap/internal/models"
@@ -37,8 +38,6 @@ func init() {
 
 func (v *Vyos) Setup() (plugin.Config, error) {
 	v.fetchNetworks()
-	// Since ft232 is a shitty module, it panics when USB can't be found.
-
 	return v.Config, nil
 }
 
@@ -88,13 +87,12 @@ func (v *Vyos) scanSubnet(network models.Network) error {
 				device.Mac = addr.String()
 			}
 		}
-		device.NetworkId = network.Id
-		_, err = v.Send("device", "register", &device)
-		if err != nil {
 
+		device.NetworkId = network.Id
+		_, err = v.Devices.Register(&device)
+		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
@@ -165,8 +163,9 @@ func (v *Vyos) fetchNetworks() {
 		fmt.Println(err)
 		return
 	}
-
+	wg := sync.WaitGroup{}
 	d := payload.Data
+	wg.Add(len(d.Networks))
 	for name, lan := range d.Networks {
 		network := models.Network{}
 		network.Name = name
@@ -180,12 +179,13 @@ func (v *Vyos) fetchNetworks() {
 			break
 		}
 
-		_, err = v.Send("network", "register", &network)
+		_, err = v.Networks.Register(&network)
 		if err != nil {
 			return
 		}
 
 		go func() {
+			defer wg.Done()
 			err = v.scanSubnet(network)
 			if err != nil {
 				log.Err(err)
@@ -194,4 +194,5 @@ func (v *Vyos) fetchNetworks() {
 		}()
 
 	}
+	wg.Wait()
 }

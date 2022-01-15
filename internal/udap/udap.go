@@ -13,7 +13,7 @@ import (
 	"udap/internal/store"
 )
 
-const VERSION = "2.7.1"
+const VERSION = "2.8.2"
 
 type Udap struct {
 	runtime  *server.Runtime
@@ -39,12 +39,10 @@ func Run() error {
 		return err
 	}
 
-	go func() {
-		err = u.migrate()
-		if err != nil {
-			return
-		}
-	}()
+	err = u.migrate()
+	if err != nil {
+		return err
+	}
 
 	u.runtime = &server.Runtime{}
 
@@ -62,7 +60,7 @@ func Run() error {
 
 func (u *Udap) migrate() error {
 	err := u.database.AutoMigrate(models.Log{}, models.Endpoint{}, models.Entity{}, models.Module{}, models.Device{},
-		models.Network{})
+		models.Network{}, models.Attribute{})
 	if err != nil {
 		return err
 	}
@@ -70,15 +68,20 @@ func (u *Udap) migrate() error {
 }
 
 func config() error {
+
 	log.Log("UDAP v%s - Copyright (c) 2021 Braden Nicholson", VERSION)
 	err := godotenv.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load .env file could not find any environment variables")
 	}
-	if os.Getenv("ENV") == "production" {
+	if os.Getenv("environment") == "production" {
 		log.Log("Running in PRODUCTION mode.")
 	} else {
 		log.Log("Running in DEVELOPMENT mode.")
+	}
+	err = os.Setenv("version", VERSION)
+	if err != nil {
+		return err
 	}
 	return nil
 }

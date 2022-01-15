@@ -21,6 +21,7 @@ type Request struct {
 }
 
 type Response struct {
+	Id        string `json:"id"`
 	Status    string `json:"status"`
 	Operation string `json:"operation"`
 	Body      any    `json:"body"`
@@ -36,10 +37,6 @@ func (e *Endpoints) Handle(msg bond.Msg) (res any, err error) {
 	switch t := msg.Operation; t {
 	case "compile":
 		return e.compile(msg)
-	case "enroll":
-		return e.enroll(msg)
-	case "unenroll":
-		return e.enroll(msg)
 	default:
 		return nil, fmt.Errorf("operation '%s' is not defined", t)
 	}
@@ -67,15 +64,6 @@ func (e *Endpoints) unenroll(msg bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Endpoints) enroll(msg bond.Msg) (res any, err error) {
-	endpoint := e.Find(msg.Id)
-	err = endpoint.Enroll()
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
 func (e *Endpoints) compile(msg bond.Msg) (res any, err error) {
 	var endpoints []models.Endpoint
 	for _, s := range e.Keys() {
@@ -85,19 +73,10 @@ func (e *Endpoints) compile(msg bond.Msg) (res any, err error) {
 	return endpoints, nil
 }
 
-func (e *Endpoints) Compile() (endpoints []map[string]any, err error) {
+func (e *Endpoints) Compile() (endpoints []models.Endpoint, err error) {
 	for _, s := range e.Keys() {
 		endpoint := e.Find(s)
-		marshal, err := json.Marshal(endpoint)
-		if err != nil {
-			return nil, err
-		}
-		var cache map[string]any
-		err = json.Unmarshal(marshal, &cache)
-		if err != nil {
-			return nil, err
-		}
-		endpoints = append(endpoints, cache)
+		endpoints = append(endpoints, *endpoint)
 	}
 	return endpoints, err
 }

@@ -3,6 +3,7 @@
 package controller
 
 import (
+	"sync"
 	"udap/internal/bond"
 	"udap/internal/models"
 	"udap/internal/store"
@@ -23,16 +24,18 @@ func (d *Networks) Handle(event bond.Msg) (res any, err error) {
 }
 
 func (d *Networks) compile(msg bond.Msg) (res any, err error) {
-	var networks []models.Network
-	for _, s := range d.Keys() {
-		network := d.Find(s)
-		networks = append(networks, *network)
-	}
-	return networks, nil
+	return d.Compile()
 }
 
-func (d *Networks) register(event bond.Msg) (res any, err error) {
-	network := event.Body.(*models.Network)
+func (d *Networks) Compile() (res []models.Network, err error) {
+	for _, s := range d.Keys() {
+		network := d.Find(s)
+		res = append(res, *network)
+	}
+	return res, nil
+}
+
+func (d *Networks) Register(network *models.Network) (res *models.Network, err error) {
 	err = network.Emplace()
 	if err != nil {
 		return nil, err
@@ -41,8 +44,15 @@ func (d *Networks) register(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
+func (d *Networks) register(event bond.Msg) (res *models.Network, err error) {
+	network := event.Body.(*models.Network)
+
+	return d.Register(network)
+}
+
 func LoadNetworks() (m *Networks) {
 	m = &Networks{}
+	m.data = sync.Map{}
 	m.raw = map[string]any{}
 	m.FetchAll()
 	return m
@@ -64,14 +74,6 @@ func (d *Networks) Pull() {
 			return
 		}
 	}
-}
-
-func (d *Networks) Compile() (es []models.Network, err error) {
-	for _, k := range d.Keys() {
-		ea := d.get(k).(*models.Network)
-		es = append(es, *ea)
-	}
-	return es, err
 }
 
 func (d *Networks) Find(name string) *models.Network {

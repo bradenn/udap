@@ -52,6 +52,7 @@ const (
 	partial
 	process
 	event
+	critical
 )
 
 func log(logType LogType, format string, args ...interface{}) {
@@ -68,6 +69,9 @@ func log(logType LogType, format string, args ...interface{}) {
 	case event:
 		prefix = fmt.Sprintf("%s[CHAN]%s", Reset+BoldGreen, Reset)
 		ln = false
+		break
+	case critical:
+		prefix = fmt.Sprintf("%s[ACTION REQUIRED]%s", Reset+BoldMagenta, Reset)
 		break
 	case partial:
 		prefix = fmt.Sprintf("%s", Green)
@@ -101,6 +105,10 @@ func log(logType LogType, format string, args ...interface{}) {
 		fmt.Printf(formatted)
 	}
 
+}
+
+func Critical(format string, args ...interface{}) {
+	log(critical, format, args...)
 }
 
 func Log(format string, args ...interface{}) {

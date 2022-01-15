@@ -20,7 +20,7 @@ func NewRemote(c *websocket.Conn) Remote {
 	}
 	r.rw.Lock()
 	r.conn = c
-	log.Log("Remote socket opened: %s", c.RemoteAddr())
+	log.Log("Get socket opened: %s", c.RemoteAddr())
 	r.conn.SetCloseHandler(r.closeHandler)
 	r.rw.Unlock()
 	return r
@@ -30,7 +30,7 @@ func (r *Remote) closeHandler(code int, text string) error {
 	if text == "" {
 		text = "[empty]"
 	}
-	log.Log("Remote socket closed: %s (%d)", text, code)
+	log.Log("Get socket closed: %s (%d)", text, code)
 	return nil
 }
 

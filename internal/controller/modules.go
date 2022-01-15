@@ -3,32 +3,35 @@
 package controller
 
 import (
+	"fmt"
+	"sync"
 	"udap/internal/bond"
 	"udap/internal/models"
 	"udap/internal/store"
 )
+
+type Generic struct {
+	store sync.Map
+}
 
 type Modules struct {
 	PolyBuffer
 	bond *bond.Bond
 }
 
-func (m *Modules) Handle(event bond.Msg) (res any, err error) {
-	switch event.Operation {
-	case "register":
-		return m.register(event)
-
-	}
-	return nil, nil
+func LoadModules() (m *Modules) {
+	m = &Modules{}
+	m.data = sync.Map{}
+	return m
 }
 
-func (m *Modules) Register(module *models.Module) error {
-	err := module.Emplace()
-	if err != nil {
-		return err
+func (m *Modules) Handle(event bond.Msg) (res any, err error) {
+	switch o := event.Operation; o {
+	case "register":
+		return m.register(event)
+	default:
+		return nil, fmt.Errorf("invalid operation '%s'", o)
 	}
-	m.Set(module.Id, module)
-	return nil
 }
 
 func (m *Modules) register(event bond.Msg) (res any, err error) {
@@ -41,10 +44,13 @@ func (m *Modules) register(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func LoadModules() (m *Modules) {
-	m = &Modules{}
-	m.raw = map[string]any{}
-	return m
+func (m *Modules) Register(module *models.Module) error {
+	err := module.Emplace()
+	if err != nil {
+		return err
+	}
+	m.Set(module.Id, module)
+	return nil
 }
 
 func (m *Modules) FetchAll() {
@@ -74,7 +80,8 @@ func (m *Modules) Compile() (es []models.Module, err error) {
 }
 
 func (m *Modules) Find(name string) *models.Module {
-	return m.get(name).(*models.Module)
+	get := m.get(name)
+	return get.(*models.Module)
 }
 
 func (m *Modules) Set(id string, module *models.Module) {

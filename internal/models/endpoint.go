@@ -5,6 +5,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 	"math/rand"
 	"time"
@@ -18,6 +19,55 @@ import (
 // 	m = &sync.RWMutex{}
 // }
 
+type Connection struct {
+	WS     *websocket.Conn
+	active *bool
+	edit   chan any
+	done   chan bool
+}
+
+func (c *Connection) Active() bool {
+	return *c.active
+}
+
+func (c *Connection) Send(body any) {
+	if c.Active() {
+		c.edit <- body
+	}
+}
+
+func NewConnection(ws *websocket.Conn) *Connection {
+	ch := make(chan any, 8)
+	d := make(chan bool)
+	a := true
+	c := &Connection{
+		WS:     ws,
+		edit:   ch,
+		done:   d,
+		active: &a,
+	}
+
+	return c
+}
+
+func (c *Connection) Close() {
+	close(c.edit)
+	a := false
+	c.active = &a
+}
+
+func (c *Connection) Watch() {
+	for a := range c.edit {
+		if c.WS == nil {
+			return
+		}
+		err := c.WS.WriteJSON(a)
+		if err != nil {
+			log.Err(err)
+		}
+	}
+}
+
 // Endpoint represents a client device connected to the UDAP network
 type Endpoint struct {
 	store.Persistent
@@ -26,15 +76,13 @@ type Endpoint struct {
 
 	Type string `json:"type"`
 
-	Remote *Remote `gorm:"-"`
-
 	Frequency int `json:"frequency" gorm:"default:3000"`
 
 	key string
 
-	registered bool
-
-	enrolledSince time.Time `gorm:"-"`
+	registered    bool
+	Connection    *Connection `json:"-" gorm:"-"`
+	enrolledSince time.Time   `gorm:"-"`
 }
 
 func (e *Endpoint) Compile() (a map[string]any) {
@@ -49,15 +97,24 @@ func (e *Endpoint) Compile() (a map[string]any) {
 	return a
 }
 
-func (e *Endpoint) Enroll() error {
+func (e *Endpoint) Enroll(ws *websocket.Conn) error {
 	err := store.DB.Model(&Endpoint{}).FirstOrCreate(&e).Error
 	if err != nil {
 		return err
 	}
-
+	ws.SetCloseHandler(e.closeHandler)
+	e.Connection = NewConnection(ws)
 	e.registered = true
 	e.enrolledSince = time.Now()
-	log.Log("%s: Enrolled (%s)", e.Name)
+	log.Log("Endpoint '%s' enrolled (%s)", e.Name, ws.LocalAddr())
+
+	return nil
+}
+
+func (e *Endpoint) closeHandler(code int, text string) error {
+	if e.Enrolled() {
+		e.Unenroll()
+	}
 
 	return nil
 }
@@ -100,5 +157,6 @@ func (e *Endpoint) Fetch() error {
 
 func (e *Endpoint) Unenroll() {
 	e.registered = false
-	log.Log("%s: Unenrolled... (%s)", e.Name, time.Since(e.enrolledSince).String())
+	e.Connection.Close()
+	log.Log("Endpoint '%s' unenrolled (%s)", e.Name, time.Since(e.enrolledSince).String())
 }

@@ -4,7 +4,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -23,9 +22,15 @@ type Endpoints struct {
 	bond        *bond.Bond
 	router      chi.Router
 	connections sync.Map
+	ctrl        *controller.Controller
 }
 
-func (e *Endpoints) Setup(bond *bond.Bond) error {
+func (e *Endpoints) Name() string {
+	return "endpoints"
+}
+
+func (e *Endpoints) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
+	e.ctrl = ctrl
 	e.bond = bond
 	e.router = chi.NewRouter()
 
@@ -41,6 +46,21 @@ func (e *Endpoints) Setup(bond *bond.Bond) error {
 
 	e.router.Get("/socket/{token}", e.socketAdaptor)
 	e.router.Get("/endpoints/register/{accessKey}", e.registerEndpoint)
+
+	return nil
+}
+
+func (e *Endpoints) entityBroadcast(ent models.Entity) error {
+	response := controller.Response{
+		Status:    "success",
+		Operation: "entity",
+		Body:      ent,
+	}
+
+	err := e.Broadcast(response)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -83,47 +103,61 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		log.Err(err)
 		return
 	}
-	cn := NewConnection(c)
-	e.connections.Store(id, cn)
-
-	c.SetCloseHandler(func(code int, text string) error {
-		andDelete, loaded := e.connections.LoadAndDelete(id)
-		if loaded {
-			close(andDelete.(*Connection).edit)
-		}
-		return nil
-	})
-
-	err = e.HandleRequest(cn)
+	ep := e.ctrl.Endpoints.Find(id)
+	err = ep.Enroll(c)
 	if err != nil {
-		log.Err(err)
+		return
 	}
 
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		ep.Connection.Watch()
+	}()
+
+	go func() {
+		defer wg.Done()
+		for {
+			_, out, err := ep.Connection.WS.ReadMessage()
+			if err != nil {
+				return
+			}
+
+			_, err = e.bond.CmdJSON(out)
+			if err != nil {
+				return
+			}
+		}
+	}()
+	wg.Wait()
 }
 
-func (e *Endpoints) HandleRequest(connection *Connection) error {
-	for {
-		_, out, err := connection.WS.ReadMessage()
-		if err != nil {
-			return err
+func (e *Endpoints) Broadcast(body any) error {
+	for _, s := range e.ctrl.Endpoints.Keys() {
+		endpoint := e.ctrl.Endpoints.Find(s)
+		if endpoint.Enrolled() {
+			endpoint.Connection.Send(body)
 		}
-
-		t, err := e.bond.CmdJSON(out)
-		if err != nil {
-			return err
-		}
-		fmt.Println(t)
-
 	}
+	return nil
 }
 
 func (e *Endpoints) Run() error {
 	log.Log("Endpoints: Listening")
-	err := http.ListenAndServe(":3020", e.router)
+	entities, err := e.ctrl.Entities.Compile()
+	for _, entity := range entities {
+		err = entity.OnChange(e.entityBroadcast)
+		if err != nil {
+			return err
+		}
+	}
+	err = http.ListenAndServe(":3020", e.router)
 	if err != nil {
 		log.Err(err)
 	}
-	log.Log("Remote: Exiting")
+	log.Log("Get: Exiting")
 	return nil
 }
 
@@ -157,104 +191,58 @@ type Identifier struct {
 	Id string `json:"id"`
 }
 
-// Metadata sends metadata back to an enrolled endpoint
-func (e *Endpoints) metadata(msg bond.Msg) error {
-	// err := e.Metadata(msg.Id)
-	// if err != nil {
-	// 	return err
-	// }
-	return nil
-}
+func (e *Endpoints) Metadata() error {
 
-type Connection struct {
-	WS   *websocket.Conn
-	edit chan any
-}
-
-func (c *Connection) Send(body any) {
-	c.edit <- body
-}
-
-func NewConnection(ws *websocket.Conn) *Connection {
-	ch := make(chan any, 16)
-	c := &Connection{
-		WS:   ws,
-		edit: ch,
-	}
-	go c.Watch()
-
-	return c
-}
-
-func (c *Connection) Watch() {
-	for msg := range c.edit {
-		if c.WS == nil {
-			continue
-		}
-		err := c.WS.WriteJSON(msg)
-		if err != nil {
-			log.Err(err)
-		}
-	}
-	c.WS = nil
-}
-
-func (e *Endpoints) Metadata(id string, connection *Connection) error {
-
-	entities, err := e.bond.Send("entity", "compile", nil)
+	entities, err := e.ctrl.Entities.Compile()
 	if err != nil {
 		return err
 	}
 
-	endpoints, err := e.bond.Send("endpoint", "compile", nil)
+	endpoints, err := e.ctrl.Endpoints.Compile()
 	if err != nil {
 		return err
 	}
 
-	devices, err := e.bond.Send("device", "compile", nil)
+	devices, err := e.ctrl.Devices.Compile()
 	if err != nil {
 		return err
 	}
 
-	networks, err := e.bond.Send("network", "compile", nil)
+	networks, err := e.ctrl.Networks.Compile()
 	if err != nil {
 		return err
 	}
 
 	var logs []models.Log
-	err = store.DB.Model(&models.Log{}).Order("created_at desc").Limit(40).Find(&logs).Error
+	err = store.DB.Model(&models.Log{}).Order("created_at desc").Limit(100).Find(&logs).Error
 	if err != nil {
 		return err
 	}
-
-	mid := models.Endpoint{}
-	mid.Id = id
 
 	response := controller.Response{
 		Status:    "success",
 		Operation: "metadata",
 		Body: controller.Metadata{
 			Logs:      logs,
-			Entities:  entities.([]models.Entity),
-			Devices:   devices.([]models.Device),
-			Networks:  networks.([]models.Network),
-			Endpoints: endpoints.([]models.Endpoint),
-			Endpoint:  mid,
+			Endpoints: endpoints,
+			Entities:  entities,
+			Devices:   devices,
+			Networks:  networks,
 		},
 	}
 
-	connection.Send(response)
+	err = e.Broadcast(response)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (e *Endpoints) Update() error {
-	e.connections.Range(func(key, value any) bool {
-		err := e.Metadata(key.(string), value.(*Connection))
-		if err != nil {
-			log.Err(err)
-		}
-		return true
-	})
+	err := e.Metadata()
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -2,84 +2,58 @@
 
 package models
 
-import (
-	"encoding/json"
+// Core attributes
+var (
+	On = &Attribute{
+		Key: "on",
+	}
+	Dim = &Attribute{
+		Key: "dim",
+	}
+	Hue = &Attribute{
+		Key: "hue",
+	}
+	Cct = &Attribute{
+		Key: "cct",
+	}
 )
 
-type Mono struct {
-	Value float32 `json:"value"`
-}
-
-func (m *Mono) Marshal() []byte {
-	marshal, err := json.Marshal(m)
-	if err != nil {
-		return nil
-	}
-	return marshal
-}
-
-func (m *Mono) Unmarshal(data []byte) {
-	err := json.Unmarshal(data, m)
-	if err != nil {
-		return
-	}
-}
-
-func NewDimmer(name string, module string) *Entity {
-	mono := Mono{
-		Value: 0,
-	}
+func NewMediaEntity(name string, module string) *Entity {
 	e := Entity{
-		Name:   name,
-		Type:   "dimmer",
-		Module: module,
-		State:  mono.Marshal(),
+		Name:       name,
+		Type:       "media",
+		Attributes: []*Attribute{},
+		Module:     module,
 	}
 	return &e
 }
 
-type Rgbw struct {
-	R   int `json:"r"`
-	G   int `json:"g"`
-	B   int `json:"b"`
-	CCT int `json:"cct"`
-}
-
-func (r *Rgbw) Unmarshal(data []byte) {
-	err := json.Unmarshal(data, r)
-	if err != nil {
-		return
-	}
-}
-
-func (r *Rgbw) Marshal() []byte {
-	marshal, err := json.Marshal(r)
-	if err != nil {
-		return nil
-	}
-	return marshal
-}
-
-func NewWildcardDevice(name string, module string, state State) *Entity {
-
+func NewEntity(name string, module string) *Entity {
 	e := Entity{
-		Name:   name,
-		Type:   "wildcard",
-		Module: module,
-		State:  json.RawMessage(state),
+		Name:       name,
+		Type:       "switch",
+		Module:     module,
+		Attributes: []*Attribute{},
+	}
+	return &e
+}
+
+func NewSpectrum(name string, module string) *Entity {
+	e := Entity{
+		Name:       name,
+		Type:       "spectrum",
+		Module:     module,
+		Attributes: []*Attribute{On, Dim, Hue, Cct},
 	}
 	return &e
 }
 
 func NewSwitch(name string, module string) *Entity {
-	mono := Mono{
-		Value: 0,
-	}
 	e := Entity{
-		Name:   name,
-		Type:   "switch",
-		Module: module,
-		State:  mono.Marshal(),
+		Name:       name,
+		Type:       "switch",
+		Module:     module,
+		Attributes: []*Attribute{On},
 	}
 	return &e
 }

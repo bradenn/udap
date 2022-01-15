@@ -2,7 +2,10 @@
 
 package plugin
 
-import "udap/internal/bond"
+import (
+	"udap/internal/bond"
+	"udap/internal/controller"
+)
 
 type Config struct {
 	Name        string `json:"name"`
@@ -15,10 +18,12 @@ type Config struct {
 type Module struct {
 	Config
 	*bond.Bond
+	*controller.Controller
 }
 
 // Connect is called once at the launch of the module
-func (m *Module) Connect(b *bond.Bond) error {
+func (m *Module) Connect(ctrl *controller.Controller, b *bond.Bond) error {
 	m.Bond = b
+	m.Controller = ctrl
 	return nil
 }

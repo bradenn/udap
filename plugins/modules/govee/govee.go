@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gerow/go-color"
+	_ "github.com/gerow/go-color"
 	"net/http"
 	"os"
 	"udap/internal/log"
@@ -17,13 +19,6 @@ type Color struct {
 	R int `json:"r"`
 	B int `json:"b"`
 	G int `json:"g"`
-}
-
-type Property struct {
-	Online     bool   `json:"online,omitempty"`
-	PowerState string `json:"powerState,omitempty"`
-	Brightness int    `json:"brightness,omitempty"`
-	Color      Color  `json:"color,omitempty"`
 }
 
 type DevicesResponse struct {
@@ -141,7 +136,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	return r.Data, nil
 }
 
-func (g *Govee) getState(device Device) (models.State, error) {
+func (g *Govee) getAllStates(device Device, mode string) (any, error) {
 	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
 
 	request, err := g.sendApiRequest("GET", path, nil)
@@ -155,50 +150,119 @@ func (g *Govee) getState(device Device) (models.State, error) {
 		log.Err(err)
 		return nil, err
 	}
-	state := models.LightState{}
 	for _, value := range a.Properties {
 		for s, message := range value {
-
 			switch s {
 			case "powerState":
-				var st string
-				err = json.Unmarshal(message, &st)
-				if err != nil {
-					return nil, err
+				if mode == "on" {
+					var st string
+					err = json.Unmarshal(message, &st)
+					if err != nil {
+						return nil, err
+					}
+					return st == "on", nil
 				}
-				state.Power = st
 			case "colorTem":
-				var out int
-				err = json.Unmarshal(message, &out)
-				if err != nil {
-					return nil, err
+				if mode == "cct" {
+					var out int
+					err = json.Unmarshal(message, &out)
+					if err != nil {
+						return nil, err
+					}
+					return out, nil
 				}
-				state.CCT = out
 			case "brightness":
-				var out int
-				err = json.Unmarshal(message, &out)
-				if err != nil {
-					return nil, err
+				if mode == "dim" {
+					var out int
+					err = json.Unmarshal(message, &out)
+					if err != nil {
+						return nil, err
+					}
+					return out, nil
 				}
-				state.Level = out
 			case "color":
-				var col Color
-				err = json.Unmarshal(message, &col)
-				if err != nil {
-					return nil, err
+				if mode == "hue" {
+					var col Color
+					err = json.Unmarshal(message, &col)
+					if err != nil {
+						return nil, err
+					}
+					rg := color.RGB{R: float64(col.R), G: float64(col.G), B: float64(col.B)}
+					h := rg.ToHSL()
+					return int(h.H), nil
 				}
-				state.Red = col.R
-				state.Green = col.G
-				state.Blue = col.B
 			}
 		}
 	}
-	marshal, err := json.Marshal(state)
+
+	return nil, nil
+}
+
+func (g *Govee) getSingleState(device Device, mode string) (any, error) {
+	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
+
+	request, err := g.sendApiRequest("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return marshal, nil
+	a := StateResponse{}
+	err = json.Unmarshal(request, &a)
+	if err != nil {
+		log.Err(err)
+		return nil, err
+	}
+
+	for _, value := range a.Properties {
+		for s, message := range value {
+			switch s {
+			case "powerState":
+				if mode == "on" {
+					var st string
+					err = json.Unmarshal(message, &st)
+					if err != nil {
+						return nil, err
+					}
+					return st == "on", nil
+				}
+				continue
+			case "colorTem":
+				if mode == "cct" {
+					var out int
+					err = json.Unmarshal(message, &out)
+					if err != nil {
+						return nil, err
+					}
+					return out, nil
+				}
+				continue
+			case "brightness":
+				if mode == "dim" {
+					var out int
+					err = json.Unmarshal(message, &out)
+					if err != nil {
+						return nil, err
+					}
+					return out, nil
+				}
+				continue
+			case "color":
+				if mode == "hue" {
+					var col Color
+					err = json.Unmarshal(message, &col)
+					if err != nil {
+						return nil, err
+					}
+					rg := color.RGB{R: float64(col.R), G: float64(col.G), B: float64(col.B)}
+					h := rg.ToHSL()
+					return int(h.H), nil
+				}
+				continue
+			}
+		}
+	}
+
+	return nil, nil
 }
 
 func (g *Govee) control(device Device, cmd Cmd) error {
@@ -228,51 +292,83 @@ func (g *Govee) control(device Device, cmd Cmd) error {
 	return nil
 }
 
-func (g *Govee) setState(device Device, state models.LightState) error {
-	switch state.Mode {
+func (g *Govee) setState(device Device, mode string, value any) error {
+	switch mode {
 	case "cct":
 		cct := Cmd{
 			Name:  "colorTem",
-			Value: state.CCT,
+			Value: value,
 		}
 		err := g.control(device, cct)
 		if err != nil {
 			return err
 		}
-	case "power":
-		cct := Cmd{
+	case "on":
+		var res bool
+		err := json.Unmarshal(value.(json.RawMessage), &res)
+		if err != nil {
+			return err
+		}
+		ns := "off"
+		if res {
+			ns = "on"
+		}
+		cmd := Cmd{
 			Name:  "turn",
-			Value: state.Power,
+			Value: ns,
 		}
-		err := g.control(device, cct)
+		err = g.control(device, cmd)
 		if err != nil {
 			return err
 		}
-	case "brightness":
-		cct := Cmd{
+	case "dim":
+		cmd := Cmd{
 			Name:  "brightness",
-			Value: state.Level,
+			Value: value,
 		}
-		err := g.control(device, cct)
+		err := g.control(device, cmd)
 		if err != nil {
 			return err
 		}
-	case "color":
-		color := Cmd{
+	case "hue":
+		var a int
+		err := json.Unmarshal(value.(json.RawMessage), &a)
+		if err != nil {
+			return err
+		}
+		h := color.HSL{
+			H: float64(a) / 360.0,
+			S: 1,
+			L: 0.5,
+		}
+		rgb := h.ToRGB()
+		c := Cmd{
 			Name: "color",
 			Value: Color{
-				R: state.Red,
-				B: state.Blue,
-				G: state.Green,
+				R: int(rgb.R),
+				B: int(rgb.G),
+				G: int(rgb.B),
 			},
 		}
-		err := g.control(device, color)
+		err = g.control(device, c)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (g *Govee) statePut(device Device, mode string) func(any) error {
+	return func(body any) error {
+		return g.setState(device, mode, body)
+	}
+}
+
+func (g *Govee) stateGet(device Device, mode string) func() (any, error) {
+	return func() (any, error) {
+		return g.getSingleState(device, mode)
+	}
 }
 
 func (g *Govee) Setup() (plugin.Config, error) {
@@ -284,21 +380,13 @@ func (g *Govee) Setup() (plugin.Config, error) {
 
 	for _, device := range devices {
 
-		state := models.LightState{
-			Power: "off",
-			Red:   0,
-			Green: 0,
-			Blue:  0,
-			Level: 0,
-			CCT:   5000,
+		s := models.NewSpectrum(device.DeviceName, g.Config.Name)
+		for _, attribute := range s.Attributes {
+			attribute.FnGet(g.stateGet(device, attribute.Key))
+			attribute.FnPut(g.statePut(device, attribute.Key))
 		}
-		e := models.NewWildcardDevice(device.DeviceName, g.Config.Name, models.State(state.JSON()))
 
-		err = e.Handlers(g.Tx(device), g.Rx(device))
-		if err != nil {
-			return plugin.Config{}, err
-		}
-		_, err = g.Send("entity", "register", e)
+		_, err = g.Entities.Register(s)
 		if err != nil {
 			return plugin.Config{}, err
 		}
@@ -309,58 +397,10 @@ func (g *Govee) Setup() (plugin.Config, error) {
 }
 
 func (g *Govee) Update() error {
+
 	return nil
 }
 
 func (g *Govee) Run() error {
 	return nil
 }
-
-func (g *Govee) Tx(device Device) models.Tx {
-	return func(state models.State) error {
-		a := models.LightState{}
-		err := json.Unmarshal(state, &a)
-		if err != nil {
-			return err
-		}
-		err = g.setState(device, a)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-}
-
-func (g *Govee) Rx(device Device) models.Rx {
-	return func() models.State {
-		state, err := g.getState(device)
-		if err != nil {
-			return nil
-		}
-		return state
-	}
-}
-
-// func (s *Govee) Tx(channel int) models.Tx {
-// 	return func(state models.State) error {
-// 		mono := models.Mono{}
-// 		err := json.Unmarshal(state, &mono)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		s.stateMutex.Lock()
-// 		s.state[channel] = int(mono.Value * 255.0)
-// 		s.stateMutex.Unlock()
-// 		return nil
-// 	}
-// }
-//
-// func (s *Govee) Rx(channel int) models.Rx {
-// 	return func() models.State {
-// 		mono := models.Mono{}
-// 		s.stateMutex.Lock()
-// 		mono.Value = float32(s.state[channel]) / 255.0
-// 		s.stateMutex.Unlock()
-// 		return mono.Marshal()
-// 	}
-// }
