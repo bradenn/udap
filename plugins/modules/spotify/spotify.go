@@ -47,8 +47,8 @@ func init() {
 	Module.Config = config
 }
 
-func (s *Spotify) PutAttribute(key string) func(any) error {
-	return func(a any) error {
+func (s *Spotify) PutAttribute(key string) models.FuncPut {
+	return func(a models.Attribute) error {
 		switch key {
 		case "current":
 			break
@@ -57,24 +57,34 @@ func (s *Spotify) PutAttribute(key string) func(any) error {
 	}
 }
 
-func (s *Spotify) GetAttribute(key string) func() (any, error) {
-	return func() (any, error) {
+func (s *Spotify) GetAttribute(key string) models.FuncGet {
+	return func(a models.Attribute) (string, error) {
 		switch key {
 		case "current":
 			return s.api.CurrentSong()
 		}
-		return nil, nil
+		return "", nil
 	}
 }
 
 func (s *Spotify) Setup() (plugin.Config, error) {
-	e := models.NewMediaEntity("Get", "spotify")
-	for _, attribute := range e.Attributes {
-		attribute.FnGet(s.GetAttribute(attribute.Key))
-		attribute.FnPut(s.PutAttribute(attribute.Key))
-	}
+	e := models.NewMediaEntity("Remote", "spotify")
 
 	_, err := s.Entities.Register(e)
+	if err != nil {
+		return plugin.Config{}, err
+	}
+
+	playing := models.Attribute{
+		Key:    "current",
+		Value:  "false",
+		Type:   "toggle",
+		Entity: e.Id,
+	}
+	playing.FnGet(s.GetAttribute(playing.Key))
+	playing.FnPut(s.PutAttribute(playing.Key))
+
+	err = s.Attributes.Register(&playing)
 	if err != nil {
 		return plugin.Config{}, err
 	}

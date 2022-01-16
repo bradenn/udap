@@ -67,8 +67,8 @@ func log(logType LogType, format string, args ...interface{}) {
 		ln = false
 		break
 	case event:
-		prefix = fmt.Sprintf("%s[CHAN]%s", Reset+BoldGreen, Reset)
-		ln = false
+		prefix = fmt.Sprintf("%s[EVENT]%s", Reset+BoldGreen, Faint)
+		ln = true
 		break
 	case critical:
 		prefix = fmt.Sprintf("%s[ACTION REQUIRED]%s", Reset+BoldMagenta, Reset)
@@ -116,7 +116,7 @@ func Log(format string, args ...interface{}) {
 }
 
 func Event(format string, args ...interface{}) {
-	log(module, format, args...)
+	log(event, format, args...)
 }
 
 func Sherlock(format string, args ...interface{}) {

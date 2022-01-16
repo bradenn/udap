@@ -39,28 +39,10 @@ type PolyBuffer struct {
 	data sync.Map
 }
 
-func (p *PolyBuffer) Put(id string, data any) error {
-	p.data.Store(id, data)
-	return nil
-}
-
-func (p *PolyBuffer) Get(id string) (any, error) {
-	res, ok := p.data.Load(id)
-	if !ok {
-		return res, fmt.Errorf("item does not exist at this address")
-	}
-	return res, nil
-}
-
-func (p *PolyBuffer) load() {
-	p.data = sync.Map{}
-}
-
 func (p *PolyBuffer) set(id string, data any) {
-	if p.raw == nil {
-		p.raw = map[string]any{}
-	}
+
 	p.data.Store(id, data)
+
 }
 
 func (p *PolyBuffer) peek(name string) any {

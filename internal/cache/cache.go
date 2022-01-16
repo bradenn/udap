@@ -17,7 +17,7 @@ func init() {
 }
 
 func WatchFn(key string, fn func(string) error) {
-	log.Sherlock("Watching: %s", strings.ToLower(key))
+	log.Event("Watching: %s", strings.ToLower(key))
 	ps := Mem.Subscribe(memCtx, strings.ToLower(key))
 	_, err := ps.Receive(memCtx)
 	if err != nil {

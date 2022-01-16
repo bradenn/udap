@@ -4,10 +4,11 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"udap/internal/bond"
+	"udap/internal/cache"
 	"udap/internal/models"
-	"udap/internal/store"
 )
 
 type Entities struct {
@@ -18,8 +19,6 @@ func (e *Entities) Handle(event bond.Msg) (any, error) {
 	switch event.Operation {
 	case "compile":
 		return e.compile(event)
-	case "logs":
-		return e.logs(event)
 	case "register":
 		return e.register(event)
 	case "rename": // Alias
@@ -30,9 +29,7 @@ func (e *Entities) Handle(event bond.Msg) (any, error) {
 		return e.unlock(event)
 	case "icon":
 		return e.icon(event)
-	case "pull":
-		return e.pull(event)
-	case "find":
+	case "Find":
 		return e.find(event)
 	case "neural":
 		return e.neural(event)
@@ -40,11 +37,23 @@ func (e *Entities) Handle(event bond.Msg) (any, error) {
 		return e.predict(event)
 	case "attribute":
 		return e.attribute(event)
-	case "state":
-		return e.state(event)
-
 	}
 	return nil, nil
+}
+
+func (e *Entities) Observe(id string, fn func(attribute models.Entity) error) {
+	cache.WatchFn(fmt.Sprintf("entity.%s", id), func(s string) error {
+		entity := models.Entity{}
+		err := json.Unmarshal([]byte(s), &entity)
+		if err != nil {
+			return err
+		}
+		err = fn(entity)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (e *Entities) compile(event bond.Msg) (res any, err error) {
@@ -66,10 +75,6 @@ func (e *Entities) Compile() (res []models.Entity, err error) {
 	var entities []models.Entity
 	for _, k := range e.Keys() {
 		find := e.get(k).(*models.Entity)
-		err = find.Pull()
-		if err != nil {
-			continue
-		}
 		entities = append(entities, *find)
 	}
 
@@ -176,43 +181,31 @@ func (e *Entities) icon(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
+func (e *Entities) Attribute(id string, key string, value string) (res any, err error) {
+	err = cache.PutLn(value, "entity", id, "attribute", key)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (e *Entities) attribute(msg bond.Msg) (res any, err error) {
+	a := models.Attribute{}
+	err = json.Unmarshal([]byte(msg.Payload), &a)
+	if err != nil {
+		return nil, err
+	}
+	_, err = e.Attribute(a.Entity, a.Key, a.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
 func (e *Entities) Config(id string, data string) (res any, err error) {
 	entity := e.Find(id)
 	err = entity.ChangeConfig(data)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
-func (e *Entities) pull(event bond.Msg) (res any, err error) {
-	res, err = e.Pull(event.Id)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func (e *Entities) Pull(id string) (res string, err error) {
-	entity := e.Find(id)
-	err = entity.Pull()
-	if err != nil {
-		return "", err
-	}
-	return "", nil
-}
-
-func (e *Entities) State(id string, state string) (res any, err error) {
-	entity := e.Find(id)
-	err = entity.Push(state)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
-func (e *Entities) state(event bond.Msg) (res any, err error) {
-	_, err = e.State(event.Id, event.Payload)
 	if err != nil {
 		return nil, err
 	}
@@ -223,53 +216,14 @@ func LoadEntities() (m *Entities) {
 	m = &Entities{}
 	m.raw = map[string]any{}
 	m.data = sync.Map{}
-	m.FetchAll()
 	return m
 }
 
-func (e *Entities) FetchAll() {
-	var entities []*models.Entity
-	store.DB.Model(&models.Entity{}).Find(&entities)
-	for _, entity := range entities {
-		err := entity.Pull()
-		if err != nil {
-		}
-		e.set(entity.Id, entity)
-	}
-}
-
-func (e *Entities) PullAll() {
-	for _, k := range e.Keys() {
-		_, err := e.Pull(k)
-		if err != nil {
-			return
-		}
-	}
-}
-
 func (e *Entities) Find(name string) *models.Entity {
-	return e.get(name).(*models.Entity)
+	en := e.get(name).(*models.Entity)
+	return en
 }
 
 func (e *Entities) Set(id string, entity *models.Entity) {
 	e.set(id, entity)
-}
-func (e *Entities) Logs(id string) ([]models.Log, error) {
-	entity := e.Find(id)
-	return entity.Logs()
-}
-func (e *Entities) logs(msg bond.Msg) (any, error) {
-	var lgs []models.Log
-
-	err := store.DB.Model(&models.Log{}).Where("entity_id = ? AND cct <> 0", msg.Id).Find(&lgs).Error
-	return lgs, err
-}
-
-func (e *Entities) attribute(event bond.Msg) (any, error) {
-	entity := e.Find(event.Id)
-	err := entity.Push(event.Payload)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
 }

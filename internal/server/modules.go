@@ -96,15 +96,15 @@ func (m *Modules) Run() error {
 				log.Err(err)
 				return
 			}
-
-			log.Log("Module '%s' v%s running.", c.Name, c.Version)
+			start := time.Now()
+			log.Event("Module '%s' v%s running.", c.Name, c.Version)
 			// Attempt to run the module
 			err = p.Run()
 			if err != nil {
 				log.Err(err)
 				return
 			}
-
+			log.Event("Module '%s' exited. (%s)", c.Name, time.Since(start))
 		}(module)
 	}
 	wg.Wait()
@@ -131,9 +131,10 @@ func (m *Modules) buildModuleDir(dir string) error {
 			if err = m.buildFromSource(path); err != nil {
 				// If an error occurs, print it to console
 				log.ErrF(err, "failed to build module candidate '%s'", path)
-			} else {
-
+				return
 			}
+
+			log.Event("Module '%s' compiled.", filepath.Base(path))
 		}(p)
 	}
 	wg.Wait()

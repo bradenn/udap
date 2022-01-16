@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/jaedle/golang-tplink-hs100/pkg/configuration"
 	"github.com/jaedle/golang-tplink-hs100/pkg/hs100"
 	"strings"
@@ -61,12 +60,20 @@ func (h *HS100) Update() error {
 
 		h.devices[name] = device
 		newSwitch := models.NewSwitch(strings.ToLower(name), "hs100")
-		for _, attribute := range newSwitch.Attributes {
-			attribute.FnGet(Rx(device))
-			attribute.FnPut(Tx(device))
-		}
 
 		_, err = h.Entities.Register(newSwitch)
+		if err != nil {
+			return err
+		}
+		on := models.Attribute{
+			Key:    "on",
+			Value:  "false",
+			Type:   "toggle",
+			Entity: newSwitch.Id,
+		}
+		on.FnGet(Rx(device))
+		on.FnPut(Tx(device))
+		err = h.Attributes.Register(&on)
 		if err != nil {
 			return err
 		}
@@ -80,13 +87,9 @@ func (h *HS100) Run() (err error) {
 	return h.Update()
 }
 
-func Tx(device *hs100.Hs100) func(any) error {
-	return func(state any) error {
-		res, ok := state.(bool)
-		if !ok {
-			return fmt.Errorf("invalid state type")
-		}
-		if res {
+func Tx(device *hs100.Hs100) models.FuncPut {
+	return func(a models.Attribute) error {
+		if a.AsBool() {
 			err := device.TurnOn()
 			if err != nil {
 				return err
@@ -101,12 +104,15 @@ func Tx(device *hs100.Hs100) func(any) error {
 	}
 }
 
-func Rx(device *hs100.Hs100) func() (any, error) {
-	return func() (any, error) {
+func Rx(device *hs100.Hs100) models.FuncGet {
+	return func(a models.Attribute) (string, error) {
 		on, err := device.IsOn()
 		if err != nil {
-			return false, err
+			return "false", err
 		}
-		return on, nil
+		if on {
+			return "true", nil
+		}
+		return "false", nil
 	}
 }

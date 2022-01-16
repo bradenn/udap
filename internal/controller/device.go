@@ -3,6 +3,7 @@
 package controller
 
 import (
+	"sync"
 	"udap/internal/bond"
 	"udap/internal/models"
 	"udap/internal/store"
@@ -45,7 +46,7 @@ func (d *Devices) Find(name string) *models.Device {
 
 func LoadDevices() (m *Devices) {
 	m = &Devices{}
-	m.raw = map[string]any{}
+	m.data = sync.Map{}
 	m.FetchAll()
 	return m
 }

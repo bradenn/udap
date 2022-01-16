@@ -50,6 +50,20 @@ func (e *Endpoints) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	return nil
 }
 
+func (e *Endpoints) attributeBroadcast(ent models.Attribute) error {
+	response := controller.Response{
+		Status:    "success",
+		Operation: "attribute",
+		Body:      ent,
+	}
+
+	err := e.Broadcast(response)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (e *Endpoints) entityBroadcast(ent models.Entity) error {
 	response := controller.Response{
 		Status:    "success",
@@ -94,7 +108,7 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		log.Err(err)
 		return
 	}
-	// Find the auth token in the url params
+	// find the auth token in the url params
 	tokenParam := chi.URLParam(req, "token")
 	// Defer the termination of the session to function return
 
@@ -146,14 +160,8 @@ func (e *Endpoints) Broadcast(body any) error {
 
 func (e *Endpoints) Run() error {
 	log.Log("Endpoints: Listening")
-	entities, err := e.ctrl.Entities.Compile()
-	for _, entity := range entities {
-		err = entity.OnChange(e.entityBroadcast)
-		if err != nil {
-			return err
-		}
-	}
-	err = http.ListenAndServe(":3020", e.router)
+
+	err := http.ListenAndServe(":3020", e.router)
 	if err != nil {
 		log.Err(err)
 	}
@@ -194,8 +202,19 @@ type Identifier struct {
 func (e *Endpoints) Metadata() error {
 
 	entities, err := e.ctrl.Entities.Compile()
-	if err != nil {
-		return err
+	for _, entity := range entities {
+		err = e.entityBroadcast(entity)
+		if err != nil {
+			return err
+		}
+	}
+
+	attributes := e.ctrl.Attributes.Compile()
+	for _, attribute := range attributes {
+		err = e.attributeBroadcast(attribute)
+		if err != nil {
+			return err
+		}
 	}
 
 	endpoints, err := e.ctrl.Endpoints.Compile()
@@ -213,19 +232,11 @@ func (e *Endpoints) Metadata() error {
 		return err
 	}
 
-	var logs []models.Log
-	err = store.DB.Model(&models.Log{}).Order("created_at desc").Limit(100).Find(&logs).Error
-	if err != nil {
-		return err
-	}
-
 	response := controller.Response{
 		Status:    "success",
 		Operation: "metadata",
 		Body: controller.Metadata{
-			Logs:      logs,
 			Endpoints: endpoints,
-			Entities:  entities,
 			Devices:   devices,
 			Networks:  networks,
 		},

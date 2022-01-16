@@ -3,42 +3,71 @@
 package models
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
-	"udap/internal/store"
+	"strings"
+	"time"
+	"udap/internal/cache"
 )
 
 type FuncPut func(Attribute) error
 type FuncGet func(Attribute) (string, error)
 
 type Attribute struct {
-	store.Persistent
-	EntityId string `json:"entity_id"`
-	Key      string `json:"key"`
-	Value    string `json:"value" gorm:"-"`
-	put      FuncPut
-	get      FuncGet
+	Updated time.Time `json:"updated"`
+	Entity  string    `json:"entity"`
+	Key     string    `json:"key"`
+	Value   string    `json:"value"`
+	Type    string    `json:"type"`
+	put     FuncPut
+	get     FuncGet
 }
 
-func (a *Attribute) Get() error {
-	if a.get == nil {
-		return fmt.Errorf("attribute disconnected from entity module")
-	}
-	res, err := a.get(*a)
+func (a *Attribute) Save() error {
+	ctx := context.Background()
+	data, err := json.Marshal(a)
 	if err != nil {
 		return err
 	}
-	a.Value = res
-	return nil
+	return cache.Mem.Set(ctx, strings.ToLower(a.Path()), string(data), 0).Err()
 }
 
-func (a *Attribute) Put(body string) error {
-	a.Value = body
+func (a *Attribute) Publish() error {
+	ctx := context.Background()
+	data, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
+	return cache.Mem.Publish(ctx, strings.ToLower(a.Path()), string(data)).Err()
+}
+
+func (a *Attribute) Retrieve() error {
+	ctx := context.Background()
+	result, err := cache.Mem.Get(ctx, strings.ToLower(a.Path())).Result()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(result), a)
+}
+
+func (a *Attribute) Path() string {
+	return fmt.Sprintf("entity.%s.attribute.%s", a.Entity, a.Key)
+}
+
+func (a *Attribute) Request(val string) error {
+
+	if a.put == nil {
+		return fmt.Errorf("attribute put function not connected")
+	}
+	a.Value = val
 	err := a.put(*a)
 	if err != nil {
 		return err
 	}
-	a.Value = body
+
+	a.Updated = time.Now()
 	return nil
 }
 
@@ -72,4 +101,42 @@ func (a *Attribute) AsBool() bool {
 		return false
 	}
 	return parsed
+}
+
+func NewMediaEntity(name string, module string) *Entity {
+	e := Entity{
+		Name:   name,
+		Type:   "media",
+		Module: module,
+	}
+	return &e
+}
+
+func NewEntity(name string, module string) *Entity {
+	e := Entity{
+		Name:   name,
+		Type:   "switch",
+		Module: module,
+	}
+	return &e
+}
+
+func NewSpectrum(name string, module string) *Entity {
+
+	e := Entity{
+		Name:   name,
+		Type:   "spectrum",
+		Module: module,
+	}
+	return &e
+}
+
+func NewSwitch(name string, module string) *Entity {
+
+	e := Entity{
+		Name:   name,
+		Type:   "switch",
+		Module: module,
+	}
+	return &e
 }

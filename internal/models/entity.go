@@ -5,46 +5,28 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"gorm.io/gorm"
 	"strings"
 	"time"
 	"udap/internal/cache"
 	"udap/internal/store"
 )
 
-type iEntity interface {
-	GetAttributes() ([]Attribute, error)
-	SetAttribute(key string, value Attribute) error
-	GetAttribute(key string) (Attribute, error)
-}
-
 type Entity struct {
 	store.Persistent
-	LastPoll   time.Time    `json:"lastPoll"`
-	Name       string       `gorm:"unique" json:"name"`               // Given name from module
-	Alias      string       `json:"alias"`                            // Name from users
-	Type       string       `json:"type"`                             // Type of entity {Light, Sensor, Etc}
-	Module     string       `json:"module"`                           // Parent Module name
-	Neural     string       `json:"neural" gorm:"default:'inactive'"` // Parent Module name
-	Locked     bool         `json:"locked"`                           // Is the Entity state locked?
-	Protocol   string       `json:"protocol"`                         // scalar
-	Attributes []*Attribute `json:"attributes" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:entity_id"`
-	Icon       string       `json:"icon" gorm:"default:'􀛮'"` // The icon to represent this entity
-	Frequency  int          `json:"frequency" gorm:"default:3000"`
-	Predicted  string       `gorm:"-" json:"predicted"` // scalar
-	State      string       `json:"state"`
-	Config     string       `json:"config"`
-	Live       bool         `gorm:"-" json:"live"`
-}
-
-func (e *Entity) BeforeCreate(tx *gorm.DB) (err error) {
-
-	return
-}
-
-func (e *Entity) AfterFind(tx *gorm.DB) (err error) {
-
-	return
+	LastPoll  time.Time `json:"lastPoll"`
+	Name      string    `gorm:"unique" json:"name"`               // Given name from module
+	Alias     string    `json:"alias"`                            // Name from users
+	Type      string    `json:"type"`                             // Type of entity {Light, Sensor, Etc}
+	Module    string    `json:"module"`                           // Parent Module name
+	Neural    string    `json:"neural" gorm:"default:'inactive'"` // Parent Module name
+	Locked    bool      `json:"locked"`                           // Is the Entity state locked?
+	Protocol  string    `json:"protocol"`                         // scalar
+	Icon      string    `json:"icon" gorm:"default:'􀛮'"`          // The icon to represent this entity
+	Frequency int       `json:"frequency" gorm:"default:3000"`
+	Predicted string    `gorm:"-" json:"predicted"` // scalar
+	State     string    `json:"state"`
+	Config    string    `json:"config"`
+	Live      bool      `gorm:"-" json:"live"`
 }
 
 func (e *Entity) Unlock() error {
@@ -80,6 +62,10 @@ func (e *Entity) ChangeConfig(value string) error {
 	return nil
 }
 
+func (e *Entity) Pull() error {
+	return e.writeCache()
+}
+
 func (e *Entity) ChangeNeural(value string) error {
 	e.Neural = value
 	err := e.update()
@@ -95,22 +81,6 @@ func (e *Entity) ChangeIcon(icon string) error {
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func (e *Entity) OnChange(fn func(entity Entity) error) error {
-	cache.WatchFn(fmt.Sprintf("entity.%s", e.Id), func(s string) error {
-		p := Entity{}
-		err := json.Unmarshal([]byte(s), &p)
-		if err != nil {
-			return err
-		}
-		err = fn(p)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
 	return nil
 }
 
@@ -148,18 +118,6 @@ func (e *Entity) Find() error {
 // Path attempts to locate
 func (e *Entity) Path() string {
 	return strings.ToLower(fmt.Sprintf("%s.%s", e.Module, e.Name))
-}
-
-func (e *Entity) pull() error {
-	for _, attribute := range e.Attributes {
-		if attribute.Key == "on" {
-			err := attribute.Get()
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 func (e *Entity) Emplace() error {
@@ -205,11 +163,12 @@ func (e *Entity) writeCache() error {
 	if marshal == nil {
 		return nil
 	}
+	e.UpdatedAt = time.Now()
 	err = cache.PutLn(string(marshal), "entity", e.Id)
 	if err != nil {
 		return err
 	}
-	e.UpdatedAt = time.Now()
+
 	return nil
 }
 
@@ -226,68 +185,9 @@ func (e *Entity) readCache() error {
 		}
 		return nil
 	}
-	err = json.Unmarshal([]byte(s), &e)
+	err = json.Unmarshal([]byte(s), e)
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-type Tag struct {
-	Attribute string          `json:"attribute"`
-	Value     json.RawMessage `json:"value"`
-}
-
-func (e *Entity) Push(state string) error {
-	t := Tag{}
-	err := json.Unmarshal([]byte(state), &t)
-	if err != nil {
-		return err
-	}
-
-	for _, attribute := range e.Attributes {
-		if strings.ToLower(attribute.Key) == strings.ToLower(t.Attribute) {
-			err = attribute.Put(t.Value)
-			if err != nil {
-				return err
-			}
-			err = e.writeCache()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (e *Entity) Logs() ([]Log, error) {
-	var lgs []Log
-	err := store.DB.Model(&Log{}).Where("entity_id = ? AND cct <> 0", e.Id).Find(&lgs).Error
-	if err != nil {
-		return nil, err
-	}
-	return lgs, nil
-}
-
-func (e *Entity) timestamp() {
-	e.LastPoll = time.Now()
-}
-
-func (e *Entity) coolDown() bool {
-	return time.Since(e.LastPoll) < time.Millisecond*time.Duration(e.Frequency)
-}
-
-func (e *Entity) Pull() error {
-	if e.coolDown() {
-		return nil
-	}
-
-	e.timestamp()
-	err := e.pull()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }

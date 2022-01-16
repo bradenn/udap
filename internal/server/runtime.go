@@ -58,9 +58,9 @@ func (r *Runtime) logRuntimeData() {
 
 func (r *Runtime) handleRequest() {
 	for msg := range r.eventHandler {
-		// start := time.Now()
+		start := time.Now()
 		msg.Respond(r.ctrl.Handle(msg))
-		// log.Event("EVENT: %s.%s (%s)", msg.Target, msg.Operation, time.Since(start))
+		log.Event("EVENT: %s.%s (%s)", msg.Target, msg.Operation, time.Since(start))
 	}
 }
 
@@ -80,19 +80,17 @@ func (r *Runtime) AddDaemons(daemon ...Daemon) {
 
 func (r *Runtime) SetupDaemons() (err error) {
 	b := bond.NewBond(r.eventHandler)
-	wg := sync.WaitGroup{}
-	wg.Add(len(r.daemons))
-	for i, d := range r.daemons {
-		go func(daemon Daemon, id int) {
-			defer wg.Done()
-			log.Log("Daemon '%s' loaded.", daemon.Name())
-			err = daemon.Setup(r.ctrl, b)
-			if err != nil {
-				return
-			}
-		}(d, i)
+
+	for _, d := range r.daemons {
+
+		log.Log("Daemon '%s' loaded.", d.Name())
+		err = d.Setup(r.ctrl, b)
+		if err != nil {
+			return
+		}
+
 	}
-	wg.Wait()
+
 	return nil
 }
 
@@ -246,8 +244,8 @@ func (r *Runtime) Run() (err error) {
 				log.ErrF(err, "runtime update error: %s")
 			}
 			d := time.Since(start)
-			log.Event("Tick: %.3d threads, %.2f%% load, %s", runtime.NumGoroutine(),
-				float64(d.Milliseconds())/delay, d.String())
+			// log.Event("Tick: %.3d threads, %.2f%% load, %s", runtime.NumGoroutine(),
+			// 	float64(d.Milliseconds())/delay, d.String())
 			select {
 			case <-time.After(time.Millisecond * time.Duration(delay)):
 				log.ErrF(fmt.Errorf("timed out main update loop"), "%s")
