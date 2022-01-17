@@ -98,7 +98,7 @@ func (b *Bond) send(target Msg) (any, error) {
 	case res, ok := <-c:
 		close(c)
 		if !ok {
-			return res.Body, nil
+			return nil, fmt.Errorf("somebody made a fucky-wucky")
 		}
 		return res.Body, nil
 	case <-time.After(2 * time.Second):

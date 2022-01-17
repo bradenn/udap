@@ -149,6 +149,20 @@ func MacFromIpv4(ipv4 string) (string, error) {
 	return "", nil
 }
 
+type System struct {
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Environment string `json:"environment"`
+	Ipv4        string `json:"ipv4"`
+	Ipv6        string `json:"ipv6"`
+	Hostname    string `json:"hostname"`
+	Mac         string `json:"mac"`
+	Go          string `json:"go"`
+	Cores       int    `json:"cores"`
+}
+
+var SystemInfo System
+
 func (r *Runtime) Load() (err error) {
 
 	ipv4 := GetOutboundIP().String()
@@ -173,8 +187,7 @@ func (r *Runtime) Load() (err error) {
 		Go:          runtime.Version(),
 		Cores:       runtime.NumCPU(),
 	}
-	fmt.Println(r.System)
-
+	SystemInfo = r.System
 	r.daemons = []Daemon{}
 
 	r.Modules = &Modules{}
@@ -201,18 +214,6 @@ type DaemonData struct {
 	Tick int
 }
 
-type System struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	Environment string `json:"environment"`
-	Ipv4        string `json:"ipv4"`
-	Ipv6        string `json:"ipv6"`
-	Hostname    string `json:"hostname"`
-	Mac         string `json:"mac"`
-	Go          string `json:"go"`
-	Cores       int    `json:"cores"`
-}
-
 // Run is called when the runtime is to begin accepting traffic
 func (r *Runtime) Run() (err error) {
 
@@ -236,7 +237,7 @@ func (r *Runtime) Run() (err error) {
 
 	go func() {
 		defer wg.Done()
-		delay := 1000.0
+		delay := 5000.0
 		for {
 			start := time.Now()
 			err = r.Update()

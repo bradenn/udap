@@ -10,6 +10,7 @@ import (
 	_ "github.com/gerow/go-color"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 	"udap/internal/log"
@@ -138,13 +139,12 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	return r.Data, nil
 }
 
-func (g *Govee) getAllStates(device Device, id string) (any, error) {
+func (g *Govee) getAllStates(device *Device, id string) (any, error) {
 	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
 	request, err := g.sendApiRequest("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	a := StateResponse{}
 	err = json.Unmarshal(request, &a)
 	if err != nil {
@@ -158,54 +158,49 @@ func (g *Govee) getAllStates(device Device, id string) (any, error) {
 				var st string
 				err = json.Unmarshal(message, &st)
 				if err != nil {
-					continue
+					log.Err(err)
 				}
 				val := "false"
 				if st == "on" {
 					val = "true"
 				}
-				err = g.Attributes.Put(id, "on", val)
+				err = g.Attributes.Update(id, "on", val)
 				if err != nil {
 					log.Err(err)
 				}
-
-				continue
 			case "colorTem":
-				err = g.Attributes.Put(id, "cct", string(message))
+				err = g.Attributes.Update(id, "cct", string(message))
 				if err != nil {
 					log.Err(err)
 				}
-				continue
 			case "brightness":
-				err = g.Attributes.Put(id, "dim", string(message))
+				err = g.Attributes.Update(id, "dim", string(message))
 				if err != nil {
 					log.Err(err)
 				}
-				continue
 			case "color":
 				var col Color
 				err = json.Unmarshal(message, &col)
 				if err != nil {
-					continue
+					log.Err(err)
 				}
 				rg := color.RGB{R: float64(col.R) / 255, G: float64(col.G) / 255, B: float64(col.B) / 255}
 				h := rg.ToHSL()
 				marshal, err := json.Marshal(int(h.H * 360))
 				if err != nil {
-					continue
+					log.Err(err)
 				}
-				err = g.Attributes.Put(id, "hue", string(marshal))
+				err = g.Attributes.Update(id, "hue", string(marshal))
 				if err != nil {
 					log.Err(err)
 				}
 			}
 		}
 	}
-
 	return nil, nil
 }
 
-func (g *Govee) getSingleState(device Device, att models.Attribute, mode string) (string, error) {
+func (g *Govee) getSingleState(device Device, mode string) (string, error) {
 	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
 
 	request, err := g.sendApiRequest("GET", path, nil)
@@ -288,14 +283,7 @@ func (g *Govee) control(device Device, cmd Cmd) error {
 		return err
 	}
 
-	request, err := g.sendApiRequest("PUT", "/control", marshal)
-	if err != nil {
-		return err
-	}
-
-	re := Response{}
-
-	err = json.Unmarshal(request, &re)
+	_, err = g.sendApiRequest("PUT", "/control", marshal)
 	if err != nil {
 		return err
 	}
@@ -303,46 +291,60 @@ func (g *Govee) control(device Device, cmd Cmd) error {
 	return nil
 }
 
-func (g *Govee) setState(device Device, a models.Attribute) error {
-	switch a.Key {
+func (g *Govee) setState(device Device, value string, mode string) error {
+	switch mode {
 	case "cct":
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			return err
+		}
 		cct := Cmd{
 			Name:  "colorTem",
-			Value: a.AsInt(),
+			Value: val,
 		}
-		err := g.control(device, cct)
+		err = g.control(device, cct)
 		if err != nil {
 			return err
 		}
 		break
 	case "on":
 		ns := "off"
-		if a.AsBool() {
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+		}
+		if parsed {
 			ns = "on"
 		}
 		cmd := Cmd{
 			Name:  "turn",
 			Value: ns,
 		}
-		err := g.control(device, cmd)
+		err = g.control(device, cmd)
 		if err != nil {
 			return err
 		}
 		break
 	case "dim":
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			return err
+		}
 		cmd := Cmd{
 			Name:  "brightness",
-			Value: a.AsInt(),
+			Value: val,
 		}
-		err := g.control(device, cmd)
+		err = g.control(device, cmd)
 		if err != nil {
 			return err
 		}
 		break
 	case "hue":
-
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			return err
+		}
 		h := color.HSL{
-			H: float64(a.AsInt()) / 360.0,
+			H: float64(val) / 360.0,
 			S: 1,
 			L: 0.5,
 		}
@@ -355,7 +357,7 @@ func (g *Govee) setState(device Device, a models.Attribute) error {
 				B: int(rgb.B * 255),
 			},
 		}
-		err := g.control(device, c)
+		err = g.control(device, c)
 		if err != nil {
 			return err
 		}
@@ -366,41 +368,49 @@ func (g *Govee) setState(device Device, a models.Attribute) error {
 }
 
 func (g *Govee) statePut(device Device, mode string) models.FuncPut {
-	return func(a models.Attribute) error {
-		return g.setState(device, a)
+	return func(value string) error {
+		return g.setState(device, value, mode)
 	}
 }
 
 func (g *Govee) stateGet(device Device, mode string) models.FuncGet {
-	return func(a models.Attribute) (string, error) {
-		return g.getSingleState(device, a, mode)
+	return func() (string, error) {
+		return g.getSingleState(device, mode)
 	}
 }
 
 func GenerateAttributes(id string) []*models.Attribute {
 	on := models.Attribute{
-		Key:    "on",
-		Value:  "false",
-		Type:   "toggle",
-		Entity: id,
+		Key:     "on",
+		Value:   "false",
+		Request: "false",
+		Type:    "toggle",
+		Order:   0,
+		Entity:  id,
 	}
 	dim := models.Attribute{
-		Key:    "dim",
-		Value:  "0",
-		Type:   "range",
-		Entity: id,
-	}
-	hue := models.Attribute{
-		Key:    "hue",
-		Value:  "0",
-		Type:   "range",
-		Entity: id,
+		Key:     "dim",
+		Value:   "0",
+		Request: "0",
+		Type:    "range",
+		Order:   1,
+		Entity:  id,
 	}
 	cct := models.Attribute{
-		Key:    "cct",
-		Value:  "2000",
-		Type:   "range",
-		Entity: id,
+		Key:     "cct",
+		Value:   "2000",
+		Request: "2000",
+		Type:    "range",
+		Order:   2,
+		Entity:  id,
+	}
+	hue := models.Attribute{
+		Key:     "hue",
+		Value:   "0",
+		Request: "0",
+		Type:    "range",
+		Order:   3,
+		Entity:  id,
 	}
 	return []*models.Attribute{&on, &dim, &hue, &cct}
 }
@@ -433,6 +443,7 @@ func (g *Govee) Setup() (plugin.Config, error) {
 		if err != nil {
 			return plugin.Config{}, err
 		}
+
 		g.devices[s.Id] = &device
 	}
 
@@ -445,7 +456,7 @@ func (g *Govee) Update() error {
 	for s, d := range g.devices {
 		go func(device *Device, id string) {
 			defer wg.Done()
-			_, err := g.getAllStates(*device, id)
+			_, err := g.getAllStates(device, id)
 			if err != nil {
 				log.Err(err)
 			}

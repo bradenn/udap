@@ -5,7 +5,6 @@ package controller
 import (
 	"fmt"
 	"udap/internal/bond"
-	"udap/internal/models"
 )
 
 type Controller struct {
@@ -53,13 +52,4 @@ func (c *Controller) Meta(msg bond.Msg) error {
 	default:
 		return fmt.Errorf("unknown operation '%s'", t)
 	}
-}
-
-type Metadata struct {
-	Endpoint  models.Endpoint   `json:"endpoint"`
-	Endpoints []models.Endpoint `json:"endpoints"`
-	Devices   []models.Device   `json:"devices"`
-	Entities  []models.Entity   `json:"entities"`
-	Networks  []models.Network  `json:"networks"`
-	Logs      []models.Log      `json:"logs"`
 }

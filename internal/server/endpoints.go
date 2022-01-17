@@ -12,6 +12,7 @@ import (
 	"sync"
 	"udap/internal/auth"
 	"udap/internal/bond"
+	"udap/internal/cache"
 	"udap/internal/controller"
 	"udap/internal/log"
 	"udap/internal/models"
@@ -22,6 +23,7 @@ type Endpoints struct {
 	bond        *bond.Bond
 	router      chi.Router
 	connections sync.Map
+	watching    map[string]bool
 	ctrl        *controller.Controller
 }
 
@@ -33,7 +35,7 @@ func (e *Endpoints) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	e.ctrl = ctrl
 	e.bond = bond
 	e.router = chi.NewRouter()
-
+	e.watching = map[string]bool{}
 	e.router.Use(middleware.Recoverer)
 	// Custom Middleware
 	e.router.Use(corsHeaders())
@@ -131,17 +133,23 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		ep.Connection.Watch()
 	}()
 
+	err = e.Metadata()
+	if err != nil {
+		return
+	}
+
 	go func() {
 		defer wg.Done()
 		for {
 			_, out, err := ep.Connection.WS.ReadMessage()
 			if err != nil {
+				log.Err(err)
 				return
 			}
 
 			_, err = e.bond.CmdJSON(out)
 			if err != nil {
-				return
+				log.Err(err)
 			}
 		}
 	}()
@@ -199,8 +207,17 @@ type Identifier struct {
 	Id string `json:"id"`
 }
 
-func (e *Endpoints) Metadata() error {
+type Metadata struct {
+	Endpoint  models.Endpoint   `json:"endpoint"`
+	Endpoints []models.Endpoint `json:"endpoints"`
+	Devices   []models.Device   `json:"devices"`
+	Entities  []models.Entity   `json:"entities"`
+	Networks  []models.Network  `json:"networks"`
+	Logs      []models.Log      `json:"logs"`
+	System    System            `json:"system"`
+}
 
+func (e *Endpoints) Metadata() error {
 	entities, err := e.ctrl.Entities.Compile()
 	for _, entity := range entities {
 		err = e.entityBroadcast(entity)
@@ -211,6 +228,21 @@ func (e *Endpoints) Metadata() error {
 
 	attributes := e.ctrl.Attributes.Compile()
 	for _, attribute := range attributes {
+		if !e.watching[attribute.Id] {
+			cache.WatchFn(attribute.Path(), func(s string) error {
+				var attr models.Attribute
+				err = json.Unmarshal([]byte(s), &attr)
+				if err != nil {
+					return err
+				}
+				err = e.attributeBroadcast(attr)
+				if err != nil {
+					return err
+				}
+				return nil
+			})
+			e.watching[attribute.Id] = true
+		}
 		err = e.attributeBroadcast(attribute)
 		if err != nil {
 			return err
@@ -235,10 +267,11 @@ func (e *Endpoints) Metadata() error {
 	response := controller.Response{
 		Status:    "success",
 		Operation: "metadata",
-		Body: controller.Metadata{
+		Body: Metadata{
 			Endpoints: endpoints,
 			Devices:   devices,
 			Networks:  networks,
+			System:    SystemInfo,
 		},
 	}
 

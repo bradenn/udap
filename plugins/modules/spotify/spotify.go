@@ -48,7 +48,7 @@ func init() {
 }
 
 func (s *Spotify) PutAttribute(key string) models.FuncPut {
-	return func(a models.Attribute) error {
+	return func(s string) error {
 		switch key {
 		case "current":
 			break
@@ -58,7 +58,7 @@ func (s *Spotify) PutAttribute(key string) models.FuncPut {
 }
 
 func (s *Spotify) GetAttribute(key string) models.FuncGet {
-	return func(a models.Attribute) (string, error) {
+	return func() (string, error) {
 		switch key {
 		case "current":
 			return s.api.CurrentSong()
@@ -76,10 +76,11 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 	}
 
 	playing := models.Attribute{
-		Key:    "current",
-		Value:  "false",
-		Type:   "toggle",
-		Entity: e.Id,
+		Key:     "current",
+		Value:   "false",
+		Request: "false",
+		Type:    "toggle",
+		Entity:  e.Id,
 	}
 	playing.FnGet(s.GetAttribute(playing.Key))
 	playing.FnPut(s.PutAttribute(playing.Key))

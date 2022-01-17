@@ -19,14 +19,10 @@ func init() {
 func WatchFn(key string, fn func(string) error) {
 	log.Event("Watching: %s", strings.ToLower(key))
 	ps := Mem.Subscribe(memCtx, strings.ToLower(key))
-	_, err := ps.Receive(memCtx)
-	if err != nil {
-		log.Err(err)
-	}
 	ch := ps.Channel()
 	go func(fn func(string) error) {
 		for message := range ch {
-			err = (fn)(message.Payload)
+			err := (fn)(message.Payload)
 			if err != nil {
 				log.Err(err)
 			}
@@ -35,6 +31,18 @@ func WatchFn(key string, fn func(string) error) {
 }
 
 func PutLn(value any, path ...string) error {
+	err := Mem.Publish(memCtx, strings.ToLower(strings.Join(path, ".")), value).Err()
+	if err != nil {
+		return err
+	}
+	err = Mem.Set(memCtx, strings.ToLower(strings.Join(path, ".")), value, 0).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func PutOne(value any, path ...string) error {
 	err := Mem.Publish(memCtx, strings.ToLower(strings.Join(path, ".")), value).Err()
 	if err != nil {
 		return err

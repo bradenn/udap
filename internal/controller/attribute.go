@@ -4,13 +4,28 @@ package controller
 
 import (
 	"encoding/json"
+	"math/rand"
 	"sync"
+	"time"
 	"udap/internal/bond"
 	"udap/internal/models"
 )
 
 type Attributes struct {
 	PolyBuffer
+}
+
+// randomSequence generates a random id for use as a key
+func randomSequence() string {
+	template := "abcdefghijklmnopqrstuvwxyz"
+	var out string
+	rand.Seed(time.Now().Unix())
+	for i := 0; i < 8; i++ {
+		r := rand.Intn(26)
+		u := template[r]
+		out += string(u)
+	}
+	return out
 }
 
 func (a *Attributes) Handle(event bond.Msg) (res any, err error) {
@@ -22,61 +37,47 @@ func (a *Attributes) Handle(event bond.Msg) (res any, err error) {
 }
 
 func (a *Attributes) Register(attribute *models.Attribute) error {
-	err := attribute.Save()
-	if err != nil {
-		return err
-	}
-	a.set(attribute.Path(), attribute)
+	attribute.Id = attribute.Path()
+	a.Store(attribute)
 	return nil
 }
 
 func (a *Attributes) request(event bond.Msg) (any, error) {
-	attr := &models.Attribute{}
-
-	err := json.Unmarshal([]byte(event.Payload), attr)
+	attr := models.Attribute{}
+	err := json.Unmarshal([]byte(event.Payload), &attr)
 	if err != nil {
+
 		return nil, err
 	}
-	value := attr.Value
 
-	attr = a.Find(attr.Path())
-	attr.Value = value
-	a.set(attr.Path(), attr)
-	err = attr.Request(value)
+	attribute := a.Find(attr.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	err = attr.Save()
+	err = attribute.SendRequest(attr.Request)
 	if err != nil {
 		return nil, err
 	}
 
-	err = attr.Publish()
-	if err != nil {
-		return nil, err
-	}
+	a.Store(attribute)
 
 	return nil, nil
 }
 
-func (a *Attributes) Put(entity string, key string, value string) error {
-	attr := &models.Attribute{}
+func (a *Attributes) Update(entity string, key string, value string) error {
+	attr := models.Attribute{}
 	attr.Entity = entity
 	attr.Key = key
-	attr = a.Find(attr.Path())
-	attr.Value = value
 
-	err := attr.Save()
+	attribute := a.Find(attr.Path())
+	err := attribute.UpdateValue(value)
 	if err != nil {
 		return err
 	}
 
-	err = attr.Publish()
-	if err != nil {
-		return err
-	}
-	a.set(attr.Path(), attr)
+	a.Store(attribute)
+
 	return nil
 }
 
@@ -90,7 +91,20 @@ func (a *Attributes) Compile() []models.Attribute {
 }
 
 func (a *Attributes) Find(name string) *models.Attribute {
-	return a.get(name).(*models.Attribute)
+	res := a.get(name)
+	val, ok := res.(*models.Attribute)
+	if !ok {
+		return nil
+	}
+	return val
+}
+
+func (a *Attributes) Store(attribute *models.Attribute) {
+	err := attribute.CacheIn()
+	if err != nil {
+		return
+	}
+	a.set(attribute.Id, attribute)
 }
 
 func LoadAttributes() (m *Attributes) {

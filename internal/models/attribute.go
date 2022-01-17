@@ -3,70 +3,80 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 	"udap/internal/cache"
 )
 
-type FuncPut func(Attribute) error
-type FuncGet func(Attribute) (string, error)
+type FuncPut func(value string) error
+type FuncGet func() (string, error)
 
 type Attribute struct {
-	Updated time.Time `json:"updated"`
-	Entity  string    `json:"entity"`
-	Key     string    `json:"key"`
+	Id      string    `json:"id"`
 	Value   string    `json:"value"`
-	Type    string    `json:"type"`
-	put     FuncPut
-	get     FuncGet
-}
+	Updated time.Time `json:"updated"`
 
-func (a *Attribute) Save() error {
-	ctx := context.Background()
-	data, err := json.Marshal(a)
-	if err != nil {
-		return err
-	}
-	return cache.Mem.Set(ctx, strings.ToLower(a.Path()), string(data), 0).Err()
-}
+	Request   string    `json:"request"`
+	Requested time.Time `json:"requested"`
 
-func (a *Attribute) Publish() error {
-	ctx := context.Background()
-	data, err := json.Marshal(a)
-	if err != nil {
-		return err
-	}
-	return cache.Mem.Publish(ctx, strings.ToLower(a.Path()), string(data)).Err()
-}
-
-func (a *Attribute) Retrieve() error {
-	ctx := context.Background()
-	result, err := cache.Mem.Get(ctx, strings.ToLower(a.Path())).Result()
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal([]byte(result), a)
+	Entity string `json:"entity"`
+	Key    string `json:"key"`
+	Type   string `json:"type"`
+	Order  int    `json:"order"`
+	put    FuncPut
+	get    FuncGet
 }
 
 func (a *Attribute) Path() string {
-	return fmt.Sprintf("entity.%s.attribute.%s", a.Entity, a.Key)
+	return fmt.Sprintf("%s.%s", a.Entity, a.Key)
 }
 
-func (a *Attribute) Request(val string) error {
-
-	if a.put == nil {
-		return fmt.Errorf("attribute put function not connected")
-	}
-	a.Value = val
-	err := a.put(*a)
+func (a *Attribute) CacheIn() error {
+	marshal, err := json.Marshal(a)
 	if err != nil {
 		return err
 	}
+	err = cache.PutLn(string(marshal), a.Id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
+func (a *Attribute) CacheOut() error {
+
+	ln, err := cache.GetLn(a.Entity, a.Key)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(ln.(string)), a)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *Attribute) UpdateValue(val string) error {
+	a.Value = val
+	a.Updated = time.Now()
+	return nil
+}
+
+func (a *Attribute) SendRequest(val string) error {
+	if a.put == nil {
+		return fmt.Errorf("attribute put function not connected")
+	}
+
+	a.Request = val
+	a.Requested = time.Now()
+
+	err := a.put(val)
+	if err != nil {
+		return err
+	}
+	a.Value = val
 	a.Updated = time.Now()
 	return nil
 }
@@ -80,11 +90,11 @@ func (a *Attribute) FnGet(get FuncGet) {
 }
 
 func (a *Attribute) AsInt() int {
-	parsed, err := strconv.Atoi(a.Value)
+	parsed, err := strconv.ParseInt(a.Value, 10, 64)
 	if err != nil {
 		return 0
 	}
-	return parsed
+	return int(parsed)
 }
 
 func (a *Attribute) AsFloat() float64 {
