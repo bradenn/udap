@@ -59,7 +59,13 @@ func (a *Attribute) CacheOut() error {
 }
 
 func (a *Attribute) UpdateValue(val string) error {
+	// Not a good time for an update
+	if val == a.Value || a.Request != a.Value {
+		return nil
+	}
+	// Update the values, but leave the request timestamp
 	a.Value = val
+	a.Request = val
 	a.Updated = time.Now()
 	return nil
 }
@@ -71,14 +77,27 @@ func (a *Attribute) SendRequest(val string) error {
 
 	a.Request = val
 	a.Requested = time.Now()
-
 	err := a.put(val)
 	if err != nil {
 		return err
 	}
+
 	a.Value = val
 	a.Updated = time.Now()
 	return nil
+}
+
+func (a *Attribute) Poll() (bool, error) {
+	val, err := a.get()
+	if err != nil {
+		return false, err
+	}
+	if val != a.Value && a.Request == a.Value {
+		a.Value = val
+		a.Updated = time.Now()
+		return true, nil
+	}
+	return false, nil
 }
 
 func (a *Attribute) FnPut(put FuncPut) {

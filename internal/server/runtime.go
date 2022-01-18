@@ -61,6 +61,7 @@ func (r *Runtime) handleRequest() {
 		start := time.Now()
 		msg.Respond(r.ctrl.Handle(msg))
 		log.Event("EVENT: %s.%s (%s)", msg.Target, msg.Operation, time.Since(start))
+		fmt.Println(msg.Payload)
 	}
 }
 

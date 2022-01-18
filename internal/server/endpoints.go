@@ -4,11 +4,13 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/gorilla/websocket"
 	"net/http"
+	"os"
 	"sync"
 	"udap/internal/auth"
 	"udap/internal/bond"
@@ -66,11 +68,11 @@ func (e *Endpoints) attributeBroadcast(ent models.Attribute) error {
 	return nil
 }
 
-func (e *Endpoints) entityBroadcast(ent models.Entity) error {
+func (e *Endpoints) itemBroadcast(operation string, body any) error {
 	response := controller.Response{
 		Status:    "success",
-		Operation: "entity",
-		Body:      ent,
+		Operation: operation,
+		Body:      body,
 	}
 
 	err := e.Broadcast(response)
@@ -168,8 +170,8 @@ func (e *Endpoints) Broadcast(body any) error {
 
 func (e *Endpoints) Run() error {
 	log.Log("Endpoints: Listening")
-
-	err := http.ListenAndServe(":3020", e.router)
+	port := os.Getenv("hostPort")
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), e.router)
 	if err != nil {
 		log.Err(err)
 	}
@@ -220,7 +222,7 @@ type Metadata struct {
 func (e *Endpoints) Metadata() error {
 	entities, err := e.ctrl.Entities.Compile()
 	for _, entity := range entities {
-		err = e.entityBroadcast(entity)
+		err = e.itemBroadcast("entity", entity)
 		if err != nil {
 			return err
 		}

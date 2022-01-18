@@ -8,6 +8,7 @@ import (
 	"sync"
 	"udap/internal/bond"
 	"udap/internal/cache"
+	"udap/internal/log"
 	"udap/internal/models"
 )
 
@@ -83,6 +84,7 @@ func (e *Entities) Compile() (res []models.Entity, err error) {
 
 func (e *Entities) register(event bond.Msg) (any, error) {
 	entity := e.Cast(event.Body)
+
 	_, err := e.Register(entity)
 	if err != nil {
 		return nil, err
@@ -127,6 +129,7 @@ func (e *Entities) Parse(body string) models.Entity {
 }
 
 func (e *Entities) Register(entity *models.Entity) (res *models.Entity, err error) {
+	log.Event("Entity '%s' registered.", entity.Name)
 	err = entity.Emplace()
 	if err != nil {
 		return nil, err

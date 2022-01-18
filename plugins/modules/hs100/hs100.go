@@ -54,16 +54,19 @@ func (h *HS100) findDevices() error {
 		}
 
 		h.devices[newSwitch.Id] = device
-		on := models.Attribute{
+		on := &models.Attribute{
 			Key:     "on",
 			Value:   "false",
 			Request: "false",
+			Order:   -1,
 			Type:    "toggle",
 			Entity:  newSwitch.Id,
 		}
-		on.FnGet(Rx(device))
-		on.FnPut(Tx(device))
-		err = h.Attributes.Register(&on)
+
+		on.FnGet(h.get(device))
+		on.FnPut(h.put(device))
+
+		err = h.Attributes.Register(on)
 		if err != nil {
 			return err
 		}
@@ -85,20 +88,20 @@ func (h *HS100) Setup() (plugin.Config, error) {
 // Update is called every cycle
 func (h *HS100) Update() error {
 
-	for id, device := range h.devices {
-		isOn, err := device.IsOn()
-		if err != nil {
-			return err
-		}
-		res := "false"
-		if isOn {
-			res = "true"
-		}
-		err = h.Attributes.Update(id, "on", res)
-		if err != nil {
-			return err
-		}
-	}
+	// for id, device := range h.devices {
+	// 	isOn, err := device.IsOn()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	res := "false"
+	// 	if isOn {
+	// 		res = "true"
+	// 	}
+	// 	err = h.Attributes.Update(id, "on", res)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -110,12 +113,13 @@ func (h *HS100) Run() (err error) {
 		if err != nil {
 			return err
 		}
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 5)
 	}
 }
 
-func Tx(device *hs100.Hs100) models.FuncPut {
+func (h *HS100) put(device *hs100.Hs100) models.FuncPut {
 	return func(s string) error {
+
 		parseBool, err := strconv.ParseBool(s)
 		if err != nil {
 			return err
@@ -135,7 +139,7 @@ func Tx(device *hs100.Hs100) models.FuncPut {
 	}
 }
 
-func Rx(device *hs100.Hs100) models.FuncGet {
+func (h *HS100) get(device *hs100.Hs100) models.FuncGet {
 	return func() (string, error) {
 		on, err := device.IsOn()
 		if err != nil {

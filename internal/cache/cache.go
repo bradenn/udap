@@ -30,6 +30,20 @@ func WatchFn(key string, fn func(string) error) {
 	}(fn)
 }
 
+func Watch(key string, fn func(string) error) {
+	log.Event("Watching: %s", strings.ToLower(key))
+	ps := Mem.Subscribe(memCtx, strings.ToLower(key))
+	ch := ps.Channel()
+	go func(fn func(string) error) {
+		for message := range ch {
+			err := (fn)(message.Payload)
+			if err != nil {
+				log.Err(err)
+			}
+		}
+	}(fn)
+}
+
 func PutLn(value any, path ...string) error {
 	err := Mem.Publish(memCtx, strings.ToLower(strings.Join(path, ".")), value).Err()
 	if err != nil {

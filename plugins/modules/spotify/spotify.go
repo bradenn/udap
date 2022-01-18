@@ -75,7 +75,7 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 		return plugin.Config{}, err
 	}
 
-	playing := models.Attribute{
+	playing := &models.Attribute{
 		Key:     "current",
 		Value:   "false",
 		Request: "false",
@@ -85,7 +85,7 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 	playing.FnGet(s.GetAttribute(playing.Key))
 	playing.FnPut(s.PutAttribute(playing.Key))
 
-	err = s.Attributes.Register(&playing)
+	err = s.Attributes.Register(playing)
 	if err != nil {
 		return plugin.Config{}, err
 	}
@@ -110,6 +110,7 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 }
 
 func (s *Spotify) Update() error {
+
 	return nil
 }
 
@@ -123,6 +124,24 @@ func (s *Spotify) Run() error {
 	if err != nil {
 		return err
 	}
+	done := make(chan bool)
+	go func() {
+		defer func() {
+			done <- true
+		}()
+		for {
+			song, err := s.api.CurrentSong()
+			if err != nil {
+				return
+			}
+			err = s.Attributes.Update(s.id, "current", song)
+			if err != nil {
+				return
+			}
+			time.Sleep(time.Second * 3)
+		}
+	}()
+	<-done
 	return nil
 }
 
