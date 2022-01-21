@@ -19,10 +19,13 @@ type Device struct {
 	Ipv6      string `json:"ipv6"`
 }
 
-// Emplace gets a module from its path
 func (d *Device) Emplace() (err error) {
+	err = store.DB.Model(&Device{}).Where("mac = ? OR id = ?", d.Mac, d.Id).FirstOrCreate(d).Error
+	if err != nil {
+		return err
+	}
 	d.UpdatedAt = time.Now()
-	err = store.DB.Model(&Device{}).Where("mac = ?", d.Mac).FirstOrCreate(&d).Error
+	err = d.Update()
 	if err != nil {
 		return err
 	}

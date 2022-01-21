@@ -84,6 +84,10 @@ func (a *Attribute) SendRequest(val string) error {
 
 	a.Value = val
 	a.Updated = time.Now()
+	err = a.CacheIn()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

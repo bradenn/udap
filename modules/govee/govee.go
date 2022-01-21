@@ -12,7 +12,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"time"
 	"udap/internal/log"
 	"udap/internal/models"
 	"udap/pkg/plugin"
@@ -133,7 +132,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	}
 
 	if r.Code != 200 {
-		return nil, fmt.Errorf("govee responded with a non 200 status code: %g", r.Message)
+		return nil, fmt.Errorf("update failed '%s'", r.Message)
 	}
 
 	return r.Data, nil
@@ -467,11 +466,5 @@ func (g *Govee) Update() error {
 }
 
 func (g *Govee) Run() error {
-	for {
-		err := g.Update()
-		if err != nil {
-			log.Err(err)
-		}
-		time.Sleep(5 * time.Second)
-	}
+	return nil
 }

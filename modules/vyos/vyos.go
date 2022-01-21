@@ -51,13 +51,13 @@ func (v *Vyos) Run() error {
 
 func (v *Vyos) scanSubnet(network models.Network) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	scanner, err := nmap.NewScanner(
 		nmap.WithPrivileged(),
 		nmap.WithConnectScan(),
-		nmap.WithTargets("10.0.1.2-32"),
+		nmap.WithTargets("10.0.1.0/24"),
 		nmap.WithContext(ctx),
 	)
 

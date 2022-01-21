@@ -69,7 +69,7 @@ func (u *Udap) migrate() error {
 
 func config() error {
 
-	log.Log("UDAP v%s - Copyright (c) 2021 Braden Nicholson", VERSION)
+	log.Log("UDAP v%s - Copyright (c) 2019-2022 Braden Nicholson", VERSION)
 	err := godotenv.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load .env file could not find any environment variables")

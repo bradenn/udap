@@ -100,6 +100,9 @@ func (b *Bond) send(target Msg) (any, error) {
 		if !ok {
 			return nil, fmt.Errorf("somebody made a fucky-wucky")
 		}
+		if res.Error != "" {
+			return res.Body, fmt.Errorf("command '%s.%s' failed: %s", target.Target, target.Operation, res.Error)
+		}
 		return res.Body, nil
 	case <-time.After(2 * time.Second):
 		return nil, fmt.Errorf("timeout: %s.%s (%s) => %s", target.Target, target.Operation, target.Id, target.Body)

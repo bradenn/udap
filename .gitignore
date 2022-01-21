@@ -2,5 +2,7 @@
 selfsigned.cert
 selfsigned.key
 *.so
+/local
 .idea
 private-key.pem
+spotify.json

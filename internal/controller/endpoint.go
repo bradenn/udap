@@ -3,7 +3,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi"
 	"sync"
@@ -12,13 +11,6 @@ import (
 	"udap/internal/models"
 	"udap/internal/store"
 )
-
-type Request struct {
-	Target    string          `json:"target"`
-	Operation string          `json:"operation"`
-	Body      json.RawMessage `json:"body"`
-	Sender    string
-}
 
 type Response struct {
 	Id        string `json:"id"`

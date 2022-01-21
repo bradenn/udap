@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 	"udap/internal/log"
 	"udap/internal/models"
@@ -24,16 +26,6 @@ type Spotify struct {
 	api      SpotifyApi
 	Accounts map[string]SpotifyApi
 	id       string
-	local    MediaState
-}
-
-type Track struct {
-}
-
-type MediaState struct {
-	Playing bool `json:"playing"`
-	Data    json.RawMessage
-	Current Track
 }
 
 func init() {
@@ -48,9 +40,26 @@ func init() {
 }
 
 func (s *Spotify) PutAttribute(key string) models.FuncPut {
-	return func(s string) error {
+	return func(str string) error {
+		fmt.Println(key, str)
 		switch key {
 		case "current":
+			break
+		case "playing":
+			parseBool, err := strconv.ParseBool(str)
+			if err != nil {
+				return err
+			}
+
+			if parseBool {
+				_, err = s.api.play()
+			} else {
+				_, err = s.api.pause()
+			}
+
+			if err != nil {
+				return err
+			}
 			break
 		}
 		return nil
@@ -61,10 +70,41 @@ func (s *Spotify) GetAttribute(key string) models.FuncGet {
 	return func() (string, error) {
 		switch key {
 		case "current":
-			return s.api.CurrentSong()
+			return s.api.current()
+		case "playing":
+			song, err := s.api.current()
+			if err != nil {
+				return "false", err
+			}
+			c := CurrentlyPlaying{}
+			err = json.Unmarshal([]byte(song), &c)
+			if err != nil {
+				return "false", err
+			}
+			res := "false"
+			if c.Playing {
+				res = "true"
+			}
+			return res, nil
 		}
 		return "", nil
 	}
+}
+
+type SpotifyState struct {
+	Title      string    `json:"title"`
+	Cover      string    `json:"cover"`
+	Thumbnail  string    `json:"thumbnail"`
+	Artists    string    `json:"artists"`
+	Album      string    `json:"album"`
+	Progress   int       `json:"progress"`
+	Updated    time.Time `json:"updated"`
+	Duration   int       `json:"duration"`
+	Explicit   bool      `json:"explicit"`
+	Playing    bool      `json:"playing"`
+	Popularity int       `json:"popularity"`
+	Volume     int       `json:"volume"`
+	Device     string    `json:"device"`
 }
 
 func (s *Spotify) Setup() (plugin.Config, error) {
@@ -75,16 +115,28 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 		return plugin.Config{}, err
 	}
 
-	playing := &models.Attribute{
+	current := &models.Attribute{
 		Key:     "current",
-		Value:   "false",
-		Request: "false",
-		Type:    "toggle",
+		Value:   "{}",
+		Request: "{}",
 		Entity:  e.Id,
 	}
+	current.FnGet(s.GetAttribute(current.Key))
+	current.FnPut(s.PutAttribute(current.Key))
+	err = s.Attributes.Register(current)
+	if err != nil {
+		return plugin.Config{}, err
+	}
+
+	playing := &models.Attribute{
+		Key:     "playing",
+		Value:   "false",
+		Request: "false",
+		Entity:  e.Id,
+	}
+
 	playing.FnGet(s.GetAttribute(playing.Key))
 	playing.FnPut(s.PutAttribute(playing.Key))
-
 	err = s.Attributes.Register(playing)
 	if err != nil {
 		return plugin.Config{}, err
@@ -109,8 +161,165 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 	return s.Config, nil
 }
 
-func (s *Spotify) Update() error {
+type CurrentlyPlaying struct {
+	Playing bool `json:"is_playing"`
+}
+type CurrentResponse struct {
+	Device struct {
+		Id               string `json:"id"`
+		IsActive         bool   `json:"is_active"`
+		IsPrivateSession bool   `json:"is_private_session"`
+		IsRestricted     bool   `json:"is_restricted"`
+		Name             string `json:"name"`
+		Type             string `json:"type"`
+		VolumePercent    int    `json:"volume_percent"`
+	} `json:"device"`
+	ShuffleState bool        `json:"shuffle_state"`
+	RepeatState  string      `json:"repeat_state"`
+	Timestamp    int64       `json:"timestamp"`
+	Context      interface{} `json:"context"`
+	ProgressMs   int         `json:"progress_ms"`
+	Item         struct {
+		Album struct {
+			AlbumType string `json:"album_type"`
+			Artists   []struct {
+				ExternalUrls struct {
+					Spotify string `json:"spotify"`
+				} `json:"external_urls"`
+				Href string `json:"href"`
+				Id   string `json:"id"`
+				Name string `json:"name"`
+				Type string `json:"type"`
+				Uri  string `json:"uri"`
+			} `json:"artists"`
+			AvailableMarkets []string `json:"available_markets"`
+			ExternalUrls     struct {
+				Spotify string `json:"spotify"`
+			} `json:"external_urls"`
+			Href   string `json:"href"`
+			Id     string `json:"id"`
+			Images []struct {
+				Height int    `json:"height"`
+				Url    string `json:"url"`
+				Width  int    `json:"width"`
+			} `json:"images"`
+			Name                 string `json:"name"`
+			ReleaseDate          string `json:"release_date"`
+			ReleaseDatePrecision string `json:"release_date_precision"`
+			TotalTracks          int    `json:"total_tracks"`
+			Type                 string `json:"type"`
+			Uri                  string `json:"uri"`
+		} `json:"album"`
+		Artists []struct {
+			ExternalUrls struct {
+				Spotify string `json:"spotify"`
+			} `json:"external_urls"`
+			Href string `json:"href"`
+			Id   string `json:"id"`
+			Name string `json:"name"`
+			Type string `json:"type"`
+			Uri  string `json:"uri"`
+		} `json:"artists"`
+		AvailableMarkets []string `json:"available_markets"`
+		DiscNumber       int      `json:"disc_number"`
+		DurationMs       int      `json:"duration_ms"`
+		Explicit         bool     `json:"explicit"`
+		ExternalIds      struct {
+			Isrc string `json:"isrc"`
+		} `json:"external_ids"`
+		ExternalUrls struct {
+			Spotify string `json:"spotify"`
+		} `json:"external_urls"`
+		Href        string `json:"href"`
+		Id          string `json:"id"`
+		IsLocal     bool   `json:"is_local"`
+		Name        string `json:"name"`
+		Popularity  int    `json:"popularity"`
+		PreviewUrl  string `json:"preview_url"`
+		TrackNumber int    `json:"track_number"`
+		Type        string `json:"type"`
+		Uri         string `json:"uri"`
+	} `json:"item"`
+	CurrentlyPlayingType string `json:"currently_playing_type"`
+	Actions              struct {
+		Disallows struct {
+			Resuming              bool `json:"resuming"`
+			TogglingRepeatContext bool `json:"toggling_repeat_context"`
+			TogglingRepeatTrack   bool `json:"toggling_repeat_track"`
+			TogglingShuffle       bool `json:"toggling_shuffle"`
+		} `json:"disallows"`
+	} `json:"actions"`
+	IsPlaying bool `json:"is_playing"`
+}
 
+func (s *Spotify) Update() error {
+	song, err := s.api.current()
+	if err != nil {
+		return err
+	}
+
+	if !json.Valid([]byte(song)) {
+		err = s.Attributes.Update(s.id, "playing", "false")
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	c := CurrentResponse{}
+	err = json.Unmarshal([]byte(song), &c)
+	if err != nil {
+		log.Err(err)
+		return err
+	}
+
+	sp := SpotifyState{}
+	sp.Duration = c.Item.DurationMs
+	sp.Progress = c.ProgressMs
+	sp.Updated = time.Now()
+	sp.Playing = c.IsPlaying
+	sp.Album = c.Item.Album.Name
+	sp.Title = c.Item.Name
+	sp.Popularity = c.Item.Popularity
+	sp.Explicit = c.Item.Explicit
+	sp.Volume = c.Device.VolumePercent
+	sp.Device = c.Device.Name
+
+	var names []string
+	for _, artist := range c.Item.Album.Artists {
+		names = append(names, artist.Name)
+	}
+
+	sp.Artists = strings.Join(names, ", ")
+
+	for _, image := range c.Item.Album.Images {
+		switch image.Width {
+		case 640:
+			sp.Cover = image.Url
+		case 64:
+			sp.Thumbnail = image.Url
+		default:
+			continue
+		}
+	}
+
+	marshal, err := json.Marshal(sp)
+	if err != nil {
+		return err
+	}
+
+	err = s.Attributes.Update(s.id, "current", string(marshal))
+	if err != nil {
+		return err
+	}
+	res := "false"
+	if sp.Playing {
+		res = "true"
+	}
+	err = s.Attributes.Update(s.id, "playing", res)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -124,46 +333,28 @@ func (s *Spotify) Run() error {
 	if err != nil {
 		return err
 	}
-	done := make(chan bool)
-	go func() {
-		defer func() {
-			done <- true
-		}()
-		for {
-			song, err := s.api.CurrentSong()
-			if err != nil {
-				return
-			}
-			err = s.Attributes.Update(s.id, "current", song)
-			if err != nil {
-				return
-			}
-			time.Sleep(time.Second * 3)
-		}
-	}()
-	<-done
+
 	return nil
 }
 
-func (s Spotify) Poll(v string) (string, error) {
-	spotifyApi := SpotifyApi{}
-	err := json.Unmarshal([]byte(v), &spotifyApi)
-	if err != nil {
-		return "", err
-	}
-	return spotifyApi.CurrentSong()
+func (s *SpotifyApi) current() (string, error) {
+	return s.authenticatedRequest("GET", "me/player")
 }
 
-func (s *SpotifyApi) CurrentSong() (string, error) {
-	return s.authenticatedRequest("GET", "me/player/currently-playing")
-}
-
-func (s *SpotifyApi) Play(_ string) (string, error) {
+func (s *SpotifyApi) play() (string, error) {
 	return s.authenticatedRequest("PUT", "me/player/play")
 }
 
-func (s *SpotifyApi) Pause(_ string) (string, error) {
+func (s *SpotifyApi) pause() (string, error) {
 	return s.authenticatedRequest("PUT", "me/player/pause")
+}
+
+func (s *SpotifyApi) next() (string, error) {
+	return s.authenticatedRequest("PUT", "me/player/next")
+}
+
+func (s *SpotifyApi) previous() (string, error) {
+	return s.authenticatedRequest("PUT", "me/player/previous")
 }
 
 func (s *SpotifyApi) authenticatedRequest(method string, path string) (string, error) {
@@ -262,7 +453,7 @@ func (s *SpotifyApi) beginListening(e chan string) {
 
 func (s *SpotifyApi) loginURL() string {
 
-	scope := "user-modify-playback-state user-read-currently-playing"
+	scope := "user-modify-playback-state user-read-currently-playing user-read-playback-state"
 	clientId := os.Getenv("spotifyClient")
 
 	urlString := fmt.Sprintf("https://accounts.spotify."+

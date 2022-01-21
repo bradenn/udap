@@ -21,6 +21,7 @@ type Modules struct {
 	modules map[string]plugin.UdapPlugin
 	ctrl    *controller.Controller
 	bond    *bond.Bond
+	running bool
 }
 
 func (m *Modules) Name() string {
@@ -54,10 +55,6 @@ func (m *Modules) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	return nil
 }
 
-func (m *Modules) Update() error {
-	return nil
-}
-
 func (m *Modules) Run() error {
 	// Attempt to load the modules in the directory 'modules'
 	err := m.loadModulesDir("modules")
@@ -73,7 +70,6 @@ func (m *Modules) Run() error {
 	wg.Add(len(values))
 	// Run the full lifecycle of all plugins
 	for _, module := range values {
-
 		// Run a go function to create a new thread
 		go func(p plugin.UdapPlugin) {
 			defer wg.Done()
@@ -81,7 +77,6 @@ func (m *Modules) Run() error {
 				log.Err(fmt.Errorf("plugin is not set"))
 				return
 			}
-
 			// Defer the wait group to complete at the end
 			// Attempt to connect to the module
 			err = p.Connect(m.ctrl, m.bond)
@@ -111,10 +106,27 @@ func (m *Modules) Run() error {
 	return nil
 }
 
+func (m *Modules) Update() error {
+
+	values, err := m.values()
+	if err != nil {
+		return err
+	}
+
+	for _, mod := range values {
+		err = mod.Update()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // buildModuleDir builds all potential modules in a directory
 func (m *Modules) buildModuleDir(dir string) error {
 	// Format the pattern for glob search
-	pattern := fmt.Sprintf("./plugins/%s/*/*.go", dir)
+	pattern := fmt.Sprintf("./%s/*/*.go", dir)
 	// Run the search for go files
 	files, err := filepath.Glob(pattern)
 	if err != nil {
@@ -133,7 +145,6 @@ func (m *Modules) buildModuleDir(dir string) error {
 				log.ErrF(err, "failed to build module candidate '%s'", path)
 				return
 			}
-
 			log.Event("Module '%s' compiled.", filepath.Base(path))
 		}(p)
 	}
@@ -165,7 +176,7 @@ func (m *Modules) buildFromSource(path string) error {
 
 // loadModulesDir attempts to load each module
 func (m *Modules) loadModulesDir(dir string) error {
-	path := fmt.Sprintf("./plugins/%s/*/*.so", dir)
+	path := fmt.Sprintf("./%s/*/*.so", dir)
 	files, err := filepath.Glob(path)
 	if err != nil {
 		return err

@@ -4,6 +4,7 @@ package log
 
 import (
 	"fmt"
+	"runtime"
 )
 
 const (
@@ -67,7 +68,7 @@ func log(logType LogType, format string, args ...interface{}) {
 		ln = false
 		break
 	case event:
-		prefix = fmt.Sprintf("%s[EVENT]%s", Reset+BoldGreen, Faint)
+		prefix = fmt.Sprintf("%s[EVENT]%s", Reset+BoldGreen, Reset+Faint)
 		ln = true
 		break
 	case critical:
@@ -116,7 +117,8 @@ func Log(format string, args ...interface{}) {
 }
 
 func Event(format string, args ...interface{}) {
-	log(event, format, args...)
+	// _, ln, _, ok := runtime.Caller(1)
+	fmt.Printf("%s%s%s %s\n", Reset+BoldGreen, "Event", Reset+FaintGreen, fmt.Sprintf(format, args...))
 }
 
 func Sherlock(format string, args ...interface{}) {
@@ -128,5 +130,9 @@ func ErrF(err error, format string, args ...interface{}) {
 }
 
 func Err(err error) {
-	log(panic, err.Error())
+	_, file, ln, ok := runtime.Caller(1)
+	if ok {
+		fmt.Printf("%s%s%s %s\n", Reset+BoldRed, fmt.Sprintf("%s:%d", file, ln), Reset+FaintRed,
+			fmt.Sprintf(err.Error()))
+	}
 }

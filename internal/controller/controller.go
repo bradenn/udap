@@ -8,13 +8,14 @@ import (
 )
 
 type Controller struct {
-	Entities   *Entities
-	Attributes *Attributes
-	Modules    *Modules
-	Endpoints  *Endpoints
-	Devices    *Devices
-	Networks   *Networks
-	event      chan bond.Msg
+	Entities       *Entities
+	Attributes     *Attributes
+	Modules        *Modules
+	Endpoints      *Endpoints
+	Devices        *Devices
+	Networks       *Networks
+	UserController *UserController
+	event          chan bond.Msg
 }
 
 func NewController() (*Controller, error) {
@@ -30,6 +31,8 @@ func NewController() (*Controller, error) {
 
 func (c *Controller) Handle(msg bond.Msg) (any, error) {
 	switch t := msg.Target; t {
+	case "user":
+		return c.UserController.Handle(msg)
 	case "entity":
 		return c.Entities.Handle(msg)
 	case "attribute":

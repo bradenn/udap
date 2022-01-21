@@ -5,6 +5,7 @@ package controller
 import (
 	"sync"
 	"udap/internal/bond"
+	"udap/internal/log"
 	"udap/internal/models"
 	"udap/internal/store"
 )
@@ -23,20 +24,26 @@ func (d *Devices) Handle(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (d *Devices) Compile() (es []models.Device, err error) {
-	var devices []models.Device
+func (d *Devices) Compile() ([]models.Device, error) {
+	var es []models.Device
 	for _, s := range d.Keys() {
 		device := d.Find(s)
-		devices = append(devices, *device)
+		if device == nil {
+			continue
+		}
+		es = append(es, *device)
 	}
-	return es, err
+	return es, nil
 }
 
 func (d *Devices) FetchAll() {
-	var devices []*models.Device
-	store.DB.Model(&models.Device{}).Find(&devices)
+	var devices []models.Device
+	err := store.DB.Model(&models.Device{}).Find(&devices).Error
+	if err != nil {
+		log.Err(err)
+	}
 	for _, device := range devices {
-		d.set(device.Id, device)
+		d.Set(device.Id, &device)
 	}
 }
 
@@ -69,8 +76,8 @@ func (d *Devices) Register(device *models.Device) (res *models.Device, err error
 	return nil, nil
 }
 
-func (d *Devices) Set(id string, entity *models.Device) {
-	d.set(id, entity)
+func (d *Devices) Set(id string, device *models.Device) {
+	d.set(id, device)
 }
 
 // Bond

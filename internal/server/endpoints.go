@@ -220,6 +220,7 @@ type Metadata struct {
 }
 
 func (e *Endpoints) Metadata() error {
+
 	entities, err := e.ctrl.Entities.Compile()
 	for _, entity := range entities {
 		err = e.itemBroadcast("entity", entity)
@@ -260,10 +261,22 @@ func (e *Endpoints) Metadata() error {
 	if err != nil {
 		return err
 	}
+	for _, device := range devices {
+		err = e.itemBroadcast("device", device)
+		if err != nil {
+			return err
+		}
+	}
 
 	networks, err := e.ctrl.Networks.Compile()
 	if err != nil {
 		return err
+	}
+	for _, network := range networks {
+		err = e.itemBroadcast("network", network)
+		if err != nil {
+			return err
+		}
 	}
 
 	response := controller.Response{
@@ -271,8 +284,6 @@ func (e *Endpoints) Metadata() error {
 		Operation: "metadata",
 		Body: Metadata{
 			Endpoints: endpoints,
-			Devices:   devices,
-			Networks:  networks,
 			System:    SystemInfo,
 		},
 	}
