@@ -3,6 +3,7 @@
 package plugin
 
 import (
+	"time"
 	"udap/internal/bond"
 	"udap/internal/controller"
 )
@@ -17,12 +18,15 @@ type Config struct {
 
 type Module struct {
 	Config
+	LastUpdate time.Time
+	Frequency  int
 	*bond.Bond
 	*controller.Controller
 }
 
 // Connect is called once at the launch of the module
 func (m *Module) Connect(ctrl *controller.Controller, b *bond.Bond) error {
+	m.LastUpdate = time.Now()
 	m.Bond = b
 	m.Controller = ctrl
 	return nil

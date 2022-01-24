@@ -18,6 +18,7 @@ import (
 	"udap/internal/controller"
 	"udap/internal/log"
 	"udap/internal/models"
+	"udap/internal/pulse"
 	"udap/internal/store"
 )
 
@@ -135,27 +136,37 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		ep.Connection.Watch()
 	}()
 
-	err = e.Metadata()
-	if err != nil {
-		return
-	}
-
 	go func() {
 		defer wg.Done()
 		for {
 			_, out, err := ep.Connection.WS.ReadMessage()
 			if err != nil {
-				log.Err(err)
 				return
 			}
 
 			_, err = e.bond.CmdJSON(out)
 			if err != nil {
-				log.Err(err)
+				err = e.sendError(id, err)
+				if err != nil {
+					return
+				}
 			}
 		}
 	}()
 	wg.Wait()
+}
+
+func (e *Endpoints) sendError(id string, body any) error {
+	response := controller.Response{
+		Status:    "error",
+		Operation: "error",
+		Body:      body,
+	}
+	endpoint := e.ctrl.Endpoints.Find(id)
+	if endpoint.Enrolled() {
+		endpoint.Connection.Send(response)
+	}
+	return nil
 }
 
 func (e *Endpoints) Broadcast(body any) error {
@@ -219,6 +230,17 @@ type Metadata struct {
 	System    System            `json:"system"`
 }
 
+func (e *Endpoints) Timings() error {
+	timings := pulse.Timings.Timings()
+	for _, timing := range timings {
+		err := e.itemBroadcast("timing", timing)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (e *Endpoints) Metadata() error {
 
 	entities, err := e.ctrl.Entities.Compile()
@@ -256,6 +278,13 @@ func (e *Endpoints) Metadata() error {
 	if err != nil {
 		return err
 	}
+	for _, endpoint := range endpoints {
+
+		err = e.itemBroadcast("endpoint", endpoint)
+		if err != nil {
+			return err
+		}
+	}
 
 	devices, err := e.ctrl.Devices.Compile()
 	if err != nil {
@@ -283,8 +312,7 @@ func (e *Endpoints) Metadata() error {
 		Status:    "success",
 		Operation: "metadata",
 		Body: Metadata{
-			Endpoints: endpoints,
-			System:    SystemInfo,
+			System: SystemInfo,
 		},
 	}
 
@@ -297,9 +325,12 @@ func (e *Endpoints) Metadata() error {
 }
 
 func (e *Endpoints) Update() error {
+	pulse.Fixed(250)
+	defer pulse.End()
 	err := e.Metadata()
 	if err != nil {
 		return err
 	}
 	return nil
+
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 	"udap/internal/log"
 	"udap/internal/models"
+	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -87,21 +88,22 @@ func (h *HS100) Setup() (plugin.Config, error) {
 
 // Update is called every cycle
 func (h *HS100) Update() error {
-
-	// for id, device := range h.devices {
-	// 	isOn, err := device.IsOn()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	res := "false"
-	// 	if isOn {
-	// 		res = "true"
-	// 	}
-	// 	err = h.Attributes.Update(id, "on", res)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	pulse.Fixed(1000)
+	defer pulse.End()
+	for id, device := range h.devices {
+		isOn, err := device.IsOn()
+		if err != nil {
+			return err
+		}
+		res := "false"
+		if isOn {
+			res = "true"
+		}
+		err = h.Attributes.Update(id, "on", res)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

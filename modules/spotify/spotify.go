@@ -16,6 +16,7 @@ import (
 	"time"
 	"udap/internal/log"
 	"udap/internal/models"
+	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -41,9 +42,22 @@ func init() {
 
 func (s *Spotify) PutAttribute(key string) models.FuncPut {
 	return func(str string) error {
-		fmt.Println(key, str)
 		switch key {
 		case "current":
+			break
+		case "cmd":
+			switch str {
+			case "next":
+				_, err := s.api.next()
+				if err != nil {
+					return err
+				}
+			case "previous":
+				_, err := s.api.previous()
+				if err != nil {
+					return err
+				}
+			}
 			break
 		case "playing":
 			parseBool, err := strconv.ParseBool(str)
@@ -71,6 +85,8 @@ func (s *Spotify) GetAttribute(key string) models.FuncGet {
 		switch key {
 		case "current":
 			return s.api.current()
+		case "cmd":
+			return "none", nil
 		case "playing":
 			song, err := s.api.current()
 			if err != nil {
@@ -142,6 +158,20 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 		return plugin.Config{}, err
 	}
 
+	cmd := &models.Attribute{
+		Key:     "cmd",
+		Value:   "none",
+		Request: "none",
+		Entity:  e.Id,
+	}
+
+	cmd.FnGet(s.GetAttribute(cmd.Key))
+	cmd.FnPut(s.PutAttribute(cmd.Key))
+	err = s.Attributes.Register(cmd)
+	if err != nil {
+		return plugin.Config{}, err
+	}
+
 	if e.Id != "" {
 		s.id = e.Id
 		if e.Config == "" {
@@ -158,6 +188,7 @@ func (s *Spotify) Setup() (plugin.Config, error) {
 		s.api = a
 
 	}
+	s.Frequency = 5000
 	return s.Config, nil
 }
 
@@ -253,6 +284,17 @@ type CurrentResponse struct {
 }
 
 func (s *Spotify) Update() error {
+	pulse.Fixed(s.Frequency)
+	defer pulse.End()
+	if time.Since(s.Module.LastUpdate) >= time.Duration(s.Frequency) {
+		s.Module.LastUpdate = time.Now()
+		return s.push()
+	}
+	return nil
+}
+
+func (s *Spotify) push() error {
+
 	song, err := s.api.current()
 	if err != nil {
 		return err
@@ -314,7 +356,10 @@ func (s *Spotify) Update() error {
 	}
 	res := "false"
 	if sp.Playing {
+		s.Frequency = 1000
 		res = "true"
+	} else {
+		s.Frequency = 5000
 	}
 	err = s.Attributes.Update(s.id, "playing", res)
 	if err != nil {
@@ -350,11 +395,15 @@ func (s *SpotifyApi) pause() (string, error) {
 }
 
 func (s *SpotifyApi) next() (string, error) {
-	return s.authenticatedRequest("PUT", "me/player/next")
+	return s.authenticatedRequest("POST", "me/player/next")
 }
 
 func (s *SpotifyApi) previous() (string, error) {
-	return s.authenticatedRequest("PUT", "me/player/previous")
+	return s.authenticatedRequest("POST", "me/player/previous")
+}
+
+func (s *SpotifyApi) analyzeTrack(trackId string) (string, error) {
+	return s.authenticatedRequest("POST", fmt.Sprintf("audio-analysis/%s", trackId))
 }
 
 func (s *SpotifyApi) authenticatedRequest(method string, path string) (string, error) {

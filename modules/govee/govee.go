@@ -12,8 +12,10 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 	"udap/internal/log"
 	"udap/internal/models"
+	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -106,6 +108,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	var buf bytes.Buffer
 	buf.Write(body)
 	c := http.Client{}
+
 	p := fmt.Sprintf("https://developer-api.govee.com/v1/devices%s", path)
 	request, err := http.NewRequest(method, p, &buf)
 	if err != nil {
@@ -142,12 +145,13 @@ func (g *Govee) getAllStates(device *Device, id string) (any, error) {
 	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
 	request, err := g.sendApiRequest("GET", path, nil)
 	if err != nil {
+
 		return nil, err
 	}
+
 	a := StateResponse{}
 	err = json.Unmarshal(request, &a)
 	if err != nil {
-		log.Err(err)
 		return nil, err
 	}
 	for _, value := range a.Properties {
@@ -157,7 +161,7 @@ func (g *Govee) getAllStates(device *Device, id string) (any, error) {
 				var st string
 				err = json.Unmarshal(message, &st)
 				if err != nil {
-					log.Err(err)
+					break
 				}
 				val := "false"
 				if st == "on" {
@@ -165,33 +169,33 @@ func (g *Govee) getAllStates(device *Device, id string) (any, error) {
 				}
 				err = g.Attributes.Update(id, "on", val)
 				if err != nil {
-					log.Err(err)
+					break
 				}
 			case "colorTem":
 				err = g.Attributes.Update(id, "cct", string(message))
 				if err != nil {
-					log.Err(err)
+					break
 				}
 			case "brightness":
 				err = g.Attributes.Update(id, "dim", string(message))
 				if err != nil {
-					log.Err(err)
+					break
 				}
 			case "color":
 				var col Color
 				err = json.Unmarshal(message, &col)
 				if err != nil {
-					log.Err(err)
+					break
 				}
 				rg := color.RGB{R: float64(col.R) / 255, G: float64(col.G) / 255, B: float64(col.B) / 255}
 				h := rg.ToHSL()
 				marshal, err := json.Marshal(int(h.H * 360))
 				if err != nil {
-					log.Err(err)
+					break
 				}
 				err = g.Attributes.Update(id, "hue", string(marshal))
 				if err != nil {
-					log.Err(err)
+					break
 				}
 			}
 		}
@@ -400,7 +404,7 @@ func GenerateAttributes(id string) []*models.Attribute {
 		Value:   "2000",
 		Request: "2000",
 		Type:    "range",
-		Order:   2,
+		Order:   3,
 		Entity:  id,
 	}
 	hue := models.Attribute{
@@ -408,7 +412,7 @@ func GenerateAttributes(id string) []*models.Attribute {
 		Value:   "0",
 		Request: "0",
 		Type:    "range",
-		Order:   3,
+		Order:   4,
 		Entity:  id,
 	}
 	return []*models.Attribute{&on, &dim, &hue, &cct}
@@ -439,17 +443,14 @@ func (g *Govee) Setup() (plugin.Config, error) {
 			}
 		}
 
-		if err != nil {
-			return plugin.Config{}, err
-		}
-
 		g.devices[s.Id] = &device
 	}
 
 	return g.Config, nil
 }
 
-func (g *Govee) Update() error {
+func (g *Govee) push() error {
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(g.devices))
 	for s, d := range g.devices {
@@ -462,6 +463,22 @@ func (g *Govee) Update() error {
 		}(d, s)
 	}
 	wg.Wait()
+	return nil
+}
+
+func (g *Govee) tick() error {
+	return nil
+}
+
+func (g *Govee) Update() error {
+	pulse.Fixed(4000)
+	defer pulse.End()
+	if time.Since(g.Module.LastUpdate) >= time.Second*4 {
+		g.Module.LastUpdate = time.Now()
+		return g.push()
+	} else {
+		time.Sleep(time.Second)
+	}
 	return nil
 }
 

@@ -20,12 +20,8 @@ type Device struct {
 }
 
 func (d *Device) Emplace() (err error) {
-	err = store.DB.Model(&Device{}).Where("mac = ? OR id = ?", d.Mac, d.Id).FirstOrCreate(d).Error
-	if err != nil {
-		return err
-	}
 	d.UpdatedAt = time.Now()
-	err = d.Update()
+	err = store.DB.Model(&Device{}).Where("mac = ? OR id = ?", d.Mac, d.Id).FirstOrCreate(d).Error
 	if err != nil {
 		return err
 	}

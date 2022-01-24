@@ -37,7 +37,7 @@ func (c *Connection) Send(body any) {
 }
 
 func NewConnection(ws *websocket.Conn) *Connection {
-	ch := make(chan any, 8)
+	ch := make(chan any)
 	d := make(chan bool)
 	a := true
 	c := &Connection{
@@ -63,7 +63,7 @@ func (c *Connection) Watch() {
 		}
 		err := c.WS.WriteJSON(a)
 		if err != nil {
-			log.Err(err)
+			continue
 		}
 	}
 }
@@ -77,6 +77,8 @@ type Endpoint struct {
 	Type string `json:"type"`
 
 	Frequency int `json:"frequency" gorm:"default:3000"`
+
+	Connected bool `json:"connected"`
 
 	key string
 
@@ -104,6 +106,7 @@ func (e *Endpoint) Enroll(ws *websocket.Conn) error {
 	}
 	ws.SetCloseHandler(e.closeHandler)
 	e.Connection = NewConnection(ws)
+	e.Connected = true
 	e.registered = true
 	e.enrolledSince = time.Now()
 	log.Log("Endpoint '%s' enrolled (%s)", e.Name, ws.LocalAddr())
@@ -157,6 +160,7 @@ func (e *Endpoint) Fetch() error {
 
 func (e *Endpoint) Unenroll() {
 	e.registered = false
+	e.Connected = false
 	e.Connection.Close()
 	log.Log("Endpoint '%s' unenrolled (%s)", e.Name, time.Since(e.enrolledSince).String())
 }

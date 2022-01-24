@@ -8,6 +8,7 @@ import (
 	"udap/internal/bond"
 	"udap/internal/controller"
 	"udap/internal/log"
+	"udap/internal/pulse"
 )
 
 type Daemon interface {
@@ -42,6 +43,7 @@ func (r *Runtime) handleRequest() {
 }
 
 func (r *Runtime) Update() error {
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(r.daemons))
 	for _, d := range r.daemons {
@@ -77,11 +79,6 @@ func (r *Runtime) SetupDaemons() (err error) {
 }
 
 func (r *Runtime) Load() (err error) {
-	info, err := systemInfo()
-	if err != nil {
-		return err
-	}
-	SystemInfo = info
 
 	r.daemons = []Daemon{}
 
@@ -90,12 +87,18 @@ func (r *Runtime) Load() (err error) {
 
 	r.AddDaemons(r.Modules, r.Endpoints)
 
+	r.eventHandler = make(chan bond.Msg, 4)
+
 	r.ctrl, err = controller.NewController()
 	if err != nil {
 		return err
 	}
 
-	r.eventHandler = make(chan bond.Msg, 16)
+	info, err := systemInfo()
+	if err != nil {
+		return err
+	}
+	SystemInfo = info
 
 	err = r.SetupDaemons()
 	if err != nil {
@@ -107,9 +110,9 @@ func (r *Runtime) Load() (err error) {
 
 // Run is called when the runtime is to begin accepting traffic
 func (r *Runtime) Run() (err error) {
-
 	wg := sync.WaitGroup{}
 	wg.Add(len(r.daemons) + 2)
+
 	go func() {
 		defer wg.Done()
 		r.handleRequest()
@@ -127,28 +130,35 @@ func (r *Runtime) Run() (err error) {
 		}(d)
 	}
 
-	go func() {
-		defer wg.Done()
-		for {
-
-			delay := 3000.0
-			start := time.Now()
-
+	delay := 1000.0
+	for {
+		pulse.Fixed(int(delay))
+		start := time.Now()
+		done := make(chan bool, 1)
+		go func() {
+			defer func() {
+				done <- true
+			}()
 			err = r.Update()
 			if err != nil {
 				log.ErrF(err, "runtime update error: %s")
 			}
-
-			d := time.Since(start)
-			select {
-			case <-time.After(time.Millisecond * time.Duration(delay)):
-				log.Event("Timed out! (%s)", d.String())
-			default:
-				time.Sleep(time.Millisecond*time.Duration(delay) - d)
+		}()
+		d := time.Since(start)
+		select {
+		case <-done:
+			break
+		case <-time.After(time.Millisecond * time.Duration(delay)):
+			log.Event("Timed out! (%s)", d.String())
+		default:
+			dur := time.Millisecond*time.Duration(delay) - d
+			if dur > 0 {
+				time.Sleep(dur)
 			}
-
 		}
-	}()
-	wg.Wait()
-	return nil
+		pulse.End()
+		_ = r.Endpoints.Timings()
+
+	}
+
 }

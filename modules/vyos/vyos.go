@@ -37,7 +37,7 @@ func init() {
 }
 
 func (v *Vyos) Setup() (plugin.Config, error) {
-	v.fetchNetworks()
+
 	return v.Config, nil
 }
 
@@ -46,6 +46,7 @@ func (v *Vyos) Update() error {
 }
 
 func (v *Vyos) Run() error {
+	v.fetchNetworks()
 	return nil
 }
 
@@ -89,7 +90,7 @@ func (v *Vyos) scanSubnet(network models.Network) error {
 		}
 
 		device.NetworkId = network.Id
-		_, err = v.Devices.Register(&device)
+		_, err = v.Devices.Register(device)
 		if err != nil {
 			return err
 		}

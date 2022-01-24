@@ -4,6 +4,7 @@ package log
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime"
 )
 
@@ -132,7 +133,7 @@ func ErrF(err error, format string, args ...interface{}) {
 func Err(err error) {
 	_, file, ln, ok := runtime.Caller(1)
 	if ok {
-		fmt.Printf("%s%s%s %s\n", Reset+BoldRed, fmt.Sprintf("%s:%d", file, ln), Reset+FaintRed,
+		fmt.Printf("%s%s%s %s\n", Reset+BoldRed, fmt.Sprintf("Error (%s:%d)", filepath.Base(file), ln), Reset+FaintRed,
 			fmt.Sprintf(err.Error()))
 	}
 }

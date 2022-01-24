@@ -16,34 +16,33 @@ type Devices struct {
 
 func (d *Devices) Handle(event bond.Msg) (res any, err error) {
 	switch event.Operation {
-	case "register":
-		return d.register(event)
 	case "compile":
 		return d.compile(event)
 	}
 	return nil, nil
 }
 
-func (d *Devices) Compile() ([]models.Device, error) {
-	var es []models.Device
+func (d *Devices) Compile() (res []models.Device, err error) {
 	for _, s := range d.Keys() {
 		device := d.Find(s)
 		if device == nil {
 			continue
 		}
-		es = append(es, *device)
+
+		res = append(res, *device)
 	}
-	return es, nil
+	return res, nil
 }
 
 func (d *Devices) FetchAll() {
 	var devices []models.Device
-	err := store.DB.Model(&models.Device{}).Find(&devices).Error
+	err := store.DB.Table("devices").Find(&devices).Error
 	if err != nil {
 		log.Err(err)
+		return
 	}
 	for _, device := range devices {
-		d.Set(device.Id, &device)
+		d.set(device.Id, &device)
 	}
 }
 
@@ -58,21 +57,12 @@ func LoadDevices() (m *Devices) {
 	return m
 }
 
-func (d *Devices) Pull() {
-	for _, k := range d.Keys() {
-		err := d.get(k)
-		if err != nil {
-			return
-		}
-	}
-}
-
-func (d *Devices) Register(device *models.Device) (res *models.Device, err error) {
+func (d *Devices) Register(device models.Device) (res *models.Device, err error) {
 	err = device.Emplace()
 	if err != nil {
 		return nil, err
 	}
-	d.Set(device.Id, device)
+	d.set(device.Id, &device)
 	return nil, nil
 }
 
@@ -84,9 +74,4 @@ func (d *Devices) Set(id string, device *models.Device) {
 
 func (d *Devices) compile(msg bond.Msg) (res any, err error) {
 	return d.Compile()
-}
-
-func (d *Devices) register(event bond.Msg) (res any, err error) {
-	device := event.Body.(*models.Device)
-	return d.Register(device)
 }

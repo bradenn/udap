@@ -26,6 +26,7 @@ type Entity struct {
 	Predicted string    `gorm:"-" json:"predicted"` // scalar
 	State     string    `json:"state"`
 	Config    string    `json:"config"`
+	Position  string    `json:"position" gorm:"default:'{}'"`
 	Live      bool      `gorm:"-" json:"live"`
 }
 

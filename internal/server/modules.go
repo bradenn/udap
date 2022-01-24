@@ -14,6 +14,7 @@ import (
 	"udap/internal/bond"
 	"udap/internal/controller"
 	"udap/internal/log"
+	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -107,7 +108,8 @@ func (m *Modules) Run() error {
 }
 
 func (m *Modules) Update() error {
-
+	pulse.Fixed(500)
+	defer pulse.End()
 	values, err := m.values()
 	if err != nil {
 		return err
@@ -119,7 +121,6 @@ func (m *Modules) Update() error {
 			return err
 		}
 	}
-
 	return nil
 }
 
