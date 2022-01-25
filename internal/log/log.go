@@ -119,7 +119,7 @@ func Log(format string, args ...interface{}) {
 
 func Event(format string, args ...interface{}) {
 	// _, ln, _, ok := runtime.Caller(1)
-	fmt.Printf("%s%s%s %s\n", Reset+BoldGreen, "Event", Reset+FaintGreen, fmt.Sprintf(format, args...))
+	fmt.Printf("%s%s%s %s%s\n", Reset+BoldGreen, "[EVNT]", Reset+FaintGreen, fmt.Sprintf(format, args...), Reset)
 }
 
 func Sherlock(format string, args ...interface{}) {

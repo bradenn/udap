@@ -3,37 +3,21 @@
 package controller
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"sync"
-	"time"
 	"udap/internal/bond"
 	"udap/internal/models"
 )
 
 type Attributes struct {
 	PolyBuffer
+	Observable
 }
 
 type IAttribute interface {
 	GetValue(value string)
 	GetRequest(value string)
-}
-
-type Observer chan bytes.Buffer
-
-func (e *Endpoints) Listen() {
-	c := make(Observer, 2)
-	for {
-
-		select {
-		case <-c: // Called when the attribute state changes
-
-		case <-time.After(time.Second * 1): // Called if not updated by reaction for more than 5 seconds
-
-		}
-	}
 }
 
 func (a *Attributes) Handle(event bond.Msg) (res any, err error) {
@@ -137,19 +121,13 @@ func (a *Attributes) Find(name string) *models.Attribute {
 }
 
 func (a *Attributes) Store(attribute *models.Attribute) {
-	err := attribute.CacheIn()
-	if err != nil {
-		return
-	}
 	a.set(attribute.Id, attribute)
-}
-
-func (a *Attributes) Observe(func(attribute models.Attribute) error) {
-
+	a.emit(attribute.Id, attribute)
 }
 
 func LoadAttributes() (m *Attributes) {
 	m = &Attributes{}
 	m.data = sync.Map{}
+	m.Run()
 	return m
 }

@@ -12,12 +12,11 @@ import (
 
 type Devices struct {
 	PolyBuffer
+	Observable
 }
 
 func (d *Devices) Handle(event bond.Msg) (res any, err error) {
 	switch event.Operation {
-	case "compile":
-		return d.compile(event)
 	}
 	return nil, nil
 }
@@ -36,13 +35,15 @@ func (d *Devices) Compile() (res []models.Device, err error) {
 
 func (d *Devices) FetchAll() {
 	var devices []models.Device
-	err := store.DB.Table("devices").Find(&devices).Error
+	err := store.DB.Model(&models.Device{}).Find(&devices).Error
 	if err != nil {
 		log.Err(err)
 		return
 	}
 	for _, device := range devices {
+
 		d.set(device.Id, &device)
+		d.emit(device.Id, &device)
 	}
 }
 
@@ -53,6 +54,7 @@ func (d *Devices) Find(name string) *models.Device {
 func LoadDevices() (m *Devices) {
 	m = &Devices{}
 	m.data = sync.Map{}
+	m.Run()
 	m.FetchAll()
 	return m
 }
@@ -63,15 +65,11 @@ func (d *Devices) Register(device models.Device) (res *models.Device, err error)
 		return nil, err
 	}
 	d.set(device.Id, &device)
+	d.emit(device.Id, &device)
 	return nil, nil
 }
 
 func (d *Devices) Set(id string, device *models.Device) {
 	d.set(id, device)
-}
-
-// Bond
-
-func (d *Devices) compile(msg bond.Msg) (res any, err error) {
-	return d.Compile()
+	d.emit(device.Id, &device)
 }
