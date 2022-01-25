@@ -14,7 +14,6 @@ import (
 	"sync"
 	"udap/internal/auth"
 	"udap/internal/bond"
-	"udap/internal/cache"
 	"udap/internal/controller"
 	"udap/internal/log"
 	"udap/internal/models"
@@ -67,6 +66,24 @@ func (e *Endpoints) attributeBroadcast(ent models.Attribute) error {
 		return err
 	}
 	return nil
+}
+
+func (e *Endpoints) reactive(operation string) func(any) error {
+	return func(a any) error {
+		response := controller.Response{
+			Status:    "success",
+			Operation: operation,
+			Body:      a,
+		}
+
+		err := e.Broadcast(response)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 }
 
 func (e *Endpoints) itemBroadcast(operation string, body any) error {
@@ -182,6 +199,10 @@ func (e *Endpoints) Broadcast(body any) error {
 func (e *Endpoints) Run() error {
 	log.Log("Endpoints: Listening")
 	port := os.Getenv("hostPort")
+
+	e.ctrl.Devices.Watch(e.reactive("device"))
+	e.ctrl.Attributes.Watch(e.reactive("attribute"))
+
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), e.router)
 	if err != nil {
 		log.Err(err)
@@ -251,29 +272,6 @@ func (e *Endpoints) Metadata() error {
 		}
 	}
 
-	attributes := e.ctrl.Attributes.Compile()
-	for _, attribute := range attributes {
-		if !e.watching[attribute.Id] {
-			cache.WatchFn(attribute.Path(), func(s string) error {
-				var attr models.Attribute
-				err = json.Unmarshal([]byte(s), &attr)
-				if err != nil {
-					return err
-				}
-				err = e.attributeBroadcast(attr)
-				if err != nil {
-					return err
-				}
-				return nil
-			})
-			e.watching[attribute.Id] = true
-		}
-		err = e.attributeBroadcast(attribute)
-		if err != nil {
-			return err
-		}
-	}
-
 	endpoints, err := e.ctrl.Endpoints.Compile()
 	if err != nil {
 		return err
@@ -281,17 +279,6 @@ func (e *Endpoints) Metadata() error {
 	for _, endpoint := range endpoints {
 
 		err = e.itemBroadcast("endpoint", endpoint)
-		if err != nil {
-			return err
-		}
-	}
-
-	devices, err := e.ctrl.Devices.Compile()
-	if err != nil {
-		return err
-	}
-	for _, device := range devices {
-		err = e.itemBroadcast("device", device)
 		if err != nil {
 			return err
 		}

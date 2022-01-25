@@ -13,7 +13,7 @@ import (
 	"udap/internal/store"
 )
 
-const VERSION = "2.9.1"
+const VERSION = "2.9.11 rc1"
 
 type Udap struct {
 	runtime  *server.Runtime
