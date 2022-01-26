@@ -132,31 +132,23 @@ func (r *Runtime) Run() (err error) {
 
 	delay := 1000.0
 	for {
-		pulse.Fixed(int(delay))
-		start := time.Now()
-		done := make(chan bool, 1)
-		go func() {
-			defer func() {
-				done <- true
-			}()
+		select {
+		case <-time.After(time.Millisecond * time.Duration(delay)):
+			log.Event("Update timed out")
+		default:
+			pulse.Fixed(int(delay))
+			start := time.Now()
 			err = r.Update()
 			if err != nil {
 				log.ErrF(err, "runtime update error: %s")
 			}
-		}()
-		d := time.Since(start)
-		select {
-		case <-done:
-			break
-		case <-time.After(time.Millisecond * time.Duration(delay)):
-			log.Event("Timed out! (%s)", d.String())
-		default:
-			dur := time.Millisecond*time.Duration(delay) - d
+			d := time.Since(start)
+			dur := (time.Millisecond * time.Duration(delay)) - d
 			if dur > 0 {
 				time.Sleep(dur)
 			}
+			pulse.End()
 		}
-		pulse.End()
 		_ = r.Endpoints.Timings()
 
 	}

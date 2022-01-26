@@ -75,21 +75,20 @@ func (m *Modules) Run() error {
 		go func(p plugin.UdapPlugin) {
 			defer wg.Done()
 			if p == nil {
-				log.Err(fmt.Errorf("plugin is not set"))
+				log.Err(fmt.Errorf("invalid plugin"))
 				return
 			}
 			// Defer the wait group to complete at the end
 			// Attempt to connect to the module
 			err = p.Connect(m.ctrl, m.bond)
 			if err != nil {
-				log.Err(err)
 				return
 			}
 			// Run module setup
 			c := plugin.Config{}
 			c, err = p.Setup()
 			if err != nil {
-				log.Err(err)
+				log.ErrF(err, "Module '%s' setup failed: ", c.Name)
 				return
 			}
 			start := time.Now()
@@ -97,7 +96,7 @@ func (m *Modules) Run() error {
 			// Attempt to run the module
 			err = p.Run()
 			if err != nil {
-				log.Err(err)
+				log.ErrF(err, "Module '%s' terminated prematurely: ", c.Name)
 				return
 			}
 			log.Event("Module '%s' exited. (%s)", c.Name, time.Since(start))

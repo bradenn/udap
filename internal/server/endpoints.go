@@ -201,6 +201,7 @@ func (e *Endpoints) Run() error {
 	port := os.Getenv("hostPort")
 
 	e.ctrl.Devices.Watch(e.reactive("device"))
+	e.ctrl.Entities.Watch(e.reactive("entity"))
 	e.ctrl.Attributes.Watch(e.reactive("attribute"))
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), e.router)
@@ -263,14 +264,6 @@ func (e *Endpoints) Timings() error {
 }
 
 func (e *Endpoints) Metadata() error {
-
-	entities, err := e.ctrl.Entities.Compile()
-	for _, entity := range entities {
-		err = e.itemBroadcast("entity", entity)
-		if err != nil {
-			return err
-		}
-	}
 
 	endpoints, err := e.ctrl.Endpoints.Compile()
 	if err != nil {

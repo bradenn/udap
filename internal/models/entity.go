@@ -148,7 +148,6 @@ func (e *Entity) delete() error {
 
 func (e *Entity) update() error {
 	err := store.DB.Where("id = ?", e.Id).Save(e).Error
-	err = e.writeCache()
 	if err != nil {
 		return err
 	}
