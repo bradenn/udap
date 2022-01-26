@@ -143,11 +143,12 @@ func (r *Runtime) Run() (err error) {
 				log.ErrF(err, "runtime update error: %s")
 			}
 			d := time.Since(start)
+			pulse.End()
 			dur := (time.Millisecond * time.Duration(delay)) - d
 			if dur > 0 {
 				time.Sleep(dur)
 			}
-			pulse.End()
+
 		}
 		_ = r.Endpoints.Timings()
 

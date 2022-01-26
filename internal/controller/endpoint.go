@@ -21,14 +21,13 @@ type Response struct {
 
 type Endpoints struct {
 	PolyBuffer
+	Observable
 	bond   *bond.Bond
 	router chi.Router
 }
 
 func (e *Endpoints) Handle(msg bond.Msg) (res any, err error) {
 	switch t := msg.Operation; t {
-	case "compile":
-		return e.compile(msg)
 	default:
 		return nil, fmt.Errorf("operation '%s' is not defined", t)
 	}
@@ -38,6 +37,7 @@ func LoadEndpoints() (m *Endpoints) {
 	m = &Endpoints{}
 	m.data = sync.Map{}
 	m.raw = map[string]any{}
+	m.Run()
 	m.FetchAll()
 	return m
 }
@@ -54,15 +54,6 @@ func (e *Endpoints) unenroll(msg bond.Msg) (res any, err error) {
 	endpoint := e.Find(msg.Id)
 	endpoint.Unenroll()
 	return nil, nil
-}
-
-func (e *Endpoints) compile(msg bond.Msg) (res any, err error) {
-	var endpoints []models.Endpoint
-	for _, s := range e.Keys() {
-		endpoint := e.Find(s)
-		endpoints = append(endpoints, *endpoint)
-	}
-	return endpoints, nil
 }
 
 func (e *Endpoints) Compile() (endpoints []models.Endpoint, err error) {

@@ -197,12 +197,13 @@ func (e *Endpoints) Broadcast(body any) error {
 }
 
 func (e *Endpoints) Run() error {
-	log.Log("Endpoints: Listening")
 	port := os.Getenv("hostPort")
 
 	e.ctrl.Devices.Watch(e.reactive("device"))
 	e.ctrl.Entities.Watch(e.reactive("entity"))
 	e.ctrl.Attributes.Watch(e.reactive("attribute"))
+	e.ctrl.Endpoints.Watch(e.reactive("endpoint"))
+	e.ctrl.Networks.Watch(e.reactive("network"))
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), e.router)
 	if err != nil {
@@ -243,13 +244,7 @@ type Identifier struct {
 }
 
 type Metadata struct {
-	Endpoint  models.Endpoint   `json:"endpoint"`
-	Endpoints []models.Endpoint `json:"endpoints"`
-	Devices   []models.Device   `json:"devices"`
-	Entities  []models.Entity   `json:"entities"`
-	Networks  []models.Network  `json:"networks"`
-	Logs      []models.Log      `json:"logs"`
-	System    System            `json:"system"`
+	System System `json:"system"`
 }
 
 func (e *Endpoints) Timings() error {
@@ -264,18 +259,6 @@ func (e *Endpoints) Timings() error {
 }
 
 func (e *Endpoints) Metadata() error {
-
-	endpoints, err := e.ctrl.Endpoints.Compile()
-	if err != nil {
-		return err
-	}
-	for _, endpoint := range endpoints {
-
-		err = e.itemBroadcast("endpoint", endpoint)
-		if err != nil {
-			return err
-		}
-	}
 
 	networks, err := e.ctrl.Networks.Compile()
 	if err != nil {
