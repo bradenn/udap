@@ -11,20 +11,15 @@ import (
 
 type Networks struct {
 	PolyBuffer
+	Observable
 }
 
 func (d *Networks) Handle(event bond.Msg) (res any, err error) {
 	switch event.Operation {
 	case "register":
 		return d.register(event)
-	case "compile":
-		return d.compile(event)
 	}
 	return nil, nil
-}
-
-func (d *Networks) compile(msg bond.Msg) (res any, err error) {
-	return d.Compile()
 }
 
 func (d *Networks) Compile() (res []models.Network, err error) {
@@ -54,6 +49,7 @@ func LoadNetworks() (m *Networks) {
 	m = &Networks{}
 	m.data = sync.Map{}
 	m.raw = map[string]any{}
+	m.Run()
 	m.FetchAll()
 	return m
 }

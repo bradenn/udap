@@ -142,7 +142,7 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 	ep := e.ctrl.Endpoints.Find(id)
 	err = ep.Enroll(c)
 	if err != nil {
-		return
+		log.Err(err)
 	}
 
 	wg := sync.WaitGroup{}
@@ -152,6 +152,11 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		defer wg.Done()
 		ep.Connection.Watch()
 	}()
+
+	err = e.ctrl.Entities.EmitAll()
+	if err != nil {
+		return
+	}
 
 	go func() {
 		defer wg.Done()
@@ -197,11 +202,13 @@ func (e *Endpoints) Broadcast(body any) error {
 }
 
 func (e *Endpoints) Run() error {
-	log.Log("Endpoints: Listening")
 	port := os.Getenv("hostPort")
 
 	e.ctrl.Devices.Watch(e.reactive("device"))
+	e.ctrl.Entities.Watch(e.reactive("entity"))
 	e.ctrl.Attributes.Watch(e.reactive("attribute"))
+	e.ctrl.Endpoints.Watch(e.reactive("endpoint"))
+	e.ctrl.Networks.Watch(e.reactive("network"))
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), e.router)
 	if err != nil {
@@ -242,13 +249,7 @@ type Identifier struct {
 }
 
 type Metadata struct {
-	Endpoint  models.Endpoint   `json:"endpoint"`
-	Endpoints []models.Endpoint `json:"endpoints"`
-	Devices   []models.Device   `json:"devices"`
-	Entities  []models.Entity   `json:"entities"`
-	Networks  []models.Network  `json:"networks"`
-	Logs      []models.Log      `json:"logs"`
-	System    System            `json:"system"`
+	System System `json:"system"`
 }
 
 func (e *Endpoints) Timings() error {
@@ -264,37 +265,6 @@ func (e *Endpoints) Timings() error {
 
 func (e *Endpoints) Metadata() error {
 
-	entities, err := e.ctrl.Entities.Compile()
-	for _, entity := range entities {
-		err = e.itemBroadcast("entity", entity)
-		if err != nil {
-			return err
-		}
-	}
-
-	endpoints, err := e.ctrl.Endpoints.Compile()
-	if err != nil {
-		return err
-	}
-	for _, endpoint := range endpoints {
-
-		err = e.itemBroadcast("endpoint", endpoint)
-		if err != nil {
-			return err
-		}
-	}
-
-	networks, err := e.ctrl.Networks.Compile()
-	if err != nil {
-		return err
-	}
-	for _, network := range networks {
-		err = e.itemBroadcast("network", network)
-		if err != nil {
-			return err
-		}
-	}
-
 	response := controller.Response{
 		Status:    "success",
 		Operation: "metadata",
@@ -303,7 +273,7 @@ func (e *Endpoints) Metadata() error {
 		},
 	}
 
-	err = e.Broadcast(response)
+	err := e.Broadcast(response)
 	if err != nil {
 		return err
 	}

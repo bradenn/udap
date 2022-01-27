@@ -14,7 +14,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"udap/internal/log"
 	"udap/internal/models"
 	"udap/pkg/plugin"
 )
@@ -37,7 +36,6 @@ func init() {
 }
 
 func (v *Vyos) Setup() (plugin.Config, error) {
-
 	return v.Config, nil
 }
 
@@ -46,8 +44,7 @@ func (v *Vyos) Update() error {
 }
 
 func (v *Vyos) Run() error {
-	v.fetchNetworks()
-	return nil
+	return v.fetchNetworks()
 }
 
 func (v *Vyos) scanSubnet(network models.Network) error {
@@ -68,7 +65,7 @@ func (v *Vyos) scanSubnet(network models.Network) error {
 
 	result, warnings, err := scanner.Run()
 	if err != nil {
-		return fmt.Errorf("unable to run nmap scan: %v", err)
+		return fmt.Errorf("network scan failed: %v", err)
 	}
 
 	if warnings != nil {
@@ -104,15 +101,6 @@ type Response struct {
 	Error   any  `json:"error"`
 }
 
-type Addr struct {
-	Address     string `json:"address"`
-	Description string `json:"description"`
-}
-
-type Payload struct {
-	Ethernet map[string]Addr `json:"ethernet"`
-}
-
 type Dhcp struct {
 	Networks map[string]Lan `json:"shared-network-name"`
 }
@@ -133,12 +121,13 @@ type Subnet struct {
 	Range         map[int]Range `json:"range"`
 }
 
-func (v *Vyos) fetchNetworks() {
+func (v *Vyos) fetchNetworks() error {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := http.Client{
 		Transport: transport,
+		Timeout:   time.Second * 2,
 	}
 
 	val := url.Values{}
@@ -147,30 +136,27 @@ func (v *Vyos) fetchNetworks() {
 
 	request, err := client.PostForm("https://10.0.1.1:8005/retrieve", val)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return fmt.Errorf("vyos router is non-existance")
 	}
 
 	buffer := bytes.Buffer{}
 	_, err = buffer.ReadFrom(request.Body)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	payload := Response{}
 	err = json.Unmarshal(buffer.Bytes(), &payload)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
+
 	wg := sync.WaitGroup{}
 	d := payload.Data
 	wg.Add(len(d.Networks))
 	for name, lan := range d.Networks {
 		network := models.Network{}
 		network.Name = name
-		network.Dns = strings.Join(lan.NameServer, ",")
 		network.Dns = strings.Join(lan.NameServer, ",")
 		for s, subnet := range lan.Subnets {
 			network.Mask = s
@@ -182,18 +168,15 @@ func (v *Vyos) fetchNetworks() {
 
 		_, err = v.Networks.Register(&network)
 		if err != nil {
-			return
+			return err
 		}
 
-		go func() {
-			defer wg.Done()
-			err = v.scanSubnet(network)
-			if err != nil {
-				log.Err(err)
-				return
-			}
-		}()
+		err = v.scanSubnet(network)
+		if err != nil {
+			return err
+		}
 
 	}
 	wg.Wait()
+	return nil
 }

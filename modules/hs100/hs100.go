@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"udap/internal/log"
 	"udap/internal/models"
 	"udap/internal/pulse"
 	"udap/pkg/plugin"
@@ -26,7 +25,7 @@ func init() {
 		Name:        "hs100",
 		Type:        "module",
 		Description: "Control TP-Link HS100 Outlets",
-		Version:     "1.6.2",
+		Version:     "1.7.3",
 		Author:      "Braden Nicholson",
 	}
 
@@ -34,13 +33,15 @@ func init() {
 }
 
 func (h *HS100) findDevices() error {
-	devices, err := hs100.Discover("10.0.1.1/24", configuration.Default().WithTimeout(time.Second*4))
+	devices, err := hs100.Discover("10.0.1.1/24", configuration.Default().WithTimeout(time.Second*5))
 	if err != nil {
-		log.Err(err)
+		return nil
 	}
+
 	for len(devices) == 0 {
-		continue
+		return nil
 	}
+
 	for _, device := range devices {
 		name, err := device.GetName()
 		if err != nil {
@@ -79,10 +80,7 @@ func (h *HS100) findDevices() error {
 // Setup is called once at the launch of the module
 func (h *HS100) Setup() (plugin.Config, error) {
 	h.devices = map[string]*hs100.Hs100{}
-	err := h.findDevices()
-	if err != nil {
-		return plugin.Config{}, err
-	}
+
 	return h.Config, nil
 }
 
@@ -110,13 +108,11 @@ func (h *HS100) Update() error {
 
 // Run is called after Setup, concurrent with Update
 func (h *HS100) Run() (err error) {
-	for {
-		err = h.Update()
-		if err != nil {
-			return err
-		}
-		time.Sleep(time.Second * 5)
+	err = h.findDevices()
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 func (h *HS100) put(device *hs100.Hs100) models.FuncPut {
