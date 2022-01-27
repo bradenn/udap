@@ -142,7 +142,7 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 	ep := e.ctrl.Endpoints.Find(id)
 	err = ep.Enroll(c)
 	if err != nil {
-		return
+		log.Err(err)
 	}
 
 	wg := sync.WaitGroup{}
@@ -152,6 +152,11 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		defer wg.Done()
 		ep.Connection.Watch()
 	}()
+
+	err = e.ctrl.Entities.EmitAll()
+	if err != nil {
+		return
+	}
 
 	go func() {
 		defer wg.Done()
@@ -260,17 +265,6 @@ func (e *Endpoints) Timings() error {
 
 func (e *Endpoints) Metadata() error {
 
-	networks, err := e.ctrl.Networks.Compile()
-	if err != nil {
-		return err
-	}
-	for _, network := range networks {
-		err = e.itemBroadcast("network", network)
-		if err != nil {
-			return err
-		}
-	}
-
 	response := controller.Response{
 		Status:    "success",
 		Operation: "metadata",
@@ -279,7 +273,7 @@ func (e *Endpoints) Metadata() error {
 		},
 	}
 
-	err = e.Broadcast(response)
+	err := e.Broadcast(response)
 	if err != nil {
 		return err
 	}

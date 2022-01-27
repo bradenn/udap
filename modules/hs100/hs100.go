@@ -80,10 +80,7 @@ func (h *HS100) findDevices() error {
 // Setup is called once at the launch of the module
 func (h *HS100) Setup() (plugin.Config, error) {
 	h.devices = map[string]*hs100.Hs100{}
-	err := h.findDevices()
-	if err != nil {
-		return plugin.Config{}, err
-	}
+
 	return h.Config, nil
 }
 
@@ -111,6 +108,10 @@ func (h *HS100) Update() error {
 
 // Run is called after Setup, concurrent with Update
 func (h *HS100) Run() (err error) {
+	err = h.findDevices()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

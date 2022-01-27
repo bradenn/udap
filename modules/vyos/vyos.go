@@ -36,7 +36,6 @@ func init() {
 }
 
 func (v *Vyos) Setup() (plugin.Config, error) {
-
 	return v.Config, nil
 }
 

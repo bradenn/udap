@@ -92,7 +92,7 @@ func (m *Modules) Run() error {
 				return
 			}
 			start := time.Now()
-			log.Event("Module '%s' v%s running.", c.Name, c.Version)
+			log.Event("Module '%s' v%s starting.", c.Name, c.Version)
 			// Attempt to run the module
 			err = p.Run()
 			if err != nil {
@@ -107,7 +107,7 @@ func (m *Modules) Run() error {
 }
 
 func (m *Modules) Update() error {
-	pulse.Fixed(500)
+	pulse.Fixed(1000)
 	defer pulse.End()
 	values, err := m.values()
 	if err != nil {

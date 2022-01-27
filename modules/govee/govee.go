@@ -420,31 +420,6 @@ func GenerateAttributes(id string) []*models.Attribute {
 
 func (g *Govee) Setup() (plugin.Config, error) {
 	g.devices = map[string]*Device{}
-	devices, err := g.fetchDevices()
-	if err != nil {
-		return g.Config, err
-	}
-
-	for _, device := range devices {
-
-		s := models.NewSpectrum(device.DeviceName, g.Config.Name)
-		_, err = g.Entities.Register(s)
-		if err != nil {
-			return plugin.Config{}, err
-		}
-
-		attributes := GenerateAttributes(s.Id)
-		for _, attribute := range attributes {
-			attribute.FnGet(g.stateGet(device, attribute.Key))
-			attribute.FnPut(g.statePut(device, attribute.Key))
-			err = g.Attributes.Register(attribute)
-			if err != nil {
-				return plugin.Config{}, err
-			}
-		}
-
-		g.devices[s.Id] = &device
-	}
 
 	return g.Config, nil
 }
@@ -466,22 +441,41 @@ func (g *Govee) push() error {
 	return nil
 }
 
-func (g *Govee) tick() error {
-	return nil
-}
-
 func (g *Govee) Update() error {
 	pulse.Fixed(4000)
 	defer pulse.End()
 	if time.Since(g.Module.LastUpdate) >= time.Second*4 {
 		g.Module.LastUpdate = time.Now()
 		return g.push()
-	} else {
-		time.Sleep(time.Second)
 	}
 	return nil
 }
 
 func (g *Govee) Run() error {
+	devices, err := g.fetchDevices()
+	if err != nil {
+		return err
+	}
+
+	for _, device := range devices {
+
+		s := models.NewSpectrum(device.DeviceName, g.Config.Name)
+		_, err = g.Entities.Register(s)
+		if err != nil {
+			return err
+		}
+
+		attributes := GenerateAttributes(s.Id)
+		for _, attribute := range attributes {
+			attribute.FnGet(g.stateGet(device, attribute.Key))
+			attribute.FnPut(g.statePut(device, attribute.Key))
+			err = g.Attributes.Register(attribute)
+			if err != nil {
+				return err
+			}
+		}
+
+		g.devices[s.Id] = &device
+	}
 	return nil
 }
