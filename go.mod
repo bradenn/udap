@@ -3,6 +3,8 @@ module udap
 go 1.18
 
 require (
+	github.com/Picovoice/porcupine/binding/go/v2 v2.1.0
+	github.com/Picovoice/pvrecorder/sdk/go v1.0.2
 	github.com/Ullaakut/nmap/v2 v2.2.0
 	github.com/brutella/hc v1.2.4
 	github.com/gerow/go-color v0.0.0-20140219113758-125d37f527f1
@@ -14,6 +16,7 @@ require (
 	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
 	github.com/patrikeh/go-deep v0.0.0-20191210195838-b811ffc4083e
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15
 )
@@ -44,9 +47,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tadglines/go-pkgs v0.0.0-20140924210655-1f86682992f1 // indirect
 	github.com/xiam/to v0.0.0-20191116183551-8328998fc0ed // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a // indirect
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
+	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
 	golang.org/x/text v0.3.7 // indirect
 )

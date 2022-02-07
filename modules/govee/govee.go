@@ -73,7 +73,7 @@ var Module Govee
 
 type Govee struct {
 	plugin.Module
-	devices map[string]*Device
+	devices map[string]Device
 }
 
 func init() {
@@ -141,11 +141,11 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	return r.Data, nil
 }
 
-func (g *Govee) getAllStates(device *Device, id string) (any, error) {
+func (g *Govee) getAllStates(device Device, id string) (any, error) {
 	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
+	stamp := time.Now()
 	request, err := g.sendApiRequest("GET", path, nil)
 	if err != nil {
-
 		return nil, err
 	}
 
@@ -158,29 +158,33 @@ func (g *Govee) getAllStates(device *Device, id string) (any, error) {
 		for s, message := range value {
 			switch s {
 			case "powerState":
-				var st string
-				err = json.Unmarshal(message, &st)
+				var str string
+				err = json.Unmarshal(message, &str)
 				if err != nil {
 					break
 				}
-				val := "false"
-				if st == "on" {
-					val = "true"
+				res := "false"
+				if str == "on" {
+					res = "true"
 				}
-				err = g.Attributes.Update(id, "on", val)
+				err = g.Attributes.Update(id, "on", res, stamp)
 				if err != nil {
+					fmt.Println(err)
 					break
 				}
+				break
 			case "colorTem":
-				err = g.Attributes.Update(id, "cct", string(message))
+				err = g.Attributes.Update(id, "cct", string(message), stamp)
 				if err != nil {
 					break
 				}
+				break
 			case "brightness":
-				err = g.Attributes.Update(id, "dim", string(message))
+				err = g.Attributes.Update(id, "dim", string(message), stamp)
 				if err != nil {
 					break
 				}
+				break
 			case "color":
 				var col Color
 				err = json.Unmarshal(message, &col)
@@ -193,10 +197,13 @@ func (g *Govee) getAllStates(device *Device, id string) (any, error) {
 				if err != nil {
 					break
 				}
-				err = g.Attributes.Update(id, "hue", string(marshal))
+				err = g.Attributes.Update(id, "hue", string(marshal), stamp)
 				if err != nil {
 					break
 				}
+				break
+			default:
+				break
 			}
 		}
 	}
@@ -294,6 +301,36 @@ func (g *Govee) control(device Device, cmd Cmd) error {
 	return nil
 }
 
+func (g *Govee) setOn(device Device, b bool) error {
+	ns := "off"
+	if b {
+		ns = "on"
+	}
+	cmd := Cmd{
+		Name:  "turn",
+		Value: ns,
+	}
+	err := g.control(device, cmd)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (g *Govee) setLevel(device Device, b int) error {
+	cmd := Cmd{
+		Name:  "brightness",
+		Value: b,
+	}
+	err := g.control(device, cmd)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (g *Govee) setState(device Device, value string, mode string) error {
 	switch mode {
 	case "cct":
@@ -311,32 +348,21 @@ func (g *Govee) setState(device Device, value string, mode string) error {
 		}
 		break
 	case "on":
-		ns := "off"
 		parsed, err := strconv.ParseBool(value)
-		if err != nil {
-		}
-		if parsed {
-			ns = "on"
-		}
-		cmd := Cmd{
-			Name:  "turn",
-			Value: ns,
-		}
-		err = g.control(device, cmd)
 		if err != nil {
 			return err
 		}
-		break
+
+		err = g.setOn(device, parsed)
+		if err != nil {
+			return err
+		}
 	case "dim":
 		val, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
-		cmd := Cmd{
-			Name:  "brightness",
-			Value: val,
-		}
-		err = g.control(device, cmd)
+		err = g.setLevel(device, val)
 		if err != nil {
 			return err
 		}
@@ -419,7 +445,7 @@ func GenerateAttributes(id string) []*models.Attribute {
 }
 
 func (g *Govee) Setup() (plugin.Config, error) {
-	g.devices = map[string]*Device{}
+	g.devices = map[string]Device{}
 
 	return g.Config, nil
 }
@@ -429,7 +455,7 @@ func (g *Govee) push() error {
 	wg := sync.WaitGroup{}
 	wg.Add(len(g.devices))
 	for s, d := range g.devices {
-		go func(device *Device, id string) {
+		go func(device Device, id string) {
 			defer wg.Done()
 			_, err := g.getAllStates(device, id)
 			if err != nil {
@@ -442,9 +468,9 @@ func (g *Govee) push() error {
 }
 
 func (g *Govee) Update() error {
-	pulse.Fixed(4000)
+	pulse.Fixed(5000)
 	defer pulse.End()
-	if time.Since(g.Module.LastUpdate) >= time.Second*4 {
+	if time.Since(g.Module.LastUpdate) >= time.Second*5 {
 		g.Module.LastUpdate = time.Now()
 		return g.push()
 	}
@@ -464,7 +490,7 @@ func (g *Govee) Run() error {
 		if err != nil {
 			return err
 		}
-
+		g.devices[s.Id] = device
 		attributes := GenerateAttributes(s.Id)
 		for _, attribute := range attributes {
 			attribute.FnGet(g.stateGet(device, attribute.Key))
@@ -475,7 +501,6 @@ func (g *Govee) Run() error {
 			}
 		}
 
-		g.devices[s.Id] = &device
 	}
 	return nil
 }

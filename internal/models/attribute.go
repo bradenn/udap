@@ -3,11 +3,9 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
-	"udap/internal/cache"
 )
 
 type FuncPut func(value string) error
@@ -20,52 +18,29 @@ type Attribute struct {
 
 	Request   string    `json:"request"`
 	Requested time.Time `json:"requested"`
-
-	Entity string `json:"entity"`
-	Key    string `json:"key"`
-	Type   string `json:"type"`
-	Order  int    `json:"order"`
-	put    FuncPut
-	get    FuncGet
+	Entity    string    `json:"entity"`
+	Key       string    `json:"key"`
+	Type      string    `json:"type"`
+	Order     int       `json:"order"`
+	put       FuncPut
+	get       FuncGet
 }
 
 func (a *Attribute) Path() string {
 	return fmt.Sprintf("%s.%s", a.Entity, a.Key)
 }
 
-func (a *Attribute) CacheIn() error {
-	marshal, err := json.Marshal(a)
-	if err != nil {
-		return err
-	}
-	err = cache.PutLn(string(marshal), a.Id)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *Attribute) CacheOut() error {
-
-	ln, err := cache.GetLn(a.Entity, a.Key)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal([]byte(ln.(string)), a)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *Attribute) UpdateValue(val string) error {
-	// Not a good time for an update
-	if val == a.Value || a.Request != a.Value {
-		return nil
-	}
-	// Update the values, but leave the request timestamp
+func (a *Attribute) SetValue(val string) {
 	a.Value = val
+	a.Updated = time.Now()
+}
+
+func (a *Attribute) UpdateValue(val string, stamp time.Time) error {
+	if a.Requested.Before(stamp) && a.Request != val && time.Since(a.Requested) < 5*time.Second {
+		return fmt.Errorf("OVERWRITES REQUEST")
+	}
 	a.Request = val
+	a.Value = val
 	a.Updated = time.Now()
 	return nil
 }
@@ -77,6 +52,7 @@ func (a *Attribute) SendRequest(val string) error {
 
 	a.Request = val
 	a.Requested = time.Now()
+
 	err := a.put(val)
 	if err != nil {
 		return err
@@ -84,24 +60,7 @@ func (a *Attribute) SendRequest(val string) error {
 
 	a.Value = val
 	a.Updated = time.Now()
-	err = a.CacheIn()
-	if err != nil {
-		return err
-	}
 	return nil
-}
-
-func (a *Attribute) Poll() (bool, error) {
-	val, err := a.get()
-	if err != nil {
-		return false, err
-	}
-	if val != a.Value && a.Request == a.Value {
-		a.Value = val
-		a.Updated = time.Now()
-		return true, nil
-	}
-	return false, nil
 }
 
 func (a *Attribute) FnPut(put FuncPut) {
@@ -140,15 +99,6 @@ func NewMediaEntity(name string, module string) *Entity {
 	e := Entity{
 		Name:   name,
 		Type:   "media",
-		Module: module,
-	}
-	return &e
-}
-
-func NewEntity(name string, module string) *Entity {
-	e := Entity{
-		Name:   name,
-		Type:   "switch",
 		Module: module,
 	}
 	return &e

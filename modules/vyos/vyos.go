@@ -49,7 +49,7 @@ func (v *Vyos) Run() error {
 
 func (v *Vyos) scanSubnet(network models.Network) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	scanner, err := nmap.NewScanner(
@@ -150,10 +150,10 @@ func (v *Vyos) fetchNetworks() error {
 	if err != nil {
 		return err
 	}
+	d := payload.Data
 
 	wg := sync.WaitGroup{}
-	d := payload.Data
-	wg.Add(len(d.Networks))
+
 	for name, lan := range d.Networks {
 		network := models.Network{}
 		network.Name = name
@@ -168,15 +168,17 @@ func (v *Vyos) fetchNetworks() error {
 
 		_, err = v.Networks.Register(&network)
 		if err != nil {
-			return err
 		}
-
-		err = v.scanSubnet(network)
-		if err != nil {
-			return err
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err = v.scanSubnet(network)
+			if err != nil {
+			}
+		}()
 
 	}
+
 	wg.Wait()
 	return nil
 }

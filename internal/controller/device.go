@@ -33,6 +33,16 @@ func (d *Devices) Compile() (res []models.Device, err error) {
 	return res, nil
 }
 
+func (d *Devices) EmitAll() (err error) {
+
+	for _, k := range d.Keys() {
+		find := d.Find(k)
+		d.emit(k, find)
+	}
+
+	return nil
+}
+
 func (d *Devices) FetchAll() {
 	var devices []models.Device
 	err := store.DB.Model(&models.Device{}).Find(&devices).Error

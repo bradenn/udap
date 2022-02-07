@@ -107,7 +107,7 @@ func (m *Modules) Run() error {
 }
 
 func (m *Modules) Update() error {
-	pulse.Fixed(1000)
+	pulse.Fixed(2000)
 	defer pulse.End()
 	values, err := m.values()
 	if err != nil {
@@ -116,6 +116,7 @@ func (m *Modules) Update() error {
 
 	for _, mod := range values {
 		err = mod.Update()
+		time.Sleep(1 * time.Millisecond)
 		if err != nil {
 			return err
 		}

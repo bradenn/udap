@@ -21,10 +21,6 @@ type Persistent struct {
 	Id string `json:"id" gorm:"primary_key;type:string;default:uuid_generate_v4()"`
 }
 
-func (e *Persistent) UUID() string {
-	return e.Id
-}
-
 type Database struct {
 	*gorm.DB
 }

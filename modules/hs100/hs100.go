@@ -60,7 +60,7 @@ func (h *HS100) findDevices() error {
 			Key:     "on",
 			Value:   "false",
 			Request: "false",
-			Order:   -1,
+			Order:   0,
 			Type:    "toggle",
 			Entity:  newSwitch.Id,
 		}
@@ -84,25 +84,33 @@ func (h *HS100) Setup() (plugin.Config, error) {
 	return h.Config, nil
 }
 
-// Update is called every cycle
-func (h *HS100) Update() error {
-	pulse.Fixed(1000)
-	defer pulse.End()
+func (h *HS100) pull() error {
 	for id, device := range h.devices {
+
 		isOn, err := device.IsOn()
 		if err != nil {
-			return err
+			return nil
 		}
 		res := "false"
 		if isOn {
 			res = "true"
 		}
-		err = h.Attributes.Update(id, "on", res)
+		err = h.Attributes.Update(id, "on", res, time.Now())
 		if err != nil {
 			return err
 		}
 	}
+	return nil
+}
 
+// Update is called every cycle
+func (h *HS100) Update() error {
+	pulse.Fixed(2000)
+	defer pulse.End()
+	if time.Since(h.Module.LastUpdate) >= time.Second*2 {
+		h.Module.LastUpdate = time.Now()
+		return h.pull()
+	}
 	return nil
 }
 

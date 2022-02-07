@@ -43,7 +43,6 @@ func (r *Runtime) handleRequest() {
 }
 
 func (r *Runtime) Update() error {
-
 	wg := sync.WaitGroup{}
 	wg.Add(len(r.daemons))
 	for _, d := range r.daemons {
@@ -52,7 +51,6 @@ func (r *Runtime) Update() error {
 			err := daemon.Update()
 			if err != nil {
 				log.Err(err)
-				return
 			}
 		}(d)
 	}
@@ -60,7 +58,7 @@ func (r *Runtime) Update() error {
 	return nil
 }
 
-func (r *Runtime) AddDaemons(daemon ...Daemon) {
+func (r *Runtime) addDaemons(daemon ...Daemon) {
 	for _, d := range daemon {
 		r.daemons = append(r.daemons, d)
 	}
@@ -85,7 +83,7 @@ func (r *Runtime) Load() (err error) {
 	r.Modules = &Modules{}
 	r.Endpoints = &Endpoints{}
 
-	r.AddDaemons(r.Modules, r.Endpoints)
+	r.addDaemons(r.Modules, r.Endpoints)
 
 	r.eventHandler = make(chan bond.Msg, 4)
 

@@ -14,9 +14,10 @@ var Timings Timing
 
 func init() {
 	Timings = Timing{}
+	Timings.mt = sync.Mutex{}
 	Timings.history = map[uintptr]Proc{}
 	Timings.waiting = map[uintptr]Proc{}
-	Timings.handler = make(chan Proc, 1)
+	Timings.handler = make(chan Proc)
 	go Timings.handle()
 }
 
@@ -49,7 +50,7 @@ func (h *Timing) Timings() (a map[uintptr]Proc) {
 }
 
 func (h *Timing) handle() {
-	h.mt = sync.Mutex{}
+
 	for proc := range h.handler {
 		if !proc.Complete {
 			h.waiting[proc.Pointer] = proc
@@ -102,14 +103,6 @@ func Fixed(ms int) {
 	details := runtime.FuncForPC(pc)
 	if ok && details != nil {
 		Timings.beginFixed(ms, details)
-	}
-}
-
-func Begin() {
-	pc, _, _, ok := runtime.Caller(1)
-	details := runtime.FuncForPC(pc)
-	if ok && details != nil {
-		Timings.begin(details)
 	}
 }
 

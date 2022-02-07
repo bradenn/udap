@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 	"udap/internal/bond"
 	"udap/internal/models"
 )
@@ -15,17 +16,10 @@ type Attributes struct {
 	Observable
 }
 
-type IAttribute interface {
-	GetValue(value string)
-	GetRequest(value string)
-}
-
 func (a *Attributes) Handle(event bond.Msg) (res any, err error) {
 	switch event.Operation {
 	case "request":
 		return a.request(event)
-	case "poll":
-		return a.poll(event)
 	default:
 		return nil, fmt.Errorf("operaiton not found")
 	}
@@ -37,38 +31,32 @@ func (a *Attributes) Register(attribute *models.Attribute) error {
 	return nil
 }
 
-func (a *Attributes) poll(event bond.Msg) (any, error) {
+func (a *Attributes) Request(entity string, key string, value string) error {
 	attr := models.Attribute{}
-
-	err := json.Unmarshal([]byte(event.Payload), &attr)
-	if err != nil {
-		return nil, err
-	}
-	attribute := a.Find(attr.Id)
+	attr.Entity = entity
+	attr.Key = key
+	attribute := a.Find(attr.Path())
 	if attribute == nil {
-		return nil, fmt.Errorf("attribute '%s' not found", attr.Id)
+		return fmt.Errorf("attribute '%s' not found", attr.Id)
 	}
 
-	ok, err := attribute.Poll()
+	err := attribute.SendRequest(value)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if ok {
-		a.Store(attribute)
-	}
+	a.Store(attribute)
 
-	return nil, nil
+	return nil
 }
 
 func (a *Attributes) request(event bond.Msg) (any, error) {
 	attr := models.Attribute{}
-
 	err := json.Unmarshal([]byte(event.Payload), &attr)
 	if err != nil {
 		return nil, err
 	}
-	attribute := a.Find(attr.Id)
+	attribute := a.Find(attr.Path())
 	if attribute == nil {
 		return nil, fmt.Errorf("attribute '%s' not found", attr.Id)
 	}
@@ -83,13 +71,44 @@ func (a *Attributes) request(event bond.Msg) (any, error) {
 	return nil, nil
 }
 
-func (a *Attributes) Update(entity string, key string, value string) error {
+func (a *Attributes) EmitAll() (err error) {
+
+	for _, k := range a.Keys() {
+		find := a.Find(k)
+		a.emit(k, find)
+	}
+
+	return nil
+}
+
+func (a *Attributes) Set(entity string, key string, value string) error {
 	attr := models.Attribute{}
 	attr.Entity = entity
 	attr.Key = key
 
 	attribute := a.Find(attr.Path())
-	err := attribute.UpdateValue(value)
+	if attribute == nil {
+		return fmt.Errorf("attribute not found")
+	}
+
+	attribute.SetValue(value)
+
+	a.Store(attribute)
+
+	return nil
+}
+
+func (a *Attributes) Update(entity string, key string, value string, stamp time.Time) error {
+	attr := models.Attribute{}
+	attr.Entity = entity
+	attr.Key = key
+
+	attribute := a.Find(attr.Path())
+	if attribute == nil {
+		return fmt.Errorf("attribute not found")
+	}
+
+	err := attribute.UpdateValue(value, stamp)
 	if err != nil {
 		return err
 	}
@@ -97,6 +116,19 @@ func (a *Attributes) Update(entity string, key string, value string) error {
 	a.Store(attribute)
 
 	return nil
+}
+
+func (a *Attributes) Query(entity string, key string) string {
+	attr := models.Attribute{}
+	attr.Entity = entity
+	attr.Key = key
+
+	attribute := a.Find(attr.Path())
+	if attribute == nil {
+		return ""
+	}
+
+	return attribute.Request
 }
 
 func (a *Attributes) Compile() []models.Attribute {

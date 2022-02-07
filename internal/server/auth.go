@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package auth
+package server
 
 import (
 	"fmt"
@@ -11,12 +11,12 @@ import (
 
 var tokenAuth *jwtauth.JWTAuth
 
-func LoadKeys() {
+func loadKeys() {
 	privateKey := os.Getenv("private")
 	tokenAuth = jwtauth.New("HS512", []byte(privateKey), nil)
 }
 
-func AuthToken(token string) (string, error) {
+func authToken(token string) (string, error) {
 	content, err := jwtauth.VerifyToken(tokenAuth, token)
 	if err != nil {
 		return "", err
@@ -32,14 +32,13 @@ func AuthToken(token string) (string, error) {
 	return s, nil
 }
 
-func VerifyToken() func(http.Handler) http.Handler {
+func verifyToken() func(http.Handler) http.Handler {
 	return jwtauth.Verifier(tokenAuth)
 }
 
 type Claims map[string]interface{}
 
-// SignUUID will generate and sign a JWT key with a set of claims. Use wisely.
-func SignUUID(id string) (string, error) {
+func signUUID(id string) (string, error) {
 	claims := Claims{}
 	claims["id"] = id
 	_, s, err := tokenAuth.Encode(claims)

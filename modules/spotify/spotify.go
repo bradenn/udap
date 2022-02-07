@@ -301,7 +301,7 @@ func (s *Spotify) push() error {
 	}
 
 	if !json.Valid([]byte(song)) {
-		err = s.Attributes.Update(s.id, "playing", "false")
+		err = s.Attributes.Set(s.id, "playing", "false")
 		if err != nil {
 			return err
 		}
@@ -350,7 +350,7 @@ func (s *Spotify) push() error {
 		return err
 	}
 
-	err = s.Attributes.Update(s.id, "current", string(marshal))
+	err = s.Attributes.Set(s.id, "current", string(marshal))
 	if err != nil {
 		return err
 	}
@@ -361,7 +361,7 @@ func (s *Spotify) push() error {
 	} else {
 		s.Frequency = 5000
 	}
-	err = s.Attributes.Update(s.id, "playing", res)
+	err = s.Attributes.Set(s.id, "playing", res)
 	if err != nil {
 		return err
 	}

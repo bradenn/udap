@@ -3,9 +3,11 @@
 package controller
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"sync"
+	"udap/internal/log"
 )
 
 type Observer struct {
@@ -19,19 +21,32 @@ type Mutation struct {
 }
 
 type Observable struct {
-	watchers map[string]Observer
-	handler  chan Mutation
+	watchers       map[string]Observer
+	singleWatchers map[string]map[string]Observer
+	handler        chan Mutation
 }
 
 func (p *Observable) Run() {
 	p.watchers = map[string]Observer{}
-	p.handler = make(chan Mutation)
+	p.singleWatchers = map[string]map[string]Observer{}
+	p.handler = make(chan Mutation, 1)
 	go func() {
+		// Individual-key observers
 		for a := range p.handler {
+			if p.singleWatchers[a.Key] != nil {
+				for _, watcher := range p.singleWatchers[a.Key] {
+					err := watcher.callback(a.Value)
+					if err != nil {
+						log.Err(err)
+					}
+
+				}
+			}
+			// All-key observers
 			for _, watcher := range p.watchers {
 				err := watcher.callback(a.Value)
 				if err != nil {
-					return
+					log.Err(err)
 				}
 			}
 		}
@@ -45,6 +60,25 @@ func (p *Observable) emit(id string, data any) {
 	}
 }
 
+func (p *Observable) WatchSingle(key string, fn func(data any) error) {
+	_, file, _, ok := runtime.Caller(1)
+	if ok {
+		path := filepath.Base(file)
+		o := Observer{
+			caller:   path,
+			callback: fn,
+		}
+		if p.singleWatchers[key] == nil {
+			p.singleWatchers[key] = map[string]Observer{}
+		}
+
+		if p.singleWatchers[key][path].caller != "" {
+			log.Err(fmt.Errorf("already watching"))
+		}
+		p.singleWatchers[key][path] = o
+	}
+}
+
 func (p *Observable) Watch(fn func(data any) error) {
 	_, file, _, ok := runtime.Caller(1)
 	if ok {
@@ -55,7 +89,6 @@ func (p *Observable) Watch(fn func(data any) error) {
 		}
 		p.watchers[path] = o
 	}
-
 }
 
 type PolyBuffer struct {

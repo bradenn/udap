@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"udap/internal/auth"
 	"udap/internal/bond"
 	"udap/internal/controller"
 	"udap/internal/log"
@@ -44,9 +43,9 @@ func (e *Endpoints) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	// Status Middleware
 	e.router.Use(middleware.Heartbeat("/status"))
 	// Seek, verify and validate JWT tokens
-	e.router.Use(auth.VerifyToken())
+	e.router.Use(verifyToken())
 	// Load JWT Keys
-	auth.LoadKeys()
+	loadKeys()
 
 	e.router.Get("/socket/{token}", e.socketAdaptor)
 	e.router.Get("/endpoints/register/{accessKey}", e.registerEndpoint)
@@ -134,7 +133,7 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 	tokenParam := chi.URLParam(req, "token")
 	// Defer the termination of the session to function return
 
-	id, err := auth.AuthToken(tokenParam)
+	id, err := authToken(tokenParam)
 	if err != nil {
 		log.Err(err)
 		return
@@ -154,6 +153,16 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 	}()
 
 	err = e.ctrl.Entities.EmitAll()
+	if err != nil {
+		return
+	}
+
+	err = e.ctrl.Attributes.EmitAll()
+	if err != nil {
+		return
+	}
+
+	err = e.ctrl.Devices.EmitAll()
 	if err != nil {
 		return
 	}
@@ -226,7 +235,7 @@ func (e *Endpoints) registerEndpoint(w http.ResponseWriter, rq *http.Request) {
 	if err != nil {
 	}
 
-	jwt, err := auth.SignUUID(endpoint.Id)
+	jwt, err := signUUID(endpoint.Id)
 	if err != nil {
 		return
 	}
