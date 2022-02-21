@@ -80,7 +80,7 @@ type Endpoint struct {
 
 	Connected bool `json:"connected"`
 
-	key string
+	Key string `json:"key"`
 
 	registered    bool
 	Connection    *Connection `json:"-" gorm:"-"`
@@ -128,7 +128,7 @@ func (e *Endpoint) Enrolled() bool {
 
 // BeforeCreate is a hook function from gorm, called when an endpoint is inserted
 func (e *Endpoint) BeforeCreate(_ *gorm.DB) error {
-	e.key = randomSequence()
+	e.Key = randomSequence()
 	return nil
 }
 

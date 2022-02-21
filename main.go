@@ -3,7 +3,6 @@
 package main
 
 import (
-	"os"
 	"udap/internal/log"
 	"udap/internal/udap"
 )
@@ -13,6 +12,4 @@ func main() {
 	if err != nil {
 		log.ErrF(err, "UDAP exited due to an unknown error:")
 	}
-	// Exit normally
-	os.Exit(0)
 }

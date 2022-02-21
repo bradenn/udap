@@ -55,6 +55,7 @@ func Run() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -68,7 +69,6 @@ func (u *Udap) migrate() error {
 }
 
 func config() error {
-
 	log.Log("UDAP v%s - Copyright (c) 2019-2022 Braden Nicholson", VERSION)
 	err := godotenv.Load()
 	if err != nil {
@@ -85,68 +85,3 @@ func config() error {
 	}
 	return nil
 }
-
-// // Go is run to begin the program
-// func (u *Udap) Go() (err error) {
-// 	var dependencies []Dependency
-// 	// We pull the services from the map
-// 	for _, dependency := range u.dependencies {
-// 		dependencies = append(dependencies, *dependency)
-// 	}
-// 	// Next we sort the services by their priorities
-// 	sort.Slice(dependencies, func(i, j int) bool {
-// 		return dependencies[i].Dependency() < dependencies[j].Dependency()
-// 	})
-//
-// 	for _, dep := range dependencies {
-// 		t := time.Now()
-// 		err = dep.Load()
-// 		if err != nil {
-// 			log.Err(err)
-// 		}
-// 		log.Log("Dependency '%s' loaded. (%s)", dep.Name(), time.Since(t).String())
-//
-// 	}
-//
-// 	log.Log("All dependencies loaded")
-// 	// A wait group is made to prevent premature exit
-// 	wg := sync.WaitGroup{}
-// 	// Each service is given a slot in the wait group
-// 	wg.Add(len(u.services))
-// 	// This array will contain a list of services
-// 	var services []Service
-// 	err = u.migrate()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// We pull the services from the map
-// 	for _, service := range u.services {
-// 		services = append(services, *service)
-// 	}
-// 	// Next we sort the services by their priorities
-// 	sort.Slice(services, func(i, j int) bool {
-// 		return services[i].Dependency() < services[j].Dependency()
-// 	})
-// 	sg := sync.WaitGroup{}
-// 	sg.Add(len(services))
-// 	// Now each service runs, with the priorities 1 and 0 blocking
-// 	for _, s := range services {
-// 		go func(service Service) {
-// 			log.Log("Service '%s' running", service.Name())
-// 			sg.Done()
-// 			err = service.Run()
-// 			if err != nil {
-// 				log.Err(err)
-// 				return
-// 			}
-// 			wg.Done()
-// 		}(s)
-//
-// 	}
-//
-// 	sg.Wait()
-// 	log.Log("Running.")
-//
-// 	wg.Wait()
-// 	return nil
-// }

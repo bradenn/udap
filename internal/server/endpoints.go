@@ -233,10 +233,13 @@ func (e *Endpoints) registerEndpoint(w http.ResponseWriter, rq *http.Request) {
 
 	err := store.DB.Model(&models.Endpoint{}).Where("key = ?", key).First(&endpoint).Error
 	if err != nil {
+		w.WriteHeader(401)
+		return
 	}
 
 	jwt, err := signUUID(endpoint.Id)
 	if err != nil {
+		w.WriteHeader(401)
 		return
 	}
 
@@ -244,6 +247,7 @@ func (e *Endpoints) registerEndpoint(w http.ResponseWriter, rq *http.Request) {
 
 	marshal, err := json.Marshal(resolve)
 	if err != nil {
+		w.WriteHeader(500)
 		return
 	}
 
@@ -291,7 +295,7 @@ func (e *Endpoints) Metadata() error {
 }
 
 func (e *Endpoints) Update() error {
-	pulse.Fixed(250)
+	pulse.Fixed(500)
 	defer pulse.End()
 	err := e.Metadata()
 	if err != nil {
