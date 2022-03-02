@@ -78,4 +78,5 @@ func (d *Networks) Find(name string) *models.Network {
 
 func (d *Networks) Set(id string, entity *models.Network) {
 	d.set(id, entity)
+	d.emit(id, entity)
 }

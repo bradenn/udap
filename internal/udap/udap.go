@@ -6,18 +6,16 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"os"
-	"udap/internal/cache"
 	"udap/internal/log"
 	"udap/internal/models"
 	"udap/internal/server"
 	"udap/internal/store"
 )
 
-const VERSION = "2.9.3"
+const VERSION = "2.9.4"
 
 type Udap struct {
 	runtime  *server.Runtime
-	cache    cache.Cache
 	database store.Database
 }
 
@@ -28,11 +26,6 @@ func Run() error {
 	}
 
 	u := &Udap{}
-
-	u.cache, err = cache.NewCache()
-	if err != nil {
-		return err
-	}
 
 	u.database, err = store.NewDatabase()
 	if err != nil {

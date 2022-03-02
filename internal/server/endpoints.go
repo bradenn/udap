@@ -14,6 +14,7 @@ import (
 	"sync"
 	"udap/internal/bond"
 	"udap/internal/controller"
+	"udap/internal/endpoint"
 	"udap/internal/log"
 	"udap/internal/models"
 	"udap/internal/pulse"
@@ -46,6 +47,9 @@ func (e *Endpoints) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	e.router.Use(verifyToken())
 	// Load JWT Keys
 	loadKeys()
+
+	// Endpoint routes
+	e.router.Route("/endpoint", endpoint.Router)
 
 	e.router.Get("/socket/{token}", e.socketAdaptor)
 	e.router.Get("/endpoints/register/{accessKey}", e.registerEndpoint)

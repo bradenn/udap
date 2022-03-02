@@ -28,6 +28,8 @@ type Endpoints struct {
 
 func (e *Endpoints) Handle(msg bond.Msg) (res any, err error) {
 	switch t := msg.Operation; t {
+	case "create":
+		return e.create(msg)
 	default:
 		return nil, fmt.Errorf("operation '%s' is not defined", t)
 	}
@@ -48,6 +50,16 @@ func (e *Endpoints) FetchAll() {
 	for _, endpoint := range endpoints {
 		e.Set(endpoint.Id, endpoint)
 	}
+}
+
+func (e *Endpoints) create(msg bond.Msg) (res any, err error) {
+	ep := models.NewEndpoint(msg.Payload)
+	err = store.DB.Create(&ep).Error
+	if err != nil {
+		return nil, err
+	}
+	e.Set(ep.Id, &ep)
+	return ep, err
 }
 
 func (e *Endpoints) unenroll(msg bond.Msg) (res any, err error) {
@@ -84,7 +96,7 @@ func (e *Endpoints) Find(id string) *models.Endpoint {
 }
 
 func (e *Endpoints) Set(id string, endpoint *models.Endpoint) {
-
+	e.emit(id, endpoint)
 	e.set(id, endpoint)
 
 }

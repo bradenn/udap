@@ -133,10 +133,6 @@ func Event(format string, args ...interface{}) {
 	fmt.Printf("%s%s %s%s\n", tag, color, fmt.Sprintf(format, args...), Reset)
 }
 
-func Sherlock(format string, args ...interface{}) {
-	log(sherlock, format, args...)
-}
-
 func ErrF(err error, format string, args ...interface{}) {
 	log(panic, fmt.Sprintf("%s\n	%s%s%s", format, Red, err.Error(), Reset), args...)
 }

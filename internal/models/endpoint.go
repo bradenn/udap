@@ -13,12 +13,6 @@ import (
 	"udap/internal/store"
 )
 
-// var m *sync.RWMutex
-//
-// func init() {
-// 	m = &sync.RWMutex{}
-// }
-
 type Connection struct {
 	WS     *websocket.Conn
 	active *bool
@@ -74,7 +68,7 @@ type Endpoint struct {
 
 	Name string `json:"name" gorm:"unique"`
 
-	Type string `json:"type"`
+	Type string `json:"type" gorm:"default:'terminal'"`
 
 	Frequency int `json:"frequency" gorm:"default:3000"`
 
@@ -112,6 +106,13 @@ func (e *Endpoint) Enroll(ws *websocket.Conn) error {
 	log.Log("Endpoint '%s' enrolled (%s)", e.Name, ws.LocalAddr())
 
 	return nil
+}
+
+func NewEndpoint(name string) Endpoint {
+	endpoint := Endpoint{}
+	endpoint.Name = name
+	endpoint.Type = "terminal"
+	return endpoint
 }
 
 func (e *Endpoint) closeHandler(code int, text string) error {
