@@ -21,9 +21,9 @@ func (e *Endpoint) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
-// findById attempts to find an endpoint by its UUID
-func findById(id string) (endpoint Endpoint, err error) {
-	db := store.DB.Where("id = ?", id).First(&endpoint)
+// update will attempt to create a database record if one does not already exist
+func update(endpoint *Endpoint) (err error) {
+	db := store.DB.Save(endpoint)
 	err = db.Error
 	return
 }
@@ -35,7 +35,7 @@ func insert(endpoint *Endpoint) (err error) {
 	return
 }
 
-// insert will attempt to create a database record if one does not already exist
+// drop will attempt to remove a database record if one does not already exist
 func drop(endpoint *Endpoint) (err error) {
 	db := store.DB.Delete(endpoint)
 	err = db.Error
