@@ -8,7 +8,8 @@ import (
 	"net/http"
 )
 
-func Router(router chi.Router) {
+// HttpRouter distributes rest requests to the appropriate functions
+func HttpRouter(router chi.Router) {
 	router.Post("/", httpPost)
 	router.Put("/", httpPut)
 	router.Delete("/", httpDelete)

@@ -21,6 +21,13 @@ func (e *Endpoint) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
+// findByKey returns an endpoint with a given key value
+func findByKey(key string) (endpoint Endpoint, err error) {
+	db := store.DB.Where("key = ?", key).First(endpoint)
+	err = db.Error
+	return
+}
+
 // update will attempt to create a database record if one does not already exist
 func update(endpoint *Endpoint) (err error) {
 	db := store.DB.Save(endpoint)

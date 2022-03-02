@@ -49,7 +49,7 @@ func (e *Endpoints) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	loadKeys()
 
 	// Endpoint routes
-	e.router.Route("/endpoint", endpoint.Router)
+	e.router.Route("/endpoint", endpoint.HttpRouter)
 
 	e.router.Get("/socket/{token}", e.socketAdaptor)
 	e.router.Get("/endpoints/register/{accessKey}", e.registerEndpoint)
