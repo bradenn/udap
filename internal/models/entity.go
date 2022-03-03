@@ -3,11 +3,9 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
-	"udap/internal/cache"
 	"udap/internal/store"
 )
 
@@ -61,10 +59,6 @@ func (e *Entity) ChangeConfig(value string) error {
 		return err
 	}
 	return nil
-}
-
-func (e *Entity) Pull() error {
-	return e.writeCache()
 }
 
 func (e *Entity) ChangeNeural(value string) error {
@@ -153,41 +147,4 @@ func (e *Entity) update() error {
 	}
 
 	return err
-}
-
-func (e *Entity) writeCache() error {
-	marshal, err := json.Marshal(e)
-	if err != nil {
-		return err
-	}
-	if marshal == nil {
-		return nil
-	}
-	e.UpdatedAt = time.Now()
-	err = cache.PutLn(string(marshal), "entity", e.Id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (e *Entity) readCache() error {
-	ln, err := cache.GetLn("entity", e.Id)
-	if err != nil {
-		return err
-	}
-	s := ln.(string)
-	if s == "" {
-		err = e.writeCache()
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	err = json.Unmarshal([]byte(s), e)
-	if err != nil {
-		return err
-	}
-	return nil
 }

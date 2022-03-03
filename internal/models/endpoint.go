@@ -13,12 +13,6 @@ import (
 	"udap/internal/store"
 )
 
-// var m *sync.RWMutex
-//
-// func init() {
-// 	m = &sync.RWMutex{}
-// }
-
 type Connection struct {
 	WS     *websocket.Conn
 	active *bool
@@ -74,13 +68,13 @@ type Endpoint struct {
 
 	Name string `json:"name" gorm:"unique"`
 
-	Type string `json:"type"`
+	Type string `json:"type" gorm:"default:'terminal'"`
 
 	Frequency int `json:"frequency" gorm:"default:3000"`
 
 	Connected bool `json:"connected"`
 
-	key string
+	Key string `json:"key"`
 
 	registered    bool
 	Connection    *Connection `json:"-" gorm:"-"`
@@ -114,6 +108,13 @@ func (e *Endpoint) Enroll(ws *websocket.Conn) error {
 	return nil
 }
 
+func NewEndpoint(name string) Endpoint {
+	endpoint := Endpoint{}
+	endpoint.Name = name
+	endpoint.Type = "terminal"
+	return endpoint
+}
+
 func (e *Endpoint) closeHandler(code int, text string) error {
 	if e.Enrolled() {
 		e.Unenroll()
@@ -128,7 +129,7 @@ func (e *Endpoint) Enrolled() bool {
 
 // BeforeCreate is a hook function from gorm, called when an endpoint is inserted
 func (e *Endpoint) BeforeCreate(_ *gorm.DB) error {
-	e.key = randomSequence()
+	e.Key = randomSequence()
 	return nil
 }
 
