@@ -12,12 +12,12 @@ import (
 
 type Observer struct {
 	caller   string
-	callback func(data any) error
+	callback func(data interface{}) error
 }
 
 type Mutation struct {
 	Key   string
-	Value any
+	Value interface{}
 }
 
 type Observable struct {
@@ -53,14 +53,14 @@ func (p *Observable) Run() {
 	}()
 }
 
-func (p *Observable) emit(id string, data any) {
+func (p *Observable) emit(id string, data interface{}) {
 	p.handler <- Mutation{
 		Key:   id,
 		Value: data,
 	}
 }
 
-func (p *Observable) WatchSingle(key string, fn func(data any) error) {
+func (p *Observable) WatchSingle(key string, fn func(data interface{}) error) {
 	_, file, _, ok := runtime.Caller(1)
 	if ok {
 		path := filepath.Base(file)
@@ -79,7 +79,7 @@ func (p *Observable) WatchSingle(key string, fn func(data any) error) {
 	}
 }
 
-func (p *Observable) Watch(fn func(data any) error) {
+func (p *Observable) Watch(fn func(data interface{}) error) {
 	_, file, _, ok := runtime.Caller(1)
 	if ok {
 		path := filepath.Base(file)
@@ -92,15 +92,15 @@ func (p *Observable) Watch(fn func(data any) error) {
 }
 
 type PolyBuffer struct {
-	raw  map[string]any
+	raw  map[string]interface{}
 	data sync.Map
 }
 
-func (p *PolyBuffer) set(id string, data any) {
+func (p *PolyBuffer) set(id string, data interface{}) {
 	p.data.Store(id, data)
 }
 
-func (p *PolyBuffer) get(name string) any {
+func (p *PolyBuffer) get(name string) interface{} {
 	res, ok := p.data.Load(name)
 	if !ok {
 		return nil
@@ -110,7 +110,7 @@ func (p *PolyBuffer) get(name string) any {
 
 func (p *PolyBuffer) Keys() []string {
 	var s []string
-	p.data.Range(func(key, value any) bool {
+	p.data.Range(func(key, value interface{}) bool {
 		s = append(s, key.(string))
 		return true
 	})

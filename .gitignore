@@ -6,5 +6,6 @@ selfsigned.key
 .idea
 private-key.pem
 /dist
+/node_modules
 /pkg
 spotify.json

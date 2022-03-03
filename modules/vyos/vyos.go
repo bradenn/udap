@@ -96,9 +96,9 @@ func (v *Vyos) scanSubnet(network models.Network) error {
 }
 
 type Response struct {
-	Success bool `json:"success"`
-	Data    Dhcp `json:"data"`
-	Error   any  `json:"error"`
+	Success bool        `json:"success"`
+	Data    Dhcp        `json:"data"`
+	Error   interface{} `json:"error"`
 }
 
 type Dhcp struct {

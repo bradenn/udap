@@ -1,21 +1,17 @@
 module udap
 
-go 1.18
+go 1.17
 
 require (
-	github.com/Picovoice/porcupine/binding/go/v2 v2.1.0
-	github.com/Picovoice/pvrecorder/sdk/go v1.0.2
 	github.com/Ullaakut/nmap/v2 v2.2.0
 	github.com/brutella/hc v1.2.4
 	github.com/gerow/go-color v0.0.0-20140219113758-125d37f527f1
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-chi/jwtauth/v5 v5.0.1
-	github.com/go-redis/redis/v8 v8.11.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
-	github.com/patrikeh/go-deep v0.0.0-20191210195838-b811ffc4083e
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15
@@ -23,9 +19,7 @@ require (
 
 require (
 	github.com/brutella/dnssd v1.2.0 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/goccy/go-json v0.7.6 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.1 // indirect

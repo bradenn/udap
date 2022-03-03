@@ -18,7 +18,7 @@ function createWindow() {
     });
 
     win.webContents.setZoomFactor(1)
-    win.loadURL('http://10.0.1.11:3000')
+    win.loadURL('http://localhost:5002')
 }
 
 app.whenReady().then(() => {

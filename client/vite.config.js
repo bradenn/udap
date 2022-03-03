@@ -4,5 +4,7 @@ import vue from '@vitejs/plugin-vue'
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [vue()],
-    styles: ["/src/assets/app.css"]
+    server: {
+        port: 5002,
+    }
 })

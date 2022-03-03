@@ -15,7 +15,7 @@ type Devices struct {
 	Observable
 }
 
-func (d *Devices) Handle(event bond.Msg) (res any, err error) {
+func (d *Devices) Handle(event bond.Msg) (res interface{}, err error) {
 	switch event.Operation {
 	}
 	return nil, nil

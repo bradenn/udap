@@ -131,7 +131,7 @@ func syncSwitch(p *service.Switch, a *controller.Attributes, id string) {
 		}
 	})
 
-	a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data any) error {
+	a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
 		attr := *data.(*models.Attribute)
 		p.On.UpdateValue(attr.Request)
 		return nil
@@ -163,13 +163,13 @@ func (s *spectrumLight) syncAttributes(a *controller.Attributes, id string) erro
 		}
 	})
 
-	a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data any) error {
+	a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
 		attr := *data.(*models.Attribute)
 		s.spectrum.On.UpdateValue(attr.Request)
 		return nil
 	})
 
-	a.WatchSingle(fmt.Sprintf("%s.%s", id, "dim"), func(data any) error {
+	a.WatchSingle(fmt.Sprintf("%s.%s", id, "dim"), func(data interface{}) error {
 		attr := *data.(*models.Attribute)
 		s.spectrum.Dim.UpdateValue(attr.Request)
 		return nil

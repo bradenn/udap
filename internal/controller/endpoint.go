@@ -13,10 +13,10 @@ import (
 )
 
 type Response struct {
-	Id        string `json:"id"`
-	Status    string `json:"status"`
-	Operation string `json:"operation"`
-	Body      any    `json:"body"`
+	Id        string      `json:"id"`
+	Status    string      `json:"status"`
+	Operation string      `json:"operation"`
+	Body      interface{} `json:"body"`
 }
 
 type Endpoints struct {
@@ -26,7 +26,7 @@ type Endpoints struct {
 	router chi.Router
 }
 
-func (e *Endpoints) Handle(msg bond.Msg) (res any, err error) {
+func (e *Endpoints) Handle(msg bond.Msg) (res interface{}, err error) {
 	switch t := msg.Operation; t {
 	case "create":
 		return e.create(msg)
@@ -38,7 +38,7 @@ func (e *Endpoints) Handle(msg bond.Msg) (res any, err error) {
 func LoadEndpoints() (m *Endpoints) {
 	m = &Endpoints{}
 	m.data = sync.Map{}
-	m.raw = map[string]any{}
+	m.raw = map[string]interface{}{}
 	m.Run()
 	m.FetchAll()
 	return m
@@ -52,7 +52,7 @@ func (e *Endpoints) FetchAll() {
 	}
 }
 
-func (e *Endpoints) create(msg bond.Msg) (res any, err error) {
+func (e *Endpoints) create(msg bond.Msg) (res interface{}, err error) {
 	ep := models.NewEndpoint(msg.Payload)
 	err = store.DB.Create(&ep).Error
 	if err != nil {
@@ -62,7 +62,7 @@ func (e *Endpoints) create(msg bond.Msg) (res any, err error) {
 	return ep, err
 }
 
-func (e *Endpoints) unenroll(msg bond.Msg) (res any, err error) {
+func (e *Endpoints) unenroll(msg bond.Msg) (res interface{}, err error) {
 	endpoint := e.Find(msg.Id)
 	endpoint.Unenroll()
 	return nil, nil

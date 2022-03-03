@@ -16,7 +16,7 @@ import (
 type Connection struct {
 	WS     *websocket.Conn
 	active *bool
-	edit   chan any
+	edit   chan interface{}
 	done   chan bool
 }
 
@@ -24,14 +24,14 @@ func (c *Connection) Active() bool {
 	return *c.active
 }
 
-func (c *Connection) Send(body any) {
+func (c *Connection) Send(body interface{}) {
 	if c.Active() {
 		c.edit <- body
 	}
 }
 
 func NewConnection(ws *websocket.Conn) *Connection {
-	ch := make(chan any)
+	ch := make(chan interface{})
 	d := make(chan bool)
 	a := true
 	c := &Connection{
@@ -81,7 +81,7 @@ type Endpoint struct {
 	enrolledSince time.Time   `gorm:"-"`
 }
 
-func (e *Endpoint) Compile() (a map[string]any) {
+func (e *Endpoint) Compile() (a map[string]interface{}) {
 	marshal, err := json.Marshal(e)
 	if err != nil {
 		return nil
