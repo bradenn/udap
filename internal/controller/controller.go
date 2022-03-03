@@ -29,7 +29,7 @@ func NewController() (*Controller, error) {
 	return c, nil
 }
 
-func (c *Controller) Handle(msg bond.Msg) (any, error) {
+func (c *Controller) Handle(msg bond.Msg) (interface{}, error) {
 	switch t := msg.Target; t {
 	case "user":
 		return c.UserController.Handle(msg)

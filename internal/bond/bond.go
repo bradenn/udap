@@ -9,11 +9,11 @@ import (
 )
 
 type Msg struct {
-	Target    string `json:"target"`    // Module, Daemon, Agent, etc.
-	Operation string `json:"operation"` // state
-	Id        string `json:"id"`        // {state: "on"}
-	Body      any    `json:"body"`      // {state: "on"}
-	Payload   string `json:"payload"`   // {state: "on"}
+	Target    string      `json:"target"`    // Module, Daemon, Agent, etc.
+	Operation string      `json:"operation"` // state
+	Id        string      `json:"id"`        // {state: "on"}
+	Body      interface{} `json:"body"`      // {state: "on"}
+	Payload   string      `json:"payload"`   // {state: "on"}
 	resolved  bool
 	Resp      chan Resp
 }
@@ -48,7 +48,7 @@ func (m *Msg) ResponseJSON(body []byte, err error) {
 
 }
 
-func (m *Msg) Respond(body any, err error) {
+func (m *Msg) Respond(body interface{}, err error) {
 	if err != nil {
 		m.Resp <- Resp{
 			Success: false,
@@ -74,9 +74,9 @@ func (m *Msg) Success() {
 }
 
 type Resp struct {
-	Success bool   `json:"status"`
-	Error   string `json:"error"`
-	Body    any    `json:"body"`
+	Success bool        `json:"status"`
+	Error   string      `json:"error"`
+	Body    interface{} `json:"body"`
 }
 
 type Bond struct {
@@ -87,7 +87,7 @@ func NewBond(channel chan Msg) *Bond {
 	return &Bond{channel: channel}
 }
 
-func (b *Bond) send(target Msg) (any, error) {
+func (b *Bond) send(target Msg) (interface{}, error) {
 	if b.channel == nil {
 		return nil, fmt.Errorf("channel not connected")
 	}
@@ -109,7 +109,7 @@ func (b *Bond) send(target Msg) (any, error) {
 	}
 }
 
-func (b *Bond) SendIdJSON(target string, operation string, id string, body string) (any, error) {
+func (b *Bond) SendIdJSON(target string, operation string, id string, body string) (interface{}, error) {
 	return b.send(Msg{
 		Target:    target,
 		Operation: operation,
@@ -117,7 +117,7 @@ func (b *Bond) SendIdJSON(target string, operation string, id string, body strin
 		Payload:   body,
 	})
 }
-func (b *Bond) SendId(target string, operation string, id string, body any) (any, error) {
+func (b *Bond) SendId(target string, operation string, id string, body interface{}) (interface{}, error) {
 	return b.send(Msg{
 		Target:    target,
 		Operation: operation,
@@ -126,7 +126,7 @@ func (b *Bond) SendId(target string, operation string, id string, body any) (any
 	})
 }
 
-func (b *Bond) CmdJSON(body []byte) (any, error) {
+func (b *Bond) CmdJSON(body []byte) (interface{}, error) {
 	msg := Msg{}
 	err := json.Unmarshal(body, &msg)
 	if err != nil {
@@ -135,11 +135,11 @@ func (b *Bond) CmdJSON(body []byte) (any, error) {
 	return b.send(msg)
 }
 
-func (b *Bond) Msg(msg Msg) (any, error) {
+func (b *Bond) Msg(msg Msg) (interface{}, error) {
 	return b.send(msg)
 }
 
-func (b *Bond) Send(target string, operation string, body any) (any, error) {
+func (b *Bond) Send(target string, operation string, body interface{}) (interface{}, error) {
 	return b.send(Msg{
 		Target:    target,
 		Operation: operation,

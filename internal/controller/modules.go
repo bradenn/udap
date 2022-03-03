@@ -25,7 +25,7 @@ func LoadModules() (m *Modules) {
 	return m
 }
 
-func (m *Modules) Handle(event bond.Msg) (res any, err error) {
+func (m *Modules) Handle(event bond.Msg) (res interface{}, err error) {
 	switch o := event.Operation; o {
 	case "register":
 		return m.register(event)
@@ -34,7 +34,7 @@ func (m *Modules) Handle(event bond.Msg) (res any, err error) {
 	}
 }
 
-func (m *Modules) register(event bond.Msg) (res any, err error) {
+func (m *Modules) register(event bond.Msg) (res interface{}, err error) {
 	module := event.Body.(*models.Module)
 	err = module.Emplace()
 	if err != nil {

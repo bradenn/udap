@@ -71,8 +71,8 @@ func (e *Endpoints) attributeBroadcast(ent models.Attribute) error {
 	return nil
 }
 
-func (e *Endpoints) reactive(operation string) func(any) error {
-	return func(a any) error {
+func (e *Endpoints) reactive(operation string) func(interface{}) error {
+	return func(a interface{}) error {
 		response := controller.Response{
 			Status:    "success",
 			Operation: operation,
@@ -89,7 +89,7 @@ func (e *Endpoints) reactive(operation string) func(any) error {
 
 }
 
-func (e *Endpoints) itemBroadcast(operation string, body any) error {
+func (e *Endpoints) itemBroadcast(operation string, body interface{}) error {
 	response := controller.Response{
 		Status:    "success",
 		Operation: operation,
@@ -112,7 +112,7 @@ func corsHeaders() func(next http.Handler) http.Handler {
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Bond"},
 		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300, // Maximum value not ignored by interface{} of major browsers
 	})
 }
 
@@ -191,7 +191,7 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 	wg.Wait()
 }
 
-func (e *Endpoints) sendError(id string, body any) error {
+func (e *Endpoints) sendError(id string, body interface{}) error {
 	response := controller.Response{
 		Status:    "error",
 		Operation: "error",
@@ -204,7 +204,7 @@ func (e *Endpoints) sendError(id string, body any) error {
 	return nil
 }
 
-func (e *Endpoints) Broadcast(body any) error {
+func (e *Endpoints) Broadcast(body interface{}) error {
 	for _, s := range e.ctrl.Endpoints.Keys() {
 		endpoint := e.ctrl.Endpoints.Find(s)
 		if endpoint.Enrolled() {

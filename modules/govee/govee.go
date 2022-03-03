@@ -36,8 +36,8 @@ type StateResponse struct {
 }
 
 type Cmd struct {
-	Name  string `json:"name"`
-	Value any    `json:"value"`
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
 }
 
 type SetStateRequest struct {
@@ -141,7 +141,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	return r.Data, nil
 }
 
-func (g *Govee) getAllStates(device Device, id string) (any, error) {
+func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
 	stamp := time.Now()
 	request, err := g.sendApiRequest("GET", path, nil)

@@ -15,7 +15,7 @@ type Entities struct {
 	Observable
 }
 
-func (e *Entities) Handle(event bond.Msg) (any, error) {
+func (e *Entities) Handle(event bond.Msg) (interface{}, error) {
 	switch event.Operation {
 	case "register":
 		return e.register(event)
@@ -35,7 +35,7 @@ func (e *Entities) Handle(event bond.Msg) (any, error) {
 	return nil, nil
 }
 
-func (e *Entities) neural(event bond.Msg) (res any, err error) {
+func (e *Entities) neural(event bond.Msg) (res interface{}, err error) {
 	entity := e.Find(event.Id)
 	ref := e.Parse(event.Payload)
 	err = entity.ChangeNeural(ref.Neural)
@@ -55,7 +55,7 @@ func (e *Entities) EmitAll() (err error) {
 	return nil
 }
 
-func (e *Entities) register(event bond.Msg) (any, error) {
+func (e *Entities) register(event bond.Msg) (interface{}, error) {
 	entity := e.Cast(event.Body)
 
 	_, err := e.Register(entity)
@@ -65,12 +65,12 @@ func (e *Entities) register(event bond.Msg) (any, error) {
 	return nil, nil
 }
 
-func (e *Entities) find(event bond.Msg) (res any, err error) {
+func (e *Entities) find(event bond.Msg) (res interface{}, err error) {
 	entity := e.Find(event.Id)
 	return entity, nil
 }
 
-func (e *Entities) Suggest(id string, body string) (res any, err error) {
+func (e *Entities) Suggest(id string, body string) (res interface{}, err error) {
 	entity := e.Find(id)
 	err = entity.Suggest(body)
 	if err != nil {
@@ -79,7 +79,7 @@ func (e *Entities) Suggest(id string, body string) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Entities) predict(event bond.Msg) (res any, err error) {
+func (e *Entities) predict(event bond.Msg) (res interface{}, err error) {
 	entity := e.Find(event.Id)
 	err = entity.Suggest(string(event.Body.(json.RawMessage)))
 	if err != nil {
@@ -88,7 +88,7 @@ func (e *Entities) predict(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Entities) Cast(body any) *models.Entity {
+func (e *Entities) Cast(body interface{}) *models.Entity {
 	return body.(*models.Entity)
 }
 
@@ -111,7 +111,7 @@ func (e *Entities) Register(entity *models.Entity) (res *models.Entity, err erro
 	return entity, nil
 }
 
-func (e *Entities) rename(event bond.Msg) (res any, err error) {
+func (e *Entities) rename(event bond.Msg) (res interface{}, err error) {
 	ref := e.Cast(event.Body)
 	_, err = e.Rename(event.Id, ref.Alias)
 	if err != nil {
@@ -120,7 +120,7 @@ func (e *Entities) rename(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Entities) Rename(id string, name string) (res any, err error) {
+func (e *Entities) Rename(id string, name string) (res interface{}, err error) {
 	entity := e.Find(id)
 	err = entity.Rename(name)
 	if err != nil {
@@ -129,7 +129,7 @@ func (e *Entities) Rename(id string, name string) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Entities) lock(event bond.Msg) (res any, err error) {
+func (e *Entities) lock(event bond.Msg) (res interface{}, err error) {
 	entity := e.Find(event.Id)
 	err = entity.Lock()
 	if err != nil {
@@ -138,7 +138,7 @@ func (e *Entities) lock(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Entities) unlock(event bond.Msg) (res any, err error) {
+func (e *Entities) unlock(event bond.Msg) (res interface{}, err error) {
 	entity := e.Find(event.Id)
 	err = entity.Unlock()
 	if err != nil {
@@ -147,7 +147,7 @@ func (e *Entities) unlock(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Entities) icon(event bond.Msg) (res any, err error) {
+func (e *Entities) icon(event bond.Msg) (res interface{}, err error) {
 	entity := e.Find(event.Id)
 	ee := e.Parse(event.Payload)
 	err = entity.ChangeIcon(ee.Icon)
@@ -158,7 +158,7 @@ func (e *Entities) icon(event bond.Msg) (res any, err error) {
 	return nil, nil
 }
 
-func (e *Entities) Config(id string, data string) (res any, err error) {
+func (e *Entities) Config(id string, data string) (res interface{}, err error) {
 	entity := e.Find(id)
 	err = entity.ChangeConfig(data)
 	if err != nil {
@@ -170,7 +170,7 @@ func (e *Entities) Config(id string, data string) (res any, err error) {
 
 func LoadEntities() (m *Entities) {
 	m = &Entities{}
-	m.raw = map[string]any{}
+	m.raw = map[string]interface{}{}
 	m.data = sync.Map{}
 	m.Run()
 	return m

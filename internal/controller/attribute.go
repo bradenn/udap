@@ -16,7 +16,7 @@ type Attributes struct {
 	Observable
 }
 
-func (a *Attributes) Handle(event bond.Msg) (res any, err error) {
+func (a *Attributes) Handle(event bond.Msg) (res interface{}, err error) {
 	switch event.Operation {
 	case "request":
 		return a.request(event)
@@ -50,7 +50,7 @@ func (a *Attributes) Request(entity string, key string, value string) error {
 	return nil
 }
 
-func (a *Attributes) request(event bond.Msg) (any, error) {
+func (a *Attributes) request(event bond.Msg) (interface{}, error) {
 	attr := models.Attribute{}
 	err := json.Unmarshal([]byte(event.Payload), &attr)
 	if err != nil {

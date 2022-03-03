@@ -14,7 +14,7 @@ type Networks struct {
 	Observable
 }
 
-func (d *Networks) Handle(event bond.Msg) (res any, err error) {
+func (d *Networks) Handle(event bond.Msg) (res interface{}, err error) {
 	switch event.Operation {
 	case "register":
 		return d.register(event)
@@ -48,7 +48,7 @@ func (d *Networks) register(event bond.Msg) (res *models.Network, err error) {
 func LoadNetworks() (m *Networks) {
 	m = &Networks{}
 	m.data = sync.Map{}
-	m.raw = map[string]any{}
+	m.raw = map[string]interface{}{}
 	m.Run()
 	m.FetchAll()
 	return m
