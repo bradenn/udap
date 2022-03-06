@@ -1,0 +1,22 @@
+{
+  "controllers": [
+    {
+      "name": "Development",
+      "address": "localhost:3020"
+    },
+    {
+      "name": "Staging",
+      "address": "staging.udap.local"
+    },
+    {
+      "name": "Production",
+      "address": "10.0.1.18:3020"
+    }
+  ],
+  "defaults": {
+    "background": "viridian",
+    "theme": "dark",
+    "blurintensity": "2",
+    "token": "unset"
+  }
+}

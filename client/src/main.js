@@ -1,9 +1,12 @@
 import {createApp} from 'vue'
 import router from './router'
-import Root from './Root.vue'
+import Root from './App.vue'
 import axios from 'axios';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome'
 
 const app = createApp(Root)
+
+app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.config.warnHandler = function (msg, vm, trace) {
     console.log(`Warn: ${msg}\nTrace: ${trace}`);

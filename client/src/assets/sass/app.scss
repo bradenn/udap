@@ -1093,14 +1093,19 @@ $themes: (
 
 .hg-theme-udap .hg-button:active {
   @extend .router-link-active;
+  background-color: rgba(0, 0, 0, 0.2);
+}
 
+.hg-theme-udap .hg-button.hg-activeButton {
+  background: rgba(0, 0, 0, 0.1) !important;
 }
 
 .hg-theme-udap .hg-button {
   @extend .surface;
+  height: 4rem !important;
   border-bottom: inherit !important;
   border-radius: 0.375rem !important;
-  font-size: 0.7rem;
+  font-size: 1.3rem !important;
   transition: 250ms cubic-bezier(.15, 1.48, 0, .76);
 }
 
@@ -1150,6 +1155,10 @@ $themes: (
 
 .surface-icon {
   @extend .surface;
+}
+
+.border-transparent {
+  border-color: transparent !important;
 }
 
 .h-sep {

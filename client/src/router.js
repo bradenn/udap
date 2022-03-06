@@ -1,7 +1,5 @@
 import {createRouter, createWebHistory} from "vue-router";
 import Home from "./views/Home.vue"
-import Terminal from "./views/Terminal.vue";
-import Register from "./views/Register.vue";
 import Settings from "./views/Settings.vue";
 import Endpoint from "./views/settings/Endpoint.vue";
 import Connection from "./views/settings/Connection.vue";
@@ -14,17 +12,40 @@ import Room from "./views/Room.vue";
 import Endpoints from "./views/settings/Endpoints.vue";
 import Energy from "./components/apps/Energy.vue";
 
+// Setup view components
+import Setup from "./setup/Setup.vue";
+import Welcome from "./setup/Controller.vue";
+import Authentication from "./setup/Authentication.vue";
+import Main from "./views/Main.vue";
+
 const routes = [
     {
         path: '/',
-        name: 'Register',
-        component: Register
+        redirect: '/setup/controller',
+    },
+    {
+        path: '/setup',
+        name: 'Setup',
+        redirect: '/setup/controller',
+        component: Setup,
+        children: [
+            {
+                path: '/setup/authentication',
+                name: 'Authenticate',
+                component: Authentication
+            },
+            {
+                path: '/setup/controller',
+                name: 'Welcome',
+                component: Welcome
+            },
+        ]
     },
     {
         path: '/terminal',
         name: 'Terminal',
         redirect: '/terminal/home',
-        component: Terminal,
+        component: Main,
         children: [
             {
                 path: '/terminal/apps/whiteboard',

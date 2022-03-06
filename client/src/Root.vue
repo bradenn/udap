@@ -253,7 +253,6 @@ export default {
   <div class="root" v-bind:class="rootClasses()">
     <img :src="background" alt="Background" class="backdrop"/>
     <router-view/>
-    <SimpleKeyboard v-if="state.keyboard" :input="this.state.input"></SimpleKeyboard>
   </div>
 </template>
 

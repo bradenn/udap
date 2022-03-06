@@ -36,7 +36,6 @@ export default {
   },
   computed: {},
   methods: {
-
     showContext() {
       this.context = true
     },

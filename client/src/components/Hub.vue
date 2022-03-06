@@ -26,10 +26,7 @@ export default {
   methods: {
     update() {
       this.recalculateFocus()
-      if (this.$root.state.waiting) {
-        this.focus = "wait"
-        return
-      }
+
       let n = Math.round(((new Date() - new Date(this.$root.state.last)) / 2000) * 100)
       if (n >= 150) {
         this.focus = "lapse"
@@ -78,8 +75,8 @@ export default {
 
 <template>
   <div class="top d-flex justify-content-start align-items-center gap-1">
-    <Media small>
-    </Media>
+    <!--    <Media small>-->
+    <!--    </Media>-->
     <div class="element d-flex align-items-center justify-content-center">
       <div>
         <Proc class="" style=" z-index: -1; opacity: 0.25;"></Proc>
