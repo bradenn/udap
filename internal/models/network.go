@@ -11,7 +11,7 @@ type Network struct {
 	store.Persistent
 	Name   string `json:"name"`
 	Dns    string `json:"dns"`
-	Router string `json:"router"`
+	Router string `json:"index"`
 	Lease  string `json:"lease"`
 	Mask   string `json:"mask"`
 	Range  string `json:"range"`

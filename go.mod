@@ -1,6 +1,6 @@
 module udap
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Ullaakut/nmap/v2 v2.2.0
@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
+	github.com/patrikeh/go-deep v0.0.0-20220129152125-82b8db494fe5
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15

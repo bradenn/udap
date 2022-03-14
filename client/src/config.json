@@ -16,7 +16,6 @@
   "defaults": {
     "background": "viridian",
     "theme": "dark",
-    "blurintensity": "2",
     "token": "unset"
   }
 }

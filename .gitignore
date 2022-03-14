@@ -9,3 +9,6 @@ private-key.pem
 /node_modules
 /pkg
 spotify.json
+/db-data
+/client/assets/js/
+**/yarn-error.log

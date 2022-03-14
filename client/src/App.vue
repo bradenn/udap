@@ -1,19 +1,26 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
+<script lang="ts" setup>
+import {provide, reactive} from "vue";
+import {Preference} from "@/preferences";
+import {PreferenceTypes} from "@/types"
 
-<script setup>
-import {reactive} from "vue";
-import {Attr, Preference} from "./preferences";
+interface Preferences {
+  background: string,
+  theme: string
+}
 
-
-let local = reactive({
-  background: new Preference(Attr.Background).get(),
-  theme: new Preference(Attr.Theme).get(),
+let preferences = reactive<Preferences>({
+  background: new Preference(PreferenceTypes.Background).get(),
+  theme: new Preference(PreferenceTypes.Theme).get(),
 })
+
+provide('preferences', preferences)
+
 </script>
 
 <template>
-  <div :class="`theme-${local.theme}`" class="root blurs-8">
-    <img :src="`/public/custom/${local.background}@4x.png`" alt="Background" class="backdrop"/>
+  <div :class="`theme-${preferences.theme}`" class="root blurs-8">
+    <img :src="`/custom/${preferences.background}@4x.png`" alt="Background" class="backdrop"/>
     <router-view/>
   </div>
 </template>

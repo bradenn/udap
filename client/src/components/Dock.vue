@@ -1,20 +1,14 @@
-<script>
+<script lang="ts" setup>
 
-export default {
-  name: "Dock",
-  data() {
-    return {}
-  },
-  props: {
-    small: Boolean,
-    os: Boolean,
-  }
-}
+let props = defineProps<{
+  small?: boolean,
+  os?: boolean,
+}>()
 
 </script>
 
 <template>
-  <div class="element dock" v-bind:class="`${small?'dock-small':''} ${os?'dock-os':''}`">
+  <div class="element dock" v-bind:class="`${props.small?'dock-small':''} ${props.os?'dock-os':''}`">
     <slot></slot>
   </div>
 </template>

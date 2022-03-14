@@ -1,97 +1,54 @@
-<script>
-
+<script lang="ts" setup>
 import moment from 'moment'
+import {defineProps, onMounted, reactive} from "vue";
 
-export default {
-  name: "Clock",
-  data() {
-    return {
-      time: null,
-      date: null,
-      timer: null,
-      day: null,
-    }
-  },
-  props: {
-    size: String,
-    inner: Boolean,
-    large: Boolean,
-  },
-  computed: {
-    weekday: function () {
-      return {
-        last: this.formatDay(-1),
-        current: this.formatDay(0),
-        next: this.formatDay(1)
-      }
-    }
-  },
+let props = defineProps({
+  size: String,
+  inner: Boolean,
+  large: Boolean,
+})
 
-  created() {
-    this.startClock()
-  },
-  beforeDestroy() {
-    clearInterval(this.timer)
-  },
-  methods: {
-    formatDay(wd) {
-      let m = moment()
-      let weekday = m.weekday()
-      return {
-        numeric: m.weekday(weekday + wd).format("DD"),
-        long: m.weekday(weekday + wd).format("dddd"),
-      }
-    },
-    startClock() {
-      this.updateTime()
-      setTimeout(() => {
-        this.timer = setInterval(this.updateTime, 1000)
-      }, 500 - new Date().getMilliseconds())
-    },
-    updateTime() {
-      this.time = moment().format("h:mm:ss");
+let state = reactive({
+  time: "",
+  date: "",
+  timer: 0,
+  day: "",
+})
 
-      let m = moment();
-      m.year(m.year() + 10000)
-      this.date = m.format("dddd, MMMM Do, YYYY");
+onMounted(() => {
+  startClock()
+})
 
-    }
-  },
+function formatDay(wd: number) {
+  let m = moment()
+  let weekday = m.weekday()
+  return {
+    numeric: m.weekday(weekday + wd).format("DD"),
+    long: m.weekday(weekday + wd).format("dddd"),
+  }
 }
+
+function startClock() {
+  updateTime()
+  setTimeout(() => {
+    state.timer = setInterval(updateTime, 1000)
+  }, 500 - new Date().getMilliseconds())
+}
+
+function updateTime() {
+  state.time = moment().format("h:mm:ss");
+  let m = moment();
+  m.year(m.year() + 10000)
+  state.date = m.format("dddd, MMMM Do, YYYY");
+}
+
 </script>
 
 <template>
-  <div v-if="large" class="surface p-2 flex-shrink-1 d-flex flex-row">
-    <div class="d-flex justify-content-center flex-column align-items-center">
-      <div class="clock-large" v-html="time"></div>
-      <div class="label-xs label-w300 label-o3" v-html="date"></div>
-      <div class="scale gap">
-        <div class="label-o4">
-          <div class="label-xxs label-w500">{{ this.weekday.last.numeric }}</div>
-          {{ this.weekday.last.long }}
-        </div>
-        <div class="surface">
-          <div class="label-md label-w500">{{ this.weekday.current.numeric }}</div>
-          {{ this.weekday.current.long }}
-        </div>
-        <div class="label-o4">
-          <div class="label-xxs label-w500">{{ this.weekday.next.numeric }}</div>
-          {{ this.weekday.next.long }}
-        </div>
-      </div>
-
-    </div>
+  <div>
+    <div class="clock-time-inner top" v-html="state.time"></div>
+    <div class="clock-date-inner" v-html="state.date"></div>
   </div>
-  <div v-else-if="inner">
-    <div class="clock-time-inner top" v-html="time"></div>
-    <div class="clock-date-inner" v-html="date"></div>
-  </div>
-  <div v-else>
-    <div class="clock-time top" v-html="time"></div>
-    <div class="clock-date" v-html="date"></div>
-  </div>
-
-
 </template>
 
 <style lang="scss" scoped>

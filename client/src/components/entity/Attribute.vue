@@ -1,25 +1,25 @@
-<script>
-
+<!-- Copyright (c) 2022 Braden Nicholson -->
+<script lang="ts" setup>
 import Range from "./Range.vue";
 import Toggle from "./Toggle.vue";
-import Text from "./Text.vue";
+import {defineProps, inject} from "vue";
+import type {Attribute} from "@/types";
 
-export default {
-  name: "Attribute",
-  components: {Toggle, Range, Text},
-  data() {
-    return {}
-  },
-  props: {
-    attribute: Object,
-    entity: String,
-    small: Boolean,
-  },
-  methods: {
-    commitChange(attribute) {
-      this.$root.requestId("attribute", "request", attribute, this.entity)
-    }
-  }
+// Define the props for this component
+let props = defineProps<{
+  attribute: Attribute
+  entityId: string
+  small: boolean,
+}>()
+
+// Inject the remote reference
+let remote: any = inject('remote')
+
+// Apply changes made to an attribute
+function commitChange(attribute: Attribute) {
+  // Make the request to the websocket object
+  let id: string = props.entityId
+  remote.nexus.requestId("attribute", "request", attribute, id)
 }
 
 </script>

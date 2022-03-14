@@ -116,7 +116,7 @@ type Range struct {
 }
 
 type Subnet struct {
-	DefaultRouter string        `json:"default-router"`
+	DefaultRouter string        `json:"default-index"`
 	Lease         string        `json:"lease"`
 	Range         map[int]Range `json:"range"`
 }
@@ -136,7 +136,7 @@ func (v *Vyos) fetchNetworks() error {
 
 	request, err := client.PostForm("https://10.0.1.1:8005/retrieve", val)
 	if err != nil {
-		return fmt.Errorf("vyos router is non-existance")
+		return fmt.Errorf("vyos index is non-existance")
 	}
 
 	buffer := bytes.Buffer{}

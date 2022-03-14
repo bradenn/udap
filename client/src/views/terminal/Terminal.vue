@@ -1,0 +1,235 @@
+<!-- Copyright (c) 2022 Braden Nicholson -->
+<script lang="ts" setup>
+import Dock from "@/components/Dock.vue"
+import Clock from "@/components/Clock.vue"
+import router from '@/router'
+import {onMounted, provide, reactive} from "vue";
+import {Nexus, Target} from '@/views/terminal/nexus'
+
+import type {Attribute, Device, Endpoint, Entity, Identifiable, Network} from "@/types";
+
+// -- Websockets --
+
+let audio: HTMLAudioElement;
+onMounted(() => {
+  audio = new Audio('/public/sound/selection.mp3');
+})
+
+interface Metadata {
+  name: string;
+  version: string;
+  environment: string;
+  ipv4: string;
+  ipv6: string;
+  hostname: string;
+  mac: string;
+  go: string;
+  cores: number;
+}
+
+interface Remote {
+  metadata: Metadata,
+  entities: Entity[],
+  attributes: Attribute[],
+  devices: Device[],
+  networks: Network[],
+  endpoints: Endpoint[],
+  timings: any[],
+  nexus: Nexus
+}
+
+// Define the reactive components for the remote data
+let remote = reactive<Remote>({
+  metadata: {} as Metadata,
+  entities: [],
+  attributes: [],
+  devices: [],
+  networks: [],
+  endpoints: [],
+  timings: [],
+  nexus: new Nexus(handleMessage)
+});
+
+// Handle and route incoming messages to the local cache
+function handleMessage(target: Target, data: any) {
+  switch (target) {
+    case Target.Metadata:
+      remote.metadata = data as Metadata
+      break
+    case Target.Entity:
+      replaceAndUpdate(remote.entities, data)
+      break
+    case Target.Attribute:
+      replaceAndUpdate(remote.attributes, data)
+      break
+    case Target.Device:
+      replaceAndUpdate(remote.devices, data)
+      break
+    case Target.Network:
+      replaceAndUpdate(remote.networks, data)
+      break
+    case Target.Endpoint:
+      replaceAndUpdate(remote.endpoints, data)
+      break
+    case Target.Timing:
+      replaceAndUpdate(remote.timings, data)
+      break
+  }
+}
+
+// Replace or update the existing data
+function replaceAndUpdate(target: any, data: any) {
+  if (target.find((e: Identifiable) => e.id === data.id)) {
+    target = target.map((a: Identifiable) => a.id === data.id ? data : a)
+  } else {
+    target.push(data)
+  }
+}
+
+// Provide the remote component for child components
+provide('remote', remote)
+
+// -- Gesture Navigation --
+
+// Stores the changing components of the main terminal
+let state = reactive({
+  isDragging: false,
+  timeout: null,
+  verified: false,
+  distance: 0,
+  dragA: {
+    x: 0,
+    y: 0
+  }
+});
+
+// When called, if the user is still dragging, evoke the action confirming drag intent
+function timeout() {
+  // Check if user is till dragging
+  if (state.isDragging) {
+    // Verify the drag intention
+    state.verified = true
+  }
+}
+
+// When the user starts dragging, initialize drag intent
+function dragStart(e: MouseEvent) {
+  // Record the current user position
+  let a = {x: e.clientX, y: e.clientY}
+  // If the drag has started near the bottom of the screen
+  if ((window.screen.availHeight - e.screenY) <= 128) {
+    // Set the dragging status for later verification
+    state.isDragging = true;
+    // Record the drag position
+    state.dragA = a
+    // Verify drag intent if the user is still dragging after 100ms
+    setTimeout(timeout, 100)
+  }
+}
+
+// While the user is still dragging
+function dragContinue(e: MouseEvent) {
+  // If the user is dragging, and the drag intent has been established
+  if (state.verified) {
+    // Record the current position
+    let dragB = {x: e.clientX, y: e.clientY}
+    // Set a maximum delta
+    let delta = 100
+    // Calculate the displacement
+    state.distance = (state.dragA.y - dragB.y) / delta
+    // If the user's current position is larger than the defined max intent
+    if (state.dragA.y - dragB.y > delta) {
+      // Reset the drag intention
+      state.verified = false
+      // Reset the frame position
+      state.distance = 0
+      // Change the inner route to the home page
+      router.push("/terminal/home")
+    }
+  }
+}
+
+// When the user cancels a drag intent
+function dragStop(e: MouseEvent) {
+  // Discard the drag intent
+  state.isDragging = false;
+  // Reset the distance
+  state.distance = 0;
+  // Reset verified drag intent
+  state.verified = false;
+  // Reset current position
+  state.dragA = {x: 0, y: 0}
+}
+
+
+function selectSound() {
+
+  audio.play();
+}
+
+</script>
+
+
+<template>
+  <div :style="`transform: translateY(calc(-${state.distance}rem));`"
+       class="terminal"
+       v-on:mousedown="dragStart"
+       v-on:mousemove="dragContinue"
+       v-on:mouseup="dragStop">
+
+    <div class="generic-container">
+      <div class="generic-slot-sm">
+        <Clock inner></Clock>
+      </div>
+    </div>
+
+    <div class="h-75">
+      <router-view v-slot="{ Component }">
+        <component :is="Component"/>
+      </router-view>
+    </div>
+
+    <div class="footer mt-3">
+      <Dock os>
+        <router-link class="macro-icon-default" draggable="false" to="/terminal/home">
+          <div class="macro-icon" @mousedown="selectSound">
+            􀎟
+          </div>
+        </router-link>
+        <span class="mx-2 my-1"
+              style="width: 0.0255rem; height: 1.8rem; border-radius: 1rem; background-color: rgba(255,255,255,0.1);"></span>
+        <router-link class="macro-icon-default" draggable="false" to="/terminal/wifi/">
+          <div class="macro-icon" @mousedown="selectSound">
+            􀙇
+          </div>
+        </router-link>
+        <router-link class="macro-icon-default" draggable="false" to="/terminal/energy/">
+          <div class="macro-icon" @mousedown="selectSound">
+            􀋦
+          </div>
+        </router-link>
+        <router-link class="macro-icon-default" draggable="false" to="/terminal/settings/preferences">
+          <div class="macro-icon" @mousedown="selectSound">
+            􀍟
+          </div>
+        </router-link>
+      </Dock>
+    </div>
+    <div class="home-bar top"></div>
+  </div>
+</template>
+
+<style scoped>
+.footer {
+  position: absolute;
+  bottom: 1.2rem;
+}
+
+.terminal {
+  padding: 1em;
+  height: 100vh !important;
+  flex-direction: column;
+  justify-content: start;
+}
+
+</style>

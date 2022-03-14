@@ -1,22 +1,15 @@
 // Copyright (c) 2022 Braden Nicholson
 
-import config from "./config.js"
+import {config} from "./config.js"
 
-enum Attr {
-    Controller = "controller",
-    Background = "background",
-    Screensaver = "screensaver",
-    TouchMode = "touchmode",
-    Token = "token",
-    Theme = "theme",
-}
+import type {PreferenceTypes} from "@/types";
 
 class Preference {
-    kind: Attr
+    kind: PreferenceTypes
     value: any
 
     // Initialize the class for a given preference
-    constructor(kind: Attr) {
+    constructor(kind: PreferenceTypes) {
         // Set the kind identifier enum
         this.kind = kind
         // Try to retrieve the value form localStorage
@@ -55,6 +48,5 @@ class Preference {
 }
 
 export {
-    Preference,
-    Attr
+    Preference
 };

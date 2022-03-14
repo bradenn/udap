@@ -1,9 +1,28 @@
 version: "3.9"
 services:
+  postgres:
+    image: 'postgres:latest'
+    volumes:
+      - ./db-data/:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: udap
+      POSTGRES_PASSWORD: udap
+      POSTGRES_DB: udap
   backend:
-    build: .
+    restart: always
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
     volumes:
       - persistant:/local
+    depends_on:
+      - postgres
+    networks:
+      - default
+    environment:
+      WAIT_HOSTS: postgres:5432
     env_file:
       - .env
     ports:

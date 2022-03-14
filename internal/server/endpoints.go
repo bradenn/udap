@@ -233,17 +233,17 @@ func (e *Endpoints) Run() error {
 
 func (e *Endpoints) registerEndpoint(w http.ResponseWriter, rq *http.Request) {
 	key := chi.URLParam(rq, "accessKey")
-	endpoint := models.Endpoint{}
+	ep := models.Endpoint{}
 
-	err := store.DB.Model(&models.Endpoint{}).Where("key = ?", key).First(&endpoint).Error
+	err := store.DB.Model(&models.Endpoint{}).Where("key = ?", key).First(&ep).Error
 	if err != nil {
-		w.WriteHeader(401)
+		http.Error(w, "Invalid security code.", 401)
 		return
 	}
 
-	jwt, err := signUUID(endpoint.Id)
+	jwt, err := signUUID(ep.Id)
 	if err != nil {
-		w.WriteHeader(401)
+		http.Error(w, "Failed to generate JWT.", 500)
 		return
 	}
 
@@ -251,7 +251,7 @@ func (e *Endpoints) registerEndpoint(w http.ResponseWriter, rq *http.Request) {
 
 	marshal, err := json.Marshal(resolve)
 	if err != nil {
-		w.WriteHeader(500)
+		http.Error(w, "Failed to generate json...", 500)
 		return
 	}
 

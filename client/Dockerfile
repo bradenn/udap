@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN npm ci
+RUN yarn install
 
-RUN npm run build
+RUN yarn build
 
-CMD [ "npm", "run", "serve"]
+CMD [ "yarn", "run", "serve"]

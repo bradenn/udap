@@ -1,0 +1,31 @@
+<!-- Copyright (c) 2022 Braden Nicholson -->
+<script lang="ts" setup>
+import Header from "@/components/Header.vue";
+import Sidebar from "@/components/sidebar/Sidebar.vue";
+import SidebarItem from "@/components/sidebar/SidebarItem.vue";</script>
+
+<template>
+  <div class="d-flex gap">
+    <div class="sidebar-container">
+      <Header class="px-2 pb-1" icon="gear" name="Settings"></Header>
+      <Sidebar>
+        <router-link class="" draggable="false" to="/terminal/settings/preferences">
+          <SidebarItem icon="bars-progress" name="Preferences"></SidebarItem>
+        </router-link>
+        <router-link class="" draggable="false" to="/terminal/settings/connection">
+          <SidebarItem icon="cloud" name="Connection"></SidebarItem>
+        </router-link>
+      </Sidebar>
+    </div>
+    <div class="flex-grow-1">
+      <router-view/>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+
+.sidebar-container {
+  width: 14rem;
+}
+</style>

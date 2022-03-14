@@ -1,152 +1,108 @@
-<script>
+<script lang="ts" setup>
 
-import Loading from "../Loading.vue";
+import {reactive} from "vue";
 
-export default {
-  name: "Range",
-  components: {Loading},
-  data() {
-    return {
-      latest: new Date(),
-      waiting: false,
-      sliding: false,
-      loading: false,
-      local: {},
-      config: {
-        dim: {
-          name: 'Intensity',
-          min: 0,
-          max: 100,
-          step: 5,
-          unit: '%',
-          icon: '􀇯',
-          class: 'slider-dim',
-        },
-        cct: {
-          name: 'Warmth',
-          min: 2000,
-          max: 8000,
-          step: 100,
-          unit: 'K',
-          icon: '􀍽',
-          class: 'slider-cct',
-        },
-        hue: {
-          name: 'Color',
-          min: 1,
-          max: 360,
-          step: 1,
-          unit: '°',
-          icon: '􀟗',
-          class: 'slider-hue',
-        },
-        main: {
-          min: 1,
-          max: 100,
-          step: 5,
-          unit: '%',
-          icon: '􀌆',
-          class: 'slider-dim',
-        }
-      }
-    }
-  },
-  created() {
-    this.latest = new Date()
-    this.local = this.attribute
-  },
-  beforeMount() {
+import type {Attribute} from "@/types";
 
+const props = defineProps<{
+  attribute: Attribute,
+  commit: (value: any) => void
+}>()
+
+// Local state for the slider
+const state = reactive({
+  latest: new Date(),
+  waiting: false,
+  sliding: false,
+  loading: false,
+  local: props.attribute,
+})
+
+// The predefined styles for each attribute key
+const styles: any = {
+  dim: {
+    name: 'Intensity',
+    min: 0,
+    max: 100,
+    step: 5,
+    unit: '%',
+    icon: '􀇯',
+    class: 'slider-dim',
   },
-  props: {
-    attribute: Object,
-    commit: Function,
-    small: Boolean,
-    primitive: Boolean,
+  cct: {
+    name: 'Warmth',
+    min: 2000,
+    max: 8000,
+    step: 100,
+    unit: 'K',
+    icon: '􀍽',
+    class: 'slider-cct',
   },
-  computed: {},
-  watch: {
-    'attribute': {
-      immediate: true,
-      handler(d, a) {
-        if (this.sliding) return
-        this.local = d
-        this.waiting = false
-      }
-    }
+  hue: {
+    name: 'Color',
+    min: 1,
+    max: 360,
+    step: 1,
+    unit: '°',
+    icon: '􀟗',
+    class: 'slider-hue',
   },
-  methods: {
-    slideStart: function (e) {
-      this.sliding = true
-    },
-    commitChanges: function (e) {
-      this.commit(this.local)
-      this.waiting = true
-      this.latest = new Date()
-      // Prevent updates until after we send the state
-      this.sliding = false
-    }
+  main: {
+    min: 1,
+    max: 100,
+    step: 5,
+    unit: '%',
+    icon: '􀌆',
+    class: 'slider-dim',
   }
+}
+
+// Lock the slider, kinda like a state mutex
+function slideStart(_: MouseEvent) {
+  state.sliding = true
+}
+
+// Send the changes when the user lifts their finger
+function commitChanges(_: MouseEvent) {
+  props.commit(state.local)
+  state.waiting = true
+  state.latest = new Date()
+  // Prevent updates until after we send the state
+  state.sliding = false
 }
 
 </script>
 
 <template>
-  <div v-if="small">
-    <input v-if="attribute.type==='range'" :key="attribute.id" v-model="this.local.request"
-           :class="`slider-${attribute.key}`"
-           :max=config[attribute.key].max :min=config[attribute.key].min
-           :step=config[attribute.key].step
-           class="dock dock-xsmall slider"
-           type="range"
-           v-on:mousedown="slideStart"
-           v-on:mouseup="commitChanges">
-  </div>
-  <div v-else-if="primitive">
-    <div class="h-bar justify-content-start align-items-center align-content-center pb-1">
-      <div class="label-xxs label-o2 label-w600">{{ config[attribute.key].icon }}</div>
-      <div class="label-xxs label-o4 label-w500">&nbsp;&nbsp;{{ config[attribute.key].name }}</div>
-    </div>
-    <input v-if="attribute.type==='range'" :key="attribute.id" v-model="this.local.request"
-           :class="`slider-${attribute.key}`"
-           :max=config[attribute.key].max :min=config[attribute.key].min
-           :step=config[attribute.key].step
-           class="slider element"
-           type="range"
-           v-on:mousedown="slideStart"
-           v-on:mouseup="commitChanges">
-
-  </div>
-  <div v-else class="element" v-on:click.stop>
-
-    <div class="h-bar justify-content-start align-items-center align-content-center pb-1">
-      <div class="label-xxs label-o2 label-w600">{{ config[attribute.key].icon }}</div>
-      <div class="label-xxs label-o4 label-w500">&nbsp;&nbsp;{{ config[attribute.key].name }}</div>
-      <div class="fill"></div>
-      <div class="h-bar gap label-xxs label-o3 label-w400 px-2">
-        <Loading v-if="waiting"></Loading>
-        <div class="label-xxs label-o3">{{ this.local.request }} {{ config[attribute.key].unit }}</div>
+  <div class="element surface" v-on:click.stop>
+    <div class="d-flex justify-content-between align-content-center align-items-center">
+      <div class="h-bar justify-content-start align-items-center align-content-center">
+        <div class="label-xxs label-o2 label-w600">{{ styles[attribute.key].icon }}</div>
+        <div class="label-xxs label-o4 label-w500 fixed-width-name">&nbsp;&nbsp; {{ styles[attribute.key].name }}</div>
+        <div class="fill"></div>
+        <div class="h-bar gap label-xxs label-o3 label-w400 px-2">
+          <div class="label-xxs label-o3">{{ state.local.request }} {{ styles[attribute.key].unit }}</div>
+        </div>
       </div>
-    </div>
-    <div class="d-flex gap">
-      <!--      <div class="slider-ticks">
-              <div v-for="a in [...Array(22).keys()]"></div>
-
-            </div>-->
-      <input v-if="attribute.type==='range'" :key="attribute.id" v-model="this.local.request"
+      <input v-model="state.local.request"
              :class="`slider-${attribute.key}`"
-             :max=config[attribute.key].max :min=config[attribute.key].min
-             :step=config[attribute.key].step
-             class="slider element"
+             :max=styles[attribute.key].max
+             :min=styles[attribute.key].min
+             :step=styles[attribute.key].step
+             class="element range-slider slider"
              type="range"
              v-on:mousedown="slideStart"
              v-on:mouseup="commitChanges">
-
     </div>
-
   </div>
 </template>
 
 <style scoped>
+.range-slider {
+  width: 15rem;
+}
 
+.fixed-width-name {
+  width: 3.5rem;
+}
 </style>
