@@ -1,4 +1,5 @@
 # udap v2.9.5 beta
+[![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/go.yml)
 
 ## Universal Device Aggregation Platform
 
