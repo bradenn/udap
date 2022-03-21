@@ -1,178 +1,35 @@
 <script lang="ts" setup>
 
-import {onMounted, reactive} from "vue";
-import axios from "axios";
-
-
-interface Weather {
-  id: string;
-  type: string;
-  properties: Properties;
-}
-
-interface Properties {
-  geometry: string;
-  units: string;
-  forecastGenerator: string;
-  generatedAt: string;
-  updateTime: string;
-  elevation: Elevation;
-  periods: (PeriodsEntity)[];
-}
-
-interface Elevation {
-  value: number;
-  maxValue: number;
-  minValue: number;
-  unitCode: string;
-  qualityControl: string;
-}
-
-interface PeriodsEntity {
-  number: number;
-  name: string;
-  startTime: string;
-  endTime: string;
-  isDaytime: boolean;
-  temperatureTrend?: string;
-  temperature: number;
-  windDirection: string;
-  windSpeed: string;
-  icon: string;
-  shortForecast: string;
-  detailedForecast: string;
-}
-
-interface StateType {
-  gradient: number
-  periods: PeriodsEntity[]
-  ranges: any,
-  now: PeriodsEntity
-}
-
-const state = reactive<StateType>({
-  gradient: 0,
-  periods: [],
-  ranges: {
-    temp: {
-      min: 100,
-      max: 0,
-    },
-    wind: {
-      min: 100,
-      max: 0,
-    },
-  },
-  now: {} as PeriodsEntity
-})
-
-onMounted(() => {
-  setInterval(updateGradient, 500)
-  pullWeather()
-})
-
-function pullWeather() {
-  axios.get("https://api.weather.gov/gridpoints/MTR/79,141/forecast/hourly").then(parseWeather).catch(err => {
-  })
-}
-
-
-function parseWeather(body: any) {
-  let we = body.data as Weather
-  state.now = we.properties.periods[0]
-  state.periods = we.properties.periods?.slice(0, 16) as PeriodsEntity[]
-  state.periods.forEach((p: PeriodsEntity) => {
-    if (p.temperature > state.ranges.temp.max) {
-      state.ranges.temp.max = p.temperature
-    } else if (p.temperature < state.ranges.temp.min) {
-      state.ranges.temp.min = p.temperature
-    }
-    if (parseInt(p.windSpeed) > state.ranges.wind.max) {
-      state.ranges.wind.max = parseInt(p.windSpeed)
-    } else if (parseInt(p.windSpeed) < state.ranges.wind.min) {
-      state.ranges.wind.min = parseInt(p.windSpeed)
-    }
-
-  })
-
-}
-
-function updateGradient() {
-  state.gradient += 1
-  state.gradient = new Date().getHours()
-}
-
 </script>
 
 <template>
-  <div class="element widget gap p-2">
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="label-lg label-w500 lh-1">{{ state.now.temperature }}°</div>
-      <div class="label-xxs label-w400 label-o4 lh-1">{{ state.now.shortForecast }}</div>
-    </div>
-    <div class="h-sep my-1"></div>
-    <h6 class="mb-1 mt-2">Temp</h6>
-    <div class=" d-flex flex-row justify-content-between px-1">
-      <div class="d-flex flex-row justify-content-between align-items-end w-100">
-        <div v-for="period in state.periods"
-             class="d-flex flex-column justify-content-end align-items-center h-100 w-100">
-          <div :class="`${period.isDaytime?'':'night'}`"
-               :style="`height: ${(period.temperature - state.ranges.temp.min + 2)/(state.ranges.temp.max - state.ranges.temp.min)}rem;`"
-               class="temp-bar"></div>
-          <div class="label-subtext pt-1">
-            <div v-if="period.number % 2 !== 0">
-              {{ ((new Date(period.startTime).getHours()) % 12) }}
-            </div>
-            <div v-else>
-              &nbsp;
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="d-flex flex-column justify-content-start align-items-end px-1">
-        <div class="label-subtext">{{ state.ranges.temp.max }}°</div>
-        <div class="label-subtext mt-1">{{ state.ranges.temp.min }}°</div>
-      </div>
-    </div>
-    <div class="h-sep my-1"></div>
-    <h6 class="mb-1 mt-2">Wind</h6>
-    <div class=" d-flex flex-row justify-content-between px-1">
-      <div class="d-flex flex-row justify-content-between align-items-end w-100">
-        <div v-for="period in state.periods"
-             class="d-flex flex-column justify-content-end align-items-center h-100 w-100">
-          <div :class="`${period.isDaytime?'':'night'}`"
-               :style="`height: ${parseInt(period.windSpeed)/12}rem;`"
-               class="temp-bar"></div>
-          <div class="label-subtext pt-1">
-            <div v-if="period.number % 2 !== 0">
-              {{ ((new Date(period.startTime).getHours()) % 12) }}
-            </div>
-            <div v-else>
-              &nbsp;
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="d-flex flex-column justify-content-between align-content-start px-1">
-        <div class="label-subtext label-c1">{{ state.ranges.wind.max }}</div>
-        <div class="label-subtext mb-2">{{ state.ranges.wind.min }}</div>
-      </div>
-    </div>
-    <div class="h-sep my-1"></div>
-    <div class="label-c2 label-o3">Winds at {{ state.now.windSpeed }} {{ state.now.windDirection }}</div>
-
-
+  <div class="earth-full-disk m-2"
+       style="background-image: url('https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/1808x1808.jpg')">
   </div>
 </template>
 
 <style lang="scss" scoped>
+.earth-full-disk {
+  height: 26rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 4px 8px rgba(0, 0, 0, 0.025);
+  aspect-ratio: 1808/1778;
+  border-radius: 100%;
+  background-color: rgba(76, 87, 101, 0.37);
+  background-size: cover;
+  transition: background-image 250ms ease-in-out;
+}
+
 .night {
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .label-subtext {
-  font-size: 0.45rem;
-  width: 8px;
+  font-size: 0.30rem;
+  width: 6px;
   opacity: 0.5;
   line-height: 0.4rem;
 }
@@ -182,7 +39,7 @@ function updateGradient() {
 }
 
 .temp-bar {
-  width: 8px;
+  width: 6px;
   border-radius: 3px;
   background-color: rgba(255, 255, 255, 0.5);
 }

@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import {defineProps, inject, onMounted, reactive, watch} from "vue";
+import {inject, onMounted, reactive, watch} from "vue";
 import AttributeComponent from "@/components/entity/Attribute.vue"
 import type {Attribute, Entity} from "@/types"
 
@@ -63,16 +63,19 @@ function toggleMenu(): void {
 <template>
   <div>
     <div :class="state.active?'active':''" class="entity-small" @click="toggleMenu">
-      <div class="entity-header">
-        <div class="icon">
+      <div class="entity-header mb-2 ">
+        <div class="label-o5">
           {{ props.entity.icon || '􀛮' }}
         </div>
-        <div class="label-xxs label-w400 label-o4 px-1">
+        <div class="label-c1 label-w400 label-o4 px-2">
           {{ props.entity.name }}
         </div>
       </div>
+      <div>
+
+      </div>
       <div class="fill"></div>
-      <div class="label-xxs label-o3 label-w400 px-2">
+      <div class="label-xxs label-o3 label-w500 px-2">
         <div v-if="state.active">ON</div>
         <div v-else>OFF</div>
       </div>

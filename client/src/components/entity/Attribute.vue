@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import Range from "./Range.vue";
 import Toggle from "./Toggle.vue";
-import {defineProps, inject} from "vue";
+import {inject} from "vue";
 import type {Attribute} from "@/types";
 
 // Define the props for this component

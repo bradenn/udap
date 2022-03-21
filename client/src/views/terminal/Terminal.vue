@@ -2,8 +2,9 @@
 <script lang="ts" setup>
 import Dock from "@/components/Dock.vue"
 import Clock from "@/components/Clock.vue"
+import IdHash from "@/components/IdHash.vue"
 import router from '@/router'
-import {onMounted, provide, reactive} from "vue";
+import {onMounted, provide, reactive, watch} from "vue";
 import {Nexus, Target} from '@/views/terminal/nexus'
 
 import type {Attribute, Device, Endpoint, Entity, Identifiable, Network} from "@/types";
@@ -37,6 +38,7 @@ interface Remote {
   timings: any[],
   nexus: Nexus
 }
+
 
 // Define the reactive components for the remote data
 let remote = reactive<Remote>({
@@ -97,11 +99,21 @@ let state = reactive({
   timeout: null,
   verified: false,
   distance: 0,
+  showClock: true,
   dragA: {
     x: 0,
     y: 0
   }
 });
+
+watch(() => router.currentRoute.value, () => {
+  state.showClock = router.currentRoute.value.path === '/terminal/home'
+})
+
+onMounted(() => {
+  draw()
+  state.showClock = router.currentRoute.value.path === '/terminal/home'
+})
 
 // When called, if the user is still dragging, evoke the action confirming drag intent
 function timeout() {
@@ -114,10 +126,12 @@ function timeout() {
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
+
   // Record the current user position
   let a = {x: e.clientX, y: e.clientY}
+
   // If the drag has started near the bottom of the screen
-  if ((window.screen.availHeight - e.screenY) <= 128) {
+  if ((window.screen.availHeight - e.screenY) <= 180) {
     // Set the dragging status for later verification
     state.isDragging = true;
     // Record the drag position
@@ -130,6 +144,7 @@ function dragStart(e: MouseEvent) {
 // While the user is still dragging
 function dragContinue(e: MouseEvent) {
   // If the user is dragging, and the drag intent has been established
+
   if (state.verified) {
     // Record the current position
     let dragB = {x: e.clientX, y: e.clientY}
@@ -143,6 +158,7 @@ function dragContinue(e: MouseEvent) {
       state.verified = false
       // Reset the frame position
       state.distance = 0
+
       // Change the inner route to the home page
       router.push("/terminal/home")
     }
@@ -151,6 +167,7 @@ function dragContinue(e: MouseEvent) {
 
 // When the user cancels a drag intent
 function dragStop(e: MouseEvent) {
+
   // Discard the drag intent
   state.isDragging = false;
   // Reset the distance
@@ -163,33 +180,48 @@ function dragStop(e: MouseEvent) {
 
 
 function selectSound() {
-
   audio.play();
+}
+
+function draw() {
+
+
 }
 
 </script>
 
 
 <template>
-  <div :style="`transform: translateY(calc(-${state.distance}rem));`"
-       class="terminal"
-       v-on:mousedown="dragStart"
-       v-on:mousemove="dragContinue"
-       v-on:mouseup="dragStop">
-
+  <div
+      class="terminal h-100"
+      v-on:mousedown="dragStart"
+      v-on:mousemove="dragContinue"
+      v-on:mouseup="dragStop">
     <div class="generic-container">
-      <div class="generic-slot-sm">
-        <Clock inner></Clock>
+
+      <div :class="`generic-slot-${state.showClock?'sm':'xs'}`">
+        <Clock :small="!state.showClock"></Clock>
+      </div>
+      <div :class="`generic-slot-sm`">
+        <div class="element h-75 d-flex align-items-center align-content-center justify-content-start gap-2">
+          <div class="px-2">
+            <IdHash></IdHash>
+          </div>
+          <div class="d-flex flex-column gap-0">
+            <div class="label-xxs label-o5 lh-1">Braden Nicholson</div>
+            <div class="label-c2 label-o2 lh-1">Superuser</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="h-75">
+    <div class="h-100">
       <router-view v-slot="{ Component }">
         <component :is="Component"/>
       </router-view>
     </div>
 
-    <div class="footer mt-3">
+    <div v-if="state.showClock" class="footer mt-3">
       <Dock os>
         <router-link class="macro-icon-default" draggable="false" to="/terminal/home">
           <div class="macro-icon" @mousedown="selectSound">
@@ -208,6 +240,16 @@ function selectSound() {
             􀋦
           </div>
         </router-link>
+        <router-link class="macro-icon-default" draggable="false" to="/terminal/exogeology/">
+          <div class="macro-icon" @mousedown="selectSound">
+            <i class="fa-solid fa-meteor fa-fw"></i>
+          </div>
+        </router-link>
+        <router-link class="macro-icon-default" draggable="false" to="/terminal/timing/">
+          <div class="macro-icon" @mousedown="selectSound">
+            <i class="fa-solid fa-stopwatch fa-fw"></i>
+          </div>
+        </router-link>
         <router-link class="macro-icon-default" draggable="false" to="/terminal/settings/preferences">
           <div class="macro-icon" @mousedown="selectSound">
             􀍟
@@ -215,7 +257,7 @@ function selectSound() {
         </router-link>
       </Dock>
     </div>
-    <div class="home-bar top"></div>
+    <div :style="`transform: translateY(calc(-${state.distance}rem));`" class="home-bar top"></div>
   </div>
 </template>
 
@@ -227,7 +269,7 @@ function selectSound() {
 
 .terminal {
   padding: 1em;
-  height: 100vh !important;
+
   flex-direction: column;
   justify-content: start;
 }

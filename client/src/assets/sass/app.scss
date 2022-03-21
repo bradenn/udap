@@ -48,7 +48,7 @@ $light-6: rgb(142, 142, 147);
 html {
   font-family: 'SF Pro Text', sans-serif;
   font-size: 28px;
-
+  user-select: none !important;
   background-color: black !important;
 }
 
@@ -223,6 +223,24 @@ $themes: (
     }
   }
 }
+
+
+.element.element-green, .element.element-red {
+
+}
+
+.element.element-green {
+  background-color: rgba(48, 209, 88, 0.25) !important;
+  box-shadow: inset 0 0 8px 4px rgba(48, 209, 88, 0.25), 0 0 8px 1px rgba(0, 0, 0, 0.025) !important;
+}
+
+
+.element.element-red {
+  background-color: rgba(255, 69, 58, 0.5) !important;
+  box-shadow: inset 0 0 8px 4px rgba(255, 69, 58, 0.25), 0 0 8px 1px rgba(0, 0, 0, 0.025) !important;
+  transform: scale(0.98);
+}
+
 
 // Element
 // Surface
@@ -1055,23 +1073,6 @@ $themes: (
   padding: 0 !important;
 }
 
-.clock-time-inner {
-  font-size: 2rem;
-  line-height: 2rem;
-  font-weight: 600;
-  font-family: "SF Pro Rounded", sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.clock-date-inner {
-  font-size: 0.75rem;
-  line-height: 0.75rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: "SF Pro Rounded", sans-serif;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
 
 .clock-time {
   font-size: 1.5rem;
@@ -1236,7 +1237,7 @@ $themes: (
   }
 }
 
-.macro-icon > .macro-icon-default.router-link-active {
+.macro-icon-default.router-link-active > .macro-icon {
   color: rgba(255, 255, 255, 0.8);
   box-shadow: none !important;
   background-color: transparent !important;
@@ -1244,7 +1245,6 @@ $themes: (
 
 .macro-icon-default {
   color: rgba(255, 255, 255, 0.4);
-  cursor: none !important;
   user-select: none !important;
 }
 
@@ -1739,6 +1739,11 @@ hr {
 .generic-slot-sm {
   width: 13rem;
   height: 3.25rem;
+}
+
+.generic-slot-xs {
+  width: 13rem;
+  height: 1rem;
 }
 
 

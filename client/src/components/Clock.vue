@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import moment from 'moment'
-import {defineProps, onMounted, reactive} from "vue";
+import {onMounted, reactive} from "vue";
 
-let props = defineProps({
-  size: String,
-  inner: Boolean,
-  large: Boolean,
-})
+let props = defineProps<{
+  small?: boolean,
+}>()
 
 let state = reactive({
   time: "",
@@ -18,6 +16,7 @@ let state = reactive({
 onMounted(() => {
   startClock()
 })
+
 
 function formatDay(wd: number) {
   let m = moment()
@@ -42,46 +41,53 @@ function updateTime() {
   state.date = m.format("dddd, MMMM Do, YYYY");
 }
 
+
 </script>
 
 <template>
   <div>
-    <div class="clock-time-inner top" v-html="state.time"></div>
-    <div class="clock-date-inner" v-html="state.date"></div>
+    <div :class="`time${props.small?'-sm':''}`" class="top" @click="$router.push('/terminal/home')"
+         v-html="state.time"></div>
+    <div v-if="!props.small" class="date" v-html="state.date"></div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.clock-container {
-  /*height: 48px !important;*/
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-}
-
-.weekday {
-
-}
-
-.clock-large {
-  font-size: 3rem !important;
-}
-
-.clock-sm {
-
-}
-
-
-.clock {
-  font-family: "SF Compact Display", sans-serif;
-  font-size: 0.8rem;
+.time {
+  font-size: 3.4rem;
+  line-height: 3.5rem;
   font-weight: 600;
-  line-height: 2rem !important;
-
-
+  font-family: "SF Pro Rounded", sans-serif;
   color: rgba(255, 255, 255, 0.8);
-  text-shadow: 1px 1px 12px rgba(0, 0, 0, 0.25);
-  transition: font-size 0.25s ease-in-out;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  transition: font-size 100ms ease-out;
+}
+
+.date {
+  font-size: 1rem;
+  line-height: 1rem;
+  font-weight: 500;
+  padding-left: 0.25rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: "SF Pro Rounded", sans-serif;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.time-sm {
+  font-size: 1rem;
+  line-height: 1rem;
+  font-weight: 600;
+  font-family: "SF Pro Rounded", sans-serif;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.date-sm {
+  font-size: 0.75rem;
+  line-height: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: "SF Pro Rounded", sans-serif;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 </style>

@@ -18,6 +18,17 @@ import Home from "../views/terminal/Home.vue"
 import Wifi from "../views/terminal/Wifi.vue";
 import Energy from "../views/terminal/Energy.vue";
 
+// Exogeology Routes
+import Exogeology from "../views/terminal/exogeology/Exogeology.vue";
+import Earth from "../views/terminal/exogeology/Earth.vue";
+import Moon from "../views/terminal/exogeology/Moon.vue";
+import Sol from "../views/terminal/exogeology/Sol.vue";
+
+// Timing Routes
+import Timing from "../views/terminal/timing/Timing.vue";
+import Stopwatch from "../views/terminal/timing/Stopwatch.vue";
+import Timer from "../views/terminal/timing/Timer.vue";
+
 const defaultRoute = {
     path: '/',
     component: Setup,
@@ -61,6 +72,48 @@ const settingsRoutes = {
     ]
 }
 
+const exogeologyRoutes = {
+    path: '/terminal/exogeology',
+    name: 'Exogeology',
+    redirect: '/terminal/exogeology/earth',
+    component: Exogeology,
+    children: [
+        {
+            path: '/terminal/exogeology/earth',
+            name: 'Earth',
+            component: Earth,
+        },
+        {
+            path: '/terminal/exogeology/moon',
+            name: 'Moon',
+            component: Moon,
+        },
+        {
+            path: '/terminal/exogeology/sol',
+            name: 'Sol',
+            component: Sol,
+        },
+    ]
+}
+const timingRoutes = {
+    path: '/terminal/timing',
+    name: 'Timing',
+    redirect: '/terminal/timing/stopwatch',
+    component: Timing,
+    children: [
+        {
+            path: '/terminal/timing/stopwatch',
+            name: 'Stopwatch',
+            component: Stopwatch,
+        },
+        {
+            path: '/terminal/timing/timer',
+            name: 'Timer',
+            component: Timer,
+        },
+    ]
+}
+
 const terminalRoutes = {
     path: '/terminal',
     name: 'Terminal',
@@ -82,7 +135,9 @@ const terminalRoutes = {
             name: 'Energy',
             component: Energy,
         },
-        settingsRoutes
+        settingsRoutes,
+        timingRoutes,
+        exogeologyRoutes
     ]
 }
 

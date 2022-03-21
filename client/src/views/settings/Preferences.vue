@@ -6,8 +6,9 @@ import {Preference} from "@/preferences";
 import {PreferenceTypes} from "@/types";
 
 interface Preferences {
-  background: string,
+  background: string
   theme: string
+  mode: string
 }
 
 const preferences = inject("preferences") as Preferences
@@ -39,6 +40,16 @@ const defaults = {
       identifier: "milk",
     }
   ],
+  touchModes: [
+    {
+      name: "Touch",
+      identifier: "touch",
+    },
+    {
+      name: "Cursor",
+      identifier: "cursor",
+    },
+  ],
   themes: [
     {
       name: "Dark",
@@ -59,6 +70,11 @@ function changeBackground(name: string) {
 function changeTheme(name: string) {
   new Preference(PreferenceTypes.Theme).set(name)
   preferences.theme = name
+}
+
+function changeTouchmode(mode: string) {
+  new Preference(PreferenceTypes.TouchMode).set(mode)
+  preferences.mode = mode
 }
 
 </script>
@@ -91,6 +107,20 @@ function changeTheme(name: string) {
                 class="bg-blur surface theme-preview label-xxs label-o5 label-w600 px-4 py-2">
               <div class="label-xxs label-w500 label-o4">
                 {{ theme.name }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-2">
+        <h4>Touch Mode</h4>
+        <div class="d-flex gap">
+          <div v-for="mode in defaults.touchModes" @click="changeTouchmode(mode.identifier)">
+            <div
+                :class="`${preferences.mode === mode.identifier?'theme-preview-active':''}`"
+                class="bg-blur surface theme-preview label-xxs label-o5 label-w600 px-4 py-2">
+              <div class="label-xxs label-w500 label-o4">
+                {{ mode.name }}
               </div>
             </div>
           </div>
