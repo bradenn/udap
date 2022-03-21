@@ -1,6 +1,6 @@
 # udap v2.9.5 beta
 [![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/go.yml)
-
+[![Typescript](https://github.com/bradenn/udap/actions/workflows/ts.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/ts.yml)
 ## Universal Device Aggregation Platform
 
 Udap aims to efficiently link and aggregate many unlike interfaces into a heuristic model that can be manipulated and
