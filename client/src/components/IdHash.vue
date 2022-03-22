@@ -14,7 +14,7 @@ let state = reactive<{
 
 onMounted(() => {
   loadCanvas()
-  setInterval(drawCanvas, 200)
+  // setInterval(drawCanvas, 200)
 })
 
 function loadCanvas() {
@@ -52,8 +52,8 @@ function drawCanvas() {
     let ax = w / 5 * Math.cos(x * divisor) + w / 2
     let ay = h / 5 * Math.sin(x * divisor) + h / 2
 
-    let bx = w / 2 * Math.cos(x * divisor + tick) + w / 2
-    let by = h / 2 * Math.sin(x * divisor + tick) + h / 2
+    let bx = w / 2 * Math.cos(x * divisor) + w / 2
+    let by = h / 2 * Math.sin(x * divisor) + h / 2
     ctx.beginPath();
     ctx.moveTo(ax, ay);
     ctx.lineTo(bx, by);
@@ -61,7 +61,7 @@ function drawCanvas() {
     ctx.stroke();
 
   }
-  state.tick += (state.tick + Math.PI / 8)
+
   ctx.restore()
 
 }
