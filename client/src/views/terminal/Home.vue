@@ -5,10 +5,12 @@ import Light from "@/components/Light.vue";
 import {inject, onMounted, reactive, watch} from "vue";
 import Weather from "@/components/Weather.vue";
 import Fractal from "@/components/Fractal.vue";
+import router from "@/router";
 
 // Define the local reactive data for this view
 let state = reactive({
-  lights: []
+  lights: [],
+  page: router.currentRoute.value.name
 })
 
 // Compare the names of the entities to sort them accordingly
@@ -41,11 +43,12 @@ function updateLights(entities: any) {
   state.lights = candidates.sort(compareName)
 }
 
+
 </script>
 
 <template>
-  <div class="d-flex justify-content-between gap-1 align-items-center align-content-center h-50 mt-5">
 
+  <div class="d-flex justify-content-between gap-1 align-items-center align-content-center h-50">
     <div class="widget-sm">
       <Weather></Weather>
     </div>
@@ -58,9 +61,10 @@ function updateLights(entities: any) {
           <Light :entity="light"></Light>
         </div>
       </div>
-
     </div>
   </div>
+
+
 </template>
 
 <style scoped>

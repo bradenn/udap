@@ -3,7 +3,7 @@
 <script lang="ts" setup>
 import Sidebar from "@/components/sidebar/Sidebar.vue";
 import SidebarItem from "@/components/sidebar/SidebarItem.vue";
-
+import moment from 'moment'
 import {reactive} from "vue";
 import axios from "axios";
 
@@ -12,7 +12,10 @@ let state = reactive({
   mode: "GEOCOLOR",
   section: "FD",
   currentImage: "",
-  loading: true,
+  lastUpdated: "",
+  lastDate: 0,
+  nextUpdate: "",
+  loading: false,
 })
 
 const sections = [
@@ -75,8 +78,19 @@ function selectSection(section: string) {
 }
 
 function downloadImage(url: string) {
+
   axios.get(url).then(res => {
     state.currentImage = url
+  }).catch(err => {
+
+  })
+}
+
+function downloadSha(url: string) {
+  axios.get(url).then(res => {
+
+    state.lastUpdated = moment(new Date(res.headers['last-modified'])).fromNow(false)
+    state.nextUpdate = moment(new Date(res.headers['last-modified'])).add(1000 * 60 * 15).fromNow(false)
   })
 }
 
@@ -84,6 +98,7 @@ function buildURL(satellite: string, section: string, mode: string) {
   // Mode ABI, Advanced Baseline Imager
   // Section, FD, etc
   // Mode GEOCOLOR, etc
+  downloadSha(`https://cdn.star.nesdis.noaa.gov/${satellite}/ABI/${section}/${mode}/${satellite}-ABI-${section}-${mode}-10848x10848.tif.sha256`)
   downloadImage(`https://cdn.star.nesdis.noaa.gov/${satellite}/ABI/${section}/${mode}/${section === "FD" ? '1808x1808' : '1200x1200'}.jpg`)
   return state.currentImage
 }
@@ -137,16 +152,46 @@ function buildURL(satellite: string, section: string, mode: string) {
             </div>
           </Sidebar>
         </div>
-        <div class="d-flex justify-content-center align-items-center w-75">
-          <div v-if="state.section === 'FD'"
-               :style="`background-image: url('${buildURL(state.satellite, state.section, state.mode)}');`"
-               class="earth-full-disk p-3">
-            <!--            <Loader v-if="state.loading"></Loader>-->
+        <div class="d-flex justify-content-between align-items-center flex-column flex-grow-1 w-100">
+          <div class="d-flex justify-content-center align-items-center align-content-center h-100">
+            <div v-if="state.section === 'FD'"
+                 :style="`background-image: url('${buildURL(state.satellite, state.section, state.mode)}');`"
+                 class="earth-full-disk p-5">
+            </div>
+            <div v-else :style="`background-image: url('${buildURL(state.satellite, state.section, state.mode)}');`"
+                 class="preview p-5">
+            </div>
           </div>
-          <div v-else :style="`background-image: url('${buildURL(state.satellite, state.section, state.mode)}');`"
-               class="preview p-3">
+          <div class="element d-inline-block d-flex flex-row justify-content-start align-items-center gap p-2 mt-3">
+            <img alt="noaa" class="noaa mx-1" src="/noaa.svg"/>
 
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Last Update</div>
+              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
+            </div>
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Next Update</div>
+              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.nextUpdate }}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1 px-2">
+
+              <div class="d-flex gap">
+                <div class="label-c2 label-w500 label-o5 lh-1">{{ state.satellite }}</div>
+                <div class="label-c2 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+              </div>
+              <div class="d-flex gap">
+                <div class="label-c2 label-w500 label-o5 lh-1">{{ state.section }}</div>
+                <div class="label-c2 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+              </div>
+              <div class="d-flex gap">
+                <div class="label-c2 label-w500 label-o5 lh-1">{{ state.mode }}</div>
+              </div>
+            </div>
+            <div class="dock-icon lh-1 button-icon" @click="buildURL(state.satellite, state.section, state.mode)">
+              <i class="fa-solid fa-arrow-rotate-right fa-fw"></i>
+            </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -155,6 +200,16 @@ function buildURL(satellite: string, section: string, mode: string) {
 </template>
 
 <style scoped>
+.noaa {
+  height: 1.5rem;
+  padding: 1px;
+  background-color: white;
+  border-radius: 1rem;
+}
+
+.button-icon {
+  aspect-ratio: 1/1 !important;
+}
 
 .outline {
   border-radius: 100%;
@@ -173,7 +228,7 @@ function buildURL(satellite: string, section: string, mode: string) {
 }
 
 .earth-full-disk {
-  height: 100%;
+  width: 24rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -186,7 +241,7 @@ function buildURL(satellite: string, section: string, mode: string) {
 }
 
 .earth-full-disk:hover {
-  transform: scale(1.2);
+
 
 }
 </style>

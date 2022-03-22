@@ -100,6 +100,8 @@ let state = reactive({
   verified: false,
   distance: 0,
   showClock: true,
+  scrollX: 0,
+  scrollBack: 0,
   dragA: {
     x: 0,
     y: 0
@@ -131,13 +133,14 @@ function dragStart(e: MouseEvent) {
   let a = {x: e.clientX, y: e.clientY}
 
   // If the drag has started near the bottom of the screen
-  if ((window.screen.availHeight - e.screenY) <= 180) {
+  if ((window.screen.availHeight - e.screenY) <= 1800) {
     // Set the dragging status for later verification
     state.isDragging = true;
     // Record the drag position
     state.dragA = a
     // Verify drag intent if the user is still dragging after 100ms
-    setTimeout(timeout, 100)
+    setTimeout(timeout, 10)
+    // Otherwise, we consider the swipes
   }
 }
 
@@ -162,6 +165,20 @@ function dragContinue(e: MouseEvent) {
       // Change the inner route to the home page
       router.push("/terminal/home")
     }
+    if (Math.abs(state.dragA.x - dragB.x) > 20) {
+      // Reset the drag intention
+      state.verified = true
+      // Reset the frame position
+      state.distance = 0
+      if (Math.abs(state.dragA.x - dragB.x) > 600) {
+        dragStop(e)
+
+      } else {
+        state.scrollX = (state.scrollX + dragB.x - state.dragA.x) / 4
+
+      }
+
+    }
   }
 }
 
@@ -176,6 +193,18 @@ function dragStop(e: MouseEvent) {
   state.verified = false;
   // Reset current position
   state.dragA = {x: 0, y: 0}
+  if (state.scrollX != 0 && state.scrollBack == 0) {
+
+    state.scrollBack = setInterval(() => {
+      state.scrollX = state.scrollX - (state.scrollX / 8)
+      if (Math.abs(state.scrollX) < 1) {
+        clearInterval(state.scrollBack)
+        state.scrollX = 0
+        state.scrollBack = 0
+      }
+    }, 16)
+  }
+
 }
 
 
@@ -193,16 +222,16 @@ function draw() {
 
 <template>
   <div
-      class="terminal h-100"
+      class="terminal"
       v-on:mousedown="dragStart"
       v-on:mousemove="dragContinue"
       v-on:mouseup="dragStop">
     <div class="generic-container">
 
-      <div :class="`generic-slot-${state.showClock?'sm':'xs'}`">
+      <div :class="`generic-slot-sm`">
         <Clock :small="!state.showClock"></Clock>
       </div>
-      <div :class="`generic-slot-sm`">
+      <div class="generic-slot-sm">
         <div class="element h-75 d-flex align-items-center align-content-center justify-content-start gap-2">
           <div class="px-2">
             <IdHash></IdHash>
@@ -215,21 +244,15 @@ function draw() {
       </div>
     </div>
 
-    <div class="h-100">
+    <div :style="`transform: translate(${state.scrollX}px,0) !important;`" class="route-view">
       <router-view v-slot="{ Component }">
         <component :is="Component"/>
       </router-view>
     </div>
 
     <div v-if="state.showClock" class="footer mt-3">
-      <Dock os>
-        <router-link class="macro-icon-default" draggable="false" to="/terminal/home">
-          <div class="macro-icon" @mousedown="selectSound">
-            􀎟
-          </div>
-        </router-link>
-        <span class="mx-2 my-1"
-              style="width: 0.0255rem; height: 1.8rem; border-radius: 1rem; background-color: rgba(255,255,255,0.1);"></span>
+      <Dock class="animate-in" os>
+
         <router-link class="macro-icon-default" draggable="false" to="/terminal/wifi/">
           <div class="macro-icon" @mousedown="selectSound">
             􀙇
@@ -262,16 +285,37 @@ function draw() {
 </template>
 
 <style scoped>
+
+.animate-in {
+  animation: dock-in 100ms forwards;
+}
+
+@keyframes dock-in {
+  from {
+    bottom: -1rem;
+  }
+  to {
+    bottom: 0.5rem;
+  }
+}
+
 .footer {
   position: absolute;
   bottom: 1.2rem;
 }
 
+.route-view {
+  /*outline: 1px solid rgba(255,255,255,0.3);*/
+  border-radius: 0.5rem;
+  height: calc(100% - 3rem);
+}
+
 .terminal {
   padding: 1em;
-
+  height: 100%;
   flex-direction: column;
   justify-content: start;
+  transition: all 500ms;
 }
 
 </style>

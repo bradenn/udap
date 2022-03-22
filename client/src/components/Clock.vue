@@ -54,18 +54,18 @@ function updateTime() {
 
 <style lang="scss" scoped>
 .time {
-  font-size: 3.4rem;
-  line-height: 3.5rem;
+  font-size: 2rem;
+  line-height: 2rem;
   font-weight: 600;
   font-family: "SF Pro Rounded", sans-serif;
   color: rgba(255, 255, 255, 0.8);
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-  transition: font-size 100ms ease-out;
+  transition: font-size 50ms ease-in;
 }
 
 .date {
-  font-size: 1rem;
-  line-height: 1rem;
+  font-size: 0.8rem;
+  line-height: 0.8rem;
   font-weight: 500;
   padding-left: 0.25rem;
   color: rgba(255, 255, 255, 0.5);

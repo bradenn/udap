@@ -14,6 +14,7 @@
     "axios": "^0.21.3",
     "bootstrap": "^5.1.0",
     "electron": "^16.0.5",
+    "minimist": "~1.2.6",
     "moment": "^2.29.1",
     "npm": "^8.5.3",
     "qrcanvas-vue": "^3.0.0",
