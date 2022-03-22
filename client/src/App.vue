@@ -33,7 +33,7 @@ provide('preferences', preferences)
 </script>
 
 <template>
-  <div :class="` theme-${preferences.theme} mode-${preferences.mode}`" class="root blurs-1 ">
+  <div :class="` theme-${preferences.theme} mode-${preferences.mode}`" class="root blurs-8 ">
     <img :src="`/custom/${preferences.background}@4x.png`" alt="Background" class="backdrop "/>
     <div class="grid"></div>
     <router-view/>
@@ -49,10 +49,10 @@ provide('preferences', preferences)
 
 // Colors
 $bg-color: rgba(0, 0, 0, 0);
-$dot-color: rgba(0, 0, 0, 0.5);
+$dot-color: rgba(255, 255, 255, 0.125);
 
 // Dimensions
-$dot-size: 1px;
+$dot-size: 2px;
 $dot-space: 28px;
 
 .grid {
@@ -60,10 +60,12 @@ $dot-space: 28px;
   width: 100%;
   height: 100%;
   z-index: -1;
-  background-color: rgba(0, 0, 0, 0);
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 20%, transparent 10%), radial-gradient(circle, rgba(255, 255, 255, 0.1) 20%, transparent 10%);
-  background-size: 16px 16px;
-  background-position: 0 0, 0 0;
+  background-color: transparent !important;
+  opacity: 1;
+  //background-image:  radial-gradient($dot-color $dot-size, transparent $dot-size), radial-gradient($dot-color $dot-size, $bg-color $dot-size);
+  //background-size: 40px 30px;
+  //background-position: 0 0, 40px 30px;
+
 }
 
 .mode-cursor > * {
