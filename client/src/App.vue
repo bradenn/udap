@@ -47,7 +47,7 @@ let ps: any = {
   system: {
     nexus: {
       system: {
-        version: '2.10.1'
+        version: '2.10.2'
       }
     },
     udap: {

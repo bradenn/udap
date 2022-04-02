@@ -1,6 +1,6 @@
 {
-  "name": "udap",
-  "version": "1.0.1",
+  "name": "nexus",
+  "version": "2.10.2",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vue-tsc --noEmit && vite",
