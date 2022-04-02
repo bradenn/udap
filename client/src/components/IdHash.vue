@@ -14,63 +14,50 @@ let state = reactive<{
 
 onMounted(() => {
   loadCanvas()
-  // setInterval(drawCanvas, 200)
+  setInterval(drawCanvas, 100)
 })
 
 function loadCanvas() {
   state.canvas = document.getElementById("canvas-id") as HTMLCanvasElement
-
+  const ctx = state.canvas.getContext('2d')
+  if (!ctx) return
+  ctx.scale(0.5, 0.5)
 }
 
 function drawCanvas() {
   const ctx = state.canvas.getContext('2d')
   if (!ctx) return
-  let clk = 0;
-  let w = 44
-  let h = 44
-  let ox = 1
-  let oy = 1
-  ctx.save()
-
-  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-  ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, Math.PI * 2, true)
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.ellipse(w / 2, h / 2, w / 5, h / 5, 0, 0, Math.PI * 2, true)
-  let div = 96
-  let divisor = (Math.PI * 2) / div
   ctx.clearRect(0, 0, state.canvas.width, state.canvas.height)
 
-  let tick = state.tick
-  for (let x = 0; x < div; x++) {
-    if (x % 3 === 0) {
+  let n = 24;
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    } else {
-      ctx.strokeStyle = 'rgba(224,224,224,0.4)';
-    }
+  let diam = 84;
+  let div = (Math.PI * 2) / n;
 
-    let ax = w / 5 * Math.cos(x * divisor) + w / 2
-    let ay = h / 5 * Math.sin(x * divisor) + h / 2
 
-    let bx = w / 2 * Math.cos(x * divisor) + w / 2
-    let by = h / 2 * Math.sin(x * divisor) + h / 2
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(bx, by);
-    ctx.closePath();
-    ctx.stroke();
+  for (let i = 0; i < n; i++) {
+    let ax = diam * Math.cos(i * div)
+    let ay = diam * Math.sin(i * div)
+    let bx = diam / 1.3 * Math.cos(i * div)
+    let by = diam / 1.3 * Math.sin(i * div)
+    ctx.strokeStyle = `rgba(255,255,255,${n * div % 1})`
+    ctx.beginPath()
+    ctx.moveTo(ax * 0.5 + diam / 2, ay * 0.5 + diam / 2)
+    ctx.lineTo(bx * 0.5 + diam / 2, by * 0.5 + diam / 2)
+    ctx.closePath()
+    ctx.stroke()
 
   }
+  state.tick += 1;
 
-  ctx.restore()
 
 }
 
 </script>
 
 <template>
-  <div class="canvas-container">
-    <canvas id="canvas-id"></canvas>
+  <div class="canvas-container top">
+    <canvas id="canvas-id" class="top"></canvas>
   </div>
 </template>
 

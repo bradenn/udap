@@ -29,6 +29,7 @@ func NewDatabase() (Database, error) {
 	pg := postgres.Open(dbURL())
 	db, err := gorm.Open(pg, &gorm.Config{})
 	if err != nil {
+
 		return Database{}, err
 	}
 

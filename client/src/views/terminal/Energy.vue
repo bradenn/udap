@@ -1,16 +1,96 @@
 <script lang="ts" setup>
 import {reactive} from "vue";
+import type {Allocation} from "@/components/AllocationBar.vue";
+import AllocationBar from "@/components/AllocationBar.vue";
+
+let s1: Allocation[] = [
+  {
+    name: 'MacMini',
+    source: "sq2",
+    allocated: 0.325,
+    active: 0.21
+  },
+  {
+    name: 'Nuc',
+    source: "sq2",
+    allocated: 1.5,
+    active: 1.17
+  }, {
+    name: 'AP',
+    source: "sq2",
+    allocated: 0.15,
+    active: 0.14
+  },
+]
+
+let s2: Allocation[] = [
+
+  {
+    name: 'Macbook Pro',
+    source: "sq1",
+    allocated: 2,
+    active: 1.56
+  },
+  {
+    name: 'LG Monitor 1',
+    source: "sq1",
+    allocated: 1.8,
+    active: 1.1
+  },
+  {
+    name: 'LG Monitor 2',
+    source: "sq1",
+    allocated: 1.2,
+    active: 0.8
+  },
+  {
+    name: 'HP1',
+    source: "sq1",
+    allocated: 0.5,
+    active: 0.45
+  }, {
+    name: 'HP2',
+    source: "sq1",
+    allocated: 0.5,
+    active: 0.45
+  }, {
+    name: 'TV',
+    source: "sq1",
+    allocated: 1.21,
+    active: 0.11
+  },
+  {
+    name: 'AT',
+    source: "sq1",
+    allocated: 1,
+    active: 0.12
+  }
+]
+
+let ups: Allocation[] = [
+  {
+    name: 'Mac Mini',
+    source: "sq2",
+    allocated: 0.325,
+    active: 0.22
+  },
+  {
+    name: 'Nuc',
+    source: "sq2",
+    allocated: 1.5,
+    active: 1.34
+  }, {
+    name: 'AP',
+    source: "sq2",
+    allocated: 0.15,
+    active: 0.14
+  },
+]
 
 let state = reactive({
-  chartData: [
-    ['T', 'X', 20],
-    ['A', 'X', 1],
-    ['A', 'Y', 4],
-    ['A', 'Z', 8],
-    ['B', 'C', 2],
-    ['B', 'D', 1],
-    ['B', 'Z', 8],
-  ]
+  side1: s1,
+  side2: s2,
+  ups: ups,
 })
 //
 // onMounted(() => {
@@ -91,23 +171,62 @@ let state = reactive({
 </script>
 
 <template>
-  <div class="d-flex flex-row gap justify-content-start align-items-start align-content-center h-100 pt-3">
-    <div class="element p-3 pt-2 w-100">
-      <h4>Current Load</h4>
-      <div></div>
-    </div>
-    <div class="element p-3 pt-2">
-      <h4>Dynamic Allocations</h4>
-      <div id="piechart_3d" style="height:350px; width: 300px;"></div>
-    </div>
-    <div class="element p-3 pt-2">
-      <h4>Dynamic Allocations</h4>
-      <div id="sankey_basic" style="height:350px; width: 300px;"></div>
-    </div>
+  <div>
+    <h2 class="px-1 label-o5">Energy Allocations</h2>
+  </div>
+  <div class="d-flex flex-column p-2 element gap-2">
+    <AllocationBar :allocatable="4" :allocations="state.ups" name="Battery Reserve"></AllocationBar>
+    <AllocationBar :allocatable="15" :allocations="state.side1" name="Squid 1"></AllocationBar>
+    <AllocationBar :allocatable="15" :allocations="state.side2" name="Squid 2"></AllocationBar>
 
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+.power-chart-meta {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 0.25rem;
+  color: rgba(255, 255, 255, 0.25);
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.05);
+}
 
+.power-chart-buttons {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.power-chart-id {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 0.125rem 0.25rem;
+}
+
+.power-chart {
+  display: flex;
+  justify-content: start;
+  font-size: 0.6rem;
+  font-weight: 500;
+  align-content: start;
+  align-items: start;
+  gap: 0.125rem;
+}
+
+.power-chart-point {
+  min-width: 2.75rem;
+  border-radius: 0.25rem;
+  height: 4rem;
+  width: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: start;
+
+}
 </style>

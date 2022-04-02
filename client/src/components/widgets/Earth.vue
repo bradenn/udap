@@ -10,7 +10,7 @@
 
 <style lang="scss" scoped>
 .earth-full-disk {
-  height: 26rem;
+  height: 13rem;
 
   display: flex;
   justify-content: center;

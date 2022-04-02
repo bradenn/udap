@@ -5,7 +5,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -146,6 +145,7 @@ func (m *Modules) buildModuleDir(dir string) error {
 				log.ErrF(err, "failed to build module candidate '%s'", path)
 				return
 			}
+
 			log.Event("Module '%s' compiled.", filepath.Base(path))
 		}(p)
 	}
@@ -158,15 +158,15 @@ func (m *Modules) buildFromSource(path string) error {
 	// Create output file by modifying input file extension
 	out := strings.Replace(path, ".go", ".so", 1)
 	// Create a timeout to prevent modules from taking too long to build
-	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*15)
 	// Cancel the timeout of it exits before the timeout is up
 	defer cancelFunc()
 	// get the go executable from the environment
-	goExec := os.Getenv("goExec")
+	// goExec := os.Getenv("goExec")
 	// Prepare the command arguments
 	args := []string{"build", "-v", "-buildmode=plugin", "-o", out, path}
 	// Initialize the command structure
-	cmd := exec.CommandContext(timeout, goExec, args...)
+	cmd := exec.CommandContext(timeout, "go", args...)
 	// Run and get the stdout and stderr from the output
 	err := cmd.Run()
 	if err != nil {

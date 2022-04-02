@@ -15,7 +15,7 @@ import Authentication from "@/views/setup/Authentication.vue";
 // Terminal Routes
 import Terminal from "../views/terminal/Terminal.vue";
 import Home from "../views/terminal/Home.vue"
-import Wifi from "../views/terminal/Wifi.vue";
+import Wifi from "../views/terminal/wifi/Wifi.vue";
 import Energy from "../views/terminal/Energy.vue";
 
 // Exogeology Routes
@@ -28,6 +28,10 @@ import Sol from "../views/terminal/exogeology/Sol.vue";
 import Timing from "../views/terminal/timing/Timing.vue";
 import Stopwatch from "../views/terminal/timing/Stopwatch.vue";
 import Timer from "../views/terminal/timing/Timer.vue";
+
+// Weather Routes
+import WeatherApp from "../views/weather/Weather.vue";
+import Summary from "../views/weather/Summary.vue";
 
 const defaultRoute = {
     path: '/',
@@ -58,6 +62,7 @@ const settingsRoutes = {
     name: 'Settings',
     redirect: '/terminal/settings/preferences',
     component: Settings,
+    icon: 'fa-cog',
     children: [
         {
             path: '/terminal/settings/preferences',
@@ -77,6 +82,7 @@ const exogeologyRoutes = {
     name: 'Exogeology',
     redirect: '/terminal/exogeology/earth',
     component: Exogeology,
+    icon: 'fa-satellite',
     children: [
         {
             path: '/terminal/exogeology/earth',
@@ -99,6 +105,7 @@ const timingRoutes = {
     path: '/terminal/timing',
     name: 'Timing',
     redirect: '/terminal/timing/stopwatch',
+    icon: 'fa-stopwatch',
     component: Timing,
     children: [
         {
@@ -114,6 +121,21 @@ const timingRoutes = {
     ]
 }
 
+const weatherRoutes = {
+    path: '/terminal/weather',
+    name: 'Weather',
+    redirect: '/terminal/weather/summary',
+    component: WeatherApp,
+    icon: 'fa-cloud-sun',
+    children: [
+        {
+            path: '/terminal/weather/summary',
+            name: 'Summary',
+            component: Summary,
+        },
+    ]
+}
+
 const terminalRoutes = {
     path: '/terminal',
     name: 'Terminal',
@@ -124,20 +146,24 @@ const terminalRoutes = {
             path: '/terminal/home',
             name: 'Home',
             component: Home,
+            icon: 'fa-house',
         },
         {
             path: '/terminal/wifi',
             name: 'Wifi',
             component: Wifi,
+            icon: 'fa-wifi',
         },
         {
             path: '/terminal/energy',
             name: 'Energy',
             component: Energy,
+            icon: 'fa-bolt',
         },
         settingsRoutes,
         timingRoutes,
-        exogeologyRoutes
+        exogeologyRoutes,
+        weatherRoutes
     ]
 }
 

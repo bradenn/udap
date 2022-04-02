@@ -4,6 +4,7 @@ $font-family-base: "SF Pro Display";
 
 $body-color: rgba(255, 255, 255, 0.8);
 
+@import "element.scss";
 
 $btn-border-radius: 8px;
 $blur: blur(12px);
@@ -47,14 +48,14 @@ $light-6: rgb(142, 142, 147);
 
 html {
   font-family: 'SF Pro Text', sans-serif;
-  font-size: 28px;
+  font-size: 1.778rem;
   user-select: none !important;
   background-color: black !important;
 }
 
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+body {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
 }
 
 /* Accent Definitions */
@@ -91,6 +92,7 @@ $fontWeights: (
   }
 }
 
+
 $fontColors: (
         "0": 0,
         "1": 1,
@@ -108,21 +110,16 @@ $fontColors: (
 }
 
 
+.widget-app {
+  @extend .element;
+}
+
 .gap {
   gap: 0.375rem;
 }
 
 .mb-a {
   margin-bottom: 0.375rem;
-}
-
-.element, .surface {
-  padding: 0.375rem;
-  border-radius: $border-radius;
-
-  .element, .surface {
-    border-radius: $border-radius - 0.5rem;
-  }
 }
 
 /* Accent Definitions */
@@ -144,123 +141,31 @@ $accents: (
   }
 }
 
-/* Blur Definitions */
-$blurs: (
-        1, 2, 3, 4, 5, 6, 7, 8, 9,
-);
-
-
-@for $i from 1 through 10 {
-  .blurs-#{$i} {
-
-    .bg-blur-abs {
-      overflow: hidden;
-      backdrop-filter: blur($i * 0.25rem);
-      /*-webkit-backdrop-filter: blur($i * 0.25rem);*/
-    }
-
-    .bg-blur {
-      position: relative;
-    }
-
-    .bg-blur::before {
-      overflow: hidden;
-      content: ' ';
-      position: absolute;
-      top: 0;
-      right: 0;
-      border-radius: inherit;
-      z-index: -1;
-      width: 100%;
-      height: 100%;
-      backdrop-filter: blur($i * 0.25rem);
-      -webkit-backdrop-filter: blur($i * 0.25rem);
-    }
-
-  }
-
-}
-
-$slate: rgba(24, 24, 26, 0.1);
-/* Theme Definitions */
-$themes: (
-        "light": rgba(209, 209, 214, 0.1),
-        "dark": rgba(24, 24, 26, 0.2),
-);
-
-
-@each $clr, $i in $themes {
-
-  .theme-#{$clr} {
-    .element {
-      background-color: $i !important;
-
-    }
-
-
-    .element > .element {
-      background-color: rgba(255, 255, 255, 0.2) !important;
-    }
-
-    .context {
-      background-color: $i !important;
-    }
-
-    .element .active {
-      background-color: rgba(255, 255, 255, 0.025);
-    }
-
-    .surface {
-      background-color: rgba(255, 255, 255, 0.0125);
-    }
-
-    .surface::before {
-      /*border: 0.05rem solid rgba(255, 255, 255, 0.08);*/
-    }
-
-    .element::before {
-      border: 0.05rem solid rgba(255, 255, 255, 0.08);
-    }
-  }
-}
-
-
-.element.element-green, .element.element-red {
-
-}
-
-.element.element-green {
-  background-color: rgba(48, 209, 88, 0.25) !important;
-  box-shadow: inset 0 0 8px 4px rgba(48, 209, 88, 0.25), 0 0 8px 1px rgba(0, 0, 0, 0.025) !important;
-}
-
-
-.element.element-red {
-  background-color: rgba(255, 69, 58, 0.5) !important;
-  box-shadow: inset 0 0 8px 4px rgba(255, 69, 58, 0.25), 0 0 8px 1px rgba(0, 0, 0, 0.025) !important;
-  transform: scale(0.98);
-}
-
 
 // Element
 // Surface
 
+.label-mono {
+  font-family: Menlo, sans-serif;
+  line-height: 0.8rem;
+  font-weight: 500;
+}
 
 .context {
-  width: 100vw !important;
-  height: 100vh !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
+  position: absolute !important;
+  top: 0vw;
+  left: 0vh;
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  /*transform: translate(-50vw, -50%) !important;*/
+  //transform: translate(-50vw, -50vh) !important;
   justify-content: start;
   flex-direction: column;
   overflow: hidden;
-  @extend .bg-blur-abs;
+  backdrop-filter: blur(8px);
   padding: 4.5rem 1rem 1rem;
-  margin: 0;
-  z-index: 9000 !important;
+  transition: all 100ms ease;
+  z-index: 2 !important;
 }
 
 
@@ -307,6 +212,41 @@ $themes: (
   text-align: center;
 }
 
+
+.plot {
+  //outline: 1px solid white;
+  display: grid;
+  grid-gap: 0.25rem;
+  grid-template-rows: repeat(2, minmax(1.8rem, 1fr));
+  grid-template-columns: repeat(2, minmax(4rem, 1fr));
+}
+
+.subplot {
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0rem 0.375rem !important;
+
+  //border-radius: 0.375rem !important;
+  font-family: "SF Pro", sans-serif !important;
+  color: rgba(255, 255, 255, 0.7);
+  background-color: $element-bg;
+  border-radius: 0.375rem;
+  box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+
+  font-weight: 500;
+  font-size: 0.625rem;
+}
+
+@for $i from 1 through 4 {
+  .plot-#{$i}x4 > .subplot {
+    width: 100%;
+    height: 1.8rem;
+
+  }
+}
 
 .dock {
   @extend .surface;
@@ -383,9 +323,8 @@ $themes: (
   justify-content: space-between;
   align-items: flex-start;
   align-content: flex-start;
-  flex-direction: row;
-
-  border-radius: 0.5rem !important;
+  flex-direction: column;
+  height: 100% !important;
   padding: 0.375rem 0.375rem !important;
 }
 
@@ -483,11 +422,10 @@ $themes: (
 }
 
 .slider {
-
   -webkit-appearance: none;
   width: 100%;
-  height: 1.25rem;
-  border-radius: 1rem !important;
+  height: 1.8rem;
+  border-radius: 0.5rem !important;
   max-height: 2rem;
   padding-inline: 0.125rem;
   padding: 0.125rem 0.125rem !important;
@@ -537,11 +475,11 @@ $themes: (
 
 
 .slider-dim {
-  background: linear-gradient(90deg, rgba(213, 230, 255, 0.0) 0%, rgba(213, 230, 255, 0.75) 100%);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(213, 230, 255, 0.75) 100%) !important;
 }
 
 .slider-cct {
-  background: linear-gradient(90deg, rgba(255, 160, 75, 0.75) 0%, rgba(255, 249, 230, 0.75) 50%, rgba(213, 230, 255, 0.75) 100%);
+  background: linear-gradient(90deg, rgba(255, 160, 75, 0.75) 0%, rgba(255, 249, 230, 0.5) 50%, rgba(213, 230, 255, 0.5) 100%) !important;
 }
 
 .slider-hue {
@@ -553,7 +491,7 @@ $themes: (
           hsl(240deg, 100%, 40%) 66.67%,
           hsl(320deg, 100%, 40%) 83.33%,
           hsl(360deg, 100%, 40%) 100%
-  );
+  ) !important;
 }
 
 .slider:hover {
@@ -563,11 +501,11 @@ $themes: (
 
 .slider::-webkit-slider-thumb {
   @extend .element;
-  box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.1), inset 0 0 0 2px rgba(255, 255, 255, 0.5) !important;
   background-color: rgb(153, 153, 153);
-  border-radius: 1rem !important;
-  height: 1rem;
-  width: 1rem;
+  border-radius: 0.375rem !important;
+  height: 1.5rem;
+  width: 0.5rem;
   -webkit-appearance: none;
   appearance: none;
   transition: all 500ms ease;
@@ -786,16 +724,15 @@ $themes: (
 }
 
 .entity-context {
-  position: fixed;
-  top: 50vh;
-  left: 50vw;
+  position: absolute !important;
+  top: 0;
+  left: 0;
   display: flex;
-  transform: translate(-50%, -50%);
-  justify-content: start;
-  height: 100%;
-  padding-top: 5.5rem;
-  z-index: 9999;
-  flex-direction: column;
+  justify-content: center;
+  width: 26rem;
+  z-index: 99999;
+
+  flex-direction: row;
   overflow: hidden;
 }
 
@@ -806,6 +743,7 @@ $themes: (
 .entity-context-top .top {
   z-index: 10001 !important;
 }
+
 
 .text-diag {
   font-size: 0.9rem;
@@ -1124,24 +1062,10 @@ $themes: (
   border: none !important;
 }
 
-.top {
+.entity-context > .top > * {
   z-index: 99999 !important;
 }
 
-.element .element:before {
-  backdrop-filter: none;
-}
-
-.element > .element {
-  box-shadow: none !important;
-  backdrop-filter: none;
-}
-
-
-.element.active {
-  background-color: rgba(245, 243, 255, 0.1) !important;
-  box-shadow: 0 0 4px 1px rgba(245, 243, 255, 0.04);
-}
 
 .active .powered {
   color: rgba(245, 243, 255, 0.6) !important;
@@ -1187,13 +1111,6 @@ $themes: (
 }
 
 
-.element {
-  @extend .bg-blur;
-  box-shadow: 0 0 2px 1px rgb(0 0 0 / 0.0525%), 0 0 6px 2px rgb(0 0 0 / 6%);
-  transition: background-color 100 mas ease, backdrop-filter 500ms ease;
-}
-
-
 .root {
   position: absolute;
   top: 0;
@@ -1212,6 +1129,8 @@ $themes: (
   left: 0;
   overflow: hidden;
   position: absolute;
+  background-position: center;
+  background-size: cover;
   object-fit: cover;
   width: 100%;
   height: 100%;
@@ -1233,16 +1152,10 @@ $themes: (
 
 .macro-icon-default.router-link-active > .macro-icon {
   color: rgba(255, 255, 255, 0.8);
-  box-shadow: none !important;
-  cursor: none !important;
-  user-select: none !important;
-  background-color: transparent !important;
 }
 
 .macro-icon-default {
-  color: rgba(255, 255, 255, 0.4);
-  cursor: none !important;
-  user-select: none !important;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .macro-icon:active {
@@ -1276,9 +1189,9 @@ $themes: (
   font-size: 0.9rem;
   margin: 0.125rem;
   border-radius: 0.6rem;
-  background-color: rgba(47, 47, 47, 0.4);
-  background-image: linear-gradient(135deg, rgba(75, 76, 78, 0.2) 10%, rgba(47, 47, 47, 0.1) 100%);
-  box-shadow: inset 0 0 8px 2px rgba(47, 47, 47, 0.3), 0 0 8px 1px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.4) !important;
+
+  box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.0125), 0 0 8px 4px rgba(0, 0, 0, 0.05);
 
   display: flex;
   justify-content: center;
@@ -1300,13 +1213,6 @@ $themes: (
   flex-wrap: wrap;
 }
 
-.element-grid .element {
-
-}
-
-.element-grid .element.active {
-  background-color: $light-5;
-}
 
 .element-grid .entity {
   border: none !important;
@@ -1472,12 +1378,6 @@ input[type="range"] .form-control {
 
 /* Entity */
 
-.entity:not(.manage) {
-  @extend .element;
-  width: 100%;
-  padding: 0.40rem 0.40rem;
-
-}
 
 .entity .manage {
   @extend .surface;
@@ -1609,6 +1509,9 @@ a:hover {
 
 }*/
 
+.monospace {
+  font-family: "Menlo", monospace;
+}
 
 .dropdown-item i:first-child {
   margin-right: 0.75em;
@@ -1719,6 +1622,14 @@ hr {
 
 .list-group-item:last-of-type {
   margin-bottom: 0;
+}
+
+.v-sep {
+  width: 2px;
+  border-radius: 1px;
+  margin-inline: 0.4rem;
+  height: 1.3rem;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 

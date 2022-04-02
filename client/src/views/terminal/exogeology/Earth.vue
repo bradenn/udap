@@ -1,10 +1,8 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
 <script lang="ts" setup>
-import Sidebar from "@/components/sidebar/Sidebar.vue";
-import SidebarItem from "@/components/sidebar/SidebarItem.vue";
 import moment from 'moment'
-import {reactive} from "vue";
+import {onMounted, reactive} from "vue";
 import axios from "axios";
 
 let state = reactive({
@@ -14,8 +12,19 @@ let state = reactive({
   currentImage: "",
   lastUpdated: "",
   lastDate: 0,
+  progress: "",
+  currentSize: 0,
   nextUpdate: "",
+  toggles: {
+    satellite: false,
+    section: false,
+    mode: false,
+  },
   loading: false,
+})
+
+onMounted(() => {
+  setInterval(updateData, 1000)
 })
 
 const sections = [
@@ -78,28 +87,34 @@ function selectSection(section: string) {
 }
 
 function downloadImage(url: string) {
-
   axios.get(url).then(res => {
+    let lastModified: Date = new Date(res.headers['last-modified'])
+    state.lastDate = lastModified.valueOf()
+    state.currentSize = res.headers['content-length']
+    state.lastUpdated = moment(lastModified).fromNow(false)
+    state.nextUpdate = moment(lastModified).add(1000 * 60 * 10).fromNow(false)
+    updateData()
     state.currentImage = url
   }).catch(err => {
 
   })
 }
 
-function downloadSha(url: string) {
-  axios.get(url).then(res => {
-
-    state.lastUpdated = moment(new Date(res.headers['last-modified'])).fromNow(false)
-    state.nextUpdate = moment(new Date(res.headers['last-modified'])).add(1000 * 60 * 15).fromNow(false)
-  })
+function updateData() {
+  let lastModified: Date = new Date(state.lastDate)
+  let diff = moment(lastModified).add(1000 * 60 * 10).subtract(moment().valueOf())
+  if (new Date().valueOf() - lastModified.valueOf() + 1000 * 60 * 10 % 1000 === 1) {
+    buildURL()
+  }
+  state.progress = diff.format("m[m] s[s]")
 }
 
-function buildURL(satellite: string, section: string, mode: string) {
+function buildURL() {
   // Mode ABI, Advanced Baseline Imager
   // Section, FD, etc
   // Mode GEOCOLOR, etc
-  downloadSha(`https://cdn.star.nesdis.noaa.gov/${satellite}/ABI/${section}/${mode}/${satellite}-ABI-${section}-${mode}-10848x10848.tif.sha256`)
-  downloadImage(`https://cdn.star.nesdis.noaa.gov/${satellite}/ABI/${section}/${mode}/${section === "FD" ? '1808x1808' : '1200x1200'}.jpg`)
+
+  downloadImage(`https://cdn.star.nesdis.noaa.gov/${state.satellite}/ABI/${state.section}/${state.mode}/${state.section === "FD" ? '1808x1808' : '1200x1200'}.jpg?ts=${state.lastDate}`)
   return state.currentImage
 }
 
@@ -107,91 +122,151 @@ function buildURL(satellite: string, section: string, mode: string) {
 </script>
 
 <template>
-  <div class="d-flex flex-column w-100">
-    <div class="d-flex justify-content-start p-2 px-1">
-      <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-earth-americas fa-fw`"></i></div>
-      <div class="label-w500  label-xxl px-2">Earth</div>
-    </div>
-    <div class="">
-      <div class=" d-flex flex-row gap-4">
-        <div class="d-flex flex-column gap w-25">
-          <!-- Satellite -->
-          <Sidebar class="w-100"
-                   icon="satellite"
-                   name="Satellite"
-                   small>
+  <div class="d-flex flex-row justify-content-start align-items-start align-items-start w-100">
+
+    <div class="d-flex  p-2 px-1 w-100">
+
+      <div class=" d-flex flex-row gap w-100">
+        <!-- Sidebar -->
+        <div class="d-flex flex-column gap w-25  flex-grow-0">
+          <div class="d-flex justify-content-start px-1 pt-0">
+            <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-earth-americas fa-fw`"></i></div>
+            <div class="label-w500  label-xxl px-2">Earth</div>
+          </div>
+          <div class="element">
+            <div class="d-flex justify-content-between mx-1 align-items-center"
+                 @click="state.toggles.satellite = !state.toggles.satellite">
+              <div class="h5">Satellite</div>
+              <div class="label-c2 label-w500 label-o4">{{ satellites.length }} options <i
+                  class="fa-solid fa-caret-down label-o5"></i></div>
+            </div>
             <div v-for="sat in satellites"
                  :key="sat.key"
+
                  :class="`${state.satellite === sat.key?'router-link-active':''}`"
-                 class="macro-icon-default">
-              <SidebarItem :name="`${sat.name} (${sat.alt})`"
-                           @click="selectSatellite(sat.key)"></SidebarItem>
+                 class="gap">
+              <div v-if="sat.key === state.satellite || state.toggles.satellite" class="option"
+                   @click="selectSatellite(sat.key)">
+                {{ sat.name }}<span class="float-end label-o3 text-uppercase">{{ sat.alt }}</span>
+              </div>
             </div>
-          </Sidebar>
-          <!-- Perspective -->
-          <Sidebar class="w-100"
-                   icon="crop-simple"
-                   name="Perspective"
-                   small>
+
+          </div>
+          <div class="element">
+            <div class="d-flex justify-content-between mx-1 align-items-center"
+                 @click="state.toggles.section = !state.toggles.section">
+              <div class="h5">Perspective</div>
+              <div class="label-c2 label-w500 label-o4">{{ sections.length }} options <i
+                  class="fa-solid fa-caret-down label-o5"></i></div>
+            </div>
             <div v-for="sect in sections" :key="sect.key"
+
                  :class="`${state.section === sect.key?'router-link-active':''}`"
-                 class="macro-icon-default">
-              <SidebarItem :name="sect.name"
-                           @click="selectSection(sect.key)"></SidebarItem>
+                 class="gap">
+              <div v-if="sect.key === state.section || state.toggles.section" class="option"
+                   @click="selectSection(sect.key)">{{ sect.name }}
+              </div>
             </div>
-          </Sidebar>
-          <!-- Wavelengths -->
-          <Sidebar class="w-100"
-                   icon="swatchbook"
-                   name="Wavelength"
-                   small>
-            <div v-for="mode in viewModes" :key="mode.key" :class="`${state.mode === mode.key?'router-link-active':''}`"
-                 class="macro-icon-default">
-              <SidebarItem :name="mode.name"
-                           @click="selectMode(mode.key)"></SidebarItem>
+          </div>
+          <div class="element">
+            <div class="d-flex justify-content-between mx-1 align-items-center"
+                 @click="state.toggles.mode = !state.toggles.mode">
+              <div class="h5">Wavelength</div>
+              <div class="label-c2 label-w500 label-o4">{{ viewModes.length }} options <i
+                  class="fa-solid fa-caret-down label-o5"></i></div>
             </div>
-          </Sidebar>
+            <div v-for="mode in viewModes" :key="mode.key"
+
+                 :class="`${state.mode === mode.key?'router-link-active':''}`"
+                 class="gap">
+              <div v-if="mode.key === state.mode || state.toggles.mode" class="option"
+                   @click="selectMode(mode.key)">{{ mode.name }}
+              </div>
+            </div>
+          </div>
+
+
         </div>
-        <div class="d-flex justify-content-between align-items-center flex-column flex-grow-1 w-100">
+        <!-- Earth -->
+        <div
+            class="d-flex justify-content-between align-items-center align-content-center flex-column flex-grow-1 h-100">
+
+          <!-- Disk -->
           <div class="d-flex justify-content-center align-items-center align-content-center h-100">
             <div v-if="state.section === 'FD'"
-                 :style="`background-image: url('${buildURL(state.satellite, state.section, state.mode)}');`"
-                 class="earth-full-disk p-5">
+                 :style="`background-image: url('${buildURL()}');`"
+                 class="earth-full-disk">
             </div>
-            <div v-else :style="`background-image: url('${buildURL(state.satellite, state.section, state.mode)}');`"
+            <div v-else :style="`background-image: url('${buildURL()}');`"
                  class="preview p-5">
             </div>
           </div>
-          <div class="element d-inline-block d-flex flex-row justify-content-start align-items-center gap p-2 mt-3">
+
+          <!-- Help Bar -->
+          <div class="element d-flex flex-row justify-content-start align-items-center gap-1 p-1 mt-4">
+            <!-- NOAA Logo, as per their TOS -->
             <img alt="noaa" class="noaa mx-1" src="/noaa.svg"/>
 
+            <!-- Last update from the headers of the photo -->
             <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Last Update</div>
+              <div class="label-c2 label-w500 label-o5 lh-sm">Last updated</div>
               <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
             </div>
+
+            <div class="v-sep"></div>
+
+            <!-- Last update from the headers of the photo -->
             <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Next Update</div>
-              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.nextUpdate }}</div>
+              <div class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
+              <div class="label-c2 label-w300 label-o4 lh-1 monospace">{{ state.progress }}</div>
             </div>
-            <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1 px-2">
 
-              <div class="d-flex gap">
-                <div class="label-c2 label-w500 label-o5 lh-1">{{ state.satellite }}</div>
-                <div class="label-c2 lh-1"><i class="fa-solid fa-caret-right"></i></div>
-              </div>
-              <div class="d-flex gap">
-                <div class="label-c2 label-w500 label-o5 lh-1">{{ state.section }}</div>
-                <div class="label-c2 lh-1"><i class="fa-solid fa-caret-right"></i></div>
-              </div>
-              <div class="d-flex gap">
-                <div class="label-c2 label-w500 label-o5 lh-1">{{ state.mode }}</div>
+            <div class="v-sep"></div>
+
+            <!-- The path tp the current photo -->
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Path</div>
+              <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1">
+
+                <div class="d-flex gap">
+                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.satellite }}</div>
+                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                </div>
+                <div class="d-flex gap">
+                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.section }}</div>
+                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                </div>
+                <div class="d-flex gap">
+                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.mode }}</div>
+                </div>
               </div>
             </div>
-            <div class="dock-icon lh-1 button-icon" @click="buildURL(state.satellite, state.section, state.mode)">
-              <i class="fa-solid fa-arrow-rotate-right fa-fw"></i>
+            <div class="v-sep"></div>
+            <!-- Last update from the headers of the photo -->
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Size</div>
+              <div class="label-c2 label-w300 label-o4 lh-1 monospace">
+                {{ Math.round(state.currentSize / 1000 / 1000 * 100) / 100 }} MB
+              </div>
             </div>
+
+
+            <div class="v-sep"></div>
+
+
+            <!-- Refresh the image manually -->
+            <div
+                class="dock-icon surface button-icon d-flex flex-row justify-content-center align-content-center align-items-center flex-grow-0"
+                @click="buildURL()">
+              <div class="label-c2 label-w500 label-o5"><i class="fa-solid fa-arrow-rotate-right fa-fw"></i></div>
+
+            </div>
+
           </div>
-
+          <!-- Current url -->
+          <div class="label-c3 label-o4 pt-2">
+            {{ state.currentImage }}
+          </div>
         </div>
       </div>
     </div>
@@ -209,6 +284,31 @@ function buildURL(satellite: string, section: string, mode: string) {
 
 .button-icon {
   aspect-ratio: 1/1 !important;
+
+}
+
+.option {
+  font-size: 0.625rem;
+  line-height: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.5rem;
+
+
+}
+
+.router-link-active > .option {
+  font-size: 0.625rem;
+  line-height: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.5rem;
+
+
 }
 
 .outline {
@@ -216,8 +316,8 @@ function buildURL(satellite: string, section: string, mode: string) {
 }
 
 .preview {
-  width: 24rem !important;
-  height: 24rem;
+  width: 22rem !important;
+  height: 22rem;
   border-radius: 1rem;
   background-size: cover;
 
