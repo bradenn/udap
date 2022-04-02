@@ -2,6 +2,8 @@
 
 <script lang="ts" setup>
 
+import {reactive} from "vue";
+
 let props = defineProps<{
   small?: boolean,
   os?: boolean,
@@ -9,6 +11,10 @@ let props = defineProps<{
   icon?: string
   name?: string
 }>()
+
+let state = reactive({
+  show: false
+})
 
 </script>
 
@@ -27,7 +33,9 @@ let props = defineProps<{
           <div class="label-w500 label-o5 label-md px-2">{{ props.name }}</div>
         </div>
       </div>
+
       <slot></slot>
+
     </div>
   </div>
   <div v-else class="d-flex flex-column sidebar-width align-content-start">
@@ -38,14 +46,16 @@ let props = defineProps<{
     </div>
     <div class="element main-sidebar d-flex flex-column gap-1"
          v-bind:class="`${props.small?'dock-small':''} ${props.os?'dock-os':''}` ">
-      <div v-if="small" class="pb-1">
+      <div v-if="small" class="pb-1" @click="state.show = !state.show">
         <div class="sidebar-item d-flex justify-content-start pb-1 px-1">
           <div class="label-w500 label-o4 label-xs"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i></div>
           <div class="label-w500 label-o6 label-xxs px-2">{{ props.name }}</div>
         </div>
         <div class="h-sep"></div>
       </div>
-      <slot></slot>
+      <div>
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>

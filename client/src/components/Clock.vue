@@ -64,10 +64,10 @@ function updateTime() {
 }
 
 .date {
-  font-size: 0.8rem;
-  line-height: 0.8rem;
+  font-size: 0.75rem;
+  line-height: 0.75rem;
   font-weight: 500;
-  padding-left: 0.25rem;
+
   color: rgba(255, 255, 255, 0.5);
   font-family: "SF Pro Rounded", sans-serif;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);

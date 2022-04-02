@@ -67,7 +67,7 @@ function updateState() {
       <div class="label-xxs label-o4 label-w500">&nbsp;&nbsp;{{ props.attribute.key }}</div>
       <div class="fill"></div>
 
-      <div class="h-bar gap label-sm label-w600 text-uppercase label-o4 px-2" @click="commitChanges">
+      <div class="h-bar btn-active gap label-sm label-w600 text-uppercase label-o4 px-2" @click="commitChanges">
         <div>{{ state.active ? "ON" : "OFF" }}</div>
       </div>
     </div>
@@ -77,5 +77,9 @@ function updateState() {
 </template>
 
 <style scoped>
-
+.btn-active:active {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
 </style>

@@ -32,8 +32,8 @@ const defaults = {
       identifier: "daemon",
     },
     {
-      name: "Toaster",
-      identifier: "toaster",
+      name: "Void",
+      identifier: "void",
     },
     {
       name: "Milky Way",

@@ -10,11 +10,13 @@ let state = reactive<{
   showMenu: boolean,
   activeColor: string,
   powerAttribute: Attribute,
-  attributes: Attribute[]
+  levelAttribute: Attribute,
+  attributes: Attribute[],
 }>({
   active: false,
   showMenu: false,
   activeColor: "rgba(255,255,255,1)",
+  levelAttribute: {} as Attribute,
   powerAttribute: {} as Attribute,
   attributes: []
 })
@@ -25,7 +27,8 @@ let props = defineProps<{
 }>()
 
 // Inject the remote manifest
-const remote: any = inject('remote')
+let remote: any = inject('remote')
+let hideHome: any = inject('hideHome')
 
 // When the view loads, force the local state to update
 onMounted(() => {
@@ -47,22 +50,27 @@ function updateLight(attributes: Attribute[]): void {
   // Define the attributes for the light
   state.attributes = attributes.filter((a: Attribute) => a.entity === props.entity.id).sort(compareOrder)
   // Get the current power state of the light
-  let current = attributes.find((a: Attribute) => a.entity === props.entity.id && a.key === 'on')
+  let on = state.attributes.find((a: Attribute) => a.key === 'on')
+  let dim = state.attributes.find((a: Attribute) => a.key === 'dim')
   // Assign the power state to a local attribute
-  state.powerAttribute = current as Attribute
-  // Register weather the light is on or off
-  state.active = current ? current.value === 'true' : false;
+  if (!on) return
+  state.powerAttribute = on as Attribute
+  if (dim) {
+    state.levelAttribute = dim as Attribute
+  }
+  state.active = on.value === "true" || on.request === "true"
 }
 
 // Toggle the state of the context menu
 function toggleMenu(): void {
   state.showMenu = !state.showMenu
+  hideHome(state.showMenu)
 }
 </script>
 
 <template>
   <div>
-    <div :class="state.active?'active':''" class="entity-small" @click="toggleMenu">
+    <div :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">
       <div class="entity-header mb-2 ">
         <div class="label-o5">
           {{ props.entity.icon || '􀛮' }}
@@ -70,37 +78,38 @@ function toggleMenu(): void {
         <div class="label-c1 label-w400 label-o4 px-2">
           {{ props.entity.name }}
         </div>
-      </div>
-      <div>
+        <div class="fill"></div>
 
       </div>
-      <div class="fill"></div>
-      <div class="label-xxs label-o3 label-w500 px-2">
-        <div v-if="state.active">ON</div>
-        <div v-else>OFF</div>
+      <div v-if="state.powerAttribute" class="d-flex justify-content-between w-100">
+        <div class="label-xxs label-o2 label-w500"
+             v-text="(state.active) ? `ON${(state.levelAttribute) ? ', ' + state.levelAttribute.value + '%' : ''}` : 'OFF'"></div>
+        <div class="label-c3 float-end align-self-center label-o2 label-w500">
+          ~{{ Math.round(parseInt(state.levelAttribute.value, 10) / 100.0 * 7 * 100) / 100 }}w
+        </div>
       </div>
     </div>
-    <div v-if="state.showMenu" class="context" @click="toggleMenu"></div>
-    <div v-if="state.showMenu" @click="toggleMenu">
-      <div class="entity-context top d-flex">
-        <div class="d-flex flex-column gap px-3 top ">
+
+    <div v-if="state.showMenu" class="" @click="toggleMenu">
+      <div class="entity-context">
+        <div class="element surface d-flex flex-column gap py-4 px-3 pt-2">
           <div class="d-flex justify-content-start align-items-end align-content-end" v-on:click.stop>
-            <div>
+            <div class="mt-1">
               <span :style="`text-shadow: 0 0 8px ${state.activeColor};`"
                     class="label-md label-w600 label-o3">{{ props.entity.icon }}</span>
               <span class="label-md label-w600 label-o6 px-2">{{ props.entity.name }}</span>
             </div>
-            <div class="fill"></div>
+            <div class="fill "></div>
+
             <div class="h-bar">
               <AttributeComponent :attribute="state.powerAttribute" :entity-id="props.entity.id"
                                   small></AttributeComponent>
             </div>
           </div>
-
+          <div class="h-sep"></div>
           <div class="context-container gap v-bar">
             <div
-                v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key !== 'on')"
-                :key="attribute.id">
+                v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key !== 'on')">
               <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
                                   small></AttributeComponent>
             </div>
@@ -111,6 +120,15 @@ function toggleMenu(): void {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+
+.entity-context {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  padding: 1rem;
+  height: calc(100% - 4.5rem);
+}
+
 
 </style>

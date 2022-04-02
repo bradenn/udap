@@ -1,19 +1,18 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import Dock from "@/components/Dock.vue"
 import Clock from "@/components/Clock.vue"
-import IdHash from "@/components/IdHash.vue"
 import router from '@/router'
-import {onMounted, provide, reactive, watch} from "vue";
+import {inject, onMounted, provide, reactive, watch} from "vue";
 import {Nexus, Target} from '@/views/terminal/nexus'
 
 import type {Attribute, Device, Endpoint, Entity, Identifiable, Network} from "@/types";
+import IdTag from "@/components/IdTag.vue";
 
 // -- Websockets --
 
 let audio: HTMLAudioElement;
 onMounted(() => {
-  audio = new Audio('/public/sound/selection.mp3');
+  audio = new Audio('/sound/selection.mp3');
 })
 
 interface Metadata {
@@ -51,11 +50,13 @@ let remote = reactive<Remote>({
   timings: [],
   nexus: new Nexus(handleMessage)
 });
+let ui: any = inject("ui")
 
 // Handle and route incoming messages to the local cache
 function handleMessage(target: Target, data: any) {
   switch (target) {
     case Target.Metadata:
+      ui.system.udap = data
       remote.metadata = data as Metadata
       break
     case Target.Entity:
@@ -101,7 +102,9 @@ let state = reactive({
   distance: 0,
   showClock: true,
   scrollX: 0,
-  scrollBack: 0,
+  scrollY: 0,
+  scrollXBack: 0,
+  scrollYBack: 0,
   dragA: {
     x: 0,
     y: 0
@@ -131,17 +134,15 @@ function dragStart(e: MouseEvent) {
 
   // Record the current user position
   let a = {x: e.clientX, y: e.clientY}
-
+  if (!e.view) return
   // If the drag has started near the bottom of the screen
-  if ((window.screen.availHeight - e.screenY) <= 1800) {
-    // Set the dragging status for later verification
-    state.isDragging = true;
-    // Record the drag position
-    state.dragA = a
-    // Verify drag intent if the user is still dragging after 100ms
-    setTimeout(timeout, 10)
-    // Otherwise, we consider the swipes
-  }
+  // Set the dragging status for later verification
+  state.isDragging = true;
+  // Record the drag position
+  state.dragA = a
+  // Verify drag intent if the user is still dragging after 100ms
+  setTimeout(timeout, 10)
+  // Otherwise, we consider the swipes
 }
 
 // While the user is still dragging
@@ -152,33 +153,34 @@ function dragContinue(e: MouseEvent) {
     // Record the current position
     let dragB = {x: e.clientX, y: e.clientY}
     // Set a maximum delta
-    let delta = 100
+    let delta = 60
     // Calculate the displacement
-    state.distance = (state.dragA.y - dragB.y) / delta
     // If the user's current position is larger than the defined max intent
-    if (state.dragA.y - dragB.y > delta) {
-      // Reset the drag intention
-      state.verified = false
-      // Reset the frame position
-      state.distance = 0
+    if (!e.view) return
+    if (state.dragA.y > e.view.screen.availHeight - 200) {
+      state.scrollY = Math.log(Math.abs(state.dragA.y - dragB.y)) * 8
+    }
+
+    if (state.dragA.y - dragB.y > delta && state.dragA.y > e.view.screen.availHeight - 200) {
 
       // Change the inner route to the home page
-      router.push("/terminal/home")
-    }
-    if (Math.abs(state.dragA.x - dragB.x) > 20) {
+      router.replace("/terminal/home")
+    } else if (dragB.y - state.dragA.y > delta && state.dragA.y < 200) {
       // Reset the drag intention
-      state.verified = true
-      // Reset the frame position
-      state.distance = 0
-      if (Math.abs(state.dragA.x - dragB.x) > 600) {
-        dragStop(e)
+      dragStop(e)
+      ui.context = true
+    } else {
+      if (Math.abs(state.dragA.x - dragB.x) > 60) {
+        // Reset the drag intention
 
-      } else {
-        state.scrollX = (state.scrollX + dragB.x - state.dragA.x) / 4
-
+        if (Math.abs(state.dragA.x - dragB.x) > 800) {
+          dragStop(e)
+        } else {
+          state.scrollX = (state.scrollX + dragB.x - state.dragA.x) / 14
+        }
       }
-
     }
+
   }
 }
 
@@ -193,16 +195,27 @@ function dragStop(e: MouseEvent) {
   state.verified = false;
   // Reset current position
   state.dragA = {x: 0, y: 0}
-  if (state.scrollX != 0 && state.scrollBack == 0) {
-
-    state.scrollBack = setInterval(() => {
-      state.scrollX = state.scrollX - (state.scrollX / 8)
+  if (state.scrollX != 0 && state.scrollXBack == 0) {
+    state.scrollXBack = setInterval(() => {
+      state.scrollX = state.scrollX - (state.scrollX / 20)
       if (Math.abs(state.scrollX) < 1) {
-        clearInterval(state.scrollBack)
+        clearInterval(state.scrollXBack)
         state.scrollX = 0
-        state.scrollBack = 0
+        state.scrollXBack = 0
       }
-    }, 16)
+    }, 2)
+  }
+
+  if (state.scrollY != 0 && state.scrollYBack == 0) {
+    state.scrollYBack = setInterval(() => {
+      if (state.isDragging) return
+      state.scrollY = state.scrollY - Math.log(state.scrollY) / 2
+      if (Math.abs(state.scrollY) < 1) {
+        state.scrollY = 0
+        state.scrollYBack = 0
+        clearInterval(state.scrollYBack)
+      }
+    }, 1)
   }
 
 }
@@ -221,66 +234,65 @@ function draw() {
 
 
 <template>
+
   <div
       class="terminal"
       v-on:mousedown="dragStart"
       v-on:mousemove="dragContinue"
       v-on:mouseup="dragStop">
-    <div class="generic-container">
-
+    <div class="generic-container top">
       <div :class="`generic-slot-sm`">
         <Clock :small="!state.showClock"></Clock>
       </div>
       <div class="generic-slot-sm">
-        <div class="element h-75 d-flex align-items-center align-content-center justify-content-start gap-2">
-          <div class="px-2">
-            <IdHash></IdHash>
-          </div>
-          <div class="d-flex flex-column gap-0">
-            <div class="label-xxs label-o5 lh-1">Braden Nicholson</div>
-            <div class="label-c2 label-o2 lh-1">Superuser</div>
-          </div>
-        </div>
+        <IdTag></IdTag>
       </div>
     </div>
+    <div v-if="ui.context" class="context" @click="ui.context = false"></div>
 
-    <div :style="`transform: translate(${state.scrollX}px,0) !important;`" class="route-view">
-      <router-view v-slot="{ Component }">
+    <div :style="`transform: translate(${Math.round(state.scrollX)}px,${-Math.round(state.scrollY/2.0)}px) !important;`"
+         class="route-view">
+      <router-view v-slot="{ Component }" @mousedown="selectSound">
         <component :is="Component"/>
       </router-view>
     </div>
 
-    <div v-if="state.showClock" class="footer mt-3">
-      <Dock class="animate-in" os>
+    <!--    <div v-if="state.showClock" class="footer mt-3">-->
+    <!--      <Dock class="animate-in" os>-->
 
-        <router-link class="macro-icon-default" draggable="false" to="/terminal/wifi/">
-          <div class="macro-icon" @mousedown="selectSound">
-            􀙇
-          </div>
-        </router-link>
-        <router-link class="macro-icon-default" draggable="false" to="/terminal/energy/">
-          <div class="macro-icon" @mousedown="selectSound">
-            􀋦
-          </div>
-        </router-link>
-        <router-link class="macro-icon-default" draggable="false" to="/terminal/exogeology/">
-          <div class="macro-icon" @mousedown="selectSound">
-            <i class="fa-solid fa-meteor fa-fw"></i>
-          </div>
-        </router-link>
-        <router-link class="macro-icon-default" draggable="false" to="/terminal/timing/">
-          <div class="macro-icon" @mousedown="selectSound">
-            <i class="fa-solid fa-stopwatch fa-fw"></i>
-          </div>
-        </router-link>
-        <router-link class="macro-icon-default" draggable="false" to="/terminal/settings/preferences">
-          <div class="macro-icon" @mousedown="selectSound">
-            􀍟
-          </div>
-        </router-link>
-      </Dock>
-    </div>
-    <div :style="`transform: translateY(calc(-${state.distance}rem));`" class="home-bar top"></div>
+    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/wifi/">-->
+    <!--          <div class="macro-icon" @mousedown="selectSound">-->
+    <!--            􀙇-->
+    <!--          </div>-->
+    <!--        </router-link>-->
+    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/energy/">-->
+    <!--          <div class="macro-icon" @mousedown="selectSound">-->
+    <!--            􀋦-->
+    <!--          </div>-->
+    <!--        </router-link>-->
+    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/exogeology/">-->
+    <!--          <div class="macro-icon" @mousedown="selectSound">-->
+    <!--            <i class="fa-solid fa-satellite fa-fw"></i>-->
+    <!--          </div>-->
+    <!--        </router-link>-->
+    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/timing/">-->
+    <!--          <div class="macro-icon" @mousedown="selectSound">-->
+    <!--            <i class="fa-solid fa-stopwatch fa-fw"></i>-->
+    <!--          </div>-->
+    <!--        </router-link>-->
+    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/weather/summary">-->
+    <!--          <div class="macro-icon" @mousedown="selectSound">-->
+    <!--            <i class="fa-solid fa-cloud-sun fa-fw"></i>-->
+    <!--          </div>-->
+    <!--        </router-link>-->
+    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/settings/preferences">-->
+    <!--          <div class="macro-icon" @mousedown="selectSound">-->
+    <!--            􀍟-->
+    <!--          </div>-->
+    <!--        </router-link>-->
+    <!--      </Dock>-->
+    <!--    </div>-->
+    <div :style="`transform: translateY(calc(-${Math.round(state.scrollY)}px));`" class="home-bar top"></div>
   </div>
 </template>
 

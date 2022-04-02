@@ -114,6 +114,16 @@ func NewSpectrum(name string, module string) *Entity {
 	return &e
 }
 
+func NewDimmer(name string, module string) *Entity {
+
+	e := Entity{
+		Name:   name,
+		Type:   "dimmer",
+		Module: module,
+	}
+	return &e
+}
+
 func NewSwitch(name string, module string) *Entity {
 
 	e := Entity{

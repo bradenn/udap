@@ -2,6 +2,7 @@
 
 import {onMounted, reactive} from "vue";
 import axios from "axios";
+import moment from "moment";
 
 
 interface Weather {
@@ -16,16 +17,7 @@ interface Properties {
   forecastGenerator: string;
   generatedAt: string;
   updateTime: string;
-  elevation: Elevation;
   periods: (PeriodsEntity)[];
-}
-
-interface Elevation {
-  value: number;
-  maxValue: number;
-  minValue: number;
-  unitCode: string;
-  qualityControl: string;
 }
 
 interface PeriodsEntity {
@@ -46,13 +38,22 @@ interface PeriodsEntity {
 interface StateType {
   gradient: number
   periods: PeriodsEntity[]
-  ranges: any,
+  ranges: any
+  timeSince: string
+  lastPull: number
+  properties: Properties
   now: PeriodsEntity
 }
 
 const state = reactive<StateType>({
   gradient: 0,
   periods: [],
+  lastPull: 0,
+  timeSince: "",
+  properties: {
+    updateTime: "",
+    generatedAt: "",
+  } as Properties,
   ranges: {
     temp: {
       min: 100,
@@ -66,19 +67,24 @@ const state = reactive<StateType>({
   now: {} as PeriodsEntity
 })
 
+
 onMounted(() => {
-  setInterval(updateGradient, 500)
   pullWeather()
 })
 
 function pullWeather() {
-  axios.get("https://api.weather.gov/gridpoints/MTR/79,141/forecast/hourly").then(parseWeather).catch(err => {
-  })
+  if (new Date().valueOf() - state.lastPull > 1000 * 60 * 10) {
+    axios.get("https://api.weather.gov/gridpoints/STO/38,121/forecast/hourly").then(parseWeather).catch(err => {
+    })
+  }
 }
 
 
 function parseWeather(body: any) {
   let we = body.data as Weather
+
+  state.properties.updateTime = moment(we.properties.updateTime).fromNow()
+  state.properties.generatedAt = moment(we.properties.generatedAt).fromNow()
   state.now = we.properties.periods[0]
   state.periods = we.properties.periods?.slice(0, 16) as PeriodsEntity[]
   state.periods.forEach((p: PeriodsEntity) => {
@@ -94,22 +100,19 @@ function parseWeather(body: any) {
     }
 
   })
-
+  state.lastPull = new Date(we.properties.updateTime).valueOf()
+  state.timeSince = moment(state.lastPull).fromNow()
 }
-
-function updateGradient() {
-  state.gradient += 1
-  state.gradient = new Date().getHours()
-}
-
 </script>
 
 <template>
   <div class="element widget gap p-2">
     <div class="d-flex justify-content-between align-items-center">
-      <div class="label-lg label-w500 lh-1">{{ state.now.temperature }}°</div>
+      <div class="label-xxl label-o6 label-w500 lh-1">{{ state.now.temperature }}°</div>
+
       <div class="label-xxs label-w400 label-o4 lh-1">{{ state.now.shortForecast }}</div>
     </div>
+
     <div class="h-sep my-1"></div>
     <h6 class="mb-1 mt-2">Temp</h6>
     <div class=" d-flex flex-row justify-content-between px-1">
@@ -134,7 +137,7 @@ function updateGradient() {
         <div class="label-subtext mt-1">{{ state.ranges.temp.min }}°</div>
       </div>
     </div>
-    <div class="h-sep my-1"></div>
+    <div class="h-sep my-2"></div>
     <h6 class="mb-1 mt-2">Wind</h6>
     <div class=" d-flex flex-row justify-content-between px-1">
       <div class="d-flex flex-row justify-content-between align-items-end w-100">
@@ -158,8 +161,9 @@ function updateGradient() {
         <div class="label-subtext mb-2">{{ state.ranges.wind.min }}</div>
       </div>
     </div>
+    <div class="label-c2 label-o3 py-1 pb-0">Winds at {{ state.now.windSpeed }} {{ state.now.windDirection }}</div>
     <div class="h-sep my-1"></div>
-    <div class="label-c2 label-o3">Winds at {{ state.now.windSpeed }} {{ state.now.windDirection }}</div>
+    <div class="label-c2 label-w400 label-o2">{{ state.properties.generatedAt }}</div>
 
 
   </div>
@@ -188,8 +192,8 @@ function updateGradient() {
 }
 
 .widget {
-  aspect-ratio: 122/12 !important;
-  width: 12rem;
+
+  width: 14rem;
 }
 
 .sky-gradient {

@@ -74,7 +74,7 @@ function commitChanges(_: MouseEvent) {
 </script>
 
 <template>
-  <div class="element surface" v-on:click.stop>
+  <div class="py-1" v-on:click.stop>
     <div class="d-flex justify-content-between align-content-center align-items-center">
       <div class="h-bar justify-content-start align-items-center align-content-center">
         <div class="label-xxs label-o2 label-w600">{{ styles[attribute.key].icon }}</div>
@@ -82,17 +82,20 @@ function commitChanges(_: MouseEvent) {
         <div class="fill"></div>
         <div class="h-bar gap label-xxs label-o3 label-w400 px-2">
           <div class="label-xxs label-o3">{{ state.local.request }} {{ styles[attribute.key].unit }}</div>
+
         </div>
       </div>
+
       <input v-model="state.local.request"
              :class="`slider-${attribute.key}`"
              :max=styles[attribute.key].max
              :min=styles[attribute.key].min
              :step=styles[attribute.key].step
-             class="element range-slider slider"
+             class="range-slider slider element"
              type="range"
              v-on:mousedown="slideStart"
              v-on:mouseup="commitChanges">
+
     </div>
   </div>
 </template>
