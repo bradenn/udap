@@ -2,6 +2,7 @@
 selfsigned.cert
 selfsigned.key
 *.so
+*.css
 /local
 .idea
 private-key.pem
