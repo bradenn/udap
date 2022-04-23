@@ -1,10 +1,10 @@
 // Copyright (c) 2022 Braden Nicholson
 
 // Static
-$element-bg: rgba(255, 255, 255, 0.005);
+$element-bg: rgba(19, 21, 21, 0.12);
 
-$element-border: rgba(255, 255, 255, 0.05);
-$element-border-radius: rgba(255, 255, 255, 0.025);
+$element-border: rgba(147, 147, 147, 0.225);
+$element-border-radius: 0.25rem;
 
 // Dynamic
 $element-bg-hover: rgba(255, 128, 0, 0.280);
@@ -15,25 +15,26 @@ $element-bg-active: rgba(255, 128, 0, 0.280);
 
 /* Blur Definitions */
 @for $i from 1 through 10 {
-  $value: $i * 0.25rem;
+  $value: $i * 0.5rem;
   .blurs-#{$i} {
 
-    .bg-blur, .bg-blur-abs {
-      backdrop-filter: blur($value) grayscale(10%);
+    .bg-blur {
+      //backdrop-filter: blur($value);
+      position: relative;
     }
 
-    //.bg-blur::before {
-    //  overflow: hidden;
-    //  content: ' ';
-    //  position: absolute;
-    //  top: 0;
-    //  right: 0;
-    //  border-radius: inherit;
-    //  z-index: -1;
-    //  width: 100%;
-    //  height: 100%;
-    //  backdrop-filter: blur($value);
-    //}
+    .bg-blur::before {
+      overflow: hidden;
+      content: ' ';
+      position: absolute;
+      top: 0;
+      right: 0;
+      border-radius: inherit;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: blur($value);
+    }
 
   }
 
@@ -48,35 +49,36 @@ $themes: (
 @each $clr, $i in $themes {
 
   .theme-#{$clr} {
-    .element {
-      //background: linear-gradient(135deg, rgba(255, 255, 255, 0.0), $element-bg);
-      background-color: $i !important;
-    }
 
-    .element.active {
-      background-color: lighten($i, 80%) !important;
+    .element {
+      background-color: $i !important;
+      border: none !important;
+      box-shadow: 0 0 8px 2px rgba(0 0 0 / 12.5%) !important;
     }
 
     .element::before {
-      border: 0.06rem solid $element-border !important;
+      //background: linear-gradient(135deg, rgba(255, 255, 255, 0.0), $element-bg);
+      box-shadow: 0 0 2px 1px rgba(0 0 0 / 0.0525%), inset 0 0 1px 1.2px rgb(255 255 255 / 6.25%) !important;
+      border: none !important;
     }
+
+    .element.active::before {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), $element-bg);
+      box-shadow: 0 0 2px 1px rgba(0 0 0 / 0.0525%), inset 0 0 1px 1.2px rgb(255 255 255 / 6.25%) !important;
+    }
+
+    .element.active {
+
+    }
+
 
     .surface {
       background-color: $i !important;
     }
 
-    .surface::before {
-      border: 0.06rem solid $element-border !important;
-    }
-
   }
 }
 
-.element {
-  .element {
-
-  }
-}
 
 // Element Definition
 
@@ -84,9 +86,19 @@ $themes: (
   @extend .bg-blur;
   padding: 0.25rem;
   border-radius: 0.5rem;
-  box-shadow: 0 0 2px 1px rgba(0 0 0 / 0.0525%), 0 0 8px 3px rgb(0 0 0 / 6%), inset 0 0 2px 1px rgb(255 255 255 / 2%);
+  box-shadow: 0 0 2px 1px rgba(0 0 0 / 0.0525%), 0 0 3px 3px rgb(0 0 0 / 6%), inset 0 0 2px 1px rgb(255 255 255 / 2%);
+  z-index: 0;
 
+}
 
+.element.element-group::before {
+  filter: none !important;
+  background-color: transparent !important;
+}
+
+.element-group {
+  background-color: transparent !important;
+  padding: 0.25rem !important;
 }
 
 // Element Variations
@@ -101,6 +113,10 @@ $themes: (
   background-color: rgba(255, 69, 58, 0.5) !important;
   box-shadow: inset 0 0 8px 4px rgba(255, 69, 58, 0.25), 0 0 8px 1px rgba(0, 0, 0, 0.025) !important;
   transform: scale(0.98);
+}
+
+.router-link-active .sidebar-item {
+  background-color: lighten($element-bg, 20%) !important;
 }
 
 
