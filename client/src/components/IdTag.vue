@@ -1,26 +1,42 @@
 <script lang="ts" setup>
 
-import {inject, reactive} from "vue";
+import {inject, onMounted, reactive} from "vue";
 import IdHash from "@/components/IdHash.vue"
+import Loader from "@/components/Loader.vue";
+import Plot from "@/components/plot/Plot.vue";
+import Toggle from "@/components/plot/Toggle.vue";
 
-const remote: any = inject('remote')
+let remote: any = inject('remote')
 let system: any = inject('system')
 
 let state = reactive({
   menu: false,
+  reloading: true
 
+})
+let ui: any = inject("ui")
+
+onMounted(() => {
+  state.reloading = false
 })
 
 function toggleMenu() {
+
   state.menu = !state.menu
 }
 
-let ui: any = inject("ui")
+function reload() {
+  state.reloading = true
+  document.location.reload()
+}
+
+
 </script>
 
 <template>
+  <div v-if="state.menu" class="context context-id" @click="state.menu = false"></div>
   <div
-      class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
+      class=" tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
       @click="toggleMenu">
     <div class="px-1">
       <IdHash></IdHash>
@@ -32,7 +48,6 @@ let ui: any = inject("ui")
     <div class="flex-grow-1"></div>
     <div v-if="remote.nexus.state > 1" class="d-flex flex-column gap-0 justify-content-end align-items-end ">
       <div class="label-c3 label-o2 px-1">
-        <i class="fa-solid fa-cloud"></i>
         <span class="label-c3 label-w300">&nbsp;DOWN</span>
       </div>
     </div>
@@ -41,74 +56,86 @@ let ui: any = inject("ui")
         <i class="fa-solid fa-caret-down "></i>
       </div>
       <div v-else>
-        <i class="fa-solid fa-caret-left label-c2 label-o2 px-1"></i>
+        <i class="fa-solid fa-caret-left px-1"></i>
       </div>
     </div>
   </div>
 
-  <div v-if="state.menu" class="tag-summary element">
-    <div class="plot plot-1x4">
-      <div class="subplot">
-        <div>Wi-Fi</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center">
-          <div class="d-flex align-items-center label-o4 label-c2 lh-1 px-1">
-            <i class="fa-solid fa-circle label-c3 text-success" style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
-          </div>
-
+  <div v-if="state.menu" class="tag-summary element d-flex flex-column gap-1 p-1">
+    <div class="element element-group">
+      <div class="plot plot-4x1">
+        <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
+          <div class="label-o4 label-c2"><i class="fa-solid fa-house fa-fw"></i></div>
         </div>
-      </div>
-      <div class="subplot">
-        <div>NEXUS</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center px-1">
-          <div class="d-flex align-items-center label-o4 label-c2 lh-1">
-            <span v-if="system.udap.system.version"><i class="fa-solid fa-circle label-c3 text-success"
-                                                       style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK</span>
-            <span v-else><i class="fa-solid fa-circle label-c3 text-danger"
-                            style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;DOWN</span>
+        <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
+          <div class="label-o4 label-c2"><i class="fa-solid fa-shield fa-fw"></i></div>
+        </div>
+
+        <div class="subplot plot-centered" @click="reload">
+
+          <div class="label-o4 label-c2">
+            <div v-if="state.reloading">
+              <Loader size="sm"></Loader>
+            </div>
+
+            <i v-else class="fa-solid fa-rotate-right fa-fw"></i>
           </div>
         </div>
-      </div>
+        <div class="subplot plot-centered" @click="$router.push('/terminal/settings')">
+          <div class="label-o4 label-c2"><i class="fa-solid fa-cog fa-fw"></i></div>
+        </div>
 
+      </div>
     </div>
-    <div v-if="ui" class="plot plot-1x4 pt-2 ">
-      <div class="subplot " @click="ui.grid = !ui.grid">
-        <div>Grid</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center ">
+    <div class="element element-group">
+      <div class="label-c2 label-o4 label-w400 px-1">Status</div>
+      <div class="plot plot-2x1">
+        <div class="subplot">
+          <div class="label-c3">Wi-Fi</div>
+          <div class="d-flex justify-content-center align-items-center align-content-center">
+            <div class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+              <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
+            </div>
 
-          <div class="label-c2 label-o4 px-1 lh-1">
-            {{ ui.grid ? 'ON' : 'OFF' }}
           </div>
+        </div>
+        <div class="subplot">
+          <div class="label-c3">NEXUS</div>
+          <div class="d-flex justify-content-center align-items-center align-content-center">
+            <div class="d-flex align-items-center lh-1">
+              <div v-if="remote.nexus.state > 1" class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+                <i class="fa-solid fa-circle text-danger" style="font-size: 8px; line-height: 1.2rem;"
+                ></i>&nbsp;&nbsp;DOWN
+              </div>
+              <div v-else class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+                <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"
+                ></i>&nbsp;&nbsp;OK
+              </div>
 
-        </div>
-      </div>
-      <div class="subplot" @click="ui.outlines = !ui.outlines">
-        <div>Outlines</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center">
-          <div class="label-c2 label-o4 px-1 lh-1">
-            {{ ui.outlines ? 'ON' : 'OFF' }}
+            </div>
           </div>
         </div>
-      </div>
-      <div class="subplot" @click="ui.watermark = !ui.watermark">
-        <div>Watermark</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center">
-          <div class="label-c2 label-o4 px-1 lh-1">
-            {{ ui.watermark ? 'ON' : 'OFF' }}
-          </div>
-        </div>
-      </div>
-      <div class="subplot" @click="ui.nightVision = !ui.nightVision">
-        <div>Night Vision</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center">
-          <div class="label-c2 label-o4 px-1 lh-1">
-            {{ ui.nightVision ? 'ON' : 'OFF' }}
-          </div>
-        </div>
-      </div>
 
+      </div>
     </div>
+    <Plot :cols="1" :rows="1" title="Brightness">
+      <input v-model="ui.brightness"
+             :max=20
+             :min=4
+             :step=1
+             class="slider-small"
+             type="range"
+             @mousemove.stop>
+    </Plot>
+    <Plot :cols="2" :rows="2" title="Quick Settings">
+      <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
+      <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Outlines"></Toggle>
+      <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
+      <Toggle :active="ui.night" :fn="() => ui.night = !ui.night" title="Night"></Toggle>
+    </Plot>
 
   </div>
+
 </template>
 
 <style lang="scss" scoped>
@@ -122,7 +149,7 @@ let ui: any = inject("ui")
   position: relative;
   margin-top: 0.125rem;
 
-  animation: slideIn 200ms ease forwards;
+  animation: slideIn 250ms ease forwards;
   z-index: 22;
 }
 
@@ -134,7 +161,7 @@ let ui: any = inject("ui")
     transform: scale(1.05);
   }
   30% {
-    transform: scale(1.025);
+    transform: scale(1.015);
   }
   100% {
     transform: scale(1);
