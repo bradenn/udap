@@ -3,10 +3,12 @@
 import Clock from "@/components/Clock.vue"
 import router from '@/router'
 import {inject, onMounted, provide, reactive, watch} from "vue";
-import {Nexus, Target} from '@/views/terminal/nexus'
-
-import type {Attribute, Device, Endpoint, Entity, Identifiable, Network} from "@/types";
+import "@/types";
 import IdTag from "@/components/IdTag.vue";
+import Diagnostics from "@/components/Diagnostics.vue";
+import type {Identifiable, Metadata, Remote} from "@/types";
+
+import {Nexus, Target} from "@/views/terminal/nexus";
 
 // -- Websockets --
 
@@ -14,29 +16,6 @@ let audio: HTMLAudioElement;
 onMounted(() => {
   audio = new Audio('/sound/selection.mp3');
 })
-
-interface Metadata {
-  name: string;
-  version: string;
-  environment: string;
-  ipv4: string;
-  ipv6: string;
-  hostname: string;
-  mac: string;
-  go: string;
-  cores: number;
-}
-
-interface Remote {
-  metadata: Metadata,
-  entities: Entity[],
-  attributes: Attribute[],
-  devices: Device[],
-  networks: Network[],
-  endpoints: Endpoint[],
-  timings: any[],
-  nexus: Nexus
-}
 
 
 // Define the reactive components for the remote data
@@ -50,47 +29,64 @@ let remote = reactive<Remote>({
   timings: [],
   nexus: new Nexus(handleMessage)
 });
+
+
 let ui: any = inject("ui")
+let system: any = inject("system")
 
 // Handle and route incoming messages to the local cache
 function handleMessage(target: Target, data: any) {
+  state.lastUpdate = new Date().valueOf()
   switch (target) {
     case Target.Metadata:
-      ui.system.udap = data
+      system.udap.system = data.system as Metadata
       remote.metadata = data as Metadata
       break
     case Target.Entity:
-      replaceAndUpdate(remote.entities, data)
+      if (remote.entities.find((e: Identifiable) => e.id === data.id)) {
+        remote.entities = remote.entities.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.entities.push(data)
+      }
       break
     case Target.Attribute:
-      replaceAndUpdate(remote.attributes, data)
+      if (remote.attributes.find((e: Identifiable) => e.id === data.id)) {
+        remote.attributes = remote.attributes.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.attributes.push(data)
+      }
       break
     case Target.Device:
-      replaceAndUpdate(remote.devices, data)
+      if (remote.devices.find((e: Identifiable) => e.id === data.id)) {
+        remote.devices = remote.devices.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.devices.push(data)
+      }
       break
     case Target.Network:
-      replaceAndUpdate(remote.networks, data)
+      if (remote.networks.find((e: Identifiable) => e.id === data.id)) {
+        remote.networks = remote.networks.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.networks.push(data)
+      }
       break
     case Target.Endpoint:
-      replaceAndUpdate(remote.endpoints, data)
+      if (remote.endpoints.find((e: Identifiable) => e.id === data.id)) {
+        remote.endpoints = remote.endpoints.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.endpoints.push(data)
+      }
       break
     case Target.Timing:
-      replaceAndUpdate(remote.timings, data)
+      if (remote.timings.find((e: Identifiable) => e.id === data.id)) {
+        remote.timings = remote.timings.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.timings.push(data)
+      }
       break
   }
 }
 
-// Replace or update the existing data
-function replaceAndUpdate(target: any, data: any) {
-  if (target.find((e: Identifiable) => e.id === data.id)) {
-    target = target.map((a: Identifiable) => a.id === data.id ? data : a)
-  } else {
-    target.push(data)
-  }
-}
-
-// Provide the remote component for child components
-provide('remote', remote)
 
 // -- Gesture Navigation --
 
@@ -100,6 +96,7 @@ let state = reactive({
   timeout: null,
   verified: false,
   distance: 0,
+  lastUpdate: 0,
   showClock: true,
   scrollX: 0,
   scrollY: 0,
@@ -116,7 +113,6 @@ watch(() => router.currentRoute.value, () => {
 })
 
 onMounted(() => {
-  draw()
   state.showClock = router.currentRoute.value.path === '/terminal/home'
 })
 
@@ -153,30 +149,29 @@ function dragContinue(e: MouseEvent) {
     // Record the current position
     let dragB = {x: e.clientX, y: e.clientY}
     // Set a maximum delta
-    let delta = 60
+    let delta = 200
     // Calculate the displacement
     // If the user's current position is larger than the defined max intent
     if (!e.view) return
     if (state.dragA.y > e.view.screen.availHeight - 200) {
-      state.scrollY = Math.log(Math.abs(state.dragA.y - dragB.y)) * 8
+      state.scrollY = (state.dragA.y - dragB.y) / 8
     }
-
-    if (state.dragA.y - dragB.y > delta && state.dragA.y > e.view.screen.availHeight - 200) {
-
+    if (Math.abs(dragB.y - state.dragA.y) > delta && state.dragA.y > e.view.screen.availHeight - 200) {
       // Change the inner route to the home page
+      dragStop(e)
       router.replace("/terminal/home")
     } else if (dragB.y - state.dragA.y > delta && state.dragA.y < 200) {
       // Reset the drag intention
       dragStop(e)
       ui.context = true
     } else {
-      if (Math.abs(state.dragA.x - dragB.x) > 60) {
+      if (Math.abs(state.dragA.x - dragB.x) > 20) {
         // Reset the drag intention
 
         if (Math.abs(state.dragA.x - dragB.x) > 800) {
           dragStop(e)
         } else {
-          state.scrollX = (state.scrollX + dragB.x - state.dragA.x) / 14
+          state.scrollX = (state.scrollX + dragB.x - state.dragA.x) / 16
         }
       }
     }
@@ -196,6 +191,7 @@ function dragStop(e: MouseEvent) {
   // Reset current position
   state.dragA = {x: 0, y: 0}
   if (state.scrollX != 0 && state.scrollXBack == 0) {
+    clearInterval(state.scrollXBack)
     state.scrollXBack = setInterval(() => {
       state.scrollX = state.scrollX - (state.scrollX / 20)
       if (Math.abs(state.scrollX) < 1) {
@@ -207,29 +203,28 @@ function dragStop(e: MouseEvent) {
   }
 
   if (state.scrollY != 0 && state.scrollYBack == 0) {
+    clearInterval(state.scrollYBack)
     state.scrollYBack = setInterval(() => {
       if (state.isDragging) return
-      state.scrollY = state.scrollY - Math.log(state.scrollY) / 2
+      state.scrollY = state.scrollY - Math.log(state.scrollY)
       if (Math.abs(state.scrollY) < 1) {
         state.scrollY = 0
         state.scrollYBack = 0
         clearInterval(state.scrollYBack)
       }
-    }, 1)
+    }, 5)
   }
+
 
 }
 
 
 function selectSound() {
-  audio.play();
+  // new Audio('/sound/selection.mp3').play();
 }
 
-function draw() {
-
-
-}
-
+// Provide the remote component for child components
+provide('remote', remote)
 </script>
 
 
@@ -240,63 +235,44 @@ function draw() {
       v-on:mousedown="dragStart"
       v-on:mousemove="dragContinue"
       v-on:mouseup="dragStop">
-    <div class="generic-container top">
-      <div :class="`generic-slot-sm`">
+    <div class="generic-container ">
+
+      <div :class="`generic-slot-sm ` ">
         <Clock :small="!state.showClock"></Clock>
       </div>
-      <div class="generic-slot-sm">
+
+      <Diagnostics></Diagnostics>
+
+      <div class="generic-slot-sm ">
         <IdTag></IdTag>
       </div>
     </div>
-    <div v-if="ui.context" class="context" @click="ui.context = false"></div>
 
-    <div :style="`transform: translate(${Math.round(state.scrollX)}px,${-Math.round(state.scrollY/2.0)}px) !important;`"
+    <div :style="`transform: translate(${Math.round(state.scrollX)}px,0);`"
          class="route-view">
       <router-view v-slot="{ Component }" @mousedown="selectSound">
         <component :is="Component"/>
       </router-view>
     </div>
-
-    <!--    <div v-if="state.showClock" class="footer mt-3">-->
-    <!--      <Dock class="animate-in" os>-->
-
-    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/wifi/">-->
-    <!--          <div class="macro-icon" @mousedown="selectSound">-->
-    <!--            􀙇-->
-    <!--          </div>-->
-    <!--        </router-link>-->
-    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/energy/">-->
-    <!--          <div class="macro-icon" @mousedown="selectSound">-->
-    <!--            􀋦-->
-    <!--          </div>-->
-    <!--        </router-link>-->
-    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/exogeology/">-->
-    <!--          <div class="macro-icon" @mousedown="selectSound">-->
-    <!--            <i class="fa-solid fa-satellite fa-fw"></i>-->
-    <!--          </div>-->
-    <!--        </router-link>-->
-    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/timing/">-->
-    <!--          <div class="macro-icon" @mousedown="selectSound">-->
-    <!--            <i class="fa-solid fa-stopwatch fa-fw"></i>-->
-    <!--          </div>-->
-    <!--        </router-link>-->
-    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/weather/summary">-->
-    <!--          <div class="macro-icon" @mousedown="selectSound">-->
-    <!--            <i class="fa-solid fa-cloud-sun fa-fw"></i>-->
-    <!--          </div>-->
-    <!--        </router-link>-->
-    <!--        <router-link class="macro-icon-default" draggable="false" to="/terminal/settings/preferences">-->
-    <!--          <div class="macro-icon" @mousedown="selectSound">-->
-    <!--            􀍟-->
-    <!--          </div>-->
-    <!--        </router-link>-->
-    <!--      </Dock>-->
-    <!--    </div>-->
-    <div :style="`transform: translateY(calc(-${Math.round(state.scrollY)}px));`" class="home-bar top"></div>
+    <div
+        :style="`transform: translateY(calc(-${Math.round(state.scrollY)}px));`"
+        class="home-bar top"></div>
   </div>
 </template>
 
 <style scoped>
+.generic-container {
+}
+
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
 
 .animate-in {
   animation: dock-in 100ms forwards;

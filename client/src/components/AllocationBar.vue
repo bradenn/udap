@@ -46,7 +46,7 @@ function calculateLoad() {
              class="power-chart-point element">
 
           <div :style="`width: ${(device.active/device.allocated)*100}% !important;`"
-               class="power-chart-meta "></div>
+               class="power-chart-meta element"></div>
           <div>{{ device.name }}</div>
           <div class="label-c3 label-o4 label-mono">{{ device.allocated }}A</div>
         </div>
@@ -64,10 +64,7 @@ function calculateLoad() {
   top: 0;
   left: 0;
   border-radius: 0.25rem;
-  color: rgba(255, 255, 255, 0.25);
   height: 100%;
-  box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.1);
-  background-color: rgba(240, 240, 240, 0.05);
 }
 
 .power-chart-buttons {
@@ -81,7 +78,7 @@ function calculateLoad() {
   position: absolute;
   top: 0;
   left: 0;
-  color: rgba(255, 255, 255, 0.4);
+
   padding: 0.125rem 0.25rem;
 }
 
@@ -92,7 +89,7 @@ function calculateLoad() {
   font-weight: 500;
   align-content: start;
   align-items: start;
-  gap: 0.125rem;
+  gap: 0.18rem;
 }
 
 .power-chart-point {

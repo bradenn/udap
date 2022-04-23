@@ -6,9 +6,16 @@ import {Preference} from "@/preferences";
 import {PreferenceTypes} from "@/types";
 
 interface Preferences {
-  background: string
-  theme: string
-  mode: string
+  ui: {
+    background: string
+    theme: string
+    mode: string
+    blur: number
+    grid: boolean
+    watermark: boolean
+    night: boolean
+    outlines: boolean
+  }
 }
 
 const preferences = inject("preferences") as Preferences
@@ -20,16 +27,16 @@ const defaults = {
       identifier: "viridian",
     },
     {
-      name: "Nerf Dart",
-      identifier: "nerfdart",
+      name: "Blueberry",
+      identifier: "blueberry",
     },
     {
       name: "Dark Pattern",
       identifier: "cblack",
     },
     {
-      name: "Orange Vacuum",
-      identifier: "daemon",
+      name: "Slither",
+      identifier: "slither",
     },
     {
       name: "Void",
@@ -64,17 +71,17 @@ const defaults = {
 
 function changeBackground(name: string) {
   new Preference(PreferenceTypes.Background).set(name)
-  preferences.background = name
+  preferences.ui.background = name
 }
 
 function changeTheme(name: string) {
   new Preference(PreferenceTypes.Theme).set(name)
-  preferences.theme = name
+  preferences.ui.theme = name
 }
 
 function changeTouchmode(mode: string) {
   new Preference(PreferenceTypes.TouchMode).set(mode)
-  preferences.mode = mode
+  preferences.ui.mode = mode
 }
 
 </script>
@@ -88,7 +95,7 @@ function changeTouchmode(mode: string) {
         <div class="d-flex gap">
           <div v-for="background in defaults.backgrounds" @click="changeBackground(background.identifier)">
             <div
-                :class="`${preferences.background === background.identifier?'background-preview-active':''}`"
+                :class="`${preferences.ui.background === background.identifier?'background-preview-active':''}`"
                 :style="`background-image: url('/custom/${background.identifier}@4x.png');`"
                 class="background-preview">
               <div class="label-xxs label-w500 label-o4 pb-1">
@@ -103,7 +110,7 @@ function changeTouchmode(mode: string) {
         <div class="d-flex gap">
           <div v-for="theme in defaults.themes" @click="changeTheme(theme.identifier)">
             <div
-                :class="`${preferences.theme === theme.identifier?'theme-preview-active':''}`"
+                :class="`${preferences.ui.theme === theme.identifier?'theme-preview-active':''}`"
                 class="bg-blur surface theme-preview label-xxs label-o5 label-w600 px-4 py-2">
               <div class="label-xxs label-w500 label-o4">
                 {{ theme.name }}
@@ -117,7 +124,7 @@ function changeTouchmode(mode: string) {
         <div class="d-flex gap">
           <div v-for="mode in defaults.touchModes" @click="changeTouchmode(mode.identifier)">
             <div
-                :class="`${preferences.mode === mode.identifier?'theme-preview-active':''}`"
+                :class="`${preferences.ui.mode === mode.identifier?'theme-preview-active':''}`"
                 class="bg-blur surface theme-preview label-xxs label-o5 label-w600 px-4 py-2">
               <div class="label-xxs label-w500 label-o4">
                 {{ mode.name }}

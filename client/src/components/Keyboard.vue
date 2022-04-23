@@ -78,7 +78,7 @@ function handleShift() {
 </script>
 
 <template>
-  <div :class="keyboardClass" class="simple-keyboard"></div>
+  <div :class="props.keyboardClass" class="simple-keyboard"></div>
 </template>
 
 
@@ -88,6 +88,7 @@ function handleShift() {
 .simple-keyboard {
   position: absolute !important;
   width: 100%;
+  z-index: 1000;
   bottom: 0;
   left: 0;
 

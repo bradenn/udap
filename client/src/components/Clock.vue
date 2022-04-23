@@ -2,6 +2,7 @@
 import moment from 'moment'
 import {onMounted, reactive} from "vue";
 
+
 let props = defineProps<{
   small?: boolean,
 }>()
@@ -48,17 +49,31 @@ function updateTime() {
   <div>
     <div :class="`time${props.small?'-sm':''}`" class="top" @click="$router.push('/terminal/home')"
          v-html="state.time"></div>
+    <div v-if="props.small">
+      <div class="page-title"> {{ $router.currentRoute.value.matched[1].name }}</div>
+    </div>
     <div v-if="!props.small" class="date" v-html="state.date"></div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.time {
+.page-title {
   font-size: 2rem;
   line-height: 2rem;
   font-weight: 600;
   font-family: "SF Pro Rounded", sans-serif;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  transition: font-size 50ms ease-in;
+}
+
+.time {
+  z-index: 22 !important;
+  font-size: 2rem;
+  line-height: 2rem;
+  font-weight: 600;
+  font-family: "SF Pro Rounded", sans-serif;
+  color: rgba(255, 255, 255, 0.6);
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
   transition: font-size 50ms ease-in;
 }
@@ -74,11 +89,12 @@ function updateTime() {
 }
 
 .time-sm {
-  font-size: 1rem;
-  line-height: 1rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 0.75rem;
+  font-weight: 500;
+
+  color: rgba(255, 255, 255, 0.5);
   font-family: "SF Pro Rounded", sans-serif;
-  color: rgba(255, 255, 255, 0.8);
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
