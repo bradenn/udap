@@ -6,7 +6,8 @@ import type {Attribute} from "@/types";
 
 const props = defineProps<{
   attribute: Attribute,
-  commit: (value: any) => void
+  commit: (value: any) => void,
+  small: boolean
 }>()
 
 // Local state for the slider
@@ -74,7 +75,7 @@ function commitChanges(_: MouseEvent) {
 </script>
 
 <template>
-  <div class="py-1" v-on:click.stop>
+  <div v-if="!small" class="py-1" v-on:click.stop>
     <div class="d-flex justify-content-between align-content-center align-items-center">
       <div class="h-bar justify-content-start align-items-center align-content-center">
         <div class="label-xxs label-o2 label-w600">{{ styles[attribute.key].icon }}</div>
@@ -96,6 +97,20 @@ function commitChanges(_: MouseEvent) {
              v-on:mousedown="slideStart"
              v-on:mouseup="commitChanges">
 
+    </div>
+  </div>
+  <div v-else @mousemove.stop>
+    <div class="d-flex flex-column justify-content-between align-content-start align-items-start ">
+
+      <input v-model="state.local.request"
+             :class="`slider-${attribute.key}`"
+             :max=styles[attribute.key].max
+             :min=styles[attribute.key].min
+             :step=styles[attribute.key].step
+             class=" slider element slider-small"
+             type="range"
+             v-on:mousedown="slideStart"
+             v-on:mouseup="commitChanges">
     </div>
   </div>
 </template>
