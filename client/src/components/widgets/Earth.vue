@@ -3,24 +3,23 @@
 </script>
 
 <template>
-  <div class="earth-full-disk m-2"
-       style="background-image: url('https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/1808x1808.jpg')">
-  </div>
+  <img alt="Earth" class="earth-full-disk-k m-2"
+       src="https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/1808x1808.jpg" style=""/>
 </template>
 
 <style lang="scss" scoped>
-.earth-full-disk {
-  height: 13rem;
-
+.earth-full-disk-k {
+  height: 12rem;
   display: flex;
   justify-content: center;
   align-items: center;
   box-shadow: 0 0 4px 8px rgba(0, 0, 0, 0.025);
-  aspect-ratio: 1808/1778;
+  aspect-ratio: 1808/1778 !important;
   border-radius: 100%;
   background-color: rgba(76, 87, 101, 0.37);
   background-size: cover;
   transition: background-image 250ms ease-in-out;
+
 }
 
 .night {
