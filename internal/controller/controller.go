@@ -5,6 +5,7 @@ package controller
 import (
 	"fmt"
 	"udap/internal/bond"
+	"udap/internal/pulse"
 )
 
 type Controller struct {
@@ -30,6 +31,7 @@ func NewController() (*Controller, error) {
 }
 
 func (c *Controller) Handle(msg bond.Msg) (interface{}, error) {
+	pulse.LogGlobal("Event: ", msg.Target, msg.Operation)
 	switch t := msg.Target; t {
 	case "user":
 		return c.UserController.Handle(msg)

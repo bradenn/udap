@@ -26,47 +26,60 @@ type Attribute struct {
 	get       FuncGet
 }
 
+// Path Returns a unique identifier bound to an entity
 func (a *Attribute) Path() string {
 	return fmt.Sprintf("%s.%s", a.Entity, a.Key)
 }
 
+// SetValue overrides any existing value
 func (a *Attribute) SetValue(val string) {
+	// Overwrite the value
 	a.Value = val
+	// Update the timestamp for the current values time
 	a.Updated = time.Now()
 }
 
+// UpdateValue attempts to write an update to the attribute
 func (a *Attribute) UpdateValue(val string, stamp time.Time) error {
+	// If a request has been made in the last five seconds, and has been unresolved, ignore this update
 	if a.Requested.Before(stamp) && a.Request != val && time.Since(a.Requested) < 5*time.Second {
 		return fmt.Errorf("OVERWRITES REQUEST")
 	}
+	// Update the request value (since the request can be external)
 	a.Request = val
-	a.Value = val
-	a.Updated = time.Now()
+	// Set the value
+	a.SetValue(val)
+	// Return no errors
 	return nil
 }
 
+// SendRequest attempts to send a change to the attribute handler
 func (a *Attribute) SendRequest(val string) error {
+	// If the attribute handler is not set, return an error
 	if a.put == nil {
 		return fmt.Errorf("attribute put function not connected")
 	}
-
+	// Register the request
 	a.Request = val
+	// Mark the request's time
 	a.Requested = time.Now()
-
+	// Attempt to send the value
 	err := a.put(val)
 	if err != nil {
 		return err
 	}
-
-	a.Value = val
-	a.Updated = time.Now()
+	// Set the value
+	a.SetValue(val)
+	// Return no errors
 	return nil
 }
 
+// FnPut registers the attributes set function
 func (a *Attribute) FnPut(put FuncPut) {
 	a.put = put
 }
 
+// FnGet registers the attributes get function
 func (a *Attribute) FnGet(get FuncGet) {
 	a.get = get
 }
@@ -93,43 +106,4 @@ func (a *Attribute) AsBool() bool {
 		return false
 	}
 	return parsed
-}
-
-func NewMediaEntity(name string, module string) *Entity {
-	e := Entity{
-		Name:   name,
-		Type:   "media",
-		Module: module,
-	}
-	return &e
-}
-
-func NewSpectrum(name string, module string) *Entity {
-
-	e := Entity{
-		Name:   name,
-		Type:   "spectrum",
-		Module: module,
-	}
-	return &e
-}
-
-func NewDimmer(name string, module string) *Entity {
-
-	e := Entity{
-		Name:   name,
-		Type:   "dimmer",
-		Module: module,
-	}
-	return &e
-}
-
-func NewSwitch(name string, module string) *Entity {
-
-	e := Entity{
-		Name:   name,
-		Type:   "switch",
-		Module: module,
-	}
-	return &e
 }

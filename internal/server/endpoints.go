@@ -162,7 +162,17 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	err = e.ctrl.Networks.EmitAll()
+	if err != nil {
+		return
+	}
+
 	err = e.ctrl.Devices.EmitAll()
+	if err != nil {
+		return
+	}
+
+	err = e.ctrl.Endpoints.EmitAll()
 	if err != nil {
 		return
 	}

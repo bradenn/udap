@@ -451,7 +451,6 @@ func (g *Govee) Setup() (plugin.Config, error) {
 }
 
 func (g *Govee) push() error {
-
 	wg := sync.WaitGroup{}
 	wg.Add(len(g.devices))
 	for s, d := range g.devices {

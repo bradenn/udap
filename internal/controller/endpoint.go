@@ -44,6 +44,16 @@ func LoadEndpoints() (m *Endpoints) {
 	return m
 }
 
+func (d *Endpoints) EmitAll() (err error) {
+
+	for _, k := range d.Keys() {
+		find := d.Find(k)
+		d.emit(k, find)
+	}
+
+	return nil
+}
+
 func (e *Endpoints) FetchAll() {
 	var endpoints []*models.Endpoint
 	store.DB.Model(&models.Endpoint{}).Find(&endpoints)

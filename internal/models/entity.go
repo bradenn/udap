@@ -11,21 +11,24 @@ import (
 
 type Entity struct {
 	store.Persistent
+	Name   string `gorm:"unique" json:"name"` // Given name from module
+	Alias  string `json:"alias"`              // Name from users
+	Type   string `json:"type"`               // Type of entity {Light, Sensor, Etc}
+	Module string `json:"module"`             // Parent Module name
+	Locked bool   `json:"locked"`             // Is the Entity state locked?
+	Config string `json:"config"`
+
+	Position string `json:"position" gorm:"default:'{}'"`
+
 	LastPoll  time.Time `json:"lastPoll"`
-	Name      string    `gorm:"unique" json:"name"`               // Given name from module
-	Alias     string    `json:"alias"`                            // Name from users
-	Type      string    `json:"type"`                             // Type of entity {Light, Sensor, Etc}
-	Module    string    `json:"module"`                           // Parent Module name
 	Neural    string    `json:"neural" gorm:"default:'inactive'"` // Parent Module name
-	Locked    bool      `json:"locked"`                           // Is the Entity state locked?
 	Protocol  string    `json:"protocol"`                         // scalar
 	Icon      string    `json:"icon" gorm:"default:'􀛮'"`          // The icon to represent this entity
 	Frequency int       `json:"frequency" gorm:"default:3000"`
-	Predicted string    `gorm:"-" json:"predicted"` // scalar
-	State     string    `json:"state"`
-	Config    string    `json:"config"`
-	Position  string    `json:"position" gorm:"default:'{}'"`
-	Live      bool      `gorm:"-" json:"live"`
+
+	Predicted string `gorm:"-" json:"predicted"` // scalar
+	State     string `json:"state"`
+	Live      bool   `gorm:"-" json:"live"`
 }
 
 func (e *Entity) Unlock() error {
@@ -147,4 +150,43 @@ func (e *Entity) update() error {
 	}
 
 	return err
+}
+
+func NewMediaEntity(name string, module string) *Entity {
+	e := Entity{
+		Name:   name,
+		Type:   "media",
+		Module: module,
+	}
+	return &e
+}
+
+func NewSpectrum(name string, module string) *Entity {
+
+	e := Entity{
+		Name:   name,
+		Type:   "spectrum",
+		Module: module,
+	}
+	return &e
+}
+
+func NewDimmer(name string, module string) *Entity {
+
+	e := Entity{
+		Name:   name,
+		Type:   "dimmer",
+		Module: module,
+	}
+	return &e
+}
+
+func NewSwitch(name string, module string) *Entity {
+
+	e := Entity{
+		Name:   name,
+		Type:   "switch",
+		Module: module,
+	}
+	return &e
 }

@@ -85,7 +85,7 @@ func (r *Runtime) Load() (err error) {
 
 	r.addDaemons(r.Modules, r.Endpoints)
 
-	r.eventHandler = make(chan bond.Msg, 4)
+	r.eventHandler = make(chan bond.Msg, 8)
 
 	r.ctrl, err = controller.NewController()
 	if err != nil {

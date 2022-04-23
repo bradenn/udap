@@ -54,6 +54,16 @@ func LoadNetworks() (m *Networks) {
 	return m
 }
 
+func (d *Networks) EmitAll() (err error) {
+
+	for _, k := range d.Keys() {
+		find := d.Find(k)
+		d.emit(k, find)
+	}
+
+	return nil
+}
+
 func (d *Networks) FetchAll() {
 	var networks []*models.Network
 	store.DB.Model(&models.Network{}).Find(&networks)
