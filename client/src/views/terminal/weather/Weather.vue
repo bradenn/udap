@@ -3,7 +3,9 @@
 
 </script>
 <template>
-  Summary Page
+  <div>
+    <router-view/>
+  </div>
 </template>
 
 <style scoped>

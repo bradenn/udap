@@ -4,12 +4,14 @@
 import moment from 'moment'
 import {onMounted, reactive} from "vue";
 import axios from "axios";
+import Loader from "@/components/Loader.vue";
 
 let state = reactive({
   satellite: "GOES17",
   mode: "GEOCOLOR",
   section: "FD",
   currentImage: "",
+  lowRes: "",
   lastUpdated: "",
   lastDate: 0,
   progress: "",
@@ -24,6 +26,8 @@ let state = reactive({
 })
 
 onMounted(() => {
+  state.loading = true
+  buildURL()
   setInterval(updateData, 1000)
 })
 
@@ -95,6 +99,7 @@ function downloadImage(url: string) {
     state.nextUpdate = moment(lastModified).add(1000 * 60 * 10).fromNow(false)
     updateData()
     state.currentImage = url
+    state.loading = false
   }).catch(err => {
 
   })
@@ -113,9 +118,8 @@ function buildURL() {
   // Mode ABI, Advanced Baseline Imager
   // Section, FD, etc
   // Mode GEOCOLOR, etc
-
+  state.lowRes = `/custom/1808x1808.jpg`
   downloadImage(`https://cdn.star.nesdis.noaa.gov/${state.satellite}/ABI/${state.section}/${state.mode}/${state.section === "FD" ? '1808x1808' : '1200x1200'}.jpg?ts=${state.lastDate}`)
-  return state.currentImage
 }
 
 
@@ -127,7 +131,94 @@ function buildURL() {
     <div class="d-flex  p-2 px-1 w-100">
 
       <div class=" d-flex flex-row gap w-100">
-        <!-- Sidebar -->
+
+        <!-- Earth -->
+        <div
+            class="d-flex justify-content-between align-items-center align-content-center flex-column flex-grow-1 h-100">
+
+          <!-- Disk -->
+          <div class="d-flex justify-content-center align-items-center align-content-center h-100">
+            <div v-if="state.section === 'FD'">
+              <div v-if="state.loading"
+                   :style="`background-image: url('${state.lowRes}');`"
+                   class="earth-full-disk">
+                <Loader v-if="state.loading"></Loader>
+              </div>
+              <div v-else :style="`background-image: url('${state.currentImage}');`"
+                   class="earth-full-disk">
+              </div>
+            </div>
+            <div v-else :style="`background-image: url('${buildURL()}');`"
+                 class="preview p-5">
+            </div>
+          </div>
+
+          <!-- Help Bar -->
+          <div class="element d-flex flex-row justify-content-start align-items-center gap-1 p-1 mt-3">
+            <!-- NOAA Logo, as per their TOS -->
+            <img alt="noaa" class="noaa mx-1" src="/noaa.svg"/>
+
+            <!-- Last update from the headers of the photo -->
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Last updated</div>
+              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
+            </div>
+
+            <div class="v-sep"></div>
+
+            <!-- Last update from the headers of the photo -->
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
+              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.progress }}</div>
+            </div>
+
+            <div class="v-sep"></div>
+
+            <!-- The path tp the current photo -->
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Path</div>
+              <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1">
+
+                <div class="d-flex gap">
+                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.satellite }}</div>
+                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                </div>
+                <div class="d-flex gap">
+                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.section }}</div>
+                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                </div>
+                <div class="d-flex gap">
+                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.mode }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="v-sep"></div>
+            <!-- Last update from the headers of the photo -->
+            <div class="flex-shrink-0">
+              <div class="label-c2 label-w500 label-o5 lh-sm">Size</div>
+              <div class="label-c2 label-w300 label-o4 lh-1">
+                {{ Math.round(state.currentSize / 1000 / 1000 * 100) / 100 }} MB
+              </div>
+            </div>
+
+
+            <div class="v-sep"></div>
+
+
+            <!-- Refresh the image manually -->
+            <div
+                class="dock-icon surface button-icon d-flex flex-row justify-content-center align-content-center align-items-center flex-grow-0"
+                @click="buildURL()">
+              <div class="label-c2 label-w500 label-o5"><i class="fa-solid fa-arrow-rotate-right fa-fw"></i></div>
+
+            </div>
+
+          </div>
+          <!-- Current url -->
+          <div class="label-c3 label-o4 pt-2">
+            {{ state.currentImage }}
+          </div>
+        </div>   <!-- Sidebar -->
         <div class="d-flex flex-column gap w-25  flex-grow-0">
           <div class="d-flex justify-content-start px-1 pt-0">
             <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-earth-americas fa-fw`"></i></div>
@@ -186,87 +277,6 @@ function buildURL() {
           </div>
 
 
-        </div>
-        <!-- Earth -->
-        <div
-            class="d-flex justify-content-between align-items-center align-content-center flex-column flex-grow-1 h-100">
-
-          <!-- Disk -->
-          <div class="d-flex justify-content-center align-items-center align-content-center h-100">
-            <div v-if="state.section === 'FD'"
-                 :style="`background-image: url('${buildURL()}');`"
-                 class="earth-full-disk">
-            </div>
-            <div v-else :style="`background-image: url('${buildURL()}');`"
-                 class="preview p-5">
-            </div>
-          </div>
-
-          <!-- Help Bar -->
-          <div class="element d-flex flex-row justify-content-start align-items-center gap-1 p-1 mt-4">
-            <!-- NOAA Logo, as per their TOS -->
-            <img alt="noaa" class="noaa mx-1" src="/noaa.svg"/>
-
-            <!-- Last update from the headers of the photo -->
-            <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Last updated</div>
-              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
-            </div>
-
-            <div class="v-sep"></div>
-
-            <!-- Last update from the headers of the photo -->
-            <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
-              <div class="label-c2 label-w300 label-o4 lh-1 monospace">{{ state.progress }}</div>
-            </div>
-
-            <div class="v-sep"></div>
-
-            <!-- The path tp the current photo -->
-            <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Path</div>
-              <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1">
-
-                <div class="d-flex gap">
-                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.satellite }}</div>
-                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
-                </div>
-                <div class="d-flex gap">
-                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.section }}</div>
-                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
-                </div>
-                <div class="d-flex gap">
-                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.mode }}</div>
-                </div>
-              </div>
-            </div>
-            <div class="v-sep"></div>
-            <!-- Last update from the headers of the photo -->
-            <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Size</div>
-              <div class="label-c2 label-w300 label-o4 lh-1 monospace">
-                {{ Math.round(state.currentSize / 1000 / 1000 * 100) / 100 }} MB
-              </div>
-            </div>
-
-
-            <div class="v-sep"></div>
-
-
-            <!-- Refresh the image manually -->
-            <div
-                class="dock-icon surface button-icon d-flex flex-row justify-content-center align-content-center align-items-center flex-grow-0"
-                @click="buildURL()">
-              <div class="label-c2 label-w500 label-o5"><i class="fa-solid fa-arrow-rotate-right fa-fw"></i></div>
-
-            </div>
-
-          </div>
-          <!-- Current url -->
-          <div class="label-c3 label-o4 pt-2">
-            {{ state.currentImage }}
-          </div>
         </div>
       </div>
     </div>
@@ -337,6 +347,7 @@ function buildURL() {
   border-radius: 100%;
   background-color: rgba(76, 87, 101, 0.37);
   background-size: cover;
+  background-position: top;
   transition: background-image 250ms ease-in-out;
 }
 

@@ -14,7 +14,8 @@ let state = reactive<{
 
 onMounted(() => {
   loadCanvas()
-  setInterval(drawCanvas, 100)
+  drawCanvas()
+  // setInterval(drawCanvas, 100)
 })
 
 function loadCanvas() {

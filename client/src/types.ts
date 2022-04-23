@@ -2,10 +2,36 @@
 
 // Configuration Types
 
+import type {Nexus} from "@/views/terminal/nexus";
+
+
 export interface Controller {
     name: string
     address: string
     status?: boolean
+}
+
+export interface Remote {
+    metadata: Metadata,
+    entities: Entity[],
+    attributes: Attribute[],
+    devices: Device[],
+    networks: Network[],
+    endpoints: Endpoint[],
+    timings: any[],
+    nexus: Nexus
+}
+
+export interface Metadata {
+    name: string;
+    version: string;
+    environment: string;
+    ipv4: string;
+    ipv6: string;
+    hostname: string;
+    mac: string;
+    go: string;
+    cores: number;
 }
 
 export interface Defaults {

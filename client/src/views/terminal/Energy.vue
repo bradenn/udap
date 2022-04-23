@@ -171,62 +171,17 @@ let state = reactive({
 </script>
 
 <template>
-  <div>
-    <h2 class="px-1 label-o5">Energy Allocations</h2>
-  </div>
+
   <div class="d-flex flex-column p-2 element gap-2">
+    <div>
+      <h3 class="px-1 label-o5">Energy Allocations</h3>
+    </div>
     <AllocationBar :allocatable="4" :allocations="state.ups" name="Battery Reserve"></AllocationBar>
     <AllocationBar :allocatable="15" :allocations="state.side1" name="Squid 1"></AllocationBar>
     <AllocationBar :allocatable="15" :allocations="state.side2" name="Squid 2"></AllocationBar>
-
   </div>
 </template>
 
 <style lang="scss" scoped>
-.power-chart-meta {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-radius: 0.25rem;
-  color: rgba(255, 255, 255, 0.25);
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.05);
-}
 
-.power-chart-buttons {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-}
-
-.power-chart-id {
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: rgba(255, 255, 255, 0.4);
-  padding: 0.125rem 0.25rem;
-}
-
-.power-chart {
-  display: flex;
-  justify-content: start;
-  font-size: 0.6rem;
-  font-weight: 500;
-  align-content: start;
-  align-items: start;
-  gap: 0.125rem;
-}
-
-.power-chart-point {
-  min-width: 2.75rem;
-  border-radius: 0.25rem;
-  height: 4rem;
-  width: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  justify-content: start;
-
-}
 </style>

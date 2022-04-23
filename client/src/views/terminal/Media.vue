@@ -274,17 +274,4 @@ export default {
   backdrop-filter: blur(2px);
 }
 
-.whiteboard {
-
-  margin-top: 0.125em;
-  height: 100%;
-  font-family: "SF Pro Text", sans-serif;
-  font-size: 15px;
-  font-weight: 400;
-  padding: 0.5em 1em;
-
-  border-radius: 10px;
-  box-shadow: 0 0 32px 4px rgba(0, 0, 0, 0.06);
-
-}
 </style>

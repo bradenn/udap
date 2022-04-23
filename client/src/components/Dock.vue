@@ -15,4 +15,19 @@ let props = defineProps<{
 
 <style lang="scss">
 
+.dock {
+  @extend .surface;
+  display: flex;
+  flex-direction: row;
+
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+
+  opacity: 1;
+  height: 2.5rem;
+  border-radius: 0.6rem !important;
+  padding: 0.25rem 0.25rem !important;
+
+}
 </style>

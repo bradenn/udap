@@ -1,8 +1,9 @@
 const {app, BrowserWindow} = require("electron");
 const path = require("path");
-
+app.commandLine.appendSwitch("js-flags", "--max-old-space-size=4096")
 
 function createWindow() {
+
     const win = new BrowserWindow({
         width: 800,
         height: 600,

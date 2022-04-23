@@ -5,10 +5,9 @@ import Light from "@/components/widgets/Light.vue";
 import {inject, onMounted, reactive, watch} from "vue";
 import Weather from "@/components/widgets/Weather.vue";
 import router from "@/router";
-import Earth from "@/components/widgets/Earth.vue";
 import Widget from "@/components/widgets/Widget.vue";
 import App from "@/components/App.vue";
-import Shortcut from "@/components/Shortcut.vue";
+import Spotify from "@/components/widgets/Spotify.vue";
 
 // Define the local reactive data for this view
 let state = reactive<{
@@ -40,7 +39,7 @@ function compareName(a: any, b: any): number {
 }
 
 // Inject the remote udap context
-const remote: any = inject('remote')
+let remote: any = inject('remote')
 
 
 // Force the light state to be read on load
@@ -76,34 +75,34 @@ let ui: any = inject("ui")
 
 <template>
 
-  <div :class="`${ui.outlines?'show-outline':''}`" class="widget-grid mt-1">
-    <Widget :cols="1" :pad="3" :rows="1" size="md">
-      <Weather></Weather>
-    </Widget>
+  <div :class="`${ui.outlines?'show-outline':''}`" class="d-flex justify-content-between gap-3 mt-2x pb-4 h-100 w-100">
 
-    <Widget :cols="2" :pad="3" :rows="2" size="md">
-      <Light v-for="light in state.lights.slice(0, 4)" :key="light.id" :entity="light"
-             class="flex-grow-1 h-100"></Light>
-    </Widget>
+    <div class="widget-grid flex-grow-1">
+      <Widget :cols="4" :rows="6" class="d-flex flex-column" size="sm">
+        <Light v-for="light in state.lights.slice(0, 4)" :key="light.id" :entity="light"></Light>
+      </Widget>
 
-    <Widget :cols="4" :pad="3" :rows="3" size="md">
-      <App v-for="i in state.apps" :icon="i.icon || 'fa-square'" :name="i.name" @click="router.push(i.path)"></App>
-    </Widget>
 
-    <Widget :cols="2" :pad="3" :rows="4" size="md">
-      <Shortcut v-for="i in state.shortcuts" :icon="i.icon || 'fa-square'" :name="i.name"></Shortcut>
-    </Widget>
+      <!--      <Widget :cols="3" :rows="1" size="sm">-->
+      <!--        <Shortcut v-for="i in state.shortcuts" :icon="i.icon || 'fa-square'" :name="i.name"></Shortcut>-->
+      <!--      </Widget>-->
+    </div>
 
-    <Widget :pad="3" size="md">
-      <Earth></Earth>
-    </Widget>
-    <Widget :pad="3" size="md"></Widget>
-    <Widget :pad="3" size="md"></Widget>
-    <Widget :pad="3" size="md"></Widget>
-
+    <div :class="`${ui.outlines?'show-outline':''}`" class="widget-grid-vertical" style="max-width: 13rem">
+      <Widget :cols="1" :rows="1" size="sm">
+        <Spotify></Spotify>
+      </Widget>
+      <Widget :cols="1" :rows="2" size="sm">
+        <Weather></Weather>
+      </Widget>
+      <Widget :cols="1" :rows="3" class="" size="sm"
+              style="">
+        <div class="widget-apps">
+          <App v-for="i in state.apps" :icon="i.icon || 'fa-square'" :name="i.name" @click="router.push(i.path)"></App>
+        </div>
+      </Widget>
+    </div>
   </div>
-
-
 </template>
 
 <style lang="scss">
@@ -115,44 +114,11 @@ $widget-aspect-nested: 1.1618;
 $widget-rows: 2;
 $widget-cols: 4;
 
-$widget-2x-width: 15rem;
+$widget-2x-width: 14rem;
 
-.widget-sm {
-  flex-grow: 1;
-  aspect-ratio: $widget-aspect !important;
-  //outline: 1px solid white;
-}
-
-.widget-app-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-}
-
-$macro-width: 6.5rem;
+$macro-width: 12rem;
 $macro-height: 2rem;
 
-.widget-macro {
-  width: $macro-width;
-  height: $macro-height;
-  display: flex;
-  align-self: center;
-  align-items: center;
-  justify-content: start;
-  padding-inline: 0.5rem;
-  font-size: 0.8rem;
-  gap: 0.375rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.4);
-  /*outline: 1px solid white;*/
-}
-
-.widget-macro > i {
-  text-shadow: 0 0 2px black;
-  float: left;
-}
 
 .widget-macro > div {
   font-size: 0.7rem;
@@ -173,6 +139,7 @@ $macro-height: 2rem;
   color: rgba(200, 200, 200, 0.6);
   /*outline: 1px solid white;*/
 }
+
 
 .widget-app > i {
   text-shadow: 0 0 2px black;
@@ -206,16 +173,15 @@ $macro-height: 2rem;
 
 .widget-apps {
 
-  aspect-ratio: $widget-aspect !important;
-
   display: grid;
   justify-content: flex-start;
   align-items: flex-start;
   align-content: flex-start;
-  grid-row-gap: 0.5rem !important;
-  grid-column-gap: 0.25rem !important;
-  padding: 1rem;
-  grid-template-rows: repeat(4, minmax(3.25rem, 1fr));
+
+  grid-row-gap: 0.5rem;
+  margin-top: 0.375rem;
+  grid-column-gap: 0;
+  grid-template-rows: repeat(3, minmax(3.25rem, 1fr));
   grid-template-columns: repeat(4, minmax(3.25rem, 1fr));
 }
 
@@ -275,18 +241,33 @@ $macro-height: 2rem;
   }
 }
 
+.widget-grid-vertical {
+
+  display: grid;
+  justify-content: flex-start;
+  align-items: flex-start;
+  align-content: flex-start;
+
+  grid-template-rows: repeat(9, minmax(3rem, 1fr));
+  grid-template-columns: repeat(1, minmax(13rem, 1fr));
+  gap: $widget-gap;
+
+}
+
 .widget-grid {
   display: grid;
-  align-items: center;
-  align-content: center;
-  grid-template-rows: repeat(2, 1fr);
-  grid-template-columns: repeat(auto-fill, minmax($widget-2x-width, 1fr));
+  justify-content: flex-start;
+  align-items: flex-start;
+  align-content: flex-start;
+
+  grid-template-rows: repeat(8, minmax(96px, 1fr));
+  grid-template-columns: repeat(16, 1fr);
   gap: $widget-gap;
 
 }
 
 .widget {
-  animation: animateIn 42ms ease;
+  animation: animateIn 20ms ease;
 }
 
 @keyframes animateIn {
@@ -306,7 +287,7 @@ $macro-height: 2rem;
   }
 }
 
-.show-outline > div {
+.show-outline > * > .widget {
   border-radius: 0.5rem;
   outline: 3px dashed rgba(255, 255, 255, 0.125);
 }

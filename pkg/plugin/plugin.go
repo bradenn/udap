@@ -26,7 +26,7 @@ func Load(path string) (pl UdapPlugin, err error) {
 	// Attempt to open that plugin
 	p, err := plugin.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not open plugin at path '%s': %s", path, err.Error())
+		return nil, fmt.Errorf("plugin at '%s' failed to mount: %s", path, err.Error())
 	}
 	// Attempt to access the Plugin variable to interface with the code
 	lookup, err := p.Lookup("Module")

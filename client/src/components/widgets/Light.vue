@@ -1,25 +1,35 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import {inject, onMounted, reactive, watch} from "vue";
+import {inject, onMounted, reactive, watchEffect} from "vue";
 import AttributeComponent from "@/components/entity/Attribute.vue"
 import type {Attribute, Entity} from "@/types"
-
 // Establish a local reactive state
 let state = reactive<{
   active: boolean,
   showMenu: boolean,
   activeColor: string,
   powerAttribute: Attribute,
+  shortStatus: string
   levelAttribute: Attribute,
   attributes: Attribute[],
 }>({
   active: false,
   showMenu: false,
   activeColor: "rgba(255,255,255,1)",
+  shortStatus: "",
   levelAttribute: {} as Attribute,
   powerAttribute: {} as Attribute,
   attributes: []
 })
+
+
+function generateState() {
+  if (state.levelAttribute.value) {
+    state.shortStatus = (state.active) ? `ON${(state.levelAttribute) ? ', ' + state.levelAttribute.value + '%' : ''}` : 'OFF'
+  } else {
+    state.shortStatus = (state.active) ? `ON` : 'OFF'
+  }
+}
 
 // Define the prop for this entity
 let props = defineProps<{
@@ -28,17 +38,16 @@ let props = defineProps<{
 
 // Inject the remote manifest
 let remote: any = inject('remote')
-let hideHome: any = inject('hideHome')
+let context: any = inject('context')
 
 // When the view loads, force the local state to update
 onMounted(() => {
   updateLight(remote.attributes)
+  generateState()
 })
 
 // Ripple any attribute changes down to the local reactive state
-watch(remote.attributes, (newAttributes: Attribute[]) => {
-  updateLight(newAttributes)
-})
+watchEffect(() => updateLight(remote.attributes))
 
 // Compare the defined order to sort the lights
 function compareOrder(a: any, b: any): number {
@@ -59,18 +68,21 @@ function updateLight(attributes: Attribute[]): void {
     state.levelAttribute = dim as Attribute
   }
   state.active = on.value === "true" || on.request === "true"
+  generateState()
 }
 
 // Toggle the state of the context menu
 function toggleMenu(): void {
   state.showMenu = !state.showMenu
-  hideHome(state.showMenu)
+  // context(state.showMenu)
 }
 </script>
 
 <template>
-  <div>
-    <div :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">
+
+  <div v-if="state.showMenu" class="context context-light" @click="toggleMenu"></div>
+  <div class="w-100 h-100">
+    <div v-if="!state.showMenu" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">
       <div class="entity-header mb-2 ">
         <div class="label-o5">
           {{ props.entity.icon || '􀛮' }}
@@ -81,17 +93,37 @@ function toggleMenu(): void {
         <div class="fill"></div>
 
       </div>
-      <div v-if="state.powerAttribute" class="d-flex justify-content-between w-100">
-        <div class="label-xxs label-o2 label-w500"
-             v-text="(state.active) ? `ON${(state.levelAttribute) ? ', ' + state.levelAttribute.value + '%' : ''}` : 'OFF'"></div>
-        <div class="label-c3 float-end align-self-center label-o2 label-w500">
-          ~{{ Math.round(parseInt(state.levelAttribute.value, 10) / 100.0 * 7 * 100) / 100 }}w
+      <div v-if="state.powerAttribute" class="d-flex justify-content-between align-items-center w-100">
+
+        <div class="label-c1 label-o2 label-w500">{{ state.shortStatus }}</div>
+
+        <div v-if="state.powerAttribute.value ==='true'" class="label-c2 float-end label-o1 label-w600 label-mono">
+          {{ Math.round((parseInt(state.levelAttribute.value, 10) || 20) / 100.0 * 7 * 100) / 100 }}W
         </div>
       </div>
     </div>
-
-    <div v-if="state.showMenu" class="" @click="toggleMenu">
-      <div class="entity-context">
+    <div v-else class="entity-small element quickedit">
+      <div class="entity-header mb-1 d-flex justify-content-between align-items-center w-100">
+        <div class="d-flex">
+          <div class="label-o5">
+            {{ props.entity.icon || '􀛮' }}
+          </div>
+          <div class="label-c1 label-w400 label-o4 px-2">
+            {{ props.entity.name }}
+          </div>
+        </div>
+        <div class="" @click="toggleMenu">
+          <i class="fa-solid fa-circle-xmark label-o3 label-c1 label-w400 px-1"></i>
+        </div>
+      </div>
+      <div class="w-100 d-flex flex-column gap">
+        <div
+            v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key !== 'on' )">
+          <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
+                              small></AttributeComponent>
+        </div>
+      </div>
+      <div v-if="false" class="entity-small element ">
         <div class="element surface d-flex flex-column gap py-4 px-3 pt-2">
           <div class="d-flex justify-content-start align-items-end align-content-end" v-on:click.stop>
             <div class="mt-1">
@@ -107,12 +139,10 @@ function toggleMenu(): void {
             </div>
           </div>
           <div class="h-sep"></div>
-          <div class="context-container gap v-bar">
-            <div
-                v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key !== 'on')">
-              <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
-                                  small></AttributeComponent>
-            </div>
+          <div
+              v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key !== 'on')">
+            <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
+                                small></AttributeComponent>
           </div>
         </div>
       </div>
@@ -121,6 +151,30 @@ function toggleMenu(): void {
 </template>
 
 <style lang="scss" scoped>
+
+.entity-small:not(.quickedit):active {
+  animation: click 100ms ease forwards;
+}
+
+.entity-small {
+  animation: click 100ms ease forwards;
+}
+
+
+@keyframes click {
+  0% {
+    transform: scale(1.0);
+  }
+  25% {
+    transform: scale(0.98);
+  }
+  30% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 
 .entity-context {
   position: absolute;

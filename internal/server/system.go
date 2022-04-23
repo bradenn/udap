@@ -9,16 +9,16 @@ import (
 	"runtime"
 )
 
-func GetOutboundIP() net.IP {
+func GetOutboundIP() (net.IP, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-
-	}
 	defer conn.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
-	return localAddr.IP
+	return localAddr.IP, nil
 }
 
 func MacFromIpv4(ipv4 string) (string, error) {
@@ -57,7 +57,12 @@ var SystemInfo System
 
 func systemInfo() (System, error) {
 
-	ipv4 := GetOutboundIP().String()
+	ipv4Obj, err := GetOutboundIP()
+	if err != nil {
+		return System{}, err
+	}
+
+	ipv4 := ipv4Obj.String()
 
 	hostname, err := os.Hostname()
 	if err != nil {

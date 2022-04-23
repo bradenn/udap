@@ -96,7 +96,7 @@ func log(logType LogType, format string, args ...interface{}) {
 	var body string
 
 	if format == "" {
-		body = fmt.Sprint(args)
+		body = fmt.Sprint(args...)
 	} else {
 		body = fmt.Sprintf(format, args...)
 	}

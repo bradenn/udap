@@ -1,6 +1,6 @@
 {
   "name": "nexus",
-  "version": "2.10.2",
+  "version": "2.10.4",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vue-tsc --noEmit && vite",
@@ -22,6 +22,7 @@
     "sass": "^1.45.1",
     "sass-loader": "^12.4.0",
     "simple-keyboard": "^3.4.21",
+    "stats.js": "^0.17.0",
     "vue": "3",
     "vue-chartjs": "^3.5.1",
     "vue-google-charts": "^0.3.3",
@@ -30,6 +31,7 @@
     "vuex": "^3.6.2"
   },
   "devDependencies": {
+    "@types/stats.js": "^0.17.0",
     "@vitejs/plugin-vue": "^1.6.0",
     "@vue/compiler-sfc": "^3.2.6",
     "@vue/tsconfig": "^0.1.3",

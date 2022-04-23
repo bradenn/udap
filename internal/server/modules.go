@@ -142,10 +142,9 @@ func (m *Modules) buildModuleDir(dir string) error {
 			defer wg.Done()
 			if err = m.buildFromSource(path); err != nil {
 				// If an error occurs, print it to console
-				log.ErrF(err, "failed to build module candidate '%s'", path)
+				log.ErrF(err, "compiling module at '%s' failed", path)
 				return
 			}
-
 			log.Event("Module '%s' compiled.", filepath.Base(path))
 		}(p)
 	}

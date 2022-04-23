@@ -349,7 +349,9 @@ func (s *Spotify) push() error {
 	if err != nil {
 		return err
 	}
-
+	if s.id == "" {
+		return nil
+	}
 	err = s.Attributes.Set(s.id, "current", string(marshal))
 	if err != nil {
 		return err

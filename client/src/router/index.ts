@@ -3,9 +3,9 @@
 import {createRouter, createWebHistory} from "vue-router";
 
 // Settings views
-import Settings from "@/views/settings/Settings.vue";
-import Preferences from "@/views/settings/Preferences.vue";
-import Connection from "@/views/settings/Connection.vue";
+import Settings from "@/views/terminal/settings/Settings.vue";
+import Preferences from "@/views/terminal/settings/Preferences.vue";
+import Connection from "@/views/terminal/settings/Connection.vue";
 
 // Setup view components
 import Setup from "@/views/setup/Setup.vue";
@@ -30,8 +30,12 @@ import Stopwatch from "../views/terminal/timing/Stopwatch.vue";
 import Timer from "../views/terminal/timing/Timer.vue";
 
 // Weather Routes
-import WeatherApp from "../views/weather/Weather.vue";
-import Summary from "../views/weather/Summary.vue";
+import WeatherApp from "../views/terminal/weather/Weather.vue";
+import Summary from "../views/terminal/weather/Summary.vue";
+
+
+// Whiteboard Routes
+import Whiteboard from "../views/terminal/whiteboard/Whiteboard.vue";
 
 const defaultRoute = {
     path: '/',
@@ -79,7 +83,7 @@ const settingsRoutes = {
 
 const exogeologyRoutes = {
     path: '/terminal/exogeology',
-    name: 'Exogeology',
+    name: 'ExoGeo',
     redirect: '/terminal/exogeology/earth',
     component: Exogeology,
     icon: 'fa-satellite',
@@ -136,6 +140,13 @@ const weatherRoutes = {
     ]
 }
 
+const whiteboardRoutes = {
+    path: '/terminal/whiteboard',
+    name: 'Whiteboard',
+    component: Whiteboard,
+    icon: 'fa-highlighter',
+}
+
 const terminalRoutes = {
     path: '/terminal',
     name: 'Terminal',
@@ -163,7 +174,8 @@ const terminalRoutes = {
         settingsRoutes,
         timingRoutes,
         exogeologyRoutes,
-        weatherRoutes
+        weatherRoutes,
+        whiteboardRoutes
     ]
 }
 

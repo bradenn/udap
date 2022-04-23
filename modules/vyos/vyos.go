@@ -49,7 +49,7 @@ func (v *Vyos) Run() error {
 
 func (v *Vyos) scanSubnet(network models.Network) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
 	scanner, err := nmap.NewScanner(

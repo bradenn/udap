@@ -1,6 +1,7 @@
 .env
 selfsigned.cert
 selfsigned.key
+*.css
 *.so
 /local
 .idea
@@ -10,7 +11,7 @@ private-key.pem
 /pkg
 spotify.json
 /db-data/*
-/client/assets/js/
+/client/src/assets/js/
 **/yarn-error.log
-/client/assets/**.css
-/client/assets/**.css.map
+/client/src/assets/**.css
+/client/src/assets/**.css.map
