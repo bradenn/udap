@@ -6,6 +6,10 @@ import {createRouter, createWebHistory} from "vue-router";
 import Settings from "@/views/terminal/settings/Settings.vue";
 import Preferences from "@/views/terminal/settings/Preferences.vue";
 import Connection from "@/views/terminal/settings/Connection.vue";
+import Modules from "@/views/terminal/settings/Modules.vue";
+import Endpoints from "@/views/terminal/settings/Endpoints.vue";
+import Timings from "@/views/terminal/settings/Timings.vue";
+
 
 // Setup view components
 import Setup from "@/views/setup/Setup.vue";
@@ -58,6 +62,7 @@ const setupRoutes = {
             name: 'Welcome',
             component: Welcome
         },
+
     ]
 }
 
@@ -77,6 +82,21 @@ const settingsRoutes = {
             path: '/terminal/settings/connection',
             name: 'Connection',
             component: Connection
+        },
+        {
+            path: '/terminal/settings/modules',
+            name: 'Modules',
+            component: Modules
+        },
+        {
+            path: '/terminal/settings/endpoints',
+            name: 'Endpoints',
+            component: Endpoints
+        },
+        {
+            path: '/terminal/settings/timings',
+            name: 'Timings',
+            component: Timings
         },
     ]
 }

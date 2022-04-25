@@ -13,6 +13,15 @@ import SidebarItem from "@/components/sidebar/SidebarItem.vue";</script>
       <router-link class="" draggable="false" to="/terminal/settings/connection">
         <SidebarItem icon="cloud" name="Connection"></SidebarItem>
       </router-link>
+      <router-link class="" draggable="false" to="/terminal/settings/modules">
+        <SidebarItem icon="layer-group" name="Modules"></SidebarItem>
+      </router-link>
+      <router-link class="" draggable="false" to="/terminal/settings/endpoints">
+        <SidebarItem icon="expand" name="Endpoints"></SidebarItem>
+      </router-link>
+      <router-link class="" draggable="false" to="/terminal/settings/timings">
+        <SidebarItem icon="clock" name="Timings"></SidebarItem>
+      </router-link>
     </Sidebar>
     <div class="flex-grow-1">
       <router-view/>

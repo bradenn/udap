@@ -33,6 +33,7 @@ func (a *Attribute) Path() string {
 
 // SetValue overrides any existing value
 func (a *Attribute) SetValue(val string) {
+	a.Request = val
 	// Overwrite the value
 	a.Value = val
 	// Update the timestamp for the current values time

@@ -25,7 +25,5 @@ const props = defineProps<Props>()
 </template>
 
 <style lang="scss">
-.sidebar-item {
 
-}
 </style>

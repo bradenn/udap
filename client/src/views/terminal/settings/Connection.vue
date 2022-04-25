@@ -1,13 +1,10 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {inject} from "vue";
-import {Preference} from "@/preferences";
-import {PreferenceTypes} from "@/types";
 
 let remote = inject('remote')
 let preferences = inject('preferences')
 
-let controller = new Preference(PreferenceTypes.Controller).get()
 
 </script>
 
@@ -26,13 +23,14 @@ let controller = new Preference(PreferenceTypes.Controller).get()
         <div class="h-sep"></div>
         <div class="d-flex justify-content-between">
           <div class="label-xs label-o5">Address</div>
-          <div class="label-xs label-o4">{{ controller }}</div>
+
         </div>
       </div>
       <div class="element">
         <div class="sidebar-item d-flex justify-content-start pb-1 px-1">
           <div class="label-w500 label-o4 label-xs lh-2"><i :class="`fa-solid fa-cloud fa-fw`"></i></div>
           <div class="label-w500 label-o6 label-xs lh-2 px-2">Nexus</div>
+
         </div>
 
 

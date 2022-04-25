@@ -2,7 +2,6 @@
 
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import moment from "moment";
-import Loader from "@/components/Loader.vue";
 import type {Attribute, Entity, Remote} from "@/types";
 import type {CurrentWeather, Weather} from "@/weather"
 import {getWeatherIcon, getWeatherState} from "@/weather"
@@ -148,7 +147,7 @@ function toggleMenu() {
             }}
           </div>
           <div class="label-c2 label-o4">
-            <Loader size="sm"></Loader>
+            --
           </div>
           <div class="label-c4 label-o3 label-w500">&nbsp;--°</div>
 

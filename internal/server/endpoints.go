@@ -46,10 +46,10 @@ func (e *Endpoints) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	e.router.Use(verifyToken())
 	// Load JWT Keys
 	loadKeys()
-
+	// Route the websocket listening endpoint
 	e.router.Get("/socket/{token}", e.socketAdaptor)
+	// Route the endpoint registration
 	e.router.Get("/endpoints/register/{accessKey}", e.registerEndpoint)
-
 	return nil
 }
 

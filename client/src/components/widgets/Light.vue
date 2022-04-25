@@ -5,6 +5,7 @@ import AttributeComponent from "@/components/entity/Attribute.vue"
 import type {Attribute, Entity} from "@/types"
 // Establish a local reactive state
 let state = reactive<{
+  loading: boolean,
   active: boolean,
   showMenu: boolean,
   activeColor: string,
@@ -13,6 +14,7 @@ let state = reactive<{
   levelAttribute: Attribute,
   attributes: Attribute[],
 }>({
+  loading: true,
   active: false,
   showMenu: false,
   activeColor: "rgba(255,255,255,1)",
@@ -42,6 +44,7 @@ let context: any = inject('context')
 
 // When the view loads, force the local state to update
 onMounted(() => {
+  state.loading = true
   updateLight(remote.attributes)
   generateState()
 })
@@ -69,6 +72,7 @@ function updateLight(attributes: Attribute[]): void {
   }
   state.active = on.value === "true" || on.request === "true"
   generateState()
+  state.loading = false
 }
 
 // Toggle the state of the context menu
@@ -81,7 +85,21 @@ function toggleMenu(): void {
 <template>
 
   <div v-if="state.showMenu" class="context context-light" @click="toggleMenu"></div>
-  <div class="w-100 h-100">
+  <div v-if="state.loading" class="w-100 h-100">
+    <div class="entity-small element">
+      <div class="entity-header mb-2 ">
+        <div class="label-o5">
+          {{ props.entity.icon || '􀛮' }}
+        </div>
+        <div class="label-c1 label-w400 label-o4 px-2">
+          {{ props.entity.name }}
+        </div>
+        <div class="fill"></div>
+
+      </div>
+    </div>
+  </div>
+  <div v-else class="w-100 h-100">
     <div v-if="!state.showMenu" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">
       <div class="entity-header mb-2 ">
         <div class="label-o5">
@@ -112,13 +130,15 @@ function toggleMenu(): void {
             {{ props.entity.name }}
           </div>
         </div>
+        <AttributeComponent :attribute="state.powerAttribute" :entity-id="props.entity.id"
+                            small></AttributeComponent>
         <div class="" @click="toggleMenu">
           <i class="fa-solid fa-circle-xmark label-o3 label-c1 label-w400 px-1"></i>
         </div>
       </div>
       <div class="w-100 d-flex flex-column gap">
         <div
-            v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key !== 'on' )">
+            v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key === 'dim' )">
           <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
                               small></AttributeComponent>
         </div>

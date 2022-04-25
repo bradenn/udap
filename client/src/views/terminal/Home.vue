@@ -79,7 +79,11 @@ let ui: any = inject("ui")
 
     <div class="widget-grid flex-grow-1">
       <Widget :cols="4" :rows="6" class="d-flex flex-column" size="sm">
-        <Light v-for="light in state.lights.slice(0, 4)" :key="light.id" :entity="light"></Light>
+        <Light v-for="light in state.lights.slice(0, 6)" :key="light.id" :entity="light"></Light>
+      </Widget>
+      <Widget :cols="4" :rows="6" class="d-flex flex-column" size="sm">
+        <Light v-for="light in state.lights.filter(l => l.name.startsWith('ch')).sort((a, b) => a.created-b.created)"
+               :key="light.id" :entity="light"></Light>
       </Widget>
 
 

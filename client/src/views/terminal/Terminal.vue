@@ -6,7 +6,7 @@ import {inject, onMounted, provide, reactive, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
 import Diagnostics from "@/components/Diagnostics.vue";
-import type {Identifiable, Metadata, Remote} from "@/types";
+import type {Identifiable, Metadata, Remote, Timing} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
 
@@ -78,8 +78,8 @@ function handleMessage(target: Target, data: any) {
       }
       break
     case Target.Timing:
-      if (remote.timings.find((e: Identifiable) => e.id === data.id)) {
-        remote.timings = remote.timings.map((a: Identifiable) => a.id === data.id ? data : a)
+      if (remote.timings.find((e: Timing) => e.pointer === data.pointer)) {
+        remote.timings = remote.timings.map((a: Timing) => a.pointer === data.pointer ? data : a)
       } else {
         remote.timings.push(data)
       }

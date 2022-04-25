@@ -18,8 +18,19 @@ export interface Remote {
     devices: Device[],
     networks: Network[],
     endpoints: Endpoint[],
-    timings: any[],
+    timings: Timing[],
     nexus: Nexus
+}
+
+export interface Timing {
+    pointer: number;
+    name: string;
+    start: string;
+    stop: string;
+    delta: number;
+    frequency: number;
+    complete: boolean;
+    depth: number;
 }
 
 export interface Metadata {
@@ -67,7 +78,7 @@ export enum PreferenceTypes {
 
 // Udap Models
 
-export declare interface Attribute {
+export interface Attribute {
     created: string;
     id: string;
     value: string;
@@ -80,7 +91,7 @@ export declare interface Attribute {
     order: number;
 }
 
-export declare interface Device {
+export interface Device {
     created: string;
     updated: string;
     id: string;
@@ -93,7 +104,7 @@ export declare interface Device {
     ipv6: string;
 }
 
-export declare interface Endpoint {
+export interface Endpoint {
     created: string;
     updated: string;
     id: string;
@@ -104,7 +115,7 @@ export declare interface Endpoint {
     key: string;
 }
 
-export declare interface Entity {
+export interface Entity {
     created: string;
     updated: string;
     id: string;
@@ -116,7 +127,7 @@ export declare interface Entity {
     neural: string;
     locked: boolean;
     protocol: string;
-    icon?: string;
+    icon?: string | 'd';
     frequency: number;
     predicted: string;
     state: string;
@@ -125,7 +136,7 @@ export declare interface Entity {
     live: boolean;
 }
 
-export declare interface Network {
+export interface Network {
     created: string;
     updated: string;
     id: string;
@@ -137,7 +148,7 @@ export declare interface Network {
     range: string;
 }
 
-export declare interface User {
+export interface User {
     created: string;
     updated: string;
     id: string;

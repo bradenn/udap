@@ -29,6 +29,11 @@ let props = defineProps<App>()
   justify-content: center;
   flex-direction: column;
   align-items: center;
+
+}
+
+.app-icon::before {
+
 }
 
 .app-icon {

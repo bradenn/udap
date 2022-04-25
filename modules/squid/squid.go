@@ -19,6 +19,7 @@ type Squid struct {
 	plugin.Module
 	dmx        ft232.DMXController
 	state      map[int]int
+	entities   map[int]string
 	stateMutex sync.RWMutex
 	connected  bool
 }
@@ -33,6 +34,58 @@ func init() {
 	}
 
 	Module.Config = config
+}
+
+// setChannelValue sends a dmx signal to the provide channel with the provided value
+func (s *Squid) setChannelValue(channel int, value int) (err error) {
+	if !s.connected {
+		return fmt.Errorf("squid is not connected")
+	}
+
+	if value > 100 || value < 0 {
+		return fmt.Errorf("desired value '%d' is invalid", value)
+	}
+
+	adjustedValue := (value / 100.0) * 255
+
+	s.stateMutex.Lock()
+	err = s.dmx.SetChannel(int16(channel), byte(adjustedValue))
+	if err != nil {
+		return err
+	}
+
+	s.stateMutex.Unlock()
+	return nil
+}
+
+// getChannelValue polls the dmx controller for the current value of the channel
+func (s *Squid) getChannelValue(channel int) (value int, err error) {
+	if !s.connected {
+		return 0, fmt.Errorf("squid is not connected")
+	}
+	s.stateMutex.Lock()
+	res, err := s.dmx.GetChannel(int16(channel))
+	if err != nil {
+		return 0, err
+	}
+	s.stateMutex.Unlock()
+	newValue := (res / 255.0) * 100.0
+	return int(newValue), nil
+}
+
+// isChannelOn provides a boolean describing the on state of the channel
+func (s *Squid) isChannelOn(channel int) (value bool, err error) {
+	if !s.connected {
+		return false, fmt.Errorf("squid is not connected")
+	}
+	channelValue, err := s.getChannelValue(channel)
+	if err != nil {
+		return false, err
+	}
+	if channelValue > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (s *Squid) findDevices() error {
@@ -56,24 +109,36 @@ func (s *Squid) findDevices() error {
 			Entity:  res.Id,
 		}
 
+		s.entities[i] = res.Id
+
 		on.FnGet(func() (string, error) {
 			state := "off"
-			s.stateMutex.Lock()
-			if s.state[i] > 0 {
+			channelOn, err := s.isChannelOn(i)
+			if err != nil {
+				return "", err
+			}
+
+			if channelOn {
 				state = "on"
 			}
-			s.stateMutex.Unlock()
+
 			return state, nil
 		})
 
 		on.FnPut(func(value string) error {
-			s.stateMutex.Lock()
+
 			if value == "on" {
-				s.state[i] = 100
+				err = s.setChannelValue(i, 100)
+				if err != nil {
+					return err
+				}
 			} else {
-				s.state[i] = 0
+				err = s.setChannelValue(i, 0)
+				if err != nil {
+					return err
+				}
 			}
-			s.stateMutex.Unlock()
+
 			return nil
 		})
 
@@ -93,23 +158,27 @@ func (s *Squid) findDevices() error {
 
 		dim.FnGet(func() (string, error) {
 			state := "0"
-
-			out, err := s.dmx.GetChannel(int16(i))
+			value, err := s.getChannelValue(i)
 			if err != nil {
+				return "", err
 			}
-			state = fmt.Sprintf("%d", (out/255.0)*100)
+			state = fmt.Sprintf("%d", value)
 
 			return state, nil
 		})
 
 		dim.FnPut(func(value string) error {
-			s.stateMutex.Lock()
+
 			parseInt, err := strconv.ParseInt(value, 10, 8)
 			if err != nil {
 				return err
 			}
-			s.state[i] = int((parseInt / 100.0) * 255.0)
-			s.stateMutex.Unlock()
+
+			err = s.setChannelValue(i, int(parseInt))
+			if err != nil {
+				return err
+			}
+
 			return nil
 		})
 
@@ -118,10 +187,6 @@ func (s *Squid) findDevices() error {
 			return err
 		}
 
-		s.stateMutex.Lock()
-		s.state[i] = 0
-		s.stateMutex.Unlock()
-
 	}
 
 	return nil
@@ -129,9 +194,11 @@ func (s *Squid) findDevices() error {
 
 // Setup is called once at the launch of the module
 func (s *Squid) Setup() (plugin.Config, error) {
+
 	return s.Config, nil
 }
-func (s *Squid) Setup2() (plugin.Config, error) {
+
+func (s *Squid) connect() error {
 	s.connected = false
 	config := dmx.NewConfig(0x02)
 	config.GetUSBContext()
@@ -147,55 +214,62 @@ func (s *Squid) Setup2() (plugin.Config, error) {
 	}()
 	err := s.dmx.Connect()
 	if err != nil {
-		return s.Config, err
+		return err
 	}
 	s.stateMutex = sync.RWMutex{}
 	s.state = map[int]int{}
+	s.entities = map[int]string{}
 	s.connected = true
 	err = s.findDevices()
 	if err != nil {
-		return s.Config, err
+		return err
 	}
 
-	return s.Config, nil
+	return nil
 }
 
-func (s *Squid) HandleState(channel int) func(state interface{}) error {
-	return func(state interface{}) error {
-		s.stateMutex.Lock()
-		if state == nil {
-			s.state[channel] = 0
-		} else {
-
-			parseInt, err := strconv.ParseInt(state.(string), 10, 16)
-			if err != nil {
-				return err
-			}
-			s.state[channel] = int(parseInt)
-		}
-		s.stateMutex.Unlock()
-		return nil
-	}
-}
-
-func (s *Squid) ReadState(channel int) func() interface{} {
-	return func() interface{} {
-		out, err := s.dmx.GetChannel(int16(channel))
+func (s *Squid) pull() error {
+	for i, entity := range s.entities {
+		state := "off"
+		channelOn, err := s.isChannelOn(i)
 		if err != nil {
-			return ""
+			return err
 		}
-		return out
+		if channelOn {
+			state = "on"
+		}
+		err = s.Attributes.Set(entity, "on", state)
+		if err != nil {
+			return err
+		}
+
+		state = "0"
+		value, err := s.getChannelValue(i)
+		if err != nil {
+			return err
+		}
+		state = fmt.Sprintf("%d", value)
+		err = s.Attributes.Set(entity, "dim", state)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+
 }
 
 // Update is called every cycle
 func (s *Squid) Update() error {
-
+	// pulse.Fixed(6000)
+	// defer pulse.End()
+	// if time.Since(s.Module.LastUpdate) >= time.Second*6 {
+	// 	s.Module.LastUpdate = time.Now()
+	// 	return s.pull()
+	// }
 	return nil
 }
 
 // Run is called after Setup, concurrent with Update
 func (s *Squid) Run() (err error) {
-
 	return nil
 }
