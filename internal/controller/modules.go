@@ -16,11 +16,12 @@ type Generic struct {
 
 type Modules struct {
 	PolyBuffer
-	bond *bond.Bond
+	Observable
 }
 
 func LoadModules() (m *Modules) {
 	m = &Modules{}
+
 	m.data = sync.Map{}
 	return m
 }
@@ -44,12 +45,19 @@ func (m *Modules) register(event bond.Msg) (res interface{}, err error) {
 	return nil, nil
 }
 
-func (m *Modules) Register(module *models.Module) error {
-	err := module.Emplace()
+func (m *Modules) Register(module string) error {
+
+	newModule := models.Module{
+		Persistent: store.Persistent{},
+		Path:       module,
+	}
+
+	err := newModule.Emplace()
 	if err != nil {
 		return err
 	}
-	m.Set(module.Id, module)
+
+	m.Set(newModule.Id, &newModule)
 	return nil
 }
 

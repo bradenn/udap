@@ -17,8 +17,10 @@ import (
 	"udap/pkg/plugin"
 )
 
+const DIR = "modules"
+
 type Modules struct {
-	modules map[string]plugin.UdapPlugin
+	modules map[string]plugin.ModuleInterface
 	ctrl    *controller.Controller
 	bond    *bond.Bond
 	running bool
@@ -30,14 +32,14 @@ func (m *Modules) Name() string {
 
 func (m *Modules) buildModules() error {
 	// Try to load modules from the plugin folders
-	err := m.buildModuleDir("modules")
+	err := m.buildModuleDir(DIR)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *Modules) values() (pls []plugin.UdapPlugin, err error) {
+func (m *Modules) values() (pls []plugin.ModuleInterface, err error) {
 	for _, up := range m.modules {
 		pls = append(pls, up)
 	}
@@ -47,7 +49,7 @@ func (m *Modules) values() (pls []plugin.UdapPlugin, err error) {
 func (m *Modules) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	m.ctrl = ctrl
 	m.bond = bond
-	m.modules = map[string]plugin.UdapPlugin{}
+	m.modules = map[string]plugin.ModuleInterface{}
 	err := m.buildModules()
 	if err != nil {
 		return err
@@ -57,21 +59,17 @@ func (m *Modules) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 
 func (m *Modules) Run() error {
 	// Attempt to load the modules in the directory 'modules'
-	err := m.loadModulesDir("modules")
+	err := m.loadModulesDir(DIR)
 	if err != nil {
 		return err
 	}
 	// Create a wait group so all plugins can init at the same time
 	wg := sync.WaitGroup{}
-	values, err := m.values()
-	if err != nil {
-		return err
-	}
-	wg.Add(len(values))
+	wg.Add(len(m.modules))
 	// Run the full lifecycle of all plugins
-	for _, module := range values {
+	for _, module := range m.modules {
 		// Run a go function to create a new thread
-		go func(p plugin.UdapPlugin) {
+		go func(p plugin.ModuleInterface) {
 			defer wg.Done()
 			if p == nil {
 				log.Err(fmt.Errorf("invalid plugin"))
@@ -79,7 +77,7 @@ func (m *Modules) Run() error {
 			}
 			// Defer the wait group to complete at the end
 			// Attempt to connect to the module
-			err = p.Connect(m.ctrl, m.bond)
+			err = p.Connect(m.ctrl)
 			if err != nil {
 				return
 			}
@@ -91,14 +89,13 @@ func (m *Modules) Run() error {
 				return
 			}
 			start := time.Now()
-			log.Event("Module '%s' v%s starting.", c.Name, c.Version)
 			// Attempt to run the module
 			err = p.Run()
 			if err != nil {
 				log.ErrF(err, "Module '%s' terminated prematurely: ", c.Name)
 				return
 			}
-			log.Event("Module '%s' exited. (%s)", c.Name, time.Since(start))
+			log.Event("Module '%s' loaded. (%s)", c.Name, time.Since(start))
 		}(module)
 	}
 	wg.Wait()
@@ -106,20 +103,21 @@ func (m *Modules) Run() error {
 }
 
 func (m *Modules) Update() error {
-	pulse.Fixed(2000)
+	pulse.Fixed(1000)
 	defer pulse.End()
-	values, err := m.values()
-	if err != nil {
-		return err
-	}
 
-	for _, mod := range values {
-		err = mod.Update()
-		time.Sleep(1 * time.Millisecond)
-		if err != nil {
-			return err
-		}
+	wg := sync.WaitGroup{}
+	wg.Add(len(m.modules))
+	for _, module := range m.modules {
+		go func(p plugin.ModuleInterface) {
+			err := p.Update()
+			if err != nil {
+				return
+			}
+		}(module)
 	}
+	wg.Wait()
+
 	return nil
 }
 
@@ -160,8 +158,6 @@ func (m *Modules) buildFromSource(path string) error {
 	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*15)
 	// Cancel the timeout of it exits before the timeout is up
 	defer cancelFunc()
-	// get the go executable from the environment
-	// goExec := os.Getenv("goExec")
 	// Prepare the command arguments
 	args := []string{"build", "-v", "-buildmode=plugin", "-o", out, path}
 	// Initialize the command structure
@@ -188,7 +184,8 @@ func (m *Modules) loadModulesDir(dir string) error {
 			continue
 		}
 		name := strings.Replace(filepath.Base(file), ".so", "", 1)
-		mod := p.(plugin.UdapPlugin)
+		mod := p.(plugin.ModuleInterface)
+
 		m.modules[name] = mod
 
 	}

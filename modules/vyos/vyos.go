@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"udap/internal/log"
 	"udap/internal/models"
 	"udap/pkg/plugin"
 )
@@ -49,7 +50,7 @@ func (v *Vyos) Run() error {
 
 func (v *Vyos) scanSubnet(network models.Network) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	scanner, err := nmap.NewScanner(
@@ -127,7 +128,7 @@ func (v *Vyos) fetchNetworks() error {
 	}
 	client := http.Client{
 		Transport: transport,
-		Timeout:   time.Second * 2,
+		Timeout:   time.Second * 10,
 	}
 
 	val := url.Values{}
@@ -168,12 +169,14 @@ func (v *Vyos) fetchNetworks() error {
 
 		_, err = v.Networks.Register(&network)
 		if err != nil {
+			log.Err(err)
 		}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			err = v.scanSubnet(network)
 			if err != nil {
+				log.Err(err)
 			}
 		}()
 
