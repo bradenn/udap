@@ -31,6 +31,7 @@ let state = reactive({
   color: "rgba(255,255,255,1)",
   canvas: {} as HTMLCanvasElement,
   grid: true,
+  size: 5,
 })
 
 onMounted(() => {
@@ -70,6 +71,7 @@ function initCanvas() {
 }
 
 
+
 function mouseDown(event: MouseEvent) {
   let ctx = state.canvas.getContext("2d") as CanvasRenderingContext2D
   ctx.beginPath()
@@ -78,14 +80,24 @@ function mouseDown(event: MouseEvent) {
   ctx.lineTo(event.pageX - offsets.x, event.pageY - offsets.y)
 }
 
+
 function mousePlot(event: MouseEvent) {
   let ctx = state.canvas.getContext("2d") as CanvasRenderingContext2D
   let offsets = getOffsetSum(state.canvas)
   ctx.lineTo(event.pageX - offsets.x, event.pageY - offsets.y)
   ctx.moveTo(event.pageX - offsets.x, event.pageY - offsets.y)
   ctx.strokeStyle = state.color
-  ctx.lineCap = "round"
-  ctx.lineWidth = 3
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = state.size;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "butt";
+  ctx.globalCompositeOperation = "source-over";
+  if (ctx.lineWidth >= 12) {
+    ctx.lineWidth -= 0.1;
+  }
+  ctx.filter = "blur(1px)"
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = "high"
   ctx.stroke()
 
 }
@@ -120,6 +132,11 @@ function mouseStroke(event: MouseEvent) {
         <Radio v-for="clr in colors" :active="state.color === clr.style" :fn="() => setColor(clr.style)"
                :title="clr.name"></Radio>
       </Plot>
+      <Plot :cols="3" :rows="1" style="width: 8rem">
+        <Radio :active="false" :fn="() => {}" :title="`${state.size}pt`" class="surface"></Radio>
+        <Radio :active="false" :fn="() => state.size-=state.size<=1?0:1" title="-"></Radio>
+        <Radio :active="false" :fn="() => state.size+=state.size>=12?0:1" title="+"></Radio>
+      </Plot>
       <Plot :cols="2" :rows="1">
         <Radio :active="false" :fn="clearCanvas" title="Clear"></Radio>
         <Toggle :active="state.grid" :fn="() => toggleGrid(!state.grid)" title="Grid"></Toggle>
@@ -131,6 +148,9 @@ function mouseStroke(event: MouseEvent) {
       <canvas id="whiteboard-canvas" :class="`${state.grid?'whiteboard-canvas':''}`" @mousedown="mouseDown"
               @mousemove="mousePlot"
               @mouseup="mouseStroke"
+              @mouseenter="mouseDown"
+              @mouseleave="mouseStroke"
+              @mouseout="mouseStroke"
               @mousedown.stop>
       </canvas>
     </div>
@@ -144,7 +164,7 @@ function mouseStroke(event: MouseEvent) {
 }
 
 // Colors
-$bg-color: rgba(0, 0, 0, 0);
+$bg-color: rgba(255, 255, 255, 0.04);
 $dot-color: rgba(255, 255, 255, 0.2);
 
 // Dimensions
