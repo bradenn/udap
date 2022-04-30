@@ -9,6 +9,7 @@ import Connection from "@/views/terminal/settings/Connection.vue";
 import Modules from "@/views/terminal/settings/Modules.vue";
 import Endpoints from "@/views/terminal/settings/Endpoints.vue";
 import Timings from "@/views/terminal/settings/Timings.vue";
+import Zones from "@/views/terminal/settings/Zones.vue";
 
 
 // Setup view components
@@ -37,9 +38,11 @@ import Timer from "../views/terminal/timing/Timer.vue";
 import WeatherApp from "../views/terminal/weather/Weather.vue";
 import Summary from "../views/terminal/weather/Summary.vue";
 
-
 // Whiteboard Routes
 import Whiteboard from "../views/terminal/whiteboard/Whiteboard.vue";
+
+// Calculator Routes
+import Calculator from "../views/terminal/calculator/Calculator.vue";
 
 const defaultRoute = {
     path: '/',
@@ -97,6 +100,11 @@ const settingsRoutes = {
             path: '/terminal/settings/timings',
             name: 'Timings',
             component: Timings
+        },
+        {
+            path: '/terminal/settings/zones',
+            name: 'Zones',
+            component: Zones
         },
     ]
 }
@@ -167,6 +175,13 @@ const whiteboardRoutes = {
     icon: 'fa-highlighter',
 }
 
+const calculatorRoute = {
+    path: '/terminal/calculator',
+    name: 'Calculator',
+    component: Calculator,
+    icon: 'fa-calculator',
+}
+
 const terminalRoutes = {
     path: '/terminal',
     name: 'Terminal',
@@ -195,14 +210,16 @@ const terminalRoutes = {
         timingRoutes,
         exogeologyRoutes,
         weatherRoutes,
-        whiteboardRoutes
-    ]
+        whiteboardRoutes,
+        calculatorRoute
+    ],
 }
 
 const routes = [
     defaultRoute,
     setupRoutes,
-    terminalRoutes
+    terminalRoutes,
+    {path: '/:pathMatch(.*)*', redirect: "/"}
 ]
 
 const router = createRouter({
