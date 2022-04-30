@@ -1,23 +1,21 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
 <script lang="ts" setup>
-
-import Sidebar from "@/components/sidebar/Sidebar.vue";
-import SidebarItem from "@/components/sidebar/SidebarItem.vue";</script>
+import Plot from "@/components/plot/Plot.vue"</script>
 <template>
   <div class="h-75">
-    <Sidebar class="flex-shrink-0 my-1" horizontal icon="stopwatch" name="Timing" small>
-      <div class="w-100"></div>
-      <router-link class="macro-icon-default" draggable="false" to="/terminal/timing/stopwatch">
-        <SidebarItem icon="stopwatch" name="Stopwatch"></SidebarItem>
+    <Plot :cols="3" :rows="1">
+      <router-link class="subplot justify-content-center" draggable="false" to="/terminal/timing/stopwatch">
+        <i class="fa-solid fa-stopwatch fa-fw"></i>&nbsp;Stopwatch
       </router-link>
-      <router-link class="macro-icon-default" draggable="false" to="/terminal/timing/timer">
-        <SidebarItem icon="hourglass" name="Timer"></SidebarItem>
+      <router-link class="subplot justify-content-center" draggable="false" to="/terminal/timing/timer">
+        <i class="fa-solid fa-hourglass fa-fw"></i>&nbsp;Timer
       </router-link>
-      <router-link class="macro-icon-default" draggable="false" to="/terminal/timing/conversion">
-        <SidebarItem icon="0" name="Conversion"></SidebarItem>
+      <router-link class="subplot justify-content-center" draggable="false" to="/terminal/timing/conversion">
+        <i class="fa-solid fa-0 fa-fw"></i>&nbsp;Conversion
       </router-link>
-    </Sidebar>
+    </Plot>
+
     <router-view></router-view>
   </div>
 </template>
