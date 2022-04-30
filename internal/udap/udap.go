@@ -54,7 +54,7 @@ func Run() error {
 
 func (u *Udap) migrate() error {
 	err := u.database.AutoMigrate(models.Log{}, models.Endpoint{}, models.Entity{}, models.Module{}, models.Device{},
-		models.Network{})
+		models.Network{}, models.Zone{})
 	if err != nil {
 		return err
 	}

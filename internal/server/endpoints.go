@@ -152,27 +152,7 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		ep.Connection.Watch()
 	}()
 
-	err = e.ctrl.Entities.EmitAll()
-	if err != nil {
-		return
-	}
-
-	err = e.ctrl.Attributes.EmitAll()
-	if err != nil {
-		return
-	}
-
-	err = e.ctrl.Networks.EmitAll()
-	if err != nil {
-		return
-	}
-
-	err = e.ctrl.Devices.EmitAll()
-	if err != nil {
-		return
-	}
-
-	err = e.ctrl.Endpoints.EmitAll()
+	err = e.ctrl.EmitAll()
 	if err != nil {
 		return
 	}
@@ -228,6 +208,7 @@ func (e *Endpoints) Run() error {
 	e.ctrl.Attributes.Watch(e.reactive("attribute"))
 	e.ctrl.Endpoints.Watch(e.reactive("endpoint"))
 	e.ctrl.Networks.Watch(e.reactive("network"))
+	e.ctrl.Zones.Watch(e.reactive("zone"))
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), e.router)
 	if err != nil {

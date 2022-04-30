@@ -14,6 +14,7 @@ type Controller struct {
 	Modules        *Modules
 	Endpoints      *Endpoints
 	Devices        *Devices
+	Zones          *Zones
 	Networks       *Networks
 	UserController *UserController
 	event          chan bond.Msg
@@ -27,6 +28,7 @@ func NewController() (*Controller, error) {
 	c.Endpoints = LoadEndpoints()
 	c.Devices = LoadDevices()
 	c.Networks = LoadNetworks()
+	c.Zones = LoadZones()
 	return c, nil
 }
 
@@ -47,9 +49,52 @@ func (c *Controller) Handle(msg bond.Msg) (interface{}, error) {
 		return c.Devices.Handle(msg)
 	case "network":
 		return c.Networks.Handle(msg)
+	case "zone":
+		return c.Zones.Handle(msg)
 	default:
 		return nil, fmt.Errorf("unknown target '%s'", t)
 	}
+}
+
+func (c *Controller) EmitAll() error {
+	var err error
+
+	err = c.Entities.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Attributes.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Networks.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Devices.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Endpoints.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Endpoints.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Zones.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Controller) Meta(msg bond.Msg) error {
