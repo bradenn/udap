@@ -9,6 +9,7 @@ import Diagnostics from "@/components/Diagnostics.vue";
 import type {Identifiable, Metadata, Remote, Timing} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
+import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
 
 // -- Websockets --
 
@@ -92,6 +93,7 @@ function handleMessage(target: Target, data: any) {
 
 // Stores the changing components of the main terminal
 let state = reactive({
+  sideApp: false,
   isDragging: false,
   timeout: null,
   verified: false,
@@ -165,10 +167,11 @@ function dragContinue(e: MouseEvent) {
       dragStop(e)
       ui.context = true
     } else {
-      if (Math.abs(state.dragA.x - dragB.x) > 20) {
+      if (Math.abs(state.dragA.x) >= e.view.screen.availWidth - 32) {
         // Reset the drag intention
 
-        if (Math.abs(state.dragA.x - dragB.x) > 800) {
+        if (Math.abs(state.dragA.x - dragB.x) > 64) {
+          state.sideApp = true
           dragStop(e)
         } else {
           state.scrollX = (state.scrollX + dragB.x - state.dragA.x) / 16
@@ -207,7 +210,7 @@ function dragStop(e: MouseEvent) {
     state.scrollYBack = setInterval(() => {
       if (state.isDragging) return
       state.scrollY = state.scrollY - Math.log(state.scrollY)
-      if (Math.abs(state.scrollY) < 1) {
+      if (Math.abs(state.scrollY) < 3) {
         state.scrollY = 0
         state.scrollYBack = 0
         clearInterval(state.scrollYBack)
@@ -246,10 +249,13 @@ provide('remote', remote)
       <div class="generic-slot-sm ">
         <IdTag></IdTag>
       </div>
+      <div v-if="state.sideApp" class="context context-id " @click="state.sideApp = false"></div>
+      <CalculatorQuick v-if="state.sideApp" class="position-absolute">dds</CalculatorQuick>
     </div>
 
-    <div :style="`transform: translate(${Math.round(state.scrollX)}px,0);`"
-         class="route-view">
+    <div
+        :style="`transform: translate(${Math.round(state.scrollX)}px,${-Math.round(state.scrollY)}px);`"
+        class="route-view">
       <router-view v-slot="{ Component }" @mousedown="selectSound">
         <component :is="Component"/>
       </router-view>

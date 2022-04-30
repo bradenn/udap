@@ -4,6 +4,7 @@ import Header from "@/components/Header.vue";
 import {inject} from "vue";
 import {Preference} from "@/preferences";
 import {PreferenceTypes} from "@/types";
+import Plot from "@/components/plot/Plot.vue";
 
 interface Preferences {
   ui: {
@@ -27,6 +28,10 @@ const defaults = {
       identifier: "viridian",
     },
     {
+      name: "Waves",
+      identifier: "waves",
+    },
+    {
       name: "Blueberry",
       identifier: "blueberry",
     },
@@ -35,8 +40,8 @@ const defaults = {
       identifier: "cblack",
     },
     {
-      name: "Slither",
-      identifier: "slither",
+      name: "Dust",
+      identifier: "dust",
     },
     {
       name: "Void",
@@ -92,18 +97,22 @@ function changeTouchmode(mode: string) {
     <div class="px-2">
       <div>
         <h4>Background</h4>
-        <div class="d-flex gap">
+        <Plot :cols="5" :rows="2">
           <div v-for="background in defaults.backgrounds" @click="changeBackground(background.identifier)">
-            <div
-                :class="`${preferences.ui.background === background.identifier?'background-preview-active':''}`"
-                :style="`background-image: url('/custom/${background.identifier}@4x.png');`"
-                class="background-preview">
-              <div class="label-xxs label-w500 label-o4 pb-1">
-                {{ background.name }}
+            <div class="subplot w-100 d-flex justify-content-start" style="padding: 0.125rem;">
+              <div :class="`${preferences.ui.background === background.identifier?'background-preview-active':''}`"
+                   :style="`background-image: url('/custom/${background.identifier}@4x.png');`"
+                   class="background-preview">
+                <div class="label-xxs label-w500 label-o5 pb-1">
+                  {{ background.name }}
+                </div>
               </div>
+
             </div>
+
           </div>
-        </div>
+        </Plot>
+
       </div>
       <div class="mt-2">
         <h4>Themes</h4>
@@ -143,11 +152,12 @@ function changeTouchmode(mode: string) {
   justify-content: end;
   flex-direction: column;
   align-items: center;
-  width: 8rem;
-  border-radius: 0.5rem;
-  aspect-ratio: 16/9;
+  height: 4rem;
+  width: 100%;
+  border-radius: 0.25rem;
+
   background-size: cover;
-  box-shadow: 0 0 0.5rem 2px rgba(0, 0, 0, 0.2);
+
 }
 
 .theme-preview {

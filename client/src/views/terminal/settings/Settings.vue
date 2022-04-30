@@ -22,6 +22,9 @@ import SidebarItem from "@/components/sidebar/SidebarItem.vue";</script>
       <router-link class="" draggable="false" to="/terminal/settings/timings">
         <SidebarItem icon="clock" name="Timings"></SidebarItem>
       </router-link>
+      <router-link class="" draggable="false" to="/terminal/settings/zones">
+        <SidebarItem icon="map" name="Zones"></SidebarItem>
+      </router-link>
     </Sidebar>
     <div class="flex-grow-1">
       <router-view/>

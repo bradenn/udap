@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Attribute, Entity, Remote} from "@/types";
+import Loader from "@/components/Loader.vue";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -14,6 +15,7 @@ let state = reactive({
 
 onMounted(() => {
   state.loading = true
+  handleUpdates(remote)
 })
 
 watchEffect(() => handleUpdates(remote))
@@ -51,8 +53,13 @@ function groupBy<T>(xs: T[], key: string): T[] {
 
 
     </div>
-    <div v-else class="element">
-      Loading
+    <div v-else class="element p-2">
+      <div class="label-c1 label-o4 d-flex align-content-center gap-1">
+        <div>
+          <Loader size="sm"></Loader>
+        </div>
+        <div class="">Loading...</div>
+      </div>
     </div>
   </div>
 </template>

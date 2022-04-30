@@ -28,6 +28,7 @@ let props = defineProps<Plot>()
   grid-template-rows: repeat(v-bind('props.rows'), minmax(1.75rem, 1fr));
 }
 
+
 .plot-sm {
   display: grid;
   grid-gap: 0.25rem;

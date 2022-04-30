@@ -1,6 +1,6 @@
 {
   "name": "nexus",
-  "version": "2.10.5",
+  "version": "2.10.6",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vue-tsc --noEmit && vite",

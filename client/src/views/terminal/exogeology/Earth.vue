@@ -10,7 +10,7 @@ let state = reactive({
   satellite: "GOES17",
   mode: "GEOCOLOR",
   section: "FD",
-  currentImage: "",
+  currentImage: "/custom/1808x1808.jpg",
   lowRes: "",
   lastUpdated: "",
   lastDate: 0,
@@ -80,14 +80,17 @@ const satellites = [
 
 function selectSatellite(satellite: string) {
   state.satellite = satellite
+  buildURL()
 }
 
 function selectMode(mode: string) {
   state.mode = mode
+  buildURL()
 }
 
 function selectSection(section: string) {
   state.section = section
+  buildURL()
 }
 
 function downloadImage(url: string) {
@@ -118,6 +121,7 @@ function buildURL() {
   // Mode ABI, Advanced Baseline Imager
   // Section, FD, etc
   // Mode GEOCOLOR, etc
+  state.loading = true
   state.lowRes = `/custom/1808x1808.jpg`
   downloadImage(`https://cdn.star.nesdis.noaa.gov/${state.satellite}/ABI/${state.section}/${state.mode}/${state.section === "FD" ? '1808x1808' : '1200x1200'}.jpg?ts=${state.lastDate}`)
 }
@@ -140,7 +144,7 @@ function buildURL() {
           <div class="d-flex justify-content-center align-items-center align-content-center h-100">
             <div v-if="state.section === 'FD'">
               <div v-if="state.loading"
-                   :style="`background-image: url('${state.lowRes}');`"
+                   :style="`background-image: url('${state.currentImage}');`"
                    class="earth-full-disk">
                 <Loader v-if="state.loading"></Loader>
               </div>
@@ -148,9 +152,18 @@ function buildURL() {
                    class="earth-full-disk">
               </div>
             </div>
-            <div v-else :style="`background-image: url('${buildURL()}');`"
-                 class="preview p-5">
+            <div v-else>
+              <div v-if="state.loading"
+                   :style="`background-image: url('${state.currentImage}');`"
+                   class="preview p-5 d-flex justify-content-center align-items-center">
+                <Loader v-if="state.loading"></Loader>
+              </div>
+
+              <div v-else :style="`background-image: url('${state.currentImage}');`"
+                   class="preview p-5">
+              </div>
             </div>
+
           </div>
 
           <!-- Help Bar -->

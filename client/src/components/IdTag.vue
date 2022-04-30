@@ -62,6 +62,15 @@ function reload() {
   </div>
 
   <div v-if="state.menu" class="tag-summary element d-flex flex-column gap-1 p-1">
+    <Plot :cols="1" :rows="1">
+
+      <div class="subplot d-flex align-items-end align-items-center lh-1 gap-1">
+        <div class="label-o2">􀉩</div>
+        <div class="label-o4 label-r label-w600">Braden Nicholson</div>
+        <div class="flex-fill"></div>
+        <div class="px-1 label-o2"> 􀉯</div>
+      </div>
+    </Plot>
     <div class="element element-group">
       <div class="plot plot-4x1">
         <div class="subplot plot-centered" @click="$router.push('/terminal/home')">

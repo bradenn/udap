@@ -74,7 +74,7 @@ function tick() {
 
 <template>
 
-<div class="d-flex flex-column justify-content-start align-items-center h-100">
+  <div class="d-flex flex-column justify-content-start align-items-center h-100">
     <div class="d-inline-block element px-5 py-3 my-3">
       <div class="d-flex flex-row align-items-center justify-content-center gap-4">
         <div class="d-flex flex-column align-items-end">
