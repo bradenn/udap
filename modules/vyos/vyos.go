@@ -45,7 +45,13 @@ func (v *Vyos) Update() error {
 }
 
 func (v *Vyos) Run() error {
-	return v.fetchNetworks()
+	go func() {
+		err := v.fetchNetworks()
+		if err != nil {
+
+		}
+	}()
+	return nil
 }
 
 func (v *Vyos) scanSubnet(network models.Network) error {

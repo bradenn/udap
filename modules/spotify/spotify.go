@@ -124,70 +124,7 @@ type SpotifyState struct {
 }
 
 func (s *Spotify) Setup() (plugin.Config, error) {
-	e := models.NewMediaEntity("Remote", "spotify")
 
-	_, err := s.Entities.Register(e)
-	if err != nil {
-		return plugin.Config{}, err
-	}
-
-	current := &models.Attribute{
-		Key:     "current",
-		Value:   "{}",
-		Request: "{}",
-		Entity:  e.Id,
-	}
-	current.FnGet(s.GetAttribute(current.Key))
-	current.FnPut(s.PutAttribute(current.Key))
-	err = s.Attributes.Register(current)
-	if err != nil {
-		return plugin.Config{}, err
-	}
-
-	playing := &models.Attribute{
-		Key:     "playing",
-		Value:   "false",
-		Request: "false",
-		Entity:  e.Id,
-	}
-
-	playing.FnGet(s.GetAttribute(playing.Key))
-	playing.FnPut(s.PutAttribute(playing.Key))
-	err = s.Attributes.Register(playing)
-	if err != nil {
-		return plugin.Config{}, err
-	}
-
-	cmd := &models.Attribute{
-		Key:     "cmd",
-		Value:   "none",
-		Request: "none",
-		Entity:  e.Id,
-	}
-
-	cmd.FnGet(s.GetAttribute(cmd.Key))
-	cmd.FnPut(s.PutAttribute(cmd.Key))
-	err = s.Attributes.Register(cmd)
-	if err != nil {
-		return plugin.Config{}, err
-	}
-
-	if e.Id != "" {
-		s.id = e.Id
-		if e.Config == "" {
-			a := SpotifyApi{}
-			m, _ := json.Marshal(&a)
-			e.Config = string(m)
-			return s.Config, nil
-		}
-		a := SpotifyApi{}
-		err = json.Unmarshal([]byte(e.Config), &a)
-		if err != nil {
-			return plugin.Config{}, err
-		}
-		s.api = a
-
-	}
 	s.Frequency = 5000
 	return s.Config, nil
 }
@@ -358,10 +295,10 @@ func (s *Spotify) push() error {
 	}
 	res := "false"
 	if sp.Playing {
-		s.Frequency = 1000
+		s.Frequency = 5000
 		res = "true"
 	} else {
-		s.Frequency = 5000
+		s.Frequency = 15000
 	}
 	err = s.Attributes.Set(s.id, "playing", res)
 	if err != nil {
@@ -371,6 +308,70 @@ func (s *Spotify) push() error {
 }
 
 func (s *Spotify) Run() error {
+	e := models.NewMediaEntity("Remote", "spotify")
+
+	_, err := s.Entities.Register(e)
+	if err != nil {
+		return err
+	}
+
+	current := &models.Attribute{
+		Key:     "current",
+		Value:   "{}",
+		Request: "{}",
+		Entity:  e.Id,
+	}
+	current.FnGet(s.GetAttribute(current.Key))
+	current.FnPut(s.PutAttribute(current.Key))
+	err = s.Attributes.Register(current)
+	if err != nil {
+		return err
+	}
+
+	playing := &models.Attribute{
+		Key:     "playing",
+		Value:   "false",
+		Request: "false",
+		Entity:  e.Id,
+	}
+
+	playing.FnGet(s.GetAttribute(playing.Key))
+	playing.FnPut(s.PutAttribute(playing.Key))
+	err = s.Attributes.Register(playing)
+	if err != nil {
+		return err
+	}
+
+	cmd := &models.Attribute{
+		Key:     "cmd",
+		Value:   "none",
+		Request: "none",
+		Entity:  e.Id,
+	}
+
+	cmd.FnGet(s.GetAttribute(cmd.Key))
+	cmd.FnPut(s.PutAttribute(cmd.Key))
+	err = s.Attributes.Register(cmd)
+	if err != nil {
+		return err
+	}
+
+	if e.Id != "" {
+		s.id = e.Id
+		if e.Config == "" {
+			a := SpotifyApi{}
+			m, _ := json.Marshal(&a)
+			e.Config = string(m)
+			return err
+		}
+		a := SpotifyApi{}
+		err = json.Unmarshal([]byte(e.Config), &a)
+		if err != nil {
+			return err
+		}
+		s.api = a
+
+	}
 	s.api.Authenticate()
 	marshal, err := json.Marshal(s.api)
 	if err != nil {

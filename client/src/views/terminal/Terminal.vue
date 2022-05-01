@@ -5,11 +5,12 @@ import router from '@/router'
 import {inject, onMounted, provide, reactive, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
-import Diagnostics from "@/components/Diagnostics.vue";
 import type {Identifiable, Metadata, Remote, Timing} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
 import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
+import Plot from "@/components/plot/Plot.vue";
+import Subplot from "@/components/plot/Subplot.vue";
 
 // -- Websockets --
 
@@ -238,13 +239,12 @@ provide('remote', remote)
       v-on:mousedown="dragStart"
       v-on:mousemove="dragContinue"
       v-on:mouseup="dragStop">
-    <div class="generic-container ">
+    <div class="generic-container gap-2">
 
       <div :class="`generic-slot-sm ` ">
         <Clock :small="!state.showClock"></Clock>
       </div>
 
-      <Diagnostics></Diagnostics>
 
       <div class="generic-slot-sm ">
         <IdTag></IdTag>
@@ -259,7 +259,15 @@ provide('remote', remote)
       <router-view v-slot="{ Component }" @mousedown="selectSound">
         <component :is="Component"/>
       </router-view>
+      <div v-if="$route.matched.length > 1">
+        <Plot v-if="$route.matched[1].children.length > 1" :cols="$route.matched[1].children.length" :rows="1"
+              class="bottom-nav">
+          <Subplot v-for="route in $route.matched[1].children" :icon="route.icon || 'earth-americas'" :name="route.name"
+                   :to="route.path"></Subplot>
+        </Plot>
+      </div>
     </div>
+
     <div
         :style="`transform: translateY(calc(-${Math.round(state.scrollY)}px));`"
         class="home-bar top"></div>
@@ -267,6 +275,14 @@ provide('remote', remote)
 </template>
 
 <style scoped>
+
+
+.bottom-nav {
+  display: block;
+  bottom: 2.85rem;
+
+}
+
 .generic-container {
 }
 

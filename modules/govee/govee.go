@@ -185,8 +185,7 @@ func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 					return nil, err
 				}
 
-				err = g.Attributes.Update(id, "dim", fmt.Sprintf("%d", int(mapInt(float64(parseInt), 25, 100, 0,
-					100))), stamp)
+				err = g.Attributes.Update(id, "dim", fmt.Sprintf("%d", parseInt), stamp)
 				if err != nil {
 					break
 				}
@@ -270,7 +269,7 @@ func (g *Govee) getSingleState(device Device, mode string) (string, error) {
 						return "", err
 					}
 
-					return fmt.Sprintf("%d", int(mapInt(float64(out), 25, 100, 0, 100))), nil
+					return fmt.Sprintf("%d", out), nil
 				}
 				break
 			case "color":
@@ -373,7 +372,7 @@ func (g *Govee) setState(device Device, value string, mode string) error {
 		if err != nil {
 			return err
 		}
-		err = g.setLevel(device, int(mapInt(float64(val), 0, 100, 25, 100)))
+		err = g.setLevel(device, val)
 		if err != nil {
 			return err
 		}

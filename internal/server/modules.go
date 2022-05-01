@@ -20,10 +20,11 @@ import (
 const DIR = "modules"
 
 type Modules struct {
-	modules map[string]plugin.ModuleInterface
-	ctrl    *controller.Controller
-	bond    *bond.Bond
-	running bool
+	modules    map[string]plugin.ModuleInterface
+	ctrl       *controller.Controller
+	bond       *bond.Bond
+	configured bool
+	running    bool
 }
 
 func (m *Modules) Name() string {
@@ -49,6 +50,7 @@ func (m *Modules) values() (pls []plugin.ModuleInterface, err error) {
 func (m *Modules) Setup(ctrl *controller.Controller, bond *bond.Bond) error {
 	m.ctrl = ctrl
 	m.bond = bond
+	m.configured = false
 	m.modules = map[string]plugin.ModuleInterface{}
 	err := m.buildModules()
 	if err != nil {
@@ -63,11 +65,17 @@ func (m *Modules) Run() error {
 	if err != nil {
 		return err
 	}
+
+	values, err := m.values()
+	if err != nil {
+		return err
+	}
+
 	// Create a wait group so all plugins can init at the same time
 	wg := sync.WaitGroup{}
-	wg.Add(len(m.modules))
+	wg.Add(len(values))
 	// Run the full lifecycle of all plugins
-	for _, module := range m.modules {
+	for _, module := range values {
 		// Run a go function to create a new thread
 		go func(p plugin.ModuleInterface) {
 			defer wg.Done()
@@ -99,20 +107,25 @@ func (m *Modules) Run() error {
 		}(module)
 	}
 	wg.Wait()
+
 	return nil
 }
 
 func (m *Modules) Update() error {
-	pulse.Fixed(1000)
+	pulse.Fixed(2000)
 	defer pulse.End()
-
+	values, err := m.values()
+	if err != nil {
+		return err
+	}
 	wg := sync.WaitGroup{}
-	wg.Add(len(m.modules))
-	for _, module := range m.modules {
-		go func(p plugin.ModuleInterface) {
-			err := p.Update()
+	wg.Add(len(values))
+	for _, module := range values {
+		go func(k plugin.ModuleInterface) {
+			defer wg.Done()
+			err := k.Update()
 			if err != nil {
-				return
+				log.Err(err)
 			}
 		}(module)
 	}
