@@ -6,6 +6,7 @@ import {onMounted, reactive} from "vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
 import Radio from "@/components/plot/Radio.vue";
+import Subplot from "@/components/plot/Subplot.vue";
 
 
 const colors = [
@@ -133,9 +134,9 @@ function mouseStroke(event: MouseEvent) {
                :title="clr.name"></Radio>
       </Plot>
       <Plot :cols="3" :rows="1" style="width: 8rem">
-        <Radio :active="false" :fn="() => {}" :title="`${state.size}pt`" class="surface"></Radio>
-        <Radio :active="false" :fn="() => state.size-=state.size<=1?0:1" title="-"></Radio>
-        <Radio :active="false" :fn="() => state.size+=state.size>=12?0:1" title="+"></Radio>
+        <Subplot :name="`${state.size}pt`"></Subplot>
+        <Radio :active="false" :fn="() => state.size-=state.size<=1?0:1" title="􀅽"></Radio>
+        <Radio :active="false" :fn="() => state.size+=state.size>=12?0:1" title="􀅼"></Radio>
       </Plot>
       <Plot :cols="2" :rows="1">
         <Radio :active="false" :fn="clearCanvas" title="Clear"></Radio>
@@ -164,7 +165,7 @@ function mouseStroke(event: MouseEvent) {
 }
 
 // Colors
-$bg-color: rgba(255, 255, 255, 0.04);
+$bg-color: rgba(34, 38, 45, 0.1);
 $dot-color: rgba(255, 255, 255, 0.2);
 
 // Dimensions

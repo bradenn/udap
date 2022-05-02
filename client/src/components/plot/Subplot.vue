@@ -3,6 +3,7 @@
 
 interface Props {
   icon?: string,
+  sf?: string,
   name: string
   alt?: string
   active?: boolean
@@ -18,7 +19,7 @@ const props = defineProps<Props>()
 <template>
   <div v-if="props.to" :class="`${props.to===$router.currentRoute.value.fullPath?'':'subplot-transparent'}`"
        class="subplot p-1"
-       @mousedown="$router.push(props.to)">
+       @mouseover="$router.replace(props.to || '/')">
     <div class="d-flex justify-content-start px-1">
       <div class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i></div>
       <div class="label-w500 label-c1 px-2">{{ props.name }}</div>
@@ -27,20 +28,24 @@ const props = defineProps<Props>()
     <slot></slot>
   </div>
   <div v-else-if="props.fn" :class="`${props.active||false?'':'subplot-transparent'}`" class="subplot p-1"
-       @mousedown="() => props.fn()">
+       @mousedown="props.fn">
     <div class="d-flex justify-content-start ">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
       </div>
       <div class="label-w500 label-c1 px-2">{{ props.name }}</div>
 
+
     </div>
 
     <slot></slot>
   </div>
-  <div v-else>
+  <div v-else class="subplot subplot-transparent">
 
     <div class="sidebar-item d-flex justify-content-start px-1">
-      <div class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i></div>
+      <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
+      </div>
+      <div v-if="props.sf" class="label-w500 label-o3 label-c1">{{ props.sf }}
+      </div>
       <div class="label-w500 label-o5 label-c1 px-2">{{ props.name }}</div>
     </div>
 
@@ -52,6 +57,10 @@ const props = defineProps<Props>()
 <style scoped>
 
 .subplot:active {
+  animation: click 100ms ease forwards !important;
+}
+
+.subplot:hover {
   animation: click 100ms ease forwards !important;
 }
 
@@ -89,18 +98,5 @@ const props = defineProps<Props>()
   }
 }
 
-.plot {
-  display: grid;
-  grid-gap: 0.25rem;
-  grid-template-columns: repeat(v-bind('props.cols'), minmax(1rem, 1fr));
-  grid-template-rows: repeat(v-bind('props.rows'), minmax(1.75rem, 1fr));
-}
 
-
-.plot-sm {
-  display: grid;
-  grid-gap: 0.25rem;
-  grid-template-columns: repeat(v-bind('props.cols'), minmax(1rem, 1fr));
-  grid-template-rows: repeat(v-bind('props.rows'), minmax(1.5rem, 1fr)) !important;
-}
 </style>

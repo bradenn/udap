@@ -35,6 +35,7 @@ function handleUpdates(remote: Remote) {
     <div class="flex-fill"></div>
   </div>
   <div v-if="!state.loading">
+
   </div>
   <div v-else>
 

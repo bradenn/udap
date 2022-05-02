@@ -41,10 +41,12 @@ function groupBy<T>(xs: T[], key: string): T[] {
     <div class="label-w500 opacity-100 label-xxl px-2">Timings</div>
   </div>
   <div v-if="!state.loading" class="element">
-
-    <div v-for="(timings, name) in groupBy(state.timings, 'name')">
+    <div
+        v-for="(timings, name) in groupBy(state.timings, 'name')">
       <div class="label-o6 label-c1">{{ name }}</div>
-
+      {{
+        timings[0].delta / 1000 / 1000
+      }}ms
 
     </div>
 

@@ -10,12 +10,35 @@
     <!--    </Plot>-->
 
     <div class="flex-grow-1">
-      <router-view/>
+      <router-view v-slot="{ Component }">
+        <div class="animateIn">
+          <component :is="Component"/>
+        </div>
+      </router-view>
     </div>
   </div>
 </template>
 
 <style scoped>
+
+
+/*
+  Enter and leave animations can use different
+  durations and timing functions.
+*/
+.slide-fade-enter-active {
+  transition: all 600ms ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 300ms cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  position: absolute;
+  transform: scale(0.98);
+}
 
 .sidebar-container {
   width: 14rem;

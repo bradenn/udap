@@ -37,14 +37,22 @@ const sections = [
   {
     name: "Full Disk",
     key: "FD",
+    alt: ""
   },
   {
     name: "California",
     key: "SECTOR/PSW",
+    alt: ""
+  },
+  {
+    name: "BC",
+    key: "SECTOR/sea",
+    alt: ""
   },
   {
     name: "USA",
     key: "CONUS",
+    alt: ""
   }
 ]
 
@@ -121,17 +129,17 @@ const satellites = [
   }
 ]
 
-function selectSatellite(satellite: string) {
+function selectSatellite(satellite: string): any {
   state.satellite = satellite
   buildURL()
 }
 
-function selectMode(mode: string) {
+function selectMode(mode: string): any {
   state.mode = mode
   buildURL()
 }
 
-function selectSection(section: string) {
+function selectSection(section: string): any {
   state.section = section
   buildURL()
 }
@@ -219,7 +227,7 @@ function buildURL() {
                 <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
               </div>
 
-
+              <div class="v-sep"></div>
               <!-- Last update from the headers of the photo -->
               <div class="flex-shrink-0">
                 <div class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
@@ -240,12 +248,6 @@ function buildURL() {
 
             <div class="h-sep"></div>
 
-            <div class="label-c3 label-o4 pt-2 text-wrap overflow-hidden px-3" style="max-width: 12rem ">
-              {{ state.currentImage }}
-            </div>
-
-            <div class="h-sep"></div>
-
 
             <!-- Refresh the image manually -->
             <div
@@ -258,7 +260,7 @@ function buildURL() {
 
           </div>
           <!-- Disk -->
-          <div class="d-flex justify-content-center align-items-center align-content-center">
+          <div class="d-flex justify-content-center align-items-center align-content-center earth-background element">
             <div v-if="state.section === 'FD'">
               <div v-if="state.loading"
                    :style="`background-image: url('${state.currentImage}');`"
@@ -283,20 +285,21 @@ function buildURL() {
 
           </div>
           <div class="d-flex flex-column gap w-25  flex-grow-0">
-
+            <div class="label-o4 label-sm label-r label-w500 lh-1">Satellite</div>
             <Plot :cols="2" :rows="1">
               <Subplot v-for="sat in satellites" :active="state.satellite===sat.key" :alt="sat.alt"
                        :fn="() => selectSatellite(sat.key)"
                        :name="sat.name"
                        icon="satellite"></Subplot>
             </Plot>
+            <div class="label-o4 label-sm label-r label-w500 lh-1">Prespective</div>
             <Plot :cols="2" :rows="2">
               <Subplot v-for="sect in sections" :active="sect.key === state.section || state.toggles.section"
                        :alt="sect.alt" :fn="() => selectSection(sect.key)"
                        :name="sect.name"
                        icon="satellite"></Subplot>
             </Plot>
-
+            <div class="label-o4 label-sm label-r label-w500 lh-1">Wavelengths</div>
             <Plot :cols="3" :rows="2">
               <Subplot v-for="mode in viewModes" :active="state.mode === mode.key"
                        :fn="() => selectMode(mode.key)"
@@ -318,6 +321,12 @@ function buildURL() {
 </template>
 
 <style scoped>
+
+.earth-background {
+  border-radius: 100%;
+  padding: 0.125rem;
+}
+
 .noaa {
   height: 1.5rem;
   padding: 1px;
@@ -371,7 +380,7 @@ function buildURL() {
 }
 
 .earth-full-disk {
-  width: 22rem;
+  width: 24.5rem;
   display: flex;
   justify-content: center;
   align-items: center;

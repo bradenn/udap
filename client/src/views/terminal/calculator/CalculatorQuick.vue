@@ -49,33 +49,21 @@ function calculatorType(value: any) {
 
 </script>
 <template>
-
-  <div class="side-app">
-    <div class="element">
-      <div class="label-o4 label-c1 label-w500 p-1 px-2 pb-0">Calculator</div>
-      <div class="d-flex w-100 justify-content-end px-2">
-        <div class="d-flex flex-column align-items-end">
-          <div class="calculator-result mb-0 pb-0">{{ Math.round(state.value * 10000000000) / 10000000000 }}</div>
-          <div class="label-o2 label-c1 mb-1">{{ state.line }}&nbsp;</div>
-        </div>
+  <div class="element" style="border-radius: 0.65rem">
+    <Plot :cols="1" :rows="1" class="mb-1" style="">
+      <div class="d-flex flex-column align-items-end p-1">
+        <div class="calculator-result mb-0 pb-0">{{ Math.round(state.value * 10000000000) / 10000000000 }}</div>
+        <div class="label-o2 label-c1 mb-1">{{ state.line }}&nbsp;</div>
       </div>
-      <Plot :cols="4" :rows="6" class="" style="">
-        <Radio v-for="i in numbers.keys()" :active="false" :fn="() => calculatorType(numbers[i])"
-               :title="`${numbers[i]}`"/>
-      </Plot>
-    </div>
+    </Plot>
+    <Plot :cols="4" :rows="6" class="" style="">
+      <Radio v-for="i in numbers.keys()" :active="false" :fn="() => calculatorType(numbers[i])"
+             :title="`${numbers[i]}`"/>
+    </Plot>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.side-app {
-  position: absolute;
-  right: 1rem;
-  height: calc(100% - 2rem);
-  width: 13rem;
-
-  z-index: 22 !important;
-}
 
 .calculator-result {
   font-size: 1.4rem;

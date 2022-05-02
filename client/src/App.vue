@@ -134,6 +134,8 @@ provide('hideHome', hideHome)
 
     <div v-if="state.context" class="context context-light"></div>
     <router-view/>
+
+
   </div>
 </template>
 
@@ -151,11 +153,11 @@ provide('hideHome', hideHome)
 }
 
 .backdrop {
-  z-index: -1 !important;
+  z-index: -2 !important;
   top: 0;
   left: 0;
-
-  transform: scale(1.0169491525);
+  background-color: rgba(28, 33, 40, 0.24);
+  transform: scale(1);
   overflow: hidden;
   position: absolute;
   background-position: center;

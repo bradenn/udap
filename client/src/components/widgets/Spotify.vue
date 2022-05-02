@@ -25,19 +25,27 @@ interface SpotifyState {
   metadata: Spotify
   playing: Attribute
   menu: boolean
+  current: number
+  interval: number
 }
 
 let state = reactive<SpotifyState>({
   metadata: {} as Spotify,
   playing: {} as Attribute,
   menu: false,
+  interval: 0,
+  current: 0
 })
 
 onMounted(() => {
   updateMetadata(remote.attributes)
+  clearInterval(state.interval)
+  state.interval = setInterval(updateTime, 1000)
+  updateTime()
 })
 
 watchEffect(() => updateMetadata(remote.attributes))
+
 
 function updateMetadata(attributes: Attribute[]) {
   let proto = attributes.find(a => a.key === 'current')
@@ -51,6 +59,15 @@ function updateMetadata(attributes: Attribute[]) {
   state.playing = proto
 
   return state.metadata
+}
+
+function updateTime() {
+  if (state.playing) {
+    state.current = state.metadata.progress + (new Date().valueOf() - new Date(state.metadata.updated).valueOf())
+  } else {
+    state.current = state.metadata.progress
+  }
+  return state.current
 }
 
 // Apply changes made to an attribute
@@ -87,7 +104,7 @@ function togglePlayback() {
         <div>
           <div class="d-flex flex-row justify-content-between label-c3 label-o3 label-w400">
             <div>
-              {{ moment(state.metadata.progress).format("m:ss") }}
+              {{ moment(state.current).format("m:ss") }}
             </div>
             <div class="label-c3 label-o3 label-w500 d-flex flex-row">
               <div v-for="i in Array(Math.ceil((state.metadata.popularity || 50)/20.0)).keys()" :key="i">
@@ -102,7 +119,7 @@ function togglePlayback() {
 
           <div class="timeline-sm">
 
-            <div :style="`width:${100*(state.metadata.progress/state.metadata.duration)}%;`" class="timeline-value">
+            <div :style="`width:${100*(state.current/state.metadata.duration)}%;`" class="timeline-value">
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 {
   "name": "nexus",
-  "version": "2.10.6",
+  "version": "2.10.8",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vue-tsc --noEmit && vite",
@@ -14,6 +14,7 @@
     "axios": "^0.21.3",
     "bootstrap": "^5.1.0",
     "electron": "^16.0.5",
+    "glob": "^8.0.1",
     "minimist": "~1.2.6",
     "moment": "^2.29.1",
     "npm": "^8.5.3",

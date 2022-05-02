@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import Clock from "@/components/Clock.vue"
 import router from '@/router'
-import {inject, onMounted, provide, reactive, watch} from "vue";
+import {inject, onMounted, onUpdated, provide, reactive, ref, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
 import type {Identifiable, Metadata, Remote, Timing} from "@/types";
@@ -11,6 +11,7 @@ import {Nexus, Target} from "@/views/terminal/nexus";
 import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
+import Sideapp from "@/views/terminal/Sideapp.vue";
 
 // -- Websockets --
 
@@ -92,6 +93,13 @@ function handleMessage(target: Target, data: any) {
 
 // -- Gesture Navigation --
 
+let fps = 0;
+let lastTick = ref(0);
+
+onUpdated(() => {
+  fps++;
+})
+
 // Stores the changing components of the main terminal
 let state = reactive({
   sideApp: false,
@@ -100,8 +108,9 @@ let state = reactive({
   verified: false,
   distance: 0,
   lastUpdate: 0,
+  sideAppLock: false,
   showClock: true,
-  scrollX: 0,
+  scrollX: 0.0,
   scrollY: 0,
   scrollXBack: 0,
   scrollYBack: 0,
@@ -128,11 +137,12 @@ function timeout() {
   }
 }
 
+
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
-
+  dragStop(e)
   // Record the current user position
-  let a = {x: e.clientX, y: e.clientY}
+  let a = {x: e.screenX, y: e.screenY}
   if (!e.view) return
   // If the drag has started near the bottom of the screen
   // Set the dragging status for later verification
@@ -147,38 +157,54 @@ function dragStart(e: MouseEvent) {
 // While the user is still dragging
 function dragContinue(e: MouseEvent) {
   // If the user is dragging, and the drag intent has been established
-
+  state.isDragging = true;
   if (state.verified) {
     // Record the current position
-    let dragB = {x: e.clientX, y: e.clientY}
-    // Set a maximum delta
-    let delta = 200
-    // Calculate the displacement
-    // If the user's current position is larger than the defined max intent
-    if (!e.view) return
-    if (state.dragA.y > e.view.screen.availHeight - 200) {
-      state.scrollY = (state.dragA.y - dragB.y) / 8
-    }
-    if (Math.abs(dragB.y - state.dragA.y) > delta && state.dragA.y > e.view.screen.availHeight - 200) {
-      // Change the inner route to the home page
-      dragStop(e)
-      router.replace("/terminal/home")
-    } else if (dragB.y - state.dragA.y > delta && state.dragA.y < 200) {
-      // Reset the drag intention
-      dragStop(e)
-      ui.context = true
-    } else {
-      if (Math.abs(state.dragA.x) >= e.view.screen.availWidth - 32) {
-        // Reset the drag intention
+    let dragB = {x: e.screenX, y: e.screenY}
 
-        if (Math.abs(state.dragA.x - dragB.x) > 64) {
-          state.sideApp = true
-          dragStop(e)
-        } else {
-          state.scrollX = (state.scrollX + dragB.x - state.dragA.x) / 16
-        }
+    if (!e.view) return
+
+    let height = e.view.screen.availHeight;
+    let width = e.view.screen.availWidth;
+    let thresholdOffset = 60;
+
+    let isBottom = e.screenY > height - thresholdOffset;
+
+    let isRight = state.dragA.x > width - thresholdOffset;
+
+    let bottomPull = state.dragA.y - dragB.y;
+    let rightPull = state.dragA.x - dragB.x;
+    let gestureThreshold = 24;
+
+
+    if (isBottom) {
+      if (bottomPull > gestureThreshold) {
+        router.push("/terminal/home")
+      }
+      if (state.dragA.y > dragB.y) {
+        state.scrollY -= e.movementY
       }
     }
+    let sideAppLockTarget = 445;
+    let sideAppLockDelta = 5;
+    if (isRight && !state.sideAppLock) {
+      if (rightPull >= gestureThreshold) {
+        state.sideApp = true
+        if (sideAppLockTarget - rightPull <= sideAppLockDelta) {
+          state.scrollX = 445
+          state.sideAppLock = true
+        }
+        state.scrollX += e.movementX
+      }
+
+    }
+
+    if (isRight && !state.sideAppLock) {
+      state.scrollX = state.dragA.x - dragB.x
+    } else if (state.sideAppLock && sideAppLockTarget - rightPull <= sideAppLockDelta) {
+      state.sideAppLock = false
+    }
+
 
   }
 }
@@ -194,37 +220,44 @@ function dragStop(e: MouseEvent) {
   state.verified = false;
   // Reset current position
   state.dragA = {x: 0, y: 0}
-  if (state.scrollX != 0 && state.scrollXBack == 0) {
-    clearInterval(state.scrollXBack)
-    state.scrollXBack = setInterval(() => {
-      state.scrollX = state.scrollX - (state.scrollX / 20)
-      if (Math.abs(state.scrollX) < 1) {
-        clearInterval(state.scrollXBack)
-        state.scrollX = 0
-        state.scrollXBack = 0
-      }
-    }, 2)
+  if (state.scrollX !== 0 && state.scrollX !== 445) {
+    if (state.scrollXBack == 0) {
+      let target = state.scrollX >= 128 ? 445 : 0;
+      state.scrollXBack = setInterval(() => {
+        state.scrollX -= (state.scrollX - target) * 0.05
+        if (Math.abs(target - state.scrollX) < 0.1) {
+          clearInterval(state.scrollXBack)
+          state.scrollX = target
+          if (target == 0) {
+            state.scrollX = 0
+            state.sideApp = false
+            state.sideAppLock = false
+          }
+          state.scrollXBack = 0
+        }
+      }, 5)
+    } else {
+      clearInterval(state.scrollXBack)
+    }
   }
 
-  if (state.scrollY != 0 && state.scrollYBack == 0) {
-    clearInterval(state.scrollYBack)
-    state.scrollYBack = setInterval(() => {
-      if (state.isDragging) return
-      state.scrollY = state.scrollY - Math.log(state.scrollY)
-      if (Math.abs(state.scrollY) < 3) {
-        state.scrollY = 0
-        state.scrollYBack = 0
-        clearInterval(state.scrollYBack)
-      }
-    }, 5)
+  if (Math.abs(state.scrollY) != 0 && state.scrollYBack == 0) {
+    if (state.scrollYBack == 0) {
+      state.scrollYBack = setInterval(() => {
+        if (state.isDragging) return
+        state.scrollY -= state.scrollY * 0.05
+        if (Math.abs(state.scrollY) < 0.01) {
+          state.scrollY = 0
+          state.scrollYBack = 0
+          clearInterval(state.scrollYBack)
+        }
+      }, 5)
+    } else {
+      clearInterval(state.scrollYBack)
+    }
   }
 
 
-}
-
-
-function selectSound() {
-  // new Audio('/sound/selection.mp3').play();
 }
 
 // Provide the remote component for child components
@@ -240,48 +273,112 @@ provide('remote', remote)
       v-on:mousemove="dragContinue"
       v-on:mouseup="dragStop">
     <div class="generic-container gap-2">
-
       <div :class="`generic-slot-sm ` ">
         <Clock :small="!state.showClock"></Clock>
       </div>
 
-
       <div class="generic-slot-sm ">
         <IdTag></IdTag>
       </div>
-      <div v-if="state.sideApp" class="context context-id " @click="state.sideApp = false"></div>
-      <CalculatorQuick v-if="state.sideApp" class="position-absolute">dds</CalculatorQuick>
+
     </div>
 
+
     <div
-        :style="`transform: translate(${Math.round(state.scrollX)}px,${-Math.round(state.scrollY)}px);`"
+        :style="`transform: translate(${Math.round(0)}px,${0}px);`"
         class="route-view">
-      <router-view v-slot="{ Component }" @mousedown="selectSound">
-        <component :is="Component"/>
+      <div>
+
+        <Sideapp v-if="state.sideApp" :style="`transform: translateX(${-state.scrollX}px);`">
+          <CalculatorQuick v-if="state.sideApp"></CalculatorQuick>
+        </Sideapp>
+      </div>
+      <router-view v-slot="{ Component }">
+        <transition mode="out-in" name="focus">
+          <component :is="Component"/>
+        </transition>
       </router-view>
-      <div v-if="$route.matched.length > 1">
-        <Plot v-if="$route.matched[1].children.length > 1" :cols="$route.matched[1].children.length" :rows="1"
-              class="bottom-nav">
-          <Subplot v-for="route in $route.matched[1].children" :icon="route.icon || 'earth-americas'" :name="route.name"
-                   :to="route.path"></Subplot>
-        </Plot>
+
+
+      <div class="justify-content-center d-flex align-items-center align-content-center">
+        <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">
+          <div v-if="$route.matched[1].children.length > 1">
+            <Plot :cols="$route.matched[1].children.length" :rows="1"
+                  class="bottom-nav">
+              <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
+                       :name="route.name"
+                       :to="route.path"></Subplot>
+            </Plot>
+          </div>
+        </div>
       </div>
     </div>
 
     <div
-        :style="`transform: translateY(calc(-${Math.round(state.scrollY)}px));`"
+        :style="`transform: translateY(${-state.scrollY}px);`"
         class="home-bar top"></div>
   </div>
 </template>
 
 <style scoped>
+.focus-enter-active {
+  animation: animateIn 200ms;
+}
 
+.focus-leave-active {
+
+  animation: animateOut 100ms;
+}
+
+@keyframes animateIn {
+  0% {
+    transform: scale(0.98);
+    filter: blur(8px);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(0.99);
+    filter: blur(2px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes animateOut {
+  0% {
+    transform: scale(1);
+    filter: blur(10px);
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+    filter: blur(30px);
+  }
+}
 
 .bottom-nav {
-  display: block;
-  bottom: 2.85rem;
-
+  display: inline-block;
+  position: relative;
+  bottom: 2.5rem;
+  animation: dock-in 400ms forwards;
 }
+
+
+@keyframes dock-in {
+  0% {
+    transform: translateY(4rem);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
 
 .generic-container {
 }
@@ -300,14 +397,6 @@ provide('remote', remote)
   animation: dock-in 100ms forwards;
 }
 
-@keyframes dock-in {
-  from {
-    bottom: -1rem;
-  }
-  to {
-    bottom: 0.5rem;
-  }
-}
 
 .footer {
   position: absolute;

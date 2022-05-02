@@ -63,7 +63,7 @@ const state = reactive<StateType>({
 
 onMounted(() => {
   state.loading = true
-
+  handleUpdates(remote)
 })
 
 

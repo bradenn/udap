@@ -79,31 +79,38 @@ const settingsRoutes = {
         {
             path: '/terminal/settings/preferences',
             name: 'Preferences',
+            icon: 'bars-progress',
             component: Preferences
         },
         {
             path: '/terminal/settings/connection',
             name: 'Connection',
+            icon: 'cloud',
             component: Connection
         },
         {
             path: '/terminal/settings/modules',
             name: 'Modules',
+            icon: 'layer-group',
             component: Modules
         },
         {
             path: '/terminal/settings/endpoints',
             name: 'Endpoints',
+            icon: 'expand',
             component: Endpoints
         },
         {
             path: '/terminal/settings/timings',
             name: 'Timings',
+            icon: 'clock',
             component: Timings
         },
+
         {
             path: '/terminal/settings/zones',
             name: 'Zones',
+            icon: 'map',
             component: Zones
         },
     ]
@@ -119,16 +126,19 @@ const exogeologyRoutes = {
         {
             path: '/terminal/exogeology/earth',
             name: 'Earth',
+            icon: 'earth-americas',
             component: Earth,
         },
         {
             path: '/terminal/exogeology/moon',
             name: 'Moon',
+            icon: 'moon',
             component: Moon,
         },
         {
             path: '/terminal/exogeology/sol',
             name: 'Sol',
+            icon: 'sun',
             component: Sol,
         },
     ]
@@ -143,11 +153,13 @@ const timingRoutes = {
         {
             path: '/terminal/timing/stopwatch',
             name: 'Stopwatch',
+            icon: 'stopwatch',
             component: Stopwatch,
         },
         {
             path: '/terminal/timing/timer',
             name: 'Timer',
+            icon: 'clock',
             component: Timer,
         },
     ]
