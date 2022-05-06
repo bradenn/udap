@@ -1,12 +1,11 @@
 {
-  "name": "nexus",
+  "name": "udap-nexus",
   "version": "2.10.8",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vue-tsc --noEmit && vite",
     "build": "vue-tsc --noEmit && vite build",
-    "serve": "vite --host",
-    "electron:start": "electron ."
+    "serve": "vite --host"
   },
   "dependencies": {
     "@popperjs/core": "^2.11.0",
