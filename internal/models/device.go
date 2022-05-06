@@ -20,7 +20,6 @@ type Device struct {
 }
 
 func (d *Device) Emplace() (err error) {
-	log.Event("REGISTER DEVICE %s", d.Mac)
 	d.UpdatedAt = time.Now()
 	err = store.DB.Model(&Device{}).Where("mac = ? OR id = ?", d.Mac, d.Id).FirstOrCreate(d).Error
 	if err != nil {

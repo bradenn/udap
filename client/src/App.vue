@@ -257,7 +257,7 @@ $dot-space: 16px;
   border: 1px solid $dot-color;
   background-image: radial-gradient($dot-color 0.980000000000000px, $bg-color 0.980000000000000px), radial-gradient($dot-color 0.98px, $bg-color 0.980000000000000px);
   background-size: $dot-size $dot-size;
-  background-position: 0 0, $dot-size/2 $dot-size/2;
+  background-position: 0 0, calc($dot-size / 2) calc($dot-size / 2);
 }
 
 .mode-cursor > * {

@@ -5,7 +5,7 @@ package models
 import "udap/internal/store"
 
 func MigrateModels() error {
-	err := store.DB.AutoMigrate(Log{}, Endpoint{}, Entity{}, Module{}, Device{}, Network{}, Zone{})
+	err := store.DB.AutoMigrate(Log{}, Endpoint{}, Entity{}, Module{}, Device{}, Network{}, Zone{}, User{})
 	if err != nil {
 		return err
 	}

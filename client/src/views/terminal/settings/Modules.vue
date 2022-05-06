@@ -45,14 +45,15 @@ function groupBy<T>(xs: T[], key: string): T[] {
     </div>
     <div v-if="!state.loading" class="d-flex flex-column gap-1">
 
-      <div v-for="(entities, module) in state.modules" class=" d-flex justify-content-start flex-column">
+      <div v-for="(entities, module) in state.modules" v-if="state.modules"
+           class=" d-flex justify-content-start flex-column">
         <div v-if="entities" class="d-flex flex-column gap">
           <div class="label-xs label-r px-1 " style="text-transform: capitalize;">{{ module }}</div>
           <Plot :cols="5" :rows="1">
             <div v-for="entity in entities" class="subplot">
-              <div class="d-flex justify-content-start align-items-center flex-row px-1 w-100">
-                <div class="label-w500 label-o3 label-c1">{{ entity.icon }}&nbsp;</div>
-                <div class="label-w500 label-c1">{{ entity.name }}</div>
+              <div v-if="entity" class="d-flex justify-content-start align-items-center flex-row px-1 w-100">
+                <div class="label-w500 label-o3 label-c1">{{ entity }}&nbsp;</div>
+                <div class="label-w500 label-c1">{{ entity }}</div>
                 <div class="flex-grow-1"></div>
                 <div class="label-w500 label-c2 label-o2"><i class="fa-solid fa-gear"></i></div>
               </div>

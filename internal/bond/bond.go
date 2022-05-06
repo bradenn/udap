@@ -117,6 +117,7 @@ func (b *Bond) SendIdJSON(target string, operation string, id string, body strin
 		Payload:   body,
 	})
 }
+
 func (b *Bond) SendId(target string, operation string, id string, body interface{}) (interface{}, error) {
 	return b.send(Msg{
 		Target:    target,

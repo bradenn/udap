@@ -16,6 +16,7 @@ type User struct {
 	First    string `json:"first"`
 	Middle   string `json:"middle"`
 	Last     string `json:"last"`
+	Type     string `json:"type"`
 	Password string `json:"password"`
 }
 
@@ -30,14 +31,6 @@ func (u *User) Parse(data []byte) error {
 	return nil
 }
 
-type Users struct {
-	db store.Database
-}
-
-func (u *Users) Load(db store.Database) {
-	u.db = db
-}
-
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -48,27 +41,27 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func (u *Users) Register(user *User) error {
+func (u *User) Register(user *User) error {
 	password, err := HashPassword(user.Password)
 	if err != nil {
 		return err
 	}
 	user.Password = password
-	err = u.db.Create(user).Error
+	err = store.DB.Create(user).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *Users) FindById(id string) (user User, err error) {
-	err = u.db.Where("id = ?", id).First(&user).Error
+func (u *User) FindById(id string) (user User, err error) {
+	err = store.DB.Where("id = ?", id).First(&user).Error
 	return
 }
 
-func (u *Users) Authenticate(user User) (User, error) {
+func (u *User) Authenticate(user User) (User, error) {
 	pass := user.Password
-	err := u.db.Where("username = ?", user.Username).First(&user).Error
+	err := store.DB.Where("username = ?", user.Username).First(&user).Error
 	if err != nil {
 		return User{}, nil
 	}

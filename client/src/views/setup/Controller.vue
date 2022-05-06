@@ -28,7 +28,7 @@ onMounted(() => {
 
 // Verify a controller is up and running, update the controller if it is
 function testController(controller: Controller) {
-  // Send a get request to the heartbeat endpoint of the provided controller nexus
+  // Send a get request to the heartbeat endpoint of the provided controller app
   axios.get(`http://${controller.address}/status`).then(res => {
     // Set the controller's status to reflect the successful request
     controller.status = true
@@ -40,7 +40,7 @@ function testController(controller: Controller) {
   })
 }
 
-// Recommend a working nexus controller to the user, typically the production node
+// Recommend a working app controller to the user, typically the production node
 function suggestController(address: string) {
   // Update the state to reflect the suggested address
   state.auto = address

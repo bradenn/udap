@@ -53,7 +53,7 @@ function up() {
 </template>
 
 <style scoped>
-.radio.subplot:active {
+.radio.subplot:hover {
   animation: click 100ms ease forwards;
 }
 

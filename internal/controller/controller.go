@@ -9,15 +9,15 @@ import (
 )
 
 type Controller struct {
-	Entities       *Entities
-	Attributes     *Attributes
-	Modules        *Modules
-	Endpoints      *Endpoints
-	Devices        *Devices
-	Zones          *Zones
-	Networks       *Networks
-	UserController *UserController
-	event          chan bond.Msg
+	Entities   *Entities
+	Attributes *Attributes
+	Modules    *Modules
+	Endpoints  *Endpoints
+	Devices    *Devices
+	Zones      *Zones
+	Networks   *Networks
+	Users      *Users
+	event      chan bond.Msg
 }
 
 func NewController() (*Controller, error) {
@@ -28,15 +28,18 @@ func NewController() (*Controller, error) {
 	c.Endpoints = LoadEndpoints()
 	c.Devices = LoadDevices()
 	c.Networks = LoadNetworks()
+	c.Users = LoadUsers()
 	c.Zones = LoadZones()
 	return c, nil
 }
 
 func (c *Controller) Handle(msg bond.Msg) (interface{}, error) {
+
 	pulse.LogGlobal("Event: ", msg.Target, msg.Operation)
+
 	switch t := msg.Target; t {
 	case "user":
-		return c.UserController.Handle(msg)
+		return c.Users.Handle(msg)
 	case "entity":
 		return c.Entities.Handle(msg)
 	case "attribute":
@@ -85,6 +88,11 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Endpoints.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Users.EmitAll()
 	if err != nil {
 		return err
 	}
