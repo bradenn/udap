@@ -180,7 +180,12 @@ func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 				}
 				break
 			case "brightness":
-				err = g.Attributes.Update(id, "dim", string(message), stamp)
+				parseInt, err := strconv.ParseInt(string(message), 10, 64)
+				if err != nil {
+					return nil, err
+				}
+
+				err = g.Attributes.Update(id, "dim", fmt.Sprintf("%d", parseInt), stamp)
 				if err != nil {
 					break
 				}
@@ -208,6 +213,10 @@ func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 		}
 	}
 	return nil, nil
+}
+
+func mapInt(in float64, l1 float64, h1 float64, l2 float64, h2 float64) float64 {
+	return l2 + (h2-l2)*((in-l1)/(h1-l1))
 }
 
 func (g *Govee) getSingleState(device Device, mode string) (string, error) {
@@ -259,6 +268,7 @@ func (g *Govee) getSingleState(device Device, mode string) (string, error) {
 					if err != nil {
 						return "", err
 					}
+
 					return fmt.Sprintf("%d", out), nil
 				}
 				break
@@ -363,6 +373,10 @@ func (g *Govee) setState(device Device, value string, mode string) error {
 			return err
 		}
 		err = g.setLevel(device, val)
+		if err != nil {
+			return err
+		}
+		err = g.setOn(device, val != 0)
 		if err != nil {
 			return err
 		}

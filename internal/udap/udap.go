@@ -12,27 +12,47 @@ import (
 	"udap/internal/store"
 )
 
-const VERSION = "2.9.9"
+const VERSION = "2.10.2"
 
 type Udap struct {
-	runtime  *server.Runtime
-	database store.Database
+	runtime *server.Runtime
 }
 
-func Run() error {
-	err := config()
+func (u Udap) startup() error {
+	log.Log("UDAP v%s - Copyright (c) 2019-2022 Braden Nicholson", VERSION)
+
+	err := godotenv.Load()
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to load .env file")
 	}
 
-	u := &Udap{}
+	if os.Getenv("environment") == "production" {
+		log.Log("Running in PRODUCTION mode.")
+	} else {
+		log.Log("Running in DEVELOPMENT mode.")
+	}
 
-	u.database, err = store.NewDatabase()
+	err = os.Setenv("version", VERSION)
 	if err != nil {
 		return err
 	}
 
-	err = u.migrate()
+	return nil
+}
+
+func Start() error {
+	u := &Udap{}
+	err := u.startup()
+	if err != nil {
+		return err
+	}
+
+	_, err = store.NewDatabase()
+	if err != nil {
+		return err
+	}
+
+	err = models.MigrateModels()
 	if err != nil {
 		return err
 	}
@@ -45,34 +65,6 @@ func Run() error {
 	}
 
 	err = u.runtime.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (u *Udap) migrate() error {
-	err := u.database.AutoMigrate(models.Log{}, models.Endpoint{}, models.Entity{}, models.Module{}, models.Device{},
-		models.Network{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func config() error {
-	log.Log("UDAP v%s - Copyright (c) 2019-2022 Braden Nicholson", VERSION)
-	err := godotenv.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load .env file could not find any environment variables")
-	}
-	if os.Getenv("environment") == "production" {
-		log.Log("Running in PRODUCTION mode.")
-	} else {
-		log.Log("Running in DEVELOPMENT mode.")
-	}
-	err = os.Setenv("version", VERSION)
 	if err != nil {
 		return err
 	}

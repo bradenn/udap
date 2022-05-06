@@ -1,9 +1,12 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import Header from "@/components/Header.vue";
-import {inject} from "vue";
+import {inject, reactive} from "vue";
 import {Preference} from "@/preferences";
 import {PreferenceTypes} from "@/types";
+import Plot from "@/components/plot/Plot.vue";
+import axios from "axios";
+import Subplot from "@/components/plot/Subplot.vue";
 
 interface Preferences {
   ui: {
@@ -18,6 +21,10 @@ interface Preferences {
   }
 }
 
+let state = reactive({
+  loading: true,
+})
+
 const preferences = inject("preferences") as Preferences
 
 const defaults = {
@@ -27,16 +34,24 @@ const defaults = {
       identifier: "viridian",
     },
     {
+      name: "Waves",
+      identifier: "waves",
+    },
+    {
       name: "Blueberry",
       identifier: "blueberry",
     },
     {
-      name: "Dark Pattern",
-      identifier: "cblack",
+      name: "Galaxy",
+      identifier: "glax",
     },
     {
-      name: "Slither",
-      identifier: "slither",
+      name: "Geometry",
+      identifier: "geometry",
+    },
+    {
+      name: "Dust",
+      identifier: "dust",
     },
     {
       name: "Void",
@@ -69,17 +84,29 @@ const defaults = {
   ]
 }
 
-function changeBackground(name: string) {
+
+function loadImage(image: string) {
+
+  axios.get(`/custom/${image}@2x.png`).then(res => {
+    state.loading = false
+  }).catch(err => {
+
+  })
+}
+
+function changeBackground(name: string): any {
   new Preference(PreferenceTypes.Background).set(name)
+  state.loading = true
+  loadImage(name);
   preferences.ui.background = name
 }
 
-function changeTheme(name: string) {
+function changeTheme(name: string): any {
   new Preference(PreferenceTypes.Theme).set(name)
   preferences.ui.theme = name
 }
 
-function changeTouchmode(mode: string) {
+function changeTouchmode(mode: string): any {
   new Preference(PreferenceTypes.TouchMode).set(mode)
   preferences.ui.mode = mode
 }
@@ -92,46 +119,42 @@ function changeTouchmode(mode: string) {
     <div class="px-2">
       <div>
         <h4>Background</h4>
-        <div class="d-flex gap">
+        <Plot :cols="5" :rows="2">
           <div v-for="background in defaults.backgrounds" @click="changeBackground(background.identifier)">
-            <div
-                :class="`${preferences.ui.background === background.identifier?'background-preview-active':''}`"
-                :style="`background-image: url('/custom/${background.identifier}@4x.png');`"
-                class="background-preview">
-              <div class="label-xxs label-w500 label-o4 pb-1">
-                {{ background.name }}
+            <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
+              <div :class="`${preferences.ui.background === background.identifier?'active':''}`"
+                   :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
+                   class="background-preview ">
+                <div class="label-xxs label-w500 label-o5 pb-1">
+                  {{ background.name }}
+                </div>
               </div>
+
             </div>
+
           </div>
-        </div>
+        </Plot>
+
       </div>
+
       <div class="mt-2">
         <h4>Themes</h4>
-        <div class="d-flex gap">
-          <div v-for="theme in defaults.themes" @click="changeTheme(theme.identifier)">
-            <div
-                :class="`${preferences.ui.theme === theme.identifier?'theme-preview-active':''}`"
-                class="bg-blur surface theme-preview label-xxs label-o5 label-w600 px-4 py-2">
-              <div class="label-xxs label-w500 label-o4">
-                {{ theme.name }}
-              </div>
-            </div>
-          </div>
-        </div>
+        <Plot :cols="2" :rows="1">
+          <Subplot v-for="theme in defaults.themes" :active="preferences.ui.theme === theme.identifier"
+                   :fn="() => changeTheme(theme.identifier)"
+                   :name="theme.name" @click="">
+          </Subplot>
+        </Plot>
+
       </div>
       <div class="mt-2">
         <h4>Touch Mode</h4>
-        <div class="d-flex gap">
-          <div v-for="mode in defaults.touchModes" @click="changeTouchmode(mode.identifier)">
-            <div
-                :class="`${preferences.ui.mode === mode.identifier?'theme-preview-active':''}`"
-                class="bg-blur surface theme-preview label-xxs label-o5 label-w600 px-4 py-2">
-              <div class="label-xxs label-w500 label-o4">
-                {{ mode.name }}
-              </div>
-            </div>
-          </div>
-        </div>
+        <Plot :cols="2" :rows="1">
+          <Subplot v-for="mode in defaults.touchModes" :active="preferences.ui.mode === mode.identifier"
+                   :fn="() => changeTouchmode(mode.identifier)"
+                   :name="mode.name" @click="">
+          </Subplot>
+        </Plot>
       </div>
     </div>
   </div>
@@ -143,11 +166,16 @@ function changeTouchmode(mode: string) {
   justify-content: end;
   flex-direction: column;
   align-items: center;
-  width: 8rem;
-  border-radius: 0.5rem;
-  aspect-ratio: 16/9;
+  height: 4rem;
+  width: 100%;
+  border-radius: 0.2rem;
+
   background-size: cover;
-  box-shadow: 0 0 0.5rem 2px rgba(0, 0, 0, 0.2);
+
+}
+
+.background-preview .active {
+  margin: 1rem;
 }
 
 .theme-preview {

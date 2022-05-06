@@ -9,6 +9,7 @@ import Connection from "@/views/terminal/settings/Connection.vue";
 import Modules from "@/views/terminal/settings/Modules.vue";
 import Endpoints from "@/views/terminal/settings/Endpoints.vue";
 import Timings from "@/views/terminal/settings/Timings.vue";
+import Zones from "@/views/terminal/settings/Zones.vue";
 
 
 // Setup view components
@@ -37,9 +38,11 @@ import Timer from "../views/terminal/timing/Timer.vue";
 import WeatherApp from "../views/terminal/weather/Weather.vue";
 import Summary from "../views/terminal/weather/Summary.vue";
 
-
 // Whiteboard Routes
 import Whiteboard from "../views/terminal/whiteboard/Whiteboard.vue";
+
+// Calculator Routes
+import Calculator from "../views/terminal/calculator/Calculator.vue";
 
 const defaultRoute = {
     path: '/',
@@ -76,27 +79,39 @@ const settingsRoutes = {
         {
             path: '/terminal/settings/preferences',
             name: 'Preferences',
+            icon: 'bars-progress',
             component: Preferences
         },
         {
             path: '/terminal/settings/connection',
             name: 'Connection',
+            icon: 'cloud',
             component: Connection
         },
         {
             path: '/terminal/settings/modules',
             name: 'Modules',
+            icon: 'layer-group',
             component: Modules
         },
         {
             path: '/terminal/settings/endpoints',
             name: 'Endpoints',
+            icon: 'expand',
             component: Endpoints
         },
         {
             path: '/terminal/settings/timings',
             name: 'Timings',
+            icon: 'clock',
             component: Timings
+        },
+
+        {
+            path: '/terminal/settings/zones',
+            name: 'Zones',
+            icon: 'map',
+            component: Zones
         },
     ]
 }
@@ -111,16 +126,19 @@ const exogeologyRoutes = {
         {
             path: '/terminal/exogeology/earth',
             name: 'Earth',
+            icon: 'earth-americas',
             component: Earth,
         },
         {
             path: '/terminal/exogeology/moon',
             name: 'Moon',
+            icon: 'moon',
             component: Moon,
         },
         {
             path: '/terminal/exogeology/sol',
             name: 'Sol',
+            icon: 'sun',
             component: Sol,
         },
     ]
@@ -135,11 +153,13 @@ const timingRoutes = {
         {
             path: '/terminal/timing/stopwatch',
             name: 'Stopwatch',
+            icon: 'stopwatch',
             component: Stopwatch,
         },
         {
             path: '/terminal/timing/timer',
             name: 'Timer',
+            icon: 'clock',
             component: Timer,
         },
     ]
@@ -165,6 +185,13 @@ const whiteboardRoutes = {
     name: 'Whiteboard',
     component: Whiteboard,
     icon: 'fa-highlighter',
+}
+
+const calculatorRoute = {
+    path: '/terminal/calculator',
+    name: 'Calculator',
+    component: Calculator,
+    icon: 'fa-calculator',
 }
 
 const terminalRoutes = {
@@ -195,14 +222,16 @@ const terminalRoutes = {
         timingRoutes,
         exogeologyRoutes,
         weatherRoutes,
-        whiteboardRoutes
-    ]
+        whiteboardRoutes,
+        calculatorRoute
+    ],
 }
 
 const routes = [
     defaultRoute,
     setupRoutes,
-    terminalRoutes
+    terminalRoutes,
+    {path: '/:pathMatch(.*)*', redirect: "/"}
 ]
 
 const router = createRouter({

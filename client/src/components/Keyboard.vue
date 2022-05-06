@@ -27,13 +27,14 @@ let keyboardOptions: KeyboardOptions = {
       '{tab} q w e r t y u i o p [ ] \\',
       '{lock} a s d f g h j k l ; \' {enter}',
       '{shift} z x c v b n m , . / {shift}',
+      '{control} {alt} {meta} {space} {meta} {alt} {control}'
     ],
     'shift': [
       '~ ! @ # $ % ^ & * ( ) _ + {bksp}',
       '{tab} Q W E R T Y U I O P { } |',
       '{lock} A S D F G H J K L : " {enter}',
       '{shift} Z X C V B N M < > ? {shift}',
-      '.com @ {space}'
+      '{control} {alt} {meta} {space}'
     ]
   },
   display: {
@@ -44,8 +45,14 @@ let keyboardOptions: KeyboardOptions = {
     "{shift}": "shift",
     "{control}": "⌃",
     "{alt}": "⌥",
-    "{space}": "&nbsp;",
+    "{space}": "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +
+        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",
     "{meta}": "⌘",
+    "{at}": " ",
   }
 }
 
@@ -87,10 +94,11 @@ function handleShift() {
 
 .simple-keyboard {
   position: absolute !important;
-  width: 100%;
+  width: 40rem;
+
   z-index: 1000;
-  bottom: 0;
-  left: 0;
+  bottom: 18%;
+  left: calc(50% - 20rem);
 
 }
 </style>

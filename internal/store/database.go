@@ -29,7 +29,6 @@ func NewDatabase() (Database, error) {
 	pg := postgres.Open(dbURL())
 	db, err := gorm.Open(pg, &gorm.Config{})
 	if err != nil {
-
 		return Database{}, err
 	}
 
@@ -49,6 +48,6 @@ func dbURL() string {
 	// The name of the database is again retrieved from the environment
 	dbName := os.Getenv("dbName")
 	// All variables are aggregated into the connection url
-	u := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai", dbHost, dbUser, dbPass, dbName, dbPort)
+	u := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC", dbHost, dbUser, dbPass, dbName, dbPort)
 	return u
 }

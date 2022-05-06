@@ -134,10 +134,13 @@ provide('hideHome', hideHome)
 
     <div v-if="state.context" class="context context-light"></div>
     <router-view/>
+
+
   </div>
 </template>
 
 <style lang="scss">
+
 .root {
   position: absolute;
   top: 0;
@@ -150,10 +153,11 @@ provide('hideHome', hideHome)
 }
 
 .backdrop {
-  z-index: -1 !important;
+  z-index: -2 !important;
   top: 0;
   left: 0;
-  transform: scale(1.0169491525);
+  background-color: rgba(28, 33, 40, 0.24);
+  transform: scale(1);
   overflow: hidden;
   position: absolute;
   background-position: center;
@@ -165,6 +169,11 @@ provide('hideHome', hideHome)
   padding: 0;
   animation: switch 0.25s ease-in-out forwards;
 }
+
+.backdrop:after {
+
+}
+
 
 .update-animate {
   animation: highlight 100ms ease-out forwards;
@@ -225,10 +234,9 @@ provide('hideHome', hideHome)
 }
 
 
-
 // Colors
 $bg-color: rgba(0, 0, 0, 0);
-$dot-color: rgba(255, 255, 255, 0.2);
+$dot-color: rgba(255, 255, 255, 0.1);
 
 // Dimensions
 $dot-size: 28px;
@@ -239,18 +247,17 @@ $dot-space: 16px;
   position: absolute;
   width: calc(100% - 0.5rem);
   height: calc(100% - 0.5rem);
-
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
   margin: 0.25rem;
-  border-radius: 0.125rem;
+
   z-index: -1;
   background-color: $bg-color;
   opacity: 1;
-  border-radius: 0.24rem;
+  border-radius: 0.2rem;
   border: 1px solid $dot-color;
   background-image: radial-gradient($dot-color 0.980000000000000px, $bg-color 0.980000000000000px), radial-gradient($dot-color 0.98px, $bg-color 0.980000000000000px);
   background-size: $dot-size $dot-size;
   background-position: 0 0, calc($dot-size / 2) calc($dot-size / 2);
-
 }
 
 .mode-cursor > * {

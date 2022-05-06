@@ -42,8 +42,9 @@ function reload() {
       <IdHash></IdHash>
     </div>
     <div class="d-flex flex-column gap-0">
-      <div class="label-c2 label-o5 lh-1">Braden Nicholson</div>
-      <div class="label-c2 label-o2 label-w500 lh-1" style="font-family: 'Roboto Light', sans-serif;">Superuser</div>
+      <div class="label-c2 label-o5 lh-1 label-r">Braden Nicholson</div>
+      <div class="label-c3 label-o2 label-r label-w500 lh-1"
+           style="font-family: 'Roboto Light', sans-serif;">NFC Authenticated</div>
     </div>
     <div class="flex-grow-1"></div>
     <div v-if="remote.nexus.state > 1" class="d-flex flex-column gap-0 justify-content-end align-items-end ">
@@ -61,9 +62,17 @@ function reload() {
     </div>
   </div>
 
-  <div v-if="state.menu" class="tag-summary element d-flex flex-column gap-1 p-1">
-    <div class="element element-group">
-      <div class="plot plot-4x1">
+  <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 p-1">
+
+    <Plot :cols="1" :rows="1">
+      <div class="subplot d-flex align-items-end align-items-center lh-1 gap-1">
+        <div class="label-o2">􀉩</div>
+        <div class="label-o4 label-r label-w600">Braden Nicholson</div>
+        <div class="flex-fill"></div>
+        <div class="px-1 label-o2"> 􀉯</div>
+      </div>
+
+      <Plot :cols="4" :rows="1">
         <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
           <div class="label-o4 label-c2"><i class="fa-solid fa-house fa-fw"></i></div>
         </div>
@@ -84,12 +93,8 @@ function reload() {
         <div class="subplot plot-centered" @click="$router.push('/terminal/settings')">
           <div class="label-o4 label-c2"><i class="fa-solid fa-cog fa-fw"></i></div>
         </div>
-
-      </div>
-    </div>
-    <div class="element element-group">
-      <div class="label-c2 label-o4 label-w400 px-1">Status</div>
-      <div class="plot plot-2x1">
+      </Plot>
+      <Plot :cols="2" :rows="1">
         <div class="subplot">
           <div class="label-c3">Wi-Fi</div>
           <div class="d-flex justify-content-center align-items-center align-content-center">
@@ -115,23 +120,22 @@ function reload() {
             </div>
           </div>
         </div>
-
-      </div>
-    </div>
-    <Plot :cols="1" :rows="1" title="Brightness">
-      <input v-model="ui.brightness"
-             :max=20
-             :min=4
-             :step=1
-             class="slider-small"
-             type="range"
-             @mousemove.stop>
-    </Plot>
-    <Plot :cols="2" :rows="2" title="Quick Settings">
-      <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
-      <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Outlines"></Toggle>
-      <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
-      <Toggle :active="ui.night" :fn="() => ui.night = !ui.night" title="Night"></Toggle>
+      </Plot>
+      <Plot :cols="1" :rows="1" title="Brightness">
+        <input v-model="ui.brightness"
+               :max=20
+               :min=4
+               :step=1
+               class="slider-small"
+               type="range"
+               @mousemove.stop>
+      </Plot>
+      <Plot :cols="2" :rows="2" title="Quick Settings">
+        <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
+        <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Outlines"></Toggle>
+        <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
+        <Toggle :active="ui.night" :fn="() => ui.night = !ui.night" title="Night"></Toggle>
+      </Plot>
     </Plot>
 
   </div>
@@ -145,11 +149,10 @@ function reload() {
 }
 
 .tag-summary {
-  backdrop-filter: blur(42px);
+
   position: relative;
   margin-top: 0.125rem;
 
-  animation: slideIn 250ms ease forwards;
   z-index: 22;
 }
 

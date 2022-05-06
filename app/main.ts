@@ -1,9 +1,7 @@
 const {app, BrowserWindow} = require("electron");
 const path = require("path");
-app.commandLine.appendSwitch("js-flags", "--max-old-space-size=4096")
 
 function createWindow() {
-
     const win = new BrowserWindow({
         width: 800,
         height: 600,
@@ -11,7 +9,7 @@ function createWindow() {
             preload: path.join(__dirname, "preload.js"),
         },
         showCursor: false,
-        title: "UDAP Endpoint Terminal @ CONFIDENTIAL COPY",
+        title: "Udap-Nexus Terminal Endpoint",
         acceptFirstMouse: true,
         backgroundColor: '#000000',
         autoHideMenuBar: true,
@@ -24,7 +22,6 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow();
-
     app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();

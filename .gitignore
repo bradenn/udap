@@ -6,12 +6,20 @@ selfsigned.key
 /local
 .idea
 private-key.pem
-/dist
-/node_modules
+*/dist
+*/node_modules
 /pkg
 spotify.json
-/db-data/*
+/db-data
+
+/**.log
+
+# Terminal Ignore
+
+/app/node_modules/**
+
+# Client Ignore
+
 /client/src/assets/js/
-**/yarn-error.log
 /client/src/assets/**.css
 /client/src/assets/**.css.map

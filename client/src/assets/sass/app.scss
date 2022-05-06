@@ -10,12 +10,18 @@ html {
   font-family: 'SF Pro Text', sans-serif;
   font-size: 32px;
   user-select: none !important;
+  height: 100%;
 }
 
-.router-link-active .sidebar-item {
-  @extend .surface;
+
+.router-link {
+  cursor: none !important;
 }
 
+
+a:-webkit-any-link {
+  cursor: none !important;
+}
 
 body {
   -webkit-font-smoothing: antialiased !important;
@@ -155,6 +161,10 @@ $fontColors: (
   @extend .surface;
 }
 
+.rain {
+  color: rgba(92, 177, 246, 0.6);
+}
+
 // Plots
 
 .plot {
@@ -169,12 +179,12 @@ $fontColors: (
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0.375rem !important;
+  padding: 0 0.375rem;
   //border-radius: 0.375rem !important;
-  font-family: "SF Pro", sans-serif !important;
-  color: rgba(255, 255, 255, 0.7);
+  font-family: "SF Pro Rounded", sans-serif !important;
+  color: rgba(255, 255, 255, 0.5);
   background-color: rgba(255, 255, 255, 0.025);
-  border-radius: 0.375rem;
+  border-radius: 0.3rem;
   box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.05);
 
@@ -276,7 +286,7 @@ $fontColors: (
 }
 
 .slider-small::-webkit-slider-thumb {
-  cursor: none;
+
   background-color: rgba(255, 255, 255, 0.4) !important;
   width: 1.1rem !important;
   height: 1.1rem !important;
@@ -313,10 +323,10 @@ $fontColors: (
 }
 
 .slider::-webkit-slider-thumb {
-  @extend .element;
-  box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.1), inset 0 0 0 2px rgba(255, 255, 255, 0.5) !important;
+  background: linear-gradient(315deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.45) 100%) !important;
+  box-shadow: 0 0 4px 2px rgba(0, 0, 0, 0.2) !important;
   background-color: rgb(153, 153, 153);
-  border-radius: 0.375rem !important;
+  border-radius: 0.25rem !important;
   height: 1.5rem;
   width: 0.5rem;
   -webkit-appearance: none;
@@ -325,7 +335,7 @@ $fontColors: (
 }
 
 .slider-track.slider::-webkit-slider-thumb {
-  @extend .surface;
+  @extend .element;
   padding: 0;
   height: 6px !important;
   width: 6px !important;
@@ -391,7 +401,6 @@ $fontColors: (
 
   height: 2rem;
   width: 2rem;
-
   aspect-ratio: 1/1 !important;
   border-radius: calc(0.5rem - 0.125rem) !important;
   justify-content: center;
@@ -432,21 +441,32 @@ $fontColors: (
 
 
 .hg-theme-udap .hg-button:active {
-  @extend .router-link-active;
+
   background-color: rgba(0, 0, 0, 0.2);
 }
 
 .hg-theme-udap .hg-button.hg-activeButton {
-  background: rgba(0, 0, 0, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.055);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .hg-theme-udap .hg-button {
-  @extend .element;
-  height: 4rem !important;
-  border-bottom: inherit !important;
-  border-radius: 0.375rem !important;
-  font-size: 1.3rem !important;
-  transition: 250ms cubic-bezier(.15, 1.48, 0, .76);
+
+  height: 100%;
+  min-height: 2.2rem;
+  min-width: 2.5rem;
+  color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.025);
+  border-radius: 0.3rem;
+  box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+
+  font-family: "SF Pro Rounded", sans-serif;
+  font-weight: 400;
+  //text-transform: capitalize;
+
+  font-size: 0.8rem !important;
+
 }
 
 .hg-theme-udap {
@@ -595,11 +615,11 @@ hr {
 }
 
 .v-sep {
-  width: 2px;
+  width: 1.4px;
   border-radius: 1px;
   margin-inline: 0.4rem;
   height: 1.3rem;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 

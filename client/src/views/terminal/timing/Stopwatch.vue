@@ -61,7 +61,7 @@ function tick() {
   let now = state.start > 0 ? new Date().valueOf() - state.start : 0
 
 
-  state.delta.milliseconds = (Math.floor(now) % 1000).toString().padStart(3, "0")
+  state.delta.milliseconds = (Math.floor(now) % 999).toString().padStart(3, "0")
   state.delta.seconds = (Math.floor(now / 1000) % 60).toString().padStart(2, "0")
   state.delta.minutes = (Math.floor(now / 1000 / 60) % 60).toString().padStart(2, "0")
   state.delta.hours = (Math.floor(now / 1000 / 60 / 60) % 24).toString().padStart(2, "0")
@@ -73,6 +73,7 @@ function tick() {
 </script>
 
 <template>
+
   <div class="d-flex flex-column justify-content-start align-items-center h-100">
     <div class="d-inline-block element px-5 py-3 my-3">
       <div class="d-flex flex-row align-items-center justify-content-center gap-4">
@@ -166,10 +167,11 @@ function tick() {
 }
 
 .timer {
-  font-family: "Roboto", sans-serif;
+  font-family: "SF Pro Display", sans-serif;
   letter-spacing: 1px !important;
   font-variant-numeric: tabular-nums lining-nums;
-  font-weight: 350 !important;
+  font-weight: 400 !important;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 4.5rem;
   line-height: 5rem;
   transition: all 1000ms ease-in;

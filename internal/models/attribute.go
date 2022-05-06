@@ -12,18 +12,20 @@ type FuncPut func(value string) error
 type FuncGet func() (string, error)
 
 type Attribute struct {
-	Id      string    `json:"id"`
+	Id string `json:"id"`
+
 	Value   string    `json:"value"`
 	Updated time.Time `json:"updated"`
 
 	Request   string    `json:"request"`
 	Requested time.Time `json:"requested"`
-	Entity    string    `json:"entity"`
-	Key       string    `json:"key"`
-	Type      string    `json:"type"`
-	Order     int       `json:"order"`
-	put       FuncPut
-	get       FuncGet
+
+	Entity string `json:"entity"`
+	Key    string `json:"key"`
+	Type   string `json:"type"`
+	Order  int    `json:"order"`
+	put    FuncPut
+	get    FuncGet
 }
 
 // Path Returns a unique identifier bound to an entity

@@ -101,7 +101,7 @@ function buildUrl(angstroms: string) {
 
 <style scoped>
 .sol-disk {
-  width: 24rem !important;
+  width: 22rem !important;
 
   box-shadow: 0 0 4px 8px rgba(0, 0, 0, 0.025);
   aspect-ratio: 1/1;
@@ -117,7 +117,7 @@ function buildUrl(angstroms: string) {
 }
 
 .sol-square {
-  width: 24rem !important;
+  width: 22rem !important;
 
   box-shadow: 0 0 4px 8px rgba(0, 0, 0, 0.025);
   aspect-ratio: 1/1;

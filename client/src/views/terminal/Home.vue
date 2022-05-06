@@ -8,6 +8,7 @@ import router from "@/router";
 import Widget from "@/components/widgets/Widget.vue";
 import App from "@/components/App.vue";
 import Spotify from "@/components/widgets/Spotify.vue";
+import Macros from "@/components/widgets/Macros.vue";
 
 // Define the local reactive data for this view
 let state = reactive<{
@@ -75,21 +76,21 @@ let ui: any = inject("ui")
 
 <template>
 
-  <div :class="`${ui.outlines?'show-outline':''}`" class="d-flex justify-content-between gap-3 mt-2x pb-4 h-100 w-100">
+  <div :class="`${ui.outlines?'show-outline':''}`" class="d-flex justify-content-between gap-3 mt-1 pb-4 h-100 w-100">
 
     <div class="widget-grid flex-grow-1">
-      <Widget :cols="4" :rows="6" class="d-flex flex-column" size="sm">
-        <Light v-for="light in state.lights.slice(0, 6)" :key="light.id" :entity="light"></Light>
-      </Widget>
-      <Widget :cols="4" :rows="6" class="d-flex flex-column" size="sm">
-        <Light v-for="light in state.lights.filter(l => l.name.startsWith('ch')).sort((a, b) => a.created-b.created)"
-               :key="light.id" :entity="light"></Light>
+      <Widget :cols="4" :rows="5" class="d-flex flex-column" size="sm">
+
+        <Light v-for="light in state.lights.slice(0, 4).filter(l => l.name !== 'Kitchen')" :key="light.id"
+               :entity="light"></Light>
+        <Macros></Macros>
       </Widget>
 
 
       <!--      <Widget :cols="3" :rows="1" size="sm">-->
       <!--        <Shortcut v-for="i in state.shortcuts" :icon="i.icon || 'fa-square'" :name="i.name"></Shortcut>-->
       <!--      </Widget>-->
+
     </div>
 
     <div :class="`${ui.outlines?'show-outline':''}`" class="widget-grid-vertical" style="max-width: 13rem">
@@ -99,12 +100,13 @@ let ui: any = inject("ui")
       <Widget :cols="1" :rows="2" size="sm">
         <Weather></Weather>
       </Widget>
-      <Widget :cols="1" :rows="3" class="" size="sm"
+      <Widget :cols="1" :rows="4" class="" size="sm"
               style="">
         <div class="widget-apps">
           <App v-for="i in state.apps" :icon="i.icon || 'fa-square'" :name="i.name" @click="router.push(i.path)"></App>
         </div>
       </Widget>
+
     </div>
   </div>
 </template>

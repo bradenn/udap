@@ -5,16 +5,15 @@ package plugin
 import (
 	"fmt"
 	"plugin"
-	"udap/internal/bond"
 	"udap/internal/controller"
 )
 
-// UdapPlugin defines the functions of a plugin's exported variable
-type UdapPlugin interface {
+// ModuleInterface defines the functions of a plugin's exported variable
+type ModuleInterface interface {
 	// Setup is called when the plugin is first loaded
 	Setup() (Config, error)
 	// Connect c
-	Connect(*controller.Controller, *bond.Bond) error
+	Connect(*controller.Controller) error
 	// Run provides module-relevant data
 	Run() error
 	// Update is used to assign channels
@@ -22,7 +21,7 @@ type UdapPlugin interface {
 }
 
 // Load attempts to load the plugin from a given path
-func Load(path string) (pl UdapPlugin, err error) {
+func Load(path string) (pl ModuleInterface, err error) {
 	// Attempt to open that plugin
 	p, err := plugin.Open(path)
 	if err != nil {
@@ -33,7 +32,7 @@ func Load(path string) (pl UdapPlugin, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("plugin '%s' does not define a Plugin interface", path)
 	}
-	pl = lookup.(UdapPlugin)
+	pl = lookup.(ModuleInterface)
 	// Return no errors
 	return pl, nil
 }

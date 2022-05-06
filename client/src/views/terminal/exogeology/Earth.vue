@@ -5,12 +5,14 @@ import moment from 'moment'
 import {onMounted, reactive} from "vue";
 import axios from "axios";
 import Loader from "@/components/Loader.vue";
+import Plot from "@/components/plot/Plot.vue";
+import Subplot from "@/components/plot/Subplot.vue";
 
 let state = reactive({
   satellite: "GOES17",
   mode: "GEOCOLOR",
   section: "FD",
-  currentImage: "",
+  currentImage: "/custom/1808x1808.jpg",
   lowRes: "",
   lastUpdated: "",
   lastDate: 0,
@@ -35,14 +37,22 @@ const sections = [
   {
     name: "Full Disk",
     key: "FD",
+    alt: ""
   },
   {
     name: "California",
     key: "SECTOR/PSW",
+    alt: ""
+  },
+  {
+    name: "BC",
+    key: "SECTOR/sea",
+    alt: ""
   },
   {
     name: "USA",
     key: "CONUS",
+    alt: ""
   }
 ]
 
@@ -52,13 +62,54 @@ const viewModes = [{
 }, {
   name: "Heatmap",
   key: "FireTemperature"
-}, {
-  name: "Air Mass",
-  key: "AirMass"
 },
   {
-    name: "Combined",
+    name: "Sandwich",
     key: "Sandwich"
+  },
+  {
+    name: "Dust",
+    key: "Dust"
+  },
+  {
+    name: "Clouds",
+    key: "DayCloudPhase"
+  },
+  {
+    name: "Fog",
+    key: "NightMicrophysics"
+  },
+  {
+    name: "Red",
+    key: "02",
+    alt: "640nm"
+  },
+  {
+    name: "Green",
+    key: "03",
+    alt: "860nm"
+  },
+
+  {
+    name: "Blue",
+    key: "01",
+    alt: "470nm"
+  },
+  {
+    name: "Air Mass",
+    key: "AirMass",
+    alt: "Water Vapor"
+  },
+
+  {
+    name: "3.9µm",
+    key: "07",
+    alt: "3.9µm"
+  },
+  {
+    name: "Ozone",
+    key: "12",
+    alt: "3.9um"
   },
   {
     name: "Co2",
@@ -78,16 +129,19 @@ const satellites = [
   }
 ]
 
-function selectSatellite(satellite: string) {
+function selectSatellite(satellite: string): any {
   state.satellite = satellite
+  buildURL()
 }
 
-function selectMode(mode: string) {
+function selectMode(mode: string): any {
   state.mode = mode
+  buildURL()
 }
 
-function selectSection(section: string) {
+function selectSection(section: string): any {
   state.section = section
+  buildURL()
 }
 
 function downloadImage(url: string) {
@@ -118,6 +172,7 @@ function buildURL() {
   // Mode ABI, Advanced Baseline Imager
   // Section, FD, etc
   // Mode GEOCOLOR, etc
+  state.loading = true
   state.lowRes = `/custom/1808x1808.jpg`
   downloadImage(`https://cdn.star.nesdis.noaa.gov/${state.satellite}/ABI/${state.section}/${state.mode}/${state.section === "FD" ? '1808x1808' : '1200x1200'}.jpg?ts=${state.lastDate}`)
 }
@@ -134,67 +189,56 @@ function buildURL() {
 
         <!-- Earth -->
         <div
-            class="d-flex justify-content-between align-items-center align-content-center flex-column flex-grow-1 h-100">
-
-          <!-- Disk -->
-          <div class="d-flex justify-content-center align-items-center align-content-center h-100">
-            <div v-if="state.section === 'FD'">
-              <div v-if="state.loading"
-                   :style="`background-image: url('${state.lowRes}');`"
-                   class="earth-full-disk">
-                <Loader v-if="state.loading"></Loader>
-              </div>
-              <div v-else :style="`background-image: url('${state.currentImage}');`"
-                   class="earth-full-disk">
-              </div>
-            </div>
-            <div v-else :style="`background-image: url('${buildURL()}');`"
-                 class="preview p-5">
-            </div>
-          </div>
+            class="d-flex justify-content-between align-items-center align-content-center flex-row flex-grow-1 h-100">
 
           <!-- Help Bar -->
-          <div class="element d-flex flex-row justify-content-start align-items-center gap-1 p-1 mt-3">
+          <div
+              class="element d-flex flex-column  justify-content-start align-items-center gap-2 p-1 mt-3 px-2 py-2"
+              style="width: 13rem; ">
             <!-- NOAA Logo, as per their TOS -->
-            <img alt="noaa" class="noaa mx-1" src="/noaa.svg"/>
+            <div class="d-flex align-items-center gap-2">
 
-            <!-- Last update from the headers of the photo -->
-            <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Last updated</div>
-              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
-            </div>
 
-            <div class="v-sep"></div>
+              <img alt="noaa" class="noaa mx-0" src="/noaa.svg"/>
+              <!-- The path tp the current photo -->
+              <div class="flex-shrink-0">
+                <div class="label-c2 label-w500 label-o5 lh-sm">Path</div>
+                <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1">
 
-            <!-- Last update from the headers of the photo -->
-            <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
-              <div class="label-c2 label-w300 label-o4 lh-1">{{ state.progress }}</div>
-            </div>
-
-            <div class="v-sep"></div>
-
-            <!-- The path tp the current photo -->
-            <div class="flex-shrink-0">
-              <div class="label-c2 label-w500 label-o5 lh-sm">Path</div>
-              <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1">
-
-                <div class="d-flex gap">
-                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.satellite }}</div>
-                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
-                </div>
-                <div class="d-flex gap">
-                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.section }}</div>
-                  <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
-                </div>
-                <div class="d-flex gap">
-                  <div class="label-c2 label-w300 label-o4 lh-1">{{ state.mode }}</div>
+                  <div class="d-flex gap">
+                    <div class="label-c2 label-w300 label-o4 lh-1">{{ state.satellite }}</div>
+                    <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                  </div>
+                  <div class="d-flex gap">
+                    <div class="label-c2 label-w300 label-o4 lh-1">{{ state.section }}</div>
+                    <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                  </div>
+                  <div class="d-flex gap">
+                    <div class="label-c2 label-w300 label-o4 lh-1">{{ state.mode }}</div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="v-sep"></div>
+            <div class="h-sep"></div>
+            <div class="d-flex justify-content-around w-100">
+              <!-- Last update from the headers of the photo -->
+              <div class="flex-shrink-0">
+                <div class="label-c2 label-w500 label-o5 lh-sm">Last updated</div>
+                <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
+              </div>
+
+              <div class="v-sep"></div>
+              <!-- Last update from the headers of the photo -->
+              <div class="flex-shrink-0">
+                <div class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
+                <div class="label-c2 label-w300 label-o4 lh-1">{{ state.progress }}</div>
+              </div>
+            </div>
+
+
+            <div class="h-sep"></div>
             <!-- Last update from the headers of the photo -->
-            <div class="flex-shrink-0">
+            <div class="w-100 px-3">
               <div class="label-c2 label-w500 label-o5 lh-sm">Size</div>
               <div class="label-c2 label-w300 label-o4 lh-1">
                 {{ Math.round(state.currentSize / 1000 / 1000 * 100) / 100 }} MB
@@ -202,89 +246,87 @@ function buildURL() {
             </div>
 
 
-            <div class="v-sep"></div>
+            <div class="h-sep"></div>
 
 
             <!-- Refresh the image manually -->
             <div
-                class="dock-icon surface button-icon d-flex flex-row justify-content-center align-content-center align-items-center flex-grow-0"
+                class="subplot p-1 px-2 d-flex flex-row justify-content-center align-content-center align-items-center flex-grow-0"
                 @click="buildURL()">
-              <div class="label-c2 label-w500 label-o5"><i class="fa-solid fa-arrow-rotate-right fa-fw"></i></div>
+              <div class="label-c2 label-w500 label-o4"><i
+                  class="fa-solid fa-arrow-rotate-right fa-fw"></i> Force Reload</div>
 
             </div>
 
           </div>
-          <!-- Current url -->
-          <div class="label-c3 label-o4 pt-2">
-            {{ state.currentImage }}
+          <!-- Disk -->
+          <div class="d-flex justify-content-center align-items-center align-content-center earth-background element">
+            <div v-if="state.section === 'FD'">
+              <div v-if="state.loading"
+                   :style="`background-image: url('${state.currentImage}');`"
+                   class="earth-full-disk">
+                <Loader v-if="state.loading"></Loader>
+              </div>
+              <div v-else :style="`background-image: url('${state.currentImage}');`"
+                   class="earth-full-disk">
+              </div>
+            </div>
+            <div v-else>
+              <div v-if="state.loading"
+                   :style="`background-image: url('${state.currentImage}');`"
+                   class="preview p-5 d-flex justify-content-center align-items-center">
+                <Loader v-if="state.loading"></Loader>
+              </div>
+
+              <div v-else :style="`background-image: url('${state.currentImage}');`"
+                   class="preview p-5">
+              </div>
+            </div>
+
           </div>
+          <div class="d-flex flex-column gap w-25  flex-grow-0">
+            <div class="label-o4 label-sm label-r label-w500 lh-1">Satellite</div>
+            <Plot :cols="2" :rows="1">
+              <Subplot v-for="sat in satellites" :active="state.satellite===sat.key" :alt="sat.alt"
+                       :fn="() => selectSatellite(sat.key)"
+                       :name="sat.name"
+                       icon="satellite"></Subplot>
+            </Plot>
+            <div class="label-o4 label-sm label-r label-w500 lh-1">Prespective</div>
+            <Plot :cols="2" :rows="2">
+              <Subplot v-for="sect in sections" :active="sect.key === state.section || state.toggles.section"
+                       :alt="sect.alt" :fn="() => selectSection(sect.key)"
+                       :name="sect.name"
+                       icon="satellite"></Subplot>
+            </Plot>
+            <div class="label-o4 label-sm label-r label-w500 lh-1">Wavelengths</div>
+            <Plot :cols="3" :rows="2">
+              <Subplot v-for="mode in viewModes" :active="state.mode === mode.key"
+                       :fn="() => selectMode(mode.key)"
+                       :name="mode.name"></Subplot>
+            </Plot>
+
+            <!-- Current url -->
+
+          </div>
+
         </div>   <!-- Sidebar -->
-        <div class="d-flex flex-column gap w-25  flex-grow-0">
-          <div class="d-flex justify-content-start px-1 pt-0">
-            <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-earth-americas fa-fw`"></i></div>
-            <div class="label-w500  label-xxl px-2">Earth</div>
-          </div>
-          <div class="element">
-            <div class="d-flex justify-content-between mx-1 align-items-center"
-                 @click="state.toggles.satellite = !state.toggles.satellite">
-              <div class="h5">Satellite</div>
-              <div class="label-c2 label-w500 label-o4">{{ satellites.length }} options <i
-                  class="fa-solid fa-caret-down label-o5"></i></div>
-            </div>
-            <div v-for="sat in satellites"
-                 :key="sat.key"
 
-                 :class="`${state.satellite === sat.key?'router-link-active':''}`"
-                 class="gap">
-              <div v-if="sat.key === state.satellite || state.toggles.satellite" class="option"
-                   @click="selectSatellite(sat.key)">
-                {{ sat.name }}<span class="float-end label-o3 text-uppercase">{{ sat.alt }}</span>
-              </div>
-            </div>
-
-          </div>
-          <div class="element">
-            <div class="d-flex justify-content-between mx-1 align-items-center"
-                 @click="state.toggles.section = !state.toggles.section">
-              <div class="h5">Perspective</div>
-              <div class="label-c2 label-w500 label-o4">{{ sections.length }} options <i
-                  class="fa-solid fa-caret-down label-o5"></i></div>
-            </div>
-            <div v-for="sect in sections" :key="sect.key"
-
-                 :class="`${state.section === sect.key?'router-link-active':''}`"
-                 class="gap">
-              <div v-if="sect.key === state.section || state.toggles.section" class="option"
-                   @click="selectSection(sect.key)">{{ sect.name }}
-              </div>
-            </div>
-          </div>
-          <div class="element">
-            <div class="d-flex justify-content-between mx-1 align-items-center"
-                 @click="state.toggles.mode = !state.toggles.mode">
-              <div class="h5">Wavelength</div>
-              <div class="label-c2 label-w500 label-o4">{{ viewModes.length }} options <i
-                  class="fa-solid fa-caret-down label-o5"></i></div>
-            </div>
-            <div v-for="mode in viewModes" :key="mode.key"
-
-                 :class="`${state.mode === mode.key?'router-link-active':''}`"
-                 class="gap">
-              <div v-if="mode.key === state.mode || state.toggles.mode" class="option"
-                   @click="selectMode(mode.key)">{{ mode.name }}
-              </div>
-            </div>
-          </div>
-
-
-        </div>
       </div>
+
     </div>
+
   </div>
 
 </template>
 
 <style scoped>
+
+.earth-background {
+  border-radius: 100%;
+  padding: 0.125rem;
+}
+
 .noaa {
   height: 1.5rem;
   padding: 1px;
@@ -338,7 +380,7 @@ function buildURL() {
 }
 
 .earth-full-disk {
-  width: 24rem;
+  width: 24.5rem;
   display: flex;
   justify-content: center;
   align-items: center;

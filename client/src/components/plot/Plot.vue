@@ -11,10 +11,12 @@ let props = defineProps<Plot>()
 </script>
 
 <template>
-  <div class="element element-group">
-    <div v-if="props.title" class="label-c2 label-o4 label-w400 px-1">{{ props.title }}</div>
-    <div :class="`${props.small?'plot-sm':'plot'}`" class="">
-      <slot></slot>
+  <div>
+    <div class="element element-group">
+      <div v-if="props.title" class="label-c1 label-r label-o4 label-w400 px-1">{{ props.title }}</div>
+      <div :class="`${props.small?'plot-sm':'plot'}`" class="">
+        <slot></slot>
+      </div>
     </div>
   </div>
 </template>
@@ -27,6 +29,7 @@ let props = defineProps<Plot>()
   grid-template-columns: repeat(v-bind('props.cols'), minmax(1rem, 1fr));
   grid-template-rows: repeat(v-bind('props.rows'), minmax(1.75rem, 1fr));
 }
+
 
 .plot-sm {
   display: grid;
