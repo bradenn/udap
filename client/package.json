@@ -15,7 +15,7 @@
     "bootstrap": "^5.1.0",
     "electron": "^16.0.5",
     "minimist": "~1.2.6",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "npm": "^8.5.3",
     "qrcanvas-vue": "^3.0.0",
     "qrcode": "^1.5.0",
