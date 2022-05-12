@@ -108,6 +108,11 @@ func (p *PolyBuffer) get(name string) interface{} {
 	return res
 }
 
+func (p *PolyBuffer) remove(name string) error {
+	p.data.Delete(name)
+	return nil
+}
+
 func (p *PolyBuffer) Keys() []string {
 	var s []string
 	p.data.Range(func(key, value interface{}) bool {

@@ -42,15 +42,17 @@ func MacFromIpv4(ipv4 string) (string, error) {
 }
 
 type System struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	Environment string `json:"environment"`
-	Ipv4        string `json:"ipv4"`
-	Ipv6        string `json:"ipv6"`
-	Hostname    string `json:"hostname"`
-	Mac         string `json:"mac"`
-	Go          string `json:"go"`
-	Cores       int    `json:"cores"`
+	Name        string    `json:"name"`
+	Version     string    `json:"version"`
+	Environment string    `json:"environment"`
+	Ipv4        string    `json:"ipv4"`
+	Ipv6        string    `json:"ipv6"`
+	Hostname    string    `json:"hostname"`
+	Mac         string    `json:"mac"`
+	Go          string    `json:"go"`
+	Cores       int       `json:"cores"`
+	Threads     []float64 `json:"threads"`
+	Memory      float64   `json:"memory"`
 }
 
 var SystemInfo System

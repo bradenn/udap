@@ -1,6 +1,6 @@
 {
   "name": "udap-nexus",
-  "version": "2.10.8",
+  "version": "2.10.9",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vue-tsc --noEmit && vite",
@@ -12,6 +12,7 @@
     "@types/websocket": "^1.0.5",
     "axios": "^0.21.3",
     "bootstrap": "^5.1.0",
+    "colorthief": "^2.3.2",
     "electron": "^16.0.5",
     "glob": "^8.0.1",
     "minimist": "~1.2.6",

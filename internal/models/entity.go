@@ -5,7 +5,6 @@ package models
 import (
 	"fmt"
 	"strings"
-	"time"
 	"udap/internal/store"
 )
 
@@ -20,15 +19,11 @@ type Entity struct {
 
 	Position string `json:"position" gorm:"default:'{}'"`
 
-	LastPoll  time.Time `json:"lastPoll"`
-	Neural    string    `json:"neural" gorm:"default:'inactive'"` // Parent Module name
-	Protocol  string    `json:"protocol"`                         // scalar
-	Icon      string    `json:"icon" gorm:"default:'􀛮'"`          // The icon to represent this entity
-	Frequency int       `json:"frequency" gorm:"default:3000"`
+	Icon      string `json:"icon" gorm:"default:'􀛮'"` // The icon to represent this entity
+	Frequency int    `json:"frequency" gorm:"default:3000"`
 
-	Predicted string `gorm:"-" json:"predicted"` // scalar
-	State     string `json:"state"`
-	Live      bool   `gorm:"-" json:"live"`
+	Neural    string `json:"neural" gorm:"default:'inactive'"` // Parent Module name
+	Predicted string `gorm:"-" json:"predicted"`               // scalar
 }
 
 func (e *Entity) Unlock() error {

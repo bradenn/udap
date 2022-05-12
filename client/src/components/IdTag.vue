@@ -35,12 +35,12 @@ function reload() {
 
 <template>
   <div v-if="state.menu" class="context context-id" @click="state.menu = false"></div>
-  <div
-      class=" tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
-      @click="toggleMenu">
+  <div class=" tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
+       @click="toggleMenu">
     <div class="px-1">
       <IdHash></IdHash>
     </div>
+
     <div class="d-flex flex-column gap-0">
       <div class="label-c2 label-o5 lh-1 label-r">Braden Nicholson</div>
       <div class="label-c3 label-o2 label-r label-w500 lh-1"
@@ -63,7 +63,6 @@ function reload() {
   </div>
 
   <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 p-1">
-
     <Plot :cols="1" :rows="1">
       <div class="subplot d-flex align-items-end align-items-center lh-1 gap-1">
         <div class="label-o2">􀉩</div>
@@ -71,71 +70,71 @@ function reload() {
         <div class="flex-fill"></div>
         <div class="px-1 label-o2"> 􀉯</div>
       </div>
+    </Plot>
 
-      <Plot :cols="4" :rows="1">
-        <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
-          <div class="label-o4 label-c2"><i class="fa-solid fa-house fa-fw"></i></div>
+    <Plot :cols="4" :rows="1">
+      <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
+        <div class="label-o4 label-c2"><i class="fa-solid fa-house fa-fw"></i></div>
+      </div>
+      <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
+        <div class="label-o4 label-c2"><i class="fa-solid fa-shield fa-fw"></i></div>
+      </div>
+
+      <div class="subplot plot-centered" @click="reload">
+
+        <div class="label-o4 label-c2">
+          <div v-if="state.reloading">
+            <Loader size="sm"></Loader>
+          </div>
+
+          <i v-else class="fa-solid fa-rotate-right fa-fw"></i>
         </div>
-        <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
-          <div class="label-o4 label-c2"><i class="fa-solid fa-shield fa-fw"></i></div>
+      </div>
+      <div class="subplot plot-centered" @click="$router.push('/terminal/settings')">
+        <div class="label-o4 label-c2"><i class="fa-solid fa-cog fa-fw"></i></div>
+      </div>
+    </Plot>
+    <Plot :cols="2" :rows="1">
+      <div class="subplot">
+        <div class="label-c3">Wi-Fi</div>
+        <div class="d-flex justify-content-center align-items-center align-content-center">
+          <div class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+            <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
+          </div>
+
         </div>
-
-        <div class="subplot plot-centered" @click="reload">
-
-          <div class="label-o4 label-c2">
-            <div v-if="state.reloading">
-              <Loader size="sm"></Loader>
+      </div>
+      <div class="subplot">
+        <div class="label-c3">NEXUS</div>
+        <div class="d-flex justify-content-center align-items-center align-content-center">
+          <div class="d-flex align-items-center lh-1">
+            <div v-if="remote.nexus.state > 1" class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+              <i class="fa-solid fa-circle text-danger" style="font-size: 8px; line-height: 1.2rem;"
+              ></i>&nbsp;&nbsp;DOWN
+            </div>
+            <div v-else class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+              <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"
+              ></i>&nbsp;&nbsp;OK
             </div>
 
-            <i v-else class="fa-solid fa-rotate-right fa-fw"></i>
           </div>
         </div>
-        <div class="subplot plot-centered" @click="$router.push('/terminal/settings')">
-          <div class="label-o4 label-c2"><i class="fa-solid fa-cog fa-fw"></i></div>
-        </div>
-      </Plot>
-      <Plot :cols="2" :rows="1">
-        <div class="subplot">
-          <div class="label-c3">Wi-Fi</div>
-          <div class="d-flex justify-content-center align-items-center align-content-center">
-            <div class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-              <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
-            </div>
-
-          </div>
-        </div>
-        <div class="subplot">
-          <div class="label-c3">NEXUS</div>
-          <div class="d-flex justify-content-center align-items-center align-content-center">
-            <div class="d-flex align-items-center lh-1">
-              <div v-if="remote.nexus.state > 1" class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-                <i class="fa-solid fa-circle text-danger" style="font-size: 8px; line-height: 1.2rem;"
-                ></i>&nbsp;&nbsp;DOWN
-              </div>
-              <div v-else class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-                <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"
-                ></i>&nbsp;&nbsp;OK
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </Plot>
-      <Plot :cols="1" :rows="1" title="Brightness">
-        <input v-model="ui.brightness"
-               :max=20
-               :min=4
-               :step=1
-               class="slider-small"
-               type="range"
-               @mousemove.stop>
-      </Plot>
-      <Plot :cols="2" :rows="2" title="Quick Settings">
-        <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
-        <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Outlines"></Toggle>
-        <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
-        <Toggle :active="ui.night" :fn="() => ui.night = !ui.night" title="Night"></Toggle>
-      </Plot>
+      </div>
+    </Plot>
+    <Plot :cols="1" :rows="1" title="Brightness">
+      <input v-model="ui.brightness"
+             :max=20
+             :min=4
+             :step=1
+             class="slider-small"
+             type="range"
+             @mousemove.stop>
+    </Plot>
+    <Plot :cols="2" :rows="2" title="Quick Settings">
+      <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
+      <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Outlines"></Toggle>
+      <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
+      <Toggle :active="ui.night" :fn="() => ui.night = !ui.night" title="Night"></Toggle>
     </Plot>
 
   </div>

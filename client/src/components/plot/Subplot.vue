@@ -8,7 +8,7 @@ interface Props {
   alt?: string
   active?: boolean
   to?: string
-  fn?: () => {}
+  fn?: () => void
 }
 
 const props = defineProps<Props>()
@@ -17,7 +17,7 @@ const props = defineProps<Props>()
 </script>
 
 <template>
-  <div v-if="props.to" :class="`${props.to===$router.currentRoute.value.fullPath?'':'subplot-transparent'}`"
+  <div v-if="props.to" :class="`${props.to===$router.currentRoute.value.fullPath?'':'subplot-inline'}`"
        class="subplot p-1"
        @mouseover="$router.replace(props.to || '/')">
     <div class="d-flex justify-content-start px-1">
@@ -27,7 +27,7 @@ const props = defineProps<Props>()
 
     <slot></slot>
   </div>
-  <div v-else-if="props.fn" :class="`${props.active||false?'':'subplot-transparent'}`" class="subplot p-1"
+  <div v-else-if="props.fn" :class="`${props.active||false?'':'subplot-inline'}`" class="subplot p-1"
        @mousedown="props.fn">
     <div class="d-flex justify-content-start ">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
@@ -39,7 +39,7 @@ const props = defineProps<Props>()
 
     <slot></slot>
   </div>
-  <div v-else class="subplot subplot-transparent">
+  <div v-else class="subplot subplot-inline">
 
     <div class="sidebar-item d-flex justify-content-start px-1">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
@@ -64,38 +64,8 @@ const props = defineProps<Props>()
   animation: click 100ms ease forwards !important;
 }
 
-.subplot-transparent {
-  background-color: transparent;
-  border-color: transparent;
-  box-shadow: none;
-  color: rgba(255, 255, 255, 0.45);
-}
-
 .subplot {
   justify-content: center;
-}
-
-.subplot:active {
-  animation: click 100ms ease forwards;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-
-@keyframes click {
-  0% {
-    opacity: 0.6;
-
-    transform: scale(1.0);
-  }
-  25% {
-    transform: scale(0.98);
-  }
-  30% {
-    transform: scale(0.97);
-  }
-  100% {
-    transform: scale(1);
-  }
 }
 
 

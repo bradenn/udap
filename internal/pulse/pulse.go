@@ -3,8 +3,6 @@
 package pulse
 
 import (
-	"runtime"
-	"strings"
 	"sync"
 	"time"
 	"udap/internal/log"
@@ -15,14 +13,21 @@ var Timings Timing
 func init() {
 	Timings = Timing{}
 	Timings.mt = sync.Mutex{}
-	Timings.history = map[uintptr]Proc{}
-	Timings.waiting = map[uintptr]Proc{}
+	Timings.history = map[string]Proc{}
+	Timings.waiting = map[string]Proc{}
 	Timings.handler = make(chan Proc)
 	go Timings.handle()
 }
 
+type Timing struct {
+	waiting map[string]Proc
+	handler chan Proc
+	mt      sync.Mutex
+	history map[string]Proc
+}
+
 type Proc struct {
-	Pointer   uintptr   `json:"pointer"`
+	Pointer   string    `json:"pointer"`
 	Name      string    `json:"name"`
 	Start     time.Time `json:"start"`
 	Stop      time.Time `json:"stop"`
@@ -32,15 +37,8 @@ type Proc struct {
 	Depth     int       `json:"depth"`
 }
 
-type Timing struct {
-	waiting map[uintptr]Proc
-	handler chan Proc
-	mt      sync.Mutex
-	history map[uintptr]Proc
-}
-
-func (h *Timing) Timings() (a map[uintptr]Proc) {
-	a = map[uintptr]Proc{}
+func (h *Timing) Timings() (a map[string]Proc) {
+	a = map[string]Proc{}
 	h.mt.Lock()
 	for i, u := range h.history {
 		a[i] = u
@@ -68,51 +66,50 @@ func (h *Timing) handle() {
 	}
 }
 
-func (h *Timing) beginFixed(freq int, rf *runtime.Func) {
+func (h *Timing) beginFixed(freq int, ref string) {
 	proc := Proc{}
 	proc.Frequency = freq
-	proc.Pointer = rf.Entry()
+	proc.Pointer = ref
 	proc.Start = time.Now()
 	proc.Complete = false
-	split := strings.Split(rf.Name(), ".")
-	proc.Name = strings.Join(split[1:], " ")
+	proc.Name = ref
 	h.handler <- proc
 }
 
-func (h *Timing) begin(rf *runtime.Func) {
+func (h *Timing) begin(ref string) {
 	proc := Proc{}
 	proc.Frequency = 2000
-	proc.Pointer = rf.Entry()
+	proc.Pointer = ref
 	proc.Start = time.Now()
 	proc.Complete = false
-	split := strings.Split(rf.Name(), ".")
-	proc.Name = strings.Join(split[1:], " ")
+	proc.Name = ref
 	h.handler <- proc
 }
 
-func (h *Timing) end(rf *runtime.Func) error {
+func (h *Timing) end(ref string) error {
 	proc := Proc{}
-	proc.Pointer = rf.Entry()
+	proc.Pointer = ref
 	proc.Complete = true
 	h.handler <- proc
 	return nil
 }
 
-func Fixed(ms int) {
-	pc, _, _, ok := runtime.Caller(1)
-	details := runtime.FuncForPC(pc)
-	if ok && details != nil {
-		Timings.beginFixed(ms, details)
-	}
+func Begin(ref string) {
+	// pc, _, _, ok := runtime.Caller(1)
+	// details := runtime.FuncForPC(pc)
+	Timings.begin(ref)
+	// if ok && details != nil {
+	// }
 }
 
-func End() {
-	pc, _, _, ok := runtime.Caller(1)
-	details := runtime.FuncForPC(pc)
-	if ok && details != nil {
-		err := Timings.end(details)
-		if err != nil {
-			log.Err(err)
-		}
+func End(ref string) {
+	// pc, _, _, ok := runtime.Caller(1)
+	// details := runtime.FuncForPC(pc)
+	err := Timings.end(ref)
+	if err != nil {
+		log.Err(err)
 	}
+	// if ok && details != nil {
+	//
+	// }
 }

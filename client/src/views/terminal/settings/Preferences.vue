@@ -38,6 +38,18 @@ const defaults = {
       identifier: "waves",
     },
     {
+      name: "Lies",
+      identifier: "lies",
+    },
+    {
+      name: "Yellow Lies",
+      identifier: "yellowLies",
+    },
+    {
+      name: "Nebula",
+      identifier: "nebula",
+    },
+    {
       name: "Blueberry",
       identifier: "blueberry",
     },
@@ -48,10 +60,6 @@ const defaults = {
     {
       name: "Geometry",
       identifier: "geometry",
-    },
-    {
-      name: "Dust",
-      identifier: "dust",
     },
     {
       name: "Void",

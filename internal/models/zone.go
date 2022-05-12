@@ -4,16 +4,17 @@ package models
 
 import (
 	"time"
-	"udap/internal/log"
 	"udap/internal/store"
 )
 
 type Zone struct {
 	store.Persistent
-	Name     string `json:"name"`
-	Entities string `json:"entities"`
+	Name     string   `json:"name"`
+	Entities []Entity `json:"entities" gorm:"many2many:zone_entities;"`
+	User     string   `json:"user"`
 }
 
+// Emplace will Find or Create a zone based on its id.
 func (z *Zone) Emplace() (err error) {
 	z.UpdatedAt = time.Now()
 	err = store.DB.Model(&Zone{}).Where("id = ?", z.Id).FirstOrCreate(z).Error
@@ -23,22 +24,24 @@ func (z *Zone) Emplace() (err error) {
 	return nil
 }
 
-func (z *Zone) FetchAll() []Zone {
-	var zones []Zone
-	log.Log("Fetching")
-	err := store.DB.Table("zones").Find(&zones).Error
-	if err != nil {
-		return nil
+func (z *Zone) FetchAll() (err error, zones []Zone) {
+	if err = store.DB.Table("zones").Preload("Entities").Find(&zones).Error; err != nil {
+		return err, nil
 	}
-	return zones
+	return nil, zones
 }
 
 func (z *Zone) Update() error {
-	err := store.DB.Where("id = ?", z.Id).Save(&z).Error
-	return err
+	return store.DB.Where("id = ?", z.Id).Save(&z).Error
 }
 
-func NewZone() Zone {
-	zone := Zone{}
-	return zone
+func (z *Zone) Restore() error {
+	z.Deleted = false
+	return z.Update()
+}
+
+// Delete marks the zone as deleted and discontinues its function
+func (z *Zone) Delete() error {
+	z.Deleted = true
+	return z.Update()
 }

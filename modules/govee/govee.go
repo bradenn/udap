@@ -15,7 +15,6 @@ import (
 	"time"
 	"udap/internal/log"
 	"udap/internal/models"
-	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -154,6 +153,7 @@ func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	for _, value := range a.Properties {
 		for s, message := range value {
 			switch s {
@@ -184,7 +184,13 @@ func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 				if err != nil {
 					return nil, err
 				}
-
+				if parseInt == 0 {
+					err = g.Attributes.Update(id, "on", "false", stamp)
+					if err != nil {
+						fmt.Println(err)
+						break
+					}
+				}
 				err = g.Attributes.Update(id, "dim", fmt.Sprintf("%d", parseInt), stamp)
 				if err != nil {
 					break
@@ -324,6 +330,7 @@ func (g *Govee) setOn(device Device, b bool) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 
 }
@@ -341,7 +348,7 @@ func (g *Govee) setLevel(device Device, b int) error {
 	return nil
 }
 
-func (g *Govee) setState(device Device, value string, mode string) error {
+func (g *Govee) setState(device Device, value string, mode string, id string) error {
 	switch mode {
 	case "cct":
 		val, err := strconv.Atoi(value)
@@ -367,6 +374,7 @@ func (g *Govee) setState(device Device, value string, mode string) error {
 		if err != nil {
 			return err
 		}
+
 	case "dim":
 		val, err := strconv.Atoi(value)
 		if err != nil {
@@ -406,17 +414,20 @@ func (g *Govee) setState(device Device, value string, mode string) error {
 		}
 		break
 	}
-
+	err := g.Attributes.Set(id, mode, value)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (g *Govee) statePut(device Device, mode string) models.FuncPut {
+func (g *Govee) statePut(device Device, mode string, id string) models.FuncPut {
 	return func(value string) error {
-		return g.setState(device, value, mode)
+		return g.setState(device, value, mode, id)
 	}
 }
 
-func (g *Govee) stateGet(device Device, mode string) models.FuncGet {
+func (g *Govee) stateGet(device Device, mode string, id string) models.FuncGet {
 	return func() (string, error) {
 		return g.getSingleState(device, mode)
 	}
@@ -481,9 +492,7 @@ func (g *Govee) push() error {
 }
 
 func (g *Govee) Update() error {
-	pulse.Fixed(5000)
-	defer pulse.End()
-	if time.Since(g.Module.LastUpdate) >= time.Second*5 {
+	if time.Since(g.Module.LastUpdate) >= time.Minute*1 {
 		g.Module.LastUpdate = time.Now()
 		return g.push()
 	}
@@ -506,8 +515,8 @@ func (g *Govee) Run() error {
 		g.devices[s.Id] = device
 		attributes := GenerateAttributes(s.Id)
 		for _, attribute := range attributes {
-			attribute.FnGet(g.stateGet(device, attribute.Key))
-			attribute.FnPut(g.statePut(device, attribute.Key))
+			attribute.FnGet(g.stateGet(device, attribute.Key, s.Id))
+			attribute.FnPut(g.statePut(device, attribute.Key, s.Id))
 			err = g.Attributes.Register(attribute)
 			if err != nil {
 				return err

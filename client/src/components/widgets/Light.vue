@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import AttributeComponent from "@/components/entity/Attribute.vue"
-import type {Attribute, Entity} from "@/types"
+import type {Attribute, Entity, Remote} from "@/types"
 // Establish a local reactive state
 let state = reactive<{
   loading: boolean,
@@ -39,7 +39,7 @@ let props = defineProps<{
 }>()
 
 // Inject the remote manifest
-let remote: any = inject('remote')
+let remote = inject('remote') as Remote
 let context: any = inject('context')
 
 // When the view loads, force the local state to update
@@ -80,6 +80,22 @@ function toggleMenu(): void {
   state.showMenu = !state.showMenu
   // context(state.showMenu)
 }
+
+// Apply changes made to an attribute
+function togglePower() {
+  let newAttr = state.powerAttribute;
+  if (state.powerAttribute.id == "") return
+  newAttr.request = state.powerAttribute.value === 'true' ? 'false' : 'true'
+  // Make the request to the websocket object
+  remote.nexus.requestId("attribute", "request", newAttr, newAttr.entity)
+}
+
+// Apply changes made to an attribute
+function commitChange(attribute: Attribute) {
+  // Make the request to the websocket object
+  remote.nexus.requestId("attribute", "request", attribute, attribute.entity)
+}
+
 </script>
 
 <template>

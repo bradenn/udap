@@ -111,7 +111,7 @@ func (h *Homekit) Run() error {
 	}
 
 	hc.OnTermination(func() {
-		log.Event("Module 'squid' is terminating.")
+		log.Event("Module 'hs110' is terminating.")
 		<-t.Stop()
 		os.Exit(0)
 	})

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
-	"strings"
 )
 
 const (
@@ -120,17 +119,8 @@ func Log(format string, args ...interface{}) {
 
 func Event(format string, args ...interface{}) {
 	// _, ln, _, ok := runtime.Caller(1)
-	tag := fmt.Sprintf("%s%s", Reset+BoldGreen, "[EVNT]")
-	color := Reset + Faint
-	switch t := strings.Split(format, " "); strings.ToLower(t[0]) {
-	case "entity":
-		color = Reset
-		break
-	case "module":
-		color = Reset
-		break
-	}
-	fmt.Printf("%s%s %s%s\n", tag, color, fmt.Sprintf(format, args...), Reset)
+	tag := fmt.Sprintf("%s%s%s", Reset+BoldGreen, "[EVNT]", Reset)
+	fmt.Printf("%s %s%s\n", tag, fmt.Sprintf(format, args...), Reset)
 }
 
 func ErrF(err error, format string, args ...interface{}) {

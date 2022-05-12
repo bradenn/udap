@@ -81,7 +81,7 @@ let ui: any = inject("ui")
     <div class="widget-grid flex-grow-1">
       <Widget :cols="4" :rows="5" class="d-flex flex-column" size="sm">
 
-        <Light v-for="light in state.lights.slice(0, 4).filter(l => l.name !== 'Kitchen')" :key="light.id"
+        <Light v-for="light in state.lights.slice(0, 5).filter(l => l.name !== 'Kitchen')" :key="light.id"
                :entity="light"></Light>
         <Macros></Macros>
       </Widget>

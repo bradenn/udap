@@ -17,13 +17,29 @@ export interface Remote {
     attributes: Attribute[],
     devices: Device[],
     networks: Network[],
+    modules: Module[],
     endpoints: Endpoint[],
     timings: Timing[],
+    zones: Zone[],
     nexus: Nexus
 }
 
+export interface Module {
+    created: string;
+    updated: string;
+    id: string;
+    name: string
+    path: string
+    type: string
+    enabled: boolean
+    description: string
+    version: string
+    author: string
+    state: string
+}
+
 export interface Timing {
-    pointer: number;
+    pointer: string;
     name: string;
     start: string;
     stop: string;
@@ -34,6 +50,10 @@ export interface Timing {
 }
 
 export interface Metadata {
+    system: System
+}
+
+export interface System {
     name: string;
     version: string;
     environment: string;
@@ -43,6 +63,7 @@ export interface Metadata {
     mac: string;
     go: string;
     cores: number;
+    threads: number[];
 }
 
 export interface Defaults {
@@ -104,6 +125,16 @@ export interface Device {
     ipv6: string;
 }
 
+export interface Zone {
+    created: string;
+    updated: string;
+    id: string;
+    name: string;
+    user: string;
+    entities: Entity[];
+    deleted: boolean
+}
+
 export interface Endpoint {
     created: string;
     updated: string;
@@ -127,7 +158,7 @@ export interface Entity {
     neural: string;
     locked: boolean;
     protocol: string;
-    icon?: string | 'd';
+    icon: string;
     frequency: number;
     predicted: string;
     state: string;

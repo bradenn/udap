@@ -1,15 +1,17 @@
 // Copyright (c) 2022 Braden Nicholson
 
-import {createRouter, createWebHistory} from "vue-router";
+import {createRouter, createWebHashHistory} from "vue-router";
 
 // Settings views
+import settings from "@/views/terminal/settings";
+
 import Settings from "@/views/terminal/settings/Settings.vue";
 import Preferences from "@/views/terminal/settings/Preferences.vue";
 import Connection from "@/views/terminal/settings/Connection.vue";
-import Modules from "@/views/terminal/settings/Modules.vue";
-import Endpoints from "@/views/terminal/settings/Endpoints.vue";
+import Modules from "@/views/terminal/settings/module/Modules.vue";
+import Endpoints from "@/views/terminal/settings/endpoint/Endpoints.vue";
 import Timings from "@/views/terminal/settings/Timings.vue";
-import Zones from "@/views/terminal/settings/Zones.vue";
+import Zones from "@/views/terminal/settings/zone/Zones.vue";
 
 
 // Setup view components
@@ -218,7 +220,7 @@ const terminalRoutes = {
             component: Energy,
             icon: 'fa-bolt',
         },
-        settingsRoutes,
+        settings.routes,
         timingRoutes,
         exogeologyRoutes,
         weatherRoutes,
@@ -235,7 +237,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes: routes,
 })
 

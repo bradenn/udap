@@ -54,15 +54,13 @@ function updateMetadata(attributes: Attribute[]) {
   state.metadata = JSON.parse(proto.value) as Spotify
 
   state.playing = attributes.find(a => a.key === 'playing') || {} as Attribute
-  if (!proto) return
 
-  state.playing = proto
 
   return state.metadata
 }
 
 function updateTime() {
-  if (state.playing) {
+  if (state.playing.value === 'true') {
     state.current = state.metadata.progress + (new Date().valueOf() - new Date(state.metadata.updated).valueOf())
   } else {
     state.current = state.metadata.progress
@@ -153,26 +151,6 @@ function togglePlayback() {
   text-overflow: ellipsis !important;
 }
 
-.timeline-sm {
-  width: 100%;
-
-  border-radius: 0.5rem;
-  display: flex;
-  justify-content: start;
-  align-items: center;
-  padding: 1px 1px !important;
-  backdrop-filter: blur(12px);
-  background-color: rgba(255, 255, 255, 0.0124);
-  border: 1px solid rgba(255, 255, 255, 0.1)
-}
-
-.timeline-value {
-  border-radius: 0.5rem;
-  height: 6px;
-  background-color: rgba(255, 255, 255, 0.45);
-  opacity: 0.4;
-  transition: width 100ms linear ease-in-out;
-}
 
 .earth-full-disk-k {
   height: 12rem;

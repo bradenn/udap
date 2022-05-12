@@ -30,12 +30,13 @@ func NewController() (*Controller, error) {
 	c.Networks = LoadNetworks()
 	c.Users = LoadUsers()
 	c.Zones = LoadZones()
+	c.Modules = LoadModules()
 	return c, nil
 }
 
 func (c *Controller) Handle(msg bond.Msg) (interface{}, error) {
 
-	pulse.LogGlobal("Event: ", msg.Target, msg.Operation)
+	pulse.LogGlobal("-> Ctrl::%s %s", msg.Target, msg.Operation)
 
 	switch t := msg.Target; t {
 	case "user":
@@ -78,6 +79,11 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Devices.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Modules.EmitAll()
 	if err != nil {
 		return err
 	}

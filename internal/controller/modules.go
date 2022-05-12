@@ -10,10 +10,6 @@ import (
 	"udap/internal/store"
 )
 
-type Generic struct {
-	store sync.Map
-}
-
 type Modules struct {
 	PolyBuffer
 	Observable
@@ -21,18 +17,41 @@ type Modules struct {
 
 func LoadModules() (m *Modules) {
 	m = &Modules{}
-
 	m.data = sync.Map{}
+	m.raw = map[string]interface{}{}
+	m.Run()
+	m.FetchAll()
 	return m
+}
+
+func (m *Modules) EmitAll() (err error) {
+
+	for _, k := range m.Keys() {
+		find := m.Find(k)
+		m.emit(k, find)
+	}
+
+	return nil
 }
 
 func (m *Modules) Handle(event bond.Msg) (res interface{}, err error) {
 	switch o := event.Operation; o {
 	case "register":
 		return m.register(event)
+	case "enabled":
+		return m.enable(event)
 	default:
 		return nil, fmt.Errorf("invalid operation '%s'", o)
 	}
+}
+
+func (m *Modules) enable(event bond.Msg) (res interface{}, err error) {
+	id := event.Id
+	err = m.Enabled(id, event.Payload == "true")
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func (m *Modules) register(event bond.Msg) (res interface{}, err error) {
@@ -45,19 +64,40 @@ func (m *Modules) register(event bond.Msg) (res interface{}, err error) {
 	return nil, nil
 }
 
-func (m *Modules) Register(module string) error {
+func (m *Modules) Register(module models.Module) (string, error) {
 
-	newModule := models.Module{
-		Persistent: store.Persistent{},
-		Path:       module,
+	err := module.Emplace()
+	if err != nil {
+		return "", err
 	}
 
-	err := newModule.Emplace()
+	m.Set(module.Id, &module)
+	return module.Id, nil
+}
+
+func (m *Modules) State(id string, state string) error {
+	find := m.Find(id)
+	find.State = state
+
+	err := find.Update()
 	if err != nil {
 		return err
 	}
 
-	m.Set(newModule.Id, &newModule)
+	m.Set(find.Id, find)
+	return nil
+}
+
+func (m *Modules) Enabled(id string, enabled bool) error {
+	find := m.Find(id)
+	find.Enabled = enabled
+
+	err := find.Update()
+	if err != nil {
+		return err
+	}
+
+	m.Set(find.Id, find)
 	return nil
 }
 
@@ -94,4 +134,5 @@ func (m *Modules) Find(name string) *models.Module {
 
 func (m *Modules) Set(id string, module *models.Module) {
 	m.set(id, module)
+	m.emit(id, module)
 }
