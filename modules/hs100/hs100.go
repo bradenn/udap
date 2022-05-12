@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 	"udap/internal/models"
-	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -105,8 +104,6 @@ func (h *HS100) pull() error {
 
 // Update is called every cycle
 func (h *HS100) Update() error {
-	pulse.Fixed(2000)
-	defer pulse.End()
 	if time.Since(h.Module.LastUpdate) >= time.Second*2 {
 		h.Module.LastUpdate = time.Now()
 		return h.pull()

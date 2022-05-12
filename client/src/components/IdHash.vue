@@ -58,7 +58,7 @@ function drawCanvas() {
 
 <template>
   <div class="canvas-container top">
-    <canvas id="canvas-id" class="top"></canvas>
+    <canvas id="canvas-id" height="42" width="42"></canvas>
   </div>
 </template>
 

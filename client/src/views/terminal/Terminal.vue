@@ -30,6 +30,8 @@ let remote = reactive<Remote>({
   networks: [],
   endpoints: [],
   timings: [],
+  modules: [],
+  zones: [],
   nexus: new Nexus(handleMessage)
 });
 
@@ -78,6 +80,21 @@ function handleMessage(target: Target, data: any) {
         remote.endpoints = remote.endpoints.map((a: Identifiable) => a.id === data.id ? data : a)
       } else {
         remote.endpoints.push(data)
+      }
+      break
+
+    case Target.Module:
+      if (remote.modules.find((e: Identifiable) => e.id === data.id)) {
+        remote.modules = remote.modules.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.modules.push(data)
+      }
+      break
+    case Target.Zone:
+      if (remote.zones.find((e: Identifiable) => e.id === data.id)) {
+        remote.zones = remote.zones.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.zones.push(data)
       }
       break
     case Target.Timing:
@@ -193,7 +210,10 @@ function dragContinue(e: MouseEvent) {
         if (sideAppLockTarget - rightPull <= sideAppLockDelta) {
           state.scrollX = 445
           state.sideAppLock = true
+        } else {
+          state.sideAppLock = false
         }
+
         state.scrollX += e.movementX
       }
 
@@ -261,6 +281,7 @@ function dragStop(e: MouseEvent) {
 }
 
 // Provide the remote component for child components
+provide('terminal', state)
 provide('remote', remote)
 </script>
 
@@ -283,7 +304,6 @@ provide('remote', remote)
 
     </div>
 
-
     <div
         :style="`transform: translate(${Math.round(0)}px,${0}px);`"
         class="route-view">
@@ -294,9 +314,7 @@ provide('remote', remote)
         </Sideapp>
       </div>
       <router-view v-slot="{ Component }">
-        <transition mode="out-in" name="focus">
           <component :is="Component"/>
-        </transition>
       </router-view>
 
 
@@ -320,7 +338,7 @@ provide('remote', remote)
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .focus-enter-active {
   animation: animateIn 200ms;
 }
@@ -333,31 +351,26 @@ provide('remote', remote)
 @keyframes animateIn {
   0% {
     transform: scale(0.98);
-    filter: blur(8px);
     opacity: 0.4;
   }
   50% {
     transform: scale(0.99);
-    filter: blur(2px);
     opacity: 0.8;
   }
   100% {
     transform: scale(1);
-    filter: blur(0px);
   }
 }
 
 @keyframes animateOut {
   0% {
     transform: scale(1);
-    filter: blur(10px);
     opacity: 1;
   }
 
   100% {
     opacity: 0;
     transform: scale(0.98);
-    filter: blur(30px);
   }
 }
 
@@ -365,17 +378,17 @@ provide('remote', remote)
   display: inline-block;
   position: relative;
   bottom: 2.5rem;
-  animation: dock-in 400ms forwards;
+  animation: dock-in 125ms ease-in forwards;
 }
 
 
 @keyframes dock-in {
   0% {
-    transform: translateY(4rem);
+    bottom: -1rem;
   }
 
   100% {
-    transform: translateY(0);
+    bottom: 2.5rem;
   }
 }
 

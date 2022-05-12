@@ -5,6 +5,7 @@ import {reactive} from "vue";
 interface Toggle {
   title?: string
   icon?: string
+  sf?: string
   active: boolean
   fn: () => void
 }
@@ -47,20 +48,20 @@ function up() {
   <div :class="`${props.active?'active':''}`" class="radio subplot d-flex justify-content-center"
        @mousedown="handle" @mouseleave="(e) => up()" @mouseout="(e) => up()" @mouseup="(e) => up()">
     <div><span v-if="props.icon"><i :class="`fa-${props.icon}`" class="fa-solid "></i>&nbsp;</span>{{ props.title }}
+      <div v-if="props.sf" class="label-o3 label-c2" v-html="props.sf"></div>
     </div>
     <slot></slot>
   </div>
 </template>
 
 <style scoped>
-.radio.subplot:hover {
+.radio.subplot:active {
   animation: click 100ms ease forwards;
 }
 
 @keyframes click {
   0% {
     transform: scale(1.0);
-    background-color: rgba(255, 255, 255, 0.125);
   }
   25% {
     transform: scale(0.98);

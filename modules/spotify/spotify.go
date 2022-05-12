@@ -16,7 +16,6 @@ import (
 	"time"
 	"udap/internal/log"
 	"udap/internal/models"
-	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -221,8 +220,6 @@ type CurrentResponse struct {
 }
 
 func (s *Spotify) Update() error {
-	pulse.Fixed(s.Frequency)
-	defer pulse.End()
 	if time.Since(s.Module.LastUpdate) >= time.Duration(s.Frequency)*time.Millisecond {
 		s.Module.LastUpdate = time.Now()
 		return s.push()

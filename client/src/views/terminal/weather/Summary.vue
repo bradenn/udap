@@ -6,6 +6,9 @@ import type {Attribute, Entity, Remote} from "@/types";
 import type {CurrentWeather, Weather} from "@/weather";
 import {getWeatherIcon} from "@/weather";
 
+import WeatherWidget from '@/components/widgets/Weather.vue'
+import Daytime from "@/views/terminal/weather/Daytime.vue";
+
 interface WeatherProps {
   current: CurrentWeather
   latest: Weather
@@ -41,7 +44,7 @@ onMounted(() => {
   state.loading = true
 })
 
-let remote: Remote = inject("remote") || {} as Remote
+let remote = inject("remote") as Remote
 
 watchEffect(() => handleUpdates(remote))
 
@@ -49,8 +52,8 @@ function handleUpdates(remote: Remote) {
   if (!remote) return
   let entity = remote.entities.find(e => e.name === 'weather')
   if (!entity) return;
-  state.entity = entity
-  let attribute = remote.attributes.find(e => e.entity === (entity as Entity).id && e.key === 'forecast')
+  state.entity = entity as Entity
+  let attribute = remote.attributes.find(e => e.entity === state.entity.id && e.key === 'forecast')
   if (!attribute) return;
   state.forecast = attribute
   parseWeather(JSON.parse(attribute.value) as Weather)
@@ -84,8 +87,11 @@ function parseWeather(we: Weather) {
 
 </script>
 <template>
+  <Daytime :latest="state.latest"></Daytime>
+  <h3>Hourly</h3>
+  <WeatherWidget class="" style="max-width: 15rem; "></WeatherWidget>
+
   <div class="element px-2 pt-0">
-    <h3>Hourly</h3>
     <div v-if="state.latest.hourly" class="d-flex flex-row justify-content-between align-items-end">
       <div
           v-for="(hour) in Array(12).keys()">
@@ -149,6 +155,16 @@ function parseWeather(we: Weather) {
 </template>
 
 <style scoped>
+
+.condition {
+  width: 4rem;
+  height: 4rem;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  font-size: 1.25rem;
+}
+
 .temp-chart {
   display: flex;
   align-items: end;

@@ -92,7 +92,6 @@ func (v *MacMeta) displayOff() error {
 }
 
 func (v *MacMeta) Setup() (plugin.Config, error) {
-
 	return v.Config, nil
 }
 

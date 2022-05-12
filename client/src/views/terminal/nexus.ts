@@ -12,6 +12,8 @@ export enum NexusState {
 
 export enum Target {
     Metadata = "metadata",
+    Module = "module",
+    Zone = "zone",
     Entity = "entity",
     Attribute = "attribute",
     Device = "device",
@@ -67,6 +69,16 @@ export class Nexus {
             }
         }
         this.ws.onclose = this.onClose
+    }
+
+    public requestDefault(target: string, operation: string, data: any) {
+        const r: NexusRequest = {
+            target: target,
+            operation: operation,
+            payload: JSON.stringify(data),
+            id: ""
+        }
+        this.request(r)
     }
 
     public requestId(target: string, operation: string, data: any, id: string) {

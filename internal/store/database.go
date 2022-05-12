@@ -16,6 +16,7 @@ var DB Database
 type Persistent struct {
 	CreatedAt time.Time  `json:"created"`
 	UpdatedAt time.Time  `json:"updated"`
+	Deleted   bool       `json:"deleted"`
 	deletedAt *time.Time `sql:"index"`
 	// Id is primary key of the persistent type, represented as a UUIDv4
 	Id string `json:"id" gorm:"primary_key;type:string;default:uuid_generate_v4()"`

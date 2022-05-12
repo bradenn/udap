@@ -3,12 +3,12 @@
 package server
 
 import (
+	"github.com/shirou/gopsutil/cpu"
 	"sync"
 	"time"
 	"udap/internal/bond"
 	"udap/internal/controller"
 	"udap/internal/log"
-	"udap/internal/pulse"
 )
 
 type Daemon interface {
@@ -23,8 +23,7 @@ type Runtime struct {
 	ctrl         *controller.Controller
 	daemons      []Daemon
 	eventHandler chan bond.Msg
-
-	System System
+	System       System
 
 	Endpoints *Endpoints
 	Modules   *Modules
@@ -54,6 +53,14 @@ func (r *Runtime) Update() error {
 			}
 		}(d)
 	}
+	// cpu - get CPU number of cores and speed
+
+	percentage, err := cpu.Percent(0, true)
+	if err != nil {
+		return err
+	}
+	SystemInfo.Threads = percentage
+
 	wg.Wait()
 	return nil
 }
@@ -134,20 +141,19 @@ func (r *Runtime) Run() (err error) {
 		case <-time.After(time.Millisecond * time.Duration(delay)):
 			log.Event("Update timed out")
 		default:
-			pulse.Fixed(int(delay))
 			start := time.Now()
 			err = r.Update()
 			if err != nil {
 				log.ErrF(err, "runtime update error: %s")
 			}
 			d := time.Since(start)
-			pulse.End()
 			dur := (time.Millisecond * time.Duration(delay)) - d
 			if dur > 0 {
 				time.Sleep(dur)
 			}
 
 		}
+
 		_ = r.Endpoints.Timings()
 
 	}

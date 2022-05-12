@@ -9,7 +9,7 @@ let remote = inject('remote') as Remote
 let preferences = inject('preferences')
 
 let state = reactive({
-  modules: {} as Entity[],
+  modules: {} as any,
   attributes: {} as Attribute[],
   loading: true
 })
@@ -43,6 +43,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
       <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-layer-group fa-fw`"></i></div>
       <div class="label-w500 opacity-100 label-xxl px-2">Modules</div>
     </div>
+
     <div v-if="!state.loading" class="d-flex flex-column gap-1">
 
       <div v-for="(entities, module) in state.modules" v-if="state.modules"
@@ -51,9 +52,9 @@ function groupBy<T>(xs: T[], key: string): T[] {
           <div class="label-xs label-r px-1 " style="text-transform: capitalize;">{{ module }}</div>
           <Plot :cols="5" :rows="1">
             <div v-for="entity in entities" class="subplot">
-              <div v-if="entity" class="d-flex justify-content-start align-items-center flex-row px-1 w-100">
-                <div class="label-w500 label-o3 label-c1">{{ entity }}&nbsp;</div>
-                <div class="label-w500 label-c1">{{ entity }}</div>
+              <div class="d-flex justify-content-start align-items-center flex-row px-1 w-100">
+                <div class="label-w500 label-o3 label-c1">{{ (entity.icon) || "" }}&nbsp;</div>
+                <div class="label-w500 label-c1">{{ (entity.name) || "" }}</div>
                 <div class="flex-grow-1"></div>
                 <div class="label-w500 label-c2 label-o2"><i class="fa-solid fa-gear"></i></div>
               </div>

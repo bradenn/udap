@@ -132,7 +132,6 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 	// find the auth token in the url params
 	tokenParam := chi.URLParam(req, "token")
 	// Defer the termination of the session to function return
-
 	id, err := authToken(tokenParam)
 	if err != nil {
 		log.Err(err)
@@ -159,12 +158,12 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 
 	go func() {
 		defer wg.Done()
+		var out []byte
 		for {
-			_, out, err := ep.Connection.WS.ReadMessage()
+			_, out, err = ep.Connection.WS.ReadMessage()
 			if err != nil {
 				return
 			}
-
 			_, err = e.bond.CmdJSON(out)
 			if err != nil {
 				err = e.sendError(id, err)
@@ -209,6 +208,8 @@ func (e *Endpoints) Run() error {
 	e.ctrl.Endpoints.Watch(e.reactive("endpoint"))
 	e.ctrl.Networks.Watch(e.reactive("network"))
 	e.ctrl.Zones.Watch(e.reactive("zone"))
+	e.ctrl.Modules.Watch(e.reactive("module"))
+	e.ctrl.Users.Watch(e.reactive("user"))
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), e.router)
 	if err != nil {
@@ -266,6 +267,16 @@ func (e *Endpoints) Timings() error {
 	return nil
 }
 
+func (e *Endpoints) BroadcastAll(name string, deck []any) error {
+	for _, item := range deck {
+		err := e.itemBroadcast(name, item)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (e *Endpoints) Metadata() error {
 
 	response := controller.Response{
@@ -285,8 +296,6 @@ func (e *Endpoints) Metadata() error {
 }
 
 func (e *Endpoints) Update() error {
-	pulse.Fixed(500)
-	defer pulse.End()
 	err := e.Metadata()
 	if err != nil {
 		return err

@@ -91,7 +91,7 @@ function parseWeather(we: Weather) {
   state.current = we.current_weather
 
   if (we.hourly.temperature_2m.length <= 0) return
-  for (let i = 0; i < we.hourly.temperature_2m.length; i++) {
+  for (let i = 0; i < 7; i++) {
     if (state.ranges.temp.max < we.hourly.temperature_2m[i]) {
       state.ranges.temp.max = we.hourly.temperature_2m[i]
     } else if (state.ranges.temp.min > we.hourly.temperature_2m[i]) {
@@ -327,16 +327,16 @@ function toggleMenu() {
 
 @keyframes click {
   0% {
-    transform: scale(1.0);
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(0.97);
   }
   25% {
     transform: scale(0.98);
   }
-  30% {
-    transform: scale(0.97);
-  }
   100% {
-    transform: scale(1);
+    transform: scale(0.97);
   }
 }
 

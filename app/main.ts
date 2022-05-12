@@ -14,6 +14,7 @@ function createWindow() {
         backgroundColor: '#000000',
         autoHideMenuBar: true,
         fullscreen: true,
+
     });
 
     win.webContents.setZoomFactor(1)

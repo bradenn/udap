@@ -13,8 +13,8 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
-	github.com/patrikeh/go-deep v0.0.0-20220129152125-82b8db494fe5
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	github.com/shirou/gopsutil v3.21.11+incompatible
+	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15
 )
@@ -22,6 +22,7 @@ require (
 require (
 	github.com/brutella/dnssd v1.2.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/goccy/go-json v0.7.6 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.1 // indirect
@@ -42,9 +43,12 @@ require (
 	github.com/miekg/dns v1.1.25 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tadglines/go-pkgs v0.0.0-20140924210655-1f86682992f1 // indirect
+	github.com/tklauser/go-sysconf v0.3.10 // indirect
+	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/xiam/to v0.0.0-20191116183551-8328998fc0ed // indirect
+	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a // indirect
-	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
+	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
 	golang.org/x/text v0.3.7 // indirect
 )

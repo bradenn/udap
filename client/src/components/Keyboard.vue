@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
-import {onMounted} from "vue";
+import {onMounted, reactive} from "vue";
 import type {KeyboardOptions} from "simple-keyboard/build/interfaces";
 
 const props = defineProps<{
@@ -13,9 +13,10 @@ const props = defineProps<{
 let keyboardOptions: KeyboardOptions = {
   onKeyPress: onKeyPress,
   theme: "hg-theme-default hg-theme-udap",
-  physicalKeyboardHighlight: true,
+  physicalKeyboardHighlight: false,
   syncInstanceInputs: true,
   mergeDisplay: true,
+  preventMouseDownDefault: true,
   layout: {
     'default': props.keySet === "alpha-numeric" ? [
       '1 2 3 4 5 6 7 8 9 0 {bksp}',
@@ -34,7 +35,7 @@ let keyboardOptions: KeyboardOptions = {
       '{tab} Q W E R T Y U I O P { } |',
       '{lock} A S D F G H J K L : " {enter}',
       '{shift} Z X C V B N M < > ? {shift}',
-      '{control} {alt} {meta} {space}'
+      '{control} {alt} {meta} {space} {meta} {alt} {control}'
     ]
   },
   display: {
@@ -58,22 +59,34 @@ let keyboardOptions: KeyboardOptions = {
 
 interface KeyboardState {
   keyboard: Keyboard
+  shift: boolean
 }
 
-let state: KeyboardState = {
-  keyboard: {} as Keyboard
-}
+let state: KeyboardState = reactive({
+  keyboard: {} as Keyboard,
+  shift: false
+})
+
 onMounted(() => {
   state.keyboard = new Keyboard(`.${props.keyboardClass}`, keyboardOptions)
-
 })
 
 function onKeyPress(button: string) {
+  if (button === "{shift}" || button === "{lock}") {
+    state.shift = !state.shift;
+    handleShift();
+    return
+  }
+
   props.input(button)
-  if (button === "{shift}" || button === "{lock}") handleShift();
+  if (state.shift) {
+    handleShift();
+    state.shift = false
+  }
 }
 
 function handleShift() {
+
   let currentLayout = state.keyboard.options.layoutName;
   let shiftToggle = currentLayout === "default" ? "shift" : "default";
 
@@ -95,6 +108,7 @@ function handleShift() {
 .simple-keyboard {
   position: absolute !important;
   width: 40rem;
+
 
   z-index: 1000;
   bottom: 18%;

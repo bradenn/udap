@@ -1,56 +1,65 @@
 // Copyright (c) 2022 Braden Nicholson
 
 // Static
-$element-bg: rgba(28, 33, 40, 0.5);
+$element-bg: hsla(214, 16, 12, 0.4);
+$element-fg: hsla(214, 8, 16, 0.3);
+$element-shadow: hsla(214, 16, 2, 0.1);
+$element-bg-active: hsla(214, 16, 24, 0.25);
 
-$element-border: rgba(46, 50, 57, 0.5);
+$element-border: hsla(214, 16, 64, 0.07);
+
 $element-border-radius: 0.25rem;
 
 // Dynamic
 $element-bg-hover: rgba(255, 128, 0, 0.280);
-$element-bg-active: rgba(34, 38, 45, 0.5);
 //28 33 40
 //34 38 45 / 46 50 57
 
 // Options
 
 /* Blur Definitions */
-@for $i from 1 through 10 {
-  $value: $i * 0.125rem;
-  .blurs-#{$i} {
-
-    .bg-blur {
-      //backdrop-filter: blur($value);
-      position: relative;
-      -webkit-backface-visibility: hidden;
-      -webkit-perspective: 1000px;
-      transform: translate3d(0, 0, 0) translateZ(0);
-      backface-visibility: hidden;
-      perspective: 1000px;
-    }
-
-    .bg-blur::before {
-      top: 0;
-      right: 0;
-      -webkit-backface-visibility: hidden;
-      -webkit-perspective: 1000px;
-      transform: translate3d(0, 0, 0) translateZ(0);
-      backface-visibility: hidden;
-      perspective: 1000px;
-      overflow: hidden;
-      content: ' ';
-      position: absolute;
-
-      border-radius: inherit;
-      z-index: -1;
-      width: 100%;
-      height: 100%;
-      backdrop-filter: blur(0);
-    }
-
-  }
-
+.bg-blur {
+  position: relative;
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  transform: translate3d(0, 0, 0) translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  backdrop-filter: blur(24px) contrast(98%);
 }
+
+$loadInDistance: 0.95;
+
+
+@keyframes loadIn {
+  0% {
+    transform: scale3d($loadInDistance, $loadInDistance, $loadInDistance);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+//
+//.bg-blur::before {
+//  position: absolute;
+//  top: 0;
+//  right: 0;
+//
+//  transform: translate3d(0, 0, 0) translateZ(0);
+//  backface-visibility: visible;
+//  -webkit-backface-visibility: hidden;
+//  -webkit-perspective: 1000px;
+//
+//  perspective: 1000px;
+//  overflow: hidden;
+//  content: ' ';
+//  border-radius: inherit;
+//  z-index: -1;
+//  width: 100%;
+//  height: 100%;
+//  //backdrop-filter: blur(24px);
+//}
 
 /* Theme Definitions */
 $themes: (
@@ -64,13 +73,11 @@ $themes: (
 
     .element {
       background-color: $i !important;
-      border: none !important;
-      box-shadow: 0 0 8px 2px rgba(0 0 0 / 12.5%), inset 0 0 1.5px 1.25px rgb(255 255 255 / 6.25%);
-      transition: background-color 250ms ease-in-out;
+
     }
 
     .element.active {
-      box-shadow: 0 0 2px 1px rgba(0 0 0 / 0.0525%), inset 0 0 1px 1.25px rgb(255 255 255 / 6.25%);
+      //box-shadow: 0 0 2px 1px $element-shadow, inset 0 0 2px 1.25px $element-border;
       background-color: $element-bg-active !important;
     }
 
@@ -78,37 +85,32 @@ $themes: (
   }
 }
 
+.element > .element {
+
+}
+
+.element-secondary {
+  background-color: $element-fg;
+  box-shadow: 0 0 8px 1px $element-shadow, inset 0 0 2px 1px $element-border;
+}
+
+//.element-secondary:active {
+//  background-color: $element-bg-active;
+//  animation: element-click 2s forwards linear;
+//}
+
 
 // Element Definition
 
 .element {
+  @extend .bg-blur;
+  box-shadow: 0 0 8px 1px $element-shadow, inset 0 0 2px 1px $element-border;
+  animation: loadIn 150ms forwards;
   padding: 0.25rem;
   border-radius: 0.5rem;
-  box-shadow: 0 0 2px 1px rgba(0 0 0 / 0.0525%), 0 0 3px 3px rgb(0 0 0 / 6%), inset 0 0 2px 1px rgb(255 255 255 / 2%);
-  z-index: 1 !important;
-  position: relative;
-  -webkit-backface-visibility: hidden;
-  -webkit-perspective: 1000px;
-  transform: translate3d(0, 0, 0) translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-  overflow: hidden;
-  backdrop-filter: blur(24px);
-}
-
-
-.element::before {
-
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  border-radius: inherit;
-  z-index: -1;
-  width: 100%;
-  height: 100%;
 
 }
+
 
 .element.element-group::before {
   filter: none !important;

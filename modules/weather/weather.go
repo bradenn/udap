@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 	"udap/internal/models"
-	"udap/internal/pulse"
 	"udap/pkg/plugin"
 )
 
@@ -159,8 +158,7 @@ func (v *Weather) pull() error {
 	return nil
 }
 func (v *Weather) Update() error {
-	pulse.Fixed(15000)
-	defer pulse.End()
+
 	if time.Since(v.Module.LastUpdate) >= time.Minute*15 {
 		v.Module.LastUpdate = time.Now()
 		return v.pull()
