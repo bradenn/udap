@@ -50,6 +50,10 @@ export interface Timing {
 }
 
 export interface Metadata {
+    system: System
+}
+
+export interface System {
     name: string;
     version: string;
     environment: string;

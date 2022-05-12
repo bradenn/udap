@@ -28,7 +28,7 @@ watchEffect(() => handleUpdates(remote))
 
 function handleUpdates(remote: Remote) {
   state.modules = remote.modules.sort((a, b) => a.created > b.created ? 1 : -1) as Module[]
-  state.threads = remote.metadata.threads as []
+  state.threads = remote.metadata.system.threads as []
   remote.timings.filter(t => state.modules.find(m => m.id === t.pointer)).forEach(t => {
     let local = state.histories.get(t.pointer) || []
     let cand = t.delta / 1000
@@ -120,8 +120,8 @@ function groupBy<T>(xs: T[], key: string): T[] {
                 <div :class="`${module.enabled?'text-success':''}`" class="label-o3 text-uppercase">
                   &nbsp;{{ module.enabled ? module.state : 'Disabled' }}
                 </div>
-                <div class="label-c3 label-o3 d-flex flex-row align-items-end time-marker-line">
-                  <div v-for="marker in state.histories.get(module.id).map(d => d / 1000)"
+                <div v-if="state.histories" class="label-c3 label-o3 d-flex flex-row align-items-end time-marker-line">
+                  <div v-for="marker in state.histories.get(module.id)?.map(d => d / 1000)"
                        :style="`height:${Math.log(marker)}px;`"
                        class="time-marker"></div>
                 </div>
@@ -134,7 +134,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
                        title="Enable"></Confirm>
               <Confirm v-if="module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀆧"
                        title="Disable"></Confirm>
-              <Radio sf="􀍟" style="width: 2.5rem;" title=""></Radio>
+              <Radio :active="false" :fn="() => {}" sf="􀍟" style="width: 2.5rem;" title=""></Radio>
             </div>
           </Plot>
         </div>
