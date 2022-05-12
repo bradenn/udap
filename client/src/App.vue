@@ -126,8 +126,8 @@ provide('hideHome', hideHome)
     <img :src="`/custom/${preferences.ui.background}@4x.png`" alt="Background" class="backdrop "/>
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
-        <div>NEXUS v{{ state.system.nexus.system.version }}</div>
-        <div v-if="state.system.udap">UDAP v{{ state.system.udap.system.version }}</div>
+        <!--        <div>NEXUS v{{ state.system.nexus.system.version }}</div>-->
+        <div v-if="state.system.udap" class="label-r label-w600">{{ state.system.udap.system.version }}</div>
       </div>
       <div class="float-end">{{ $route.path }}</div>
     </div>
