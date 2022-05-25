@@ -20,6 +20,7 @@ type Module struct {
 	Channel     chan Module `json:"-" gorm:"-"`
 	State       string      `json:"state"`
 	Enabled     bool        `json:"enabled" gorm:"default:true"`
+	Recover     int         `json:"recover"`
 }
 
 // create inserts the current module into the database

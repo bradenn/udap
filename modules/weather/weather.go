@@ -138,7 +138,10 @@ func (v *Weather) fetchWeather() error {
 }
 
 func (v *Weather) Setup() (plugin.Config, error) {
-
+	err := v.UpdateInterval(15000)
+	if err != nil {
+		return plugin.Config{}, err
+	}
 	return v.Config, nil
 }
 
@@ -158,10 +161,11 @@ func (v *Weather) pull() error {
 	return nil
 }
 func (v *Weather) Update() error {
-
-	if time.Since(v.Module.LastUpdate) >= time.Minute*15 {
-		v.Module.LastUpdate = time.Now()
-		return v.pull()
+	if v.Ready() {
+		err := v.pull()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

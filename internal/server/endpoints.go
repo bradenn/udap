@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 	"udap/internal/bond"
 	"udap/internal/controller"
 	"udap/internal/log"
@@ -151,11 +152,6 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 		ep.Connection.Watch()
 	}()
 
-	err = e.ctrl.EmitAll()
-	if err != nil {
-		return
-	}
-
 	go func() {
 		defer wg.Done()
 		var out []byte
@@ -171,6 +167,14 @@ func (e *Endpoints) socketAdaptor(w http.ResponseWriter, req *http.Request) {
 					return
 				}
 			}
+		}
+	}()
+
+	go func() {
+		time.After(time.Millisecond * 500)
+		err = e.ctrl.EmitAll()
+		if err != nil {
+			return
 		}
 	}()
 	wg.Wait()

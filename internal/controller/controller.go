@@ -22,6 +22,7 @@ type Controller struct {
 
 func NewController() (*Controller, error) {
 	c := &Controller{}
+
 	c.Entities = LoadEntities()
 	c.Modules = LoadModules()
 	c.Attributes = LoadAttributes()

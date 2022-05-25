@@ -73,6 +73,8 @@ func (s *Spotify) PutAttribute(key string) models.FuncPut {
 			if err != nil {
 				return err
 			}
+			err = s.Attributes.Set(s.id, "playing", str)
+
 			break
 		}
 		return nil
@@ -292,7 +294,7 @@ func (s *Spotify) push() error {
 	}
 	res := "false"
 	if sp.Playing {
-		s.Frequency = 5000
+		s.Frequency = 3000
 		res = "true"
 	} else {
 		s.Frequency = 15000

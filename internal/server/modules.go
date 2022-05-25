@@ -29,27 +29,38 @@ const (
 )
 
 type ModuleController struct {
-	model   models.Module
+	model  models.Module
+	module plugin.ModuleInterface
+
+	config plugin.Config
+
+	state   string
 	loaded  bool
 	running bool
-	module  plugin.ModuleInterface
-	config  plugin.Config
-	source  string
-	binary  string
-	state   string
-	c       chan ModuleState
-	mid     string
 
+	ctrl    *controller.Controller
+	c       chan ModuleState
 	receive chan models.Module
+
+	source string
+	binary string
+	mid    string
 }
 
 func (m *ModuleController) listen() {
 	for module := range m.receive {
 		if m.model.Enabled != module.Enabled {
-			if !module.Enabled {
-				log.Event("Disabling module '%s'", m.model.Name)
+			if module.Enabled {
+				err := m.enable()
+				if err != nil {
+					return
+				}
 			} else {
-				log.Event("Enabling module '%s'", m.model.Name)
+				err := m.disable()
+				if err != nil {
+					return
+				}
+
 			}
 		}
 		m.model = module
@@ -85,6 +96,24 @@ func (m *ModuleController) setState(state string) {
 	}
 }
 
+func (m *ModuleController) enable() error {
+	if m.running {
+		log.Event("Module '%s' is already running.", m.model.Name)
+		return nil
+	}
+	log.Event("Enabling module '%s'", m.model.Name)
+	err := m.start()
+	if err != nil {
+		log.Err(err)
+	}
+	return nil
+}
+
+func (m *ModuleController) disable() error {
+	log.Event("Disabling module '%s'", m.model.Name)
+	m.running = false
+	return nil
+}
 func (m *ModuleController) build() error {
 	// Create a timeout to prevent modules from taking too long to build
 	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*15)
@@ -103,12 +132,22 @@ func (m *ModuleController) build() error {
 	return nil
 }
 
-func (m *ModuleController) setup(ctrl *controller.Controller, c chan ModuleState) error {
+func (m *ModuleController) init(ctrl *controller.Controller, c chan ModuleState) error {
+	m.state = UNINITIALIZED
+	m.ctrl = ctrl
+	m.c = c
+	err := m.setup()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *ModuleController) setup() error {
 	err := m.build()
 	if err != nil {
 		return err
 	}
-	m.state = UNINITIALIZED
 	p, err := plugin.Load(m.binary)
 	if err != nil {
 		return err
@@ -120,13 +159,15 @@ func (m *ModuleController) setup(ctrl *controller.Controller, c chan ModuleState
 	m.module = mod
 	// Defer the wait group to complete at the end
 	// Attempt to connect to the module
-	err = m.module.Connect(ctrl)
+	err = m.module.Connect(m.ctrl)
 	if err != nil {
 		return err
 	}
 	// Run module setup
 	m.config, err = p.Setup()
 	if err != nil {
+		m.setState(UNINITIALIZED)
+		m.running = false
 		log.ErrF(err, "Module '%s' setup failed: ", m.config.Name)
 		return err
 	}
@@ -141,8 +182,8 @@ func (m *ModuleController) setup(ctrl *controller.Controller, c chan ModuleState
 		State:       m.state,
 		Channel:     m.receive,
 	}
-	m.c = c
-	mid, err := ctrl.Modules.Register(modDb)
+
+	mid, err := m.ctrl.Modules.Register(modDb)
 	if err != nil {
 		return err
 	}
@@ -152,6 +193,7 @@ func (m *ModuleController) setup(ctrl *controller.Controller, c chan ModuleState
 
 	m.setState(IDLE)
 	m.loaded = true
+
 	return nil
 }
 
@@ -162,7 +204,7 @@ func (m *ModuleController) start() error {
 	// Attempt to run the module
 	m.setState(RUNNING)
 	go func() {
-		for {
+		for m.model.Enabled {
 			err := m.module.Run()
 			if err != nil {
 				log.ErrF(err, "Module '%s' terminated prematurely: ", m.config.Name)
@@ -271,14 +313,9 @@ func (m *Modules) Run() error {
 		// Run a go function to create a new thread
 		go func(p *ModuleController) {
 			defer wg.Done()
-			err := p.setup(m.ctrl, m.state)
+			err := p.init(m.ctrl, m.state)
 			if err != nil {
 				log.ErrF(err, "Module '%s' setup failed: ", p.config.Name)
-				return
-			}
-			// Attempt to run the module
-			err = p.start()
-			if err != nil {
 				return
 			}
 		}(module)

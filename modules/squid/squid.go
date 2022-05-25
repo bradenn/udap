@@ -4,12 +4,15 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"os"
 	"strconv"
 	"sync"
+	"time"
 	"udap/internal/log"
 	"udap/internal/models"
-	"udap/internal/pkg/dmx"
-	"udap/internal/pkg/dmx/ft232"
+	"udap/pkg/dmx"
+	"udap/pkg/dmx/ft232"
 	"udap/pkg/plugin"
 )
 
@@ -20,8 +23,16 @@ type Squid struct {
 	dmx        ft232.DMXController
 	state      map[int]int
 	entities   map[int]string
-	stateMutex sync.RWMutex
-	connected  bool
+	stateMutex sync.Mutex
+	update     chan Command
+
+	connected bool
+}
+
+type Command struct {
+	read  bool
+	id    int
+	value int
 }
 
 func init() {
@@ -29,14 +40,13 @@ func init() {
 		Name:        "squid",
 		Type:        "module",
 		Description: "Control LOR Light Controller",
-		Version:     "2.0.1",
+		Version:     "1.2",
 		Author:      "Braden Nicholson",
 	}
 
 	Module.Config = config
 }
 
-// setChannelValue sends a dmx signal to the provide channel with the provided value
 func (s *Squid) setChannelValue(channel int, value int) (err error) {
 	if !s.connected {
 		return fmt.Errorf("squid is not connected")
@@ -45,10 +55,10 @@ func (s *Squid) setChannelValue(channel int, value int) (err error) {
 	if value > 100 || value < 0 {
 		return fmt.Errorf("desired value '%d' is invalid", value)
 	}
+	var adjustedValue byte
+	adjustedValue = uint8(math.Round((float64(value) / 100.0) * 255.0))
 
-	adjustedValue := (value / 100.0) * 255
-
-	err = s.dmx.SetChannel(int16(channel), byte(adjustedValue))
+	err = s.dmx.SetChannel(int16(channel), adjustedValue)
 	if err != nil {
 		return err
 	}
@@ -56,19 +66,20 @@ func (s *Squid) setChannelValue(channel int, value int) (err error) {
 	return nil
 }
 
-// getChannelValue polls the dmx controller for the current value of the channel
-func (s *Squid) getChannelValue(channel int) (value int, err error) {
-	if !s.connected {
-		return 0, fmt.Errorf("squid is not connected")
-	}
-
-	res, err := s.dmx.GetChannel(int16(channel))
-	if err != nil {
-		return 0, err
-	}
-	newValue := (res / 255.0) * 100.0
-	return int(newValue), nil
-}
+//
+// // getChannelValue polls the dmx controller for the current value of the channel
+// func (s *Squid) getChannelValue(channel int) (value int, err error) {
+// 	if !s.connected {
+// 		return 0, fmt.Errorf("squid is not connected")
+// 	}
+//
+// 	res, err := s.dmx.GetChannel(int16(channel))
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	newValue :=
+// 	return int(newValue), nil
+// }
 
 func (s *Squid) isLocalOn(channel int) (value bool) {
 	value = false
@@ -90,37 +101,78 @@ func (s *Squid) getLocalValue(channel int) (value int) {
 
 func (s *Squid) setLocalValue(channel int, value int) error {
 
-	s.stateMutex.Lock()
-	s.state[channel] = value
-	s.stateMutex.Unlock()
+	s.update <- Command{
+		read:  false,
+		id:    channel,
+		value: value,
+	}
 
 	return nil
 }
 
-// isChannelOn provides a boolean describing the on state of the channel
-func (s *Squid) isChannelOn(channel int) (value bool, err error) {
-	if !s.connected {
-		return false, fmt.Errorf("squid is not connected")
+func (s *Squid) remoteGetOn(id int) func() (string, error) {
+	return func() (string, error) {
+		state := "false"
+		if s.isLocalOn(id) {
+			state = "true"
+		}
+		return state, nil
 	}
-	channelValue, err := s.getChannelValue(channel)
-	if err != nil {
-		return false, err
-	}
-	if channelValue > 0 {
-		return true, nil
-	}
-	return false, nil
 }
 
-func (s *Squid) findDevices() error {
+func (s *Squid) remotePutOn(id int) func(value string) error {
+	return func(value string) error {
+		if value == "true" {
+			err := s.setLocalValue(id, 100)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := s.setLocalValue(id, 0)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func (s *Squid) remoteGetDim(id int) func() (string, error) {
+	return func() (string, error) {
+		state := "0"
+		value := s.getLocalValue(id)
+		state = fmt.Sprintf("%d", value)
+
+		return state, nil
+	}
+}
+
+func (s *Squid) remotePutDim(id int) func(value string) error {
+	return func(value string) error {
+
+		parseInt, err := strconv.ParseInt(value, 10, 16)
+		if err != nil {
+			return err
+		}
+
+		err = s.setLocalValue(id, int(parseInt))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (s *Squid) registerDevices() error {
 	if !s.connected {
 		return nil
 	}
 	for i := 1; i <= 16; i++ {
-		name := fmt.Sprintf("ch%d", i)
-		entity := models.NewDimmer(name, s.Name)
-		res, err := s.Entities.Register(entity)
 
+		entity := models.NewDimmer(fmt.Sprintf("ch%d", i), s.Config.Name)
+
+		res, err := s.Entities.Register(entity)
 		if err != nil {
 			return err
 		}
@@ -136,30 +188,8 @@ func (s *Squid) findDevices() error {
 
 		s.entities[i] = res.Id
 
-		on.FnGet(func() (string, error) {
-			state := "off"
-			if s.isLocalOn(i) {
-				state = "on"
-			}
-			return state, nil
-		})
-
-		on.FnPut(func(value string) error {
-
-			if value == "on" {
-				err = s.setLocalValue(i, 100)
-				if err != nil {
-					return err
-				}
-			} else {
-				err = s.setLocalValue(i, 0)
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		})
+		on.FnGet(s.remoteGetOn(i))
+		on.FnPut(s.remotePutOn(i))
 
 		err = s.Attributes.Register(&on)
 		if err != nil {
@@ -175,31 +205,8 @@ func (s *Squid) findDevices() error {
 			Entity:  res.Id,
 		}
 
-		dim.FnGet(func() (string, error) {
-			state := "0"
-			value := s.getLocalValue(i)
-			if err != nil {
-				return "", err
-			}
-			state = fmt.Sprintf("%d", value)
-
-			return state, nil
-		})
-
-		dim.FnPut(func(value string) error {
-
-			parseInt, err := strconv.ParseInt(value, 10, 16)
-			if err != nil {
-				return err
-			}
-
-			err = s.setLocalValue(i, int(parseInt))
-			if err != nil {
-				return err
-			}
-
-			return nil
-		})
+		dim.FnGet(s.remoteGetDim(i))
+		dim.FnPut(s.remotePutDim(i))
 
 		err = s.Attributes.Register(&dim)
 		if err != nil {
@@ -213,14 +220,24 @@ func (s *Squid) findDevices() error {
 
 // Setup is called once at the launch of the module
 func (s *Squid) Setup() (plugin.Config, error) {
-
+	err := s.UpdateInterval(2000)
+	if err != nil {
+		return plugin.Config{}, err
+	}
 	return s.Config, nil
 }
 
 func (s *Squid) connect() error {
 	s.connected = false
+
+	so := os.Stdout
+	os.Stdout = os.DevNull
+
 	config := dmx.NewConfig(0x02)
 	config.GetUSBContext()
+
+	os.Stdout = so
+
 	defer func() {
 		if r := recover(); r != nil {
 			s.connected = false
@@ -228,6 +245,7 @@ func (s *Squid) connect() error {
 			return
 		}
 	}()
+
 	s.dmx = ft232.NewDMXController(config)
 
 	err := s.dmx.Connect()
@@ -235,17 +253,32 @@ func (s *Squid) connect() error {
 		return err
 	}
 
-	s.stateMutex = sync.RWMutex{}
+	s.connected = true
+	s.update = make(chan Command, 4)
+
+	s.stateMutex = sync.Mutex{}
 	s.stateMutex.Lock()
 	s.state = map[int]int{}
 	s.stateMutex.Unlock()
+
 	s.entities = map[int]string{}
-	s.connected = true
-	err = s.findDevices()
+
+	go s.mux()
+
+	err = s.registerDevices()
 	if err != nil {
 		return err
 	}
+
 	return nil
+}
+
+func (s *Squid) mux() {
+	for cmd := range s.update {
+		s.stateMutex.Lock()
+		s.state[cmd.id] = cmd.value
+		s.stateMutex.Unlock()
+	}
 }
 
 func (s *Squid) pull() error {
@@ -254,12 +287,12 @@ func (s *Squid) pull() error {
 	}
 
 	for i, entity := range s.entities {
-		state := "off"
+		state := "false"
 
 		if s.isLocalOn(i) {
-			state = "on"
+			state = "true"
 		}
-		err := s.Attributes.Set(entity, "on", state)
+		err := s.Attributes.Update(entity, "on", state, time.Now())
 		if err != nil {
 			return err
 		}
@@ -267,7 +300,7 @@ func (s *Squid) pull() error {
 		state = "0"
 		value := s.getLocalValue(i)
 		state = fmt.Sprintf("%d", value)
-		err = s.Attributes.Set(entity, "dim", state)
+		err = s.Attributes.Update(entity, "dim", state, time.Now())
 		if err != nil {
 			return err
 		}
@@ -279,38 +312,51 @@ func (s *Squid) pull() error {
 
 // Update is called every cycle
 func (s *Squid) Update() error {
-	// pulse.Fixed(1000)
-	// defer pulse.End()
-	// if time.Since(s.Module.LastUpdate) >= time.Second*10 {
-	// 	s.Module.LastUpdate = time.Now()
-	// 	return s.pull()
-	// }
+	if s.Ready() {
+		err := s.pull()
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 // Run is called after Setup, concurrent with Update
 func (s *Squid) Run() (err error) {
-	//
-	// err = s.connect()
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// for {
-	// 	s.stateMutex.RLock()
-	// 	for k, v := range s.state {
-	// 		err = s.dmx.SetChannel(int16(k), byte(v))
-	// 		if err != nil {
-	// 			log.Err(err)
-	// 		}
-	// 	}
-	// 	s.stateMutex.RUnlock()
-	//
-	// 	err = s.dmx.Render()
-	// 	if err != nil {
-	// 		log.Err(err)
-	// 	}
-	// 	time.Sleep(20 * time.Millisecond)
-	// }
+
+	err = s.connect()
+	if err != nil {
+		return err
+	}
+
+	for {
+
+		if !s.connected {
+			break
+		}
+
+		s.stateMutex.Lock()
+		for k, v := range s.state {
+			err = s.setChannelValue(k, v)
+			if err != nil {
+				return err
+			}
+		}
+		s.stateMutex.Unlock()
+
+		err = s.dmx.Render()
+		if err != nil {
+			log.Err(err)
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+
+	}
+
+	err = s.dmx.Close()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

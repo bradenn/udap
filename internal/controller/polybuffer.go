@@ -17,7 +17,7 @@ type Observer struct {
 
 type Mutation struct {
 	Key   string
-	Value interface{}
+	Value any
 }
 
 type Observable struct {

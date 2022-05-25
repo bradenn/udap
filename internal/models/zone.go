@@ -17,7 +17,7 @@ type Zone struct {
 // Emplace will Find or Create a zone based on its id.
 func (z *Zone) Emplace() (err error) {
 	z.UpdatedAt = time.Now()
-	err = store.DB.Model(&Zone{}).Where("id = ?", z.Id).FirstOrCreate(z).Error
+	err = store.DB.Model(&Zone{}).FirstOrCreate(z).Error
 	if err != nil {
 		return err
 	}
