@@ -22,6 +22,18 @@ type Module struct {
 	*controller.Controller
 }
 
+// UpdateInterval is called once at the launch of the module
+func (m *Module) UpdateInterval(frequency int) error {
+	m.LastUpdate = time.Now()
+	m.Frequency = frequency
+	return nil
+}
+
+// Ready is called once at the launch of the module
+func (m *Module) Ready() bool {
+	return time.Since(m.LastUpdate) > time.Duration(m.Frequency)*time.Millisecond
+}
+
 // Connect is called once at the launch of the module
 func (m *Module) Connect(ctrl *controller.Controller) error {
 	m.LastUpdate = time.Now()

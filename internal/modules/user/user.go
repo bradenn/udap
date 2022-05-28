@@ -8,7 +8,7 @@ import (
 )
 
 func New(db *gorm.DB) domain.UserService {
-	repo := NewUserRepository(db)
-	service := NewUserService(repo)
+	repo := NewRepository(db)
+	service := NewService(repo)
 	return service
 }

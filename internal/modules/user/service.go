@@ -12,7 +12,7 @@ type userService struct {
 	repository domain.UserRepository
 }
 
-func NewUserService(repository domain.UserRepository) domain.UserService {
+func NewService(repository domain.UserRepository) domain.UserService {
 	return userService{repository: repository}
 }
 

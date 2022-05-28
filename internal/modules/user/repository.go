@@ -11,7 +11,7 @@ type userRepo struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) domain.UserRepository {
+func NewRepository(db *gorm.DB) domain.UserRepository {
 	return &userRepo{
 		db: db,
 	}

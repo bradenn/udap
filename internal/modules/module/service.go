@@ -10,7 +10,22 @@ type moduleService struct {
 	repository domain.ModuleRepository
 }
 
-func NewModuleService(repository domain.ModuleRepository) domain.ModuleService {
+func (u moduleService) Discover() error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (u moduleService) Build(name string) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (u moduleService) BuildAll() error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func NewService(repository domain.ModuleRepository) domain.ModuleService {
 	return moduleService{repository: repository}
 }
 
@@ -24,14 +39,12 @@ func (u moduleService) FindByName(name string) (*domain.Module, error) {
 	return u.repository.FindByName(name)
 }
 
-func (u moduleService) FindById(id string) (*domain.Module, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 func (u moduleService) Disable(name string) error {
-	// TODO implement me
-	panic("implement me")
+	_, err := u.FindByName(name)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u moduleService) Enable(name string) error {
