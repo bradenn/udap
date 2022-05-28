@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"udap/internal/core/domain"
 	"udap/internal/models"
 	"udap/pkg/plugin"
 )
@@ -47,25 +48,36 @@ func (h *HS100) findDevices() error {
 			return err
 		}
 
-		newSwitch := models.NewSwitch(strings.ToLower(name), "hs100")
-
-		_, err = h.Entities.Register(newSwitch)
+		newSwitch := domain.Entity{
+			Name:   strings.ToLower(name),
+			Type:   "switch",
+			Module: "hs100",
+		}
+		_, err = h.Entities.Register(&newSwitch)
 		if err != nil {
 			return err
 		}
 
 		h.devices[newSwitch.Id] = device
-		on := &models.Attribute{
+		channel := make(chan domain.Attribute)
+		on := &domain.Attribute{
 			Key:     "on",
 			Value:   "false",
 			Request: "false",
 			Order:   0,
 			Type:    "toggle",
 			Entity:  newSwitch.Id,
+			Channel: channel,
 		}
 
-		on.FnGet(h.get(device))
-		on.FnPut(h.put(device))
+		go func() {
+			for attribute := range channel {
+				err = h.put(device)(attribute.Request)
+				if err != nil {
+					return
+				}
+			}
+		}()
 
 		err = h.Attributes.Register(on)
 		if err != nil {

@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package rest
+package routes
 
 import (
 	"github.com/go-chi/chi"
@@ -36,7 +36,11 @@ func (r moduleRouter) RouteModules(router chi.Router) {
 func (r moduleRouter) build(w http.ResponseWriter, req *http.Request) {
 	name := chi.URLParam(req, "name")
 	if name != "" {
-		err := r.service.Build(name)
+		mod, err := r.service.FindByName(name)
+		if err != nil {
+			return
+		}
+		err = r.service.Build(mod)
 		if err != nil {
 			http.Error(w, "invalid module name", 401)
 		}

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-	"udap/internal/models"
+	"udap/internal/core/domain"
 	"udap/pkg/plugin"
 )
 
@@ -176,7 +176,11 @@ func (v *Weather) Run() error {
 		return err
 	}
 
-	e := models.NewMediaEntity("weather", "weather")
+	e := &domain.Entity{
+		Name:   "weather",
+		Module: "weather",
+		Type:   "media",
+	}
 	_, err = v.Entities.Register(e)
 	if err != nil {
 		return err
@@ -185,7 +189,7 @@ func (v *Weather) Run() error {
 	if err != nil {
 		return err
 	}
-	forecast := models.Attribute{
+	forecast := domain.Attribute{
 		Key:     "forecast",
 		Value:   buffer,
 		Request: buffer,
@@ -194,14 +198,6 @@ func (v *Weather) Run() error {
 		Entity:  e.Id,
 	}
 	v.eId = e.Id
-
-	forecast.FnGet(func() (string, error) {
-		return v.forecastBuffer()
-	})
-
-	forecast.FnPut(func(value string) error {
-		return nil
-	})
 
 	err = v.Attributes.Register(&forecast)
 	if err != nil {

@@ -2,8 +2,6 @@
 
 package domain
 
-import "udap/pkg/plugin"
-
 type Module struct {
 	Persistent
 	Name        string      `json:"name"`
@@ -14,22 +12,25 @@ type Module struct {
 	Author      string      `json:"author"`
 	Channel     chan Module `json:"-" gorm:"-"`
 	State       string      `json:"state"`
-	plugin.ModuleInterface
-	Enabled bool `json:"enabled" gorm:"default:true"`
-	Recover int  `json:"recover"`
+	Enabled     bool        `json:"enabled" gorm:"default:true"`
+	Recover     int         `json:"recover"`
 }
 
 type ModuleRepository interface {
-	Candidates() ([]string, error)
-	FindAll() ([]*Module, error)
+	FindAll() (*[]Module, error)
 	FindByName(name string) (*Module, error)
+	FindById(id string) (*Module, error)
+	Create(*Module) error
+	FindOrCreate(*Module) error
+	Update(*Module) error
+	Delete(*Module) error
 }
 
 type ModuleService interface {
 	Discover() error
-	Build(name string) error
+	Build(module *Module) error
 	BuildAll() error
-	FindAll() ([]*Module, error)
+	FindAll() (*[]Module, error)
 	FindByName(name string) (*Module, error)
 	Disable(name string) error
 	Enable(name string) error

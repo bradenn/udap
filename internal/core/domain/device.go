@@ -21,3 +21,12 @@ type DeviceRepository interface {
 	Update(*Device) error
 	Delete(*Device) error
 }
+
+type DeviceService interface {
+	FindAll() ([]*Device, error)
+	FindById(id string) (*Device, error)
+	Create(*Device) error
+	FindOrCreate(*Device) error
+	Update(*Device) error
+	Delete(*Device) error
+}

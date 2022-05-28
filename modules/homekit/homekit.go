@@ -10,9 +10,8 @@ import (
 	"github.com/brutella/hc/service"
 	"os"
 	"time"
-	"udap/internal/controller"
+	"udap/internal/core/domain"
 	"udap/internal/log"
-	"udap/internal/models"
 	"udap/pkg/plugin"
 )
 
@@ -66,10 +65,11 @@ func (h *Homekit) Run() error {
 
 	var accessories []*accessory.Accessory
 
-	keys := h.Entities.Keys()
+	entities, err := h.Entities.FindAll()
 
-	for _, name := range keys {
-		entity := *h.Entities.Find(name)
+	keys := *entities
+
+	for _, entity := range keys {
 		switch entity.Type {
 		case "spectrum":
 			info := accessory.Info{
@@ -81,10 +81,12 @@ func (h *Homekit) Run() error {
 				FirmwareRevision: h.Module.Version,
 			}
 			device := newSpectrumLight(info)
-			err := device.syncAttributes(h.Attributes, entity.Id)
+
+			err = device.syncAttributes(h.Attributes, entity.Id)
 			if err != nil {
 				return err
 			}
+
 			accessories = append(accessories, device.Accessory)
 		case "switch":
 			info := accessory.Info{
@@ -121,7 +123,7 @@ func (h *Homekit) Run() error {
 	return nil
 }
 
-func syncSwitch(p *service.Switch, a *controller.Attributes, id string) {
+func syncSwitch(p *service.Switch, a domain.AttributeService, id string) {
 	p.On.OnValueRemoteUpdate(func(b bool) {
 		str := "false"
 		if b {
@@ -133,11 +135,11 @@ func syncSwitch(p *service.Switch, a *controller.Attributes, id string) {
 		}
 	})
 
-	a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
-		attr := *data.(*models.Attribute)
-		p.On.UpdateValue(attr.Request)
-		return nil
-	})
+	// a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
+	// 	attr := *data.(*models.Attribute)
+	// 	p.On.UpdateValue(attr.Request)
+	// 	return nil
+	// })
 
 }
 
@@ -146,12 +148,13 @@ type spectrumLight struct {
 	spectrum *spectrum
 }
 
-func (s *spectrumLight) syncAttributes(a *controller.Attributes, id string) error {
+func (s *spectrumLight) syncAttributes(a domain.AttributeService, id string) error {
 	s.spectrum.On.OnValueRemoteUpdate(func(b bool) {
 		str := "false"
 		if b {
 			str = "true"
 		}
+
 		err := a.Request(id, "on", str)
 		if err != nil {
 			log.Err(err)
@@ -165,17 +168,17 @@ func (s *spectrumLight) syncAttributes(a *controller.Attributes, id string) erro
 		}
 	})
 
-	a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
-		attr := *data.(*models.Attribute)
-		s.spectrum.On.UpdateValue(attr.Request)
-		return nil
-	})
-
-	a.WatchSingle(fmt.Sprintf("%s.%s", id, "dim"), func(data interface{}) error {
-		attr := *data.(*models.Attribute)
-		s.spectrum.Dim.UpdateValue(attr.Request)
-		return nil
-	})
+	// a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
+	// 	attr := *data.(*models.Attribute)
+	// 	s.spectrum.On.UpdateValue(attr.Request)
+	// 	return nil
+	// })
+	//
+	// a.WatchSingle(fmt.Sprintf("%s.%s", id, "dim"), func(data interface{}) error {
+	// 	attr := *data.(*models.Attribute)
+	// 	s.spectrum.Dim.UpdateValue(attr.Request)
+	// 	return nil
+	// })
 
 	return nil
 }

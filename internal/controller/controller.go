@@ -4,42 +4,39 @@ package controller
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"udap/internal/bond"
 	"udap/internal/core/domain"
+	"udap/internal/modules/attribute"
+	"udap/internal/modules/endpoint"
+	"udap/internal/modules/entity"
 	"udap/internal/modules/module"
 	"udap/internal/modules/user"
 	"udap/internal/pulse"
-	"udap/internal/store"
 )
 
 type Controller struct {
-	Entities      *Entities
-	Attributes    *Attributes
-	Modules       *Modules
-	Endpoints     *Endpoints
 	Devices       *Devices
 	Zones         *Zones
 	Networks      *Networks
+	Attributes    domain.AttributeService
+	Modules       domain.ModuleService
+	Entities      domain.EntityService
+	Endpoints     domain.EndpointService
 	ModuleService domain.ModuleService
 	Users         domain.UserService
 	event         chan bond.Msg
 }
 
-func NewController() (*Controller, error) {
+func NewController(db *gorm.DB) (*Controller, error) {
 	c := &Controller{}
 
-	c.ModuleService = module.New()
+	c.Users = user.New(db)
+	c.Endpoints = endpoint.New(db)
+	c.Attributes = attribute.New(db)
+	c.Entities = entity.New(db)
+	c.Modules = module.New(db)
 
-	c.Users = user.New(store.DB.DB)
-
-	c.Entities = LoadEntities()
-	c.Modules = LoadModules()
-	c.Attributes = LoadAttributes()
-	c.Endpoints = LoadEndpoints()
-	c.Devices = LoadDevices()
-	c.Networks = LoadNetworks()
-	c.Zones = LoadZones()
-	c.Modules = LoadModules()
 	return c, nil
 }
 
@@ -47,67 +44,42 @@ func (c *Controller) Handle(msg bond.Msg) (interface{}, error) {
 
 	pulse.LogGlobal("-> Ctrl::%s %s", msg.Target, msg.Operation)
 
-	switch t := msg.Target; t {
-	case "entity":
-		return c.Entities.Handle(msg)
-	case "attribute":
-		return c.Attributes.Handle(msg)
-	case "module":
-		return c.Modules.Handle(msg)
-	case "endpoint":
-		return c.Endpoints.Handle(msg)
-	case "device":
-		return c.Devices.Handle(msg)
-	case "network":
-		return c.Networks.Handle(msg)
-	case "zone":
-		return c.Zones.Handle(msg)
-	default:
-		return nil, fmt.Errorf("unknown target '%s'", t)
-	}
+	// switch t := msg.Target; t {
+	// case "attribute":
+	// 	return c.Attributes.Handle(msg)
+	// case "device":
+	// 	return c.Devices.Handle(msg)
+	// case "network":
+	// 	return c.Networks.Handle(msg)
+	// case "zone":
+	// 	return c.Zones.Handle(msg)
+	// default:
+	// 	return nil, fmt.Errorf("unknown target '%s'", t)
+	// }
+	return nil, nil
 }
 
 func (c *Controller) EmitAll() error {
-	var err error
-
-	err = c.Entities.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Attributes.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Networks.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Devices.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Modules.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Endpoints.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Endpoints.EmitAll()
-	if err != nil {
-		return err
-	}
-	err = c.Zones.EmitAll()
-	if err != nil {
-		return err
-	}
+	// var err error
+	// err = c.Attributes.EmitAll()
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// err = c.Networks.EmitAll()
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// err = c.Devices.EmitAll()
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// err = c.Zones.EmitAll()
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

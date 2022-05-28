@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"udap/internal/core/domain"
 	"udap/internal/log"
 	"udap/internal/models"
 	"udap/pkg/plugin"
@@ -307,49 +308,74 @@ func (s *Spotify) push() error {
 }
 
 func (s *Spotify) Run() error {
-	e := models.NewMediaEntity("Remote", "spotify")
 
+	e := &domain.Entity{
+		Name:   "remote",
+		Type:   "media",
+		Module: "spotify",
+	}
 	_, err := s.Entities.Register(e)
 	if err != nil {
 		return err
 	}
 
-	current := &models.Attribute{
+	current := &domain.Attribute{
 		Key:     "current",
 		Value:   "{}",
 		Request: "{}",
 		Entity:  e.Id,
+		Channel: make(chan domain.Attribute),
 	}
-	current.FnGet(s.GetAttribute(current.Key))
-	current.FnPut(s.PutAttribute(current.Key))
+	go func() {
+		for attribute := range current.Channel {
+			err := s.PutAttribute(current.Key)(attribute.Request)
+			if err != nil {
+				return
+			}
+		}
+	}()
 	err = s.Attributes.Register(current)
 	if err != nil {
 		return err
 	}
 
-	playing := &models.Attribute{
+	playing := &domain.Attribute{
 		Key:     "playing",
 		Value:   "false",
 		Request: "false",
 		Entity:  e.Id,
+		Channel: make(chan domain.Attribute),
 	}
+	go func() {
+		for attribute := range playing.Channel {
+			err := s.PutAttribute(playing.Key)(attribute.Request)
+			if err != nil {
+				return
+			}
+		}
+	}()
 
-	playing.FnGet(s.GetAttribute(playing.Key))
-	playing.FnPut(s.PutAttribute(playing.Key))
 	err = s.Attributes.Register(playing)
 	if err != nil {
 		return err
 	}
 
-	cmd := &models.Attribute{
+	cmd := &domain.Attribute{
 		Key:     "cmd",
 		Value:   "none",
 		Request: "none",
 		Entity:  e.Id,
+		Channel: make(chan domain.Attribute),
 	}
+	go func() {
+		for attribute := range cmd.Channel {
+			err := s.PutAttribute(cmd.Key)(attribute.Request)
+			if err != nil {
+				return
+			}
+		}
+	}()
 
-	cmd.FnGet(s.GetAttribute(cmd.Key))
-	cmd.FnPut(s.PutAttribute(cmd.Key))
 	err = s.Attributes.Register(cmd)
 	if err != nil {
 		return err
@@ -376,7 +402,7 @@ func (s *Spotify) Run() error {
 	if err != nil {
 		return err
 	}
-	_, err = s.Entities.Config(s.id, string(marshal))
+	err = s.Entities.Config(s.id, string(marshal))
 	if err != nil {
 		return err
 	}
