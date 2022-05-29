@@ -74,9 +74,9 @@ func (m *Msg) Success() {
 }
 
 type Resp struct {
-	Success bool        `json:"status"`
-	Error   string      `json:"error"`
-	Body    interface{} `json:"body"`
+	Success bool   `json:"status"`
+	Error   string `json:"error"`
+	Body    any    `json:"body"`
 }
 
 type Bond struct {

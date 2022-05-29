@@ -33,7 +33,7 @@ func (v *MacMeta) createDisplaySwitch() error {
 		Type:   "switch",
 		Module: "macmeta",
 	}
-	_, err := v.Entities.Register(newSwitch)
+	err := v.Entities.Register(newSwitch)
 	if err != nil {
 		return err
 	}

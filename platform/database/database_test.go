@@ -1,6 +1,6 @@
-// Copyright (c) 2021 Braden Nicholson
+// Copyright (c) 2022 Braden Nicholson
 
-package store
+package database
 
 import (
 	"fmt"

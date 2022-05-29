@@ -22,6 +22,7 @@ type EntityRepository interface {
 	FindById(id string) (*Entity, error)
 	Create(*Entity) error
 	FindOrCreate(*Entity) error
+	Register(*Entity) error
 	Update(*Entity) error
 	Delete(*Entity) error
 }
@@ -32,7 +33,7 @@ type EntityService interface {
 	Create(*Entity) error
 	Config(id string, value string) error
 	FindOrCreate(*Entity) error
-	Register(*Entity) (*Entity, error)
+	Register(*Entity) error
 	Update(*Entity) error
 	Delete(*Entity) error
 }

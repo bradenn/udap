@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"udap/internal/core/domain"
 	"udap/internal/log"
-	"udap/internal/models"
 	"udap/pkg/plugin"
 )
 
@@ -421,52 +421,56 @@ func (g *Govee) setState(device Device, value string, mode string, id string) er
 	return nil
 }
 
-func (g *Govee) statePut(device Device, mode string, id string) models.FuncPut {
+func (g *Govee) statePut(device Device, mode string, id string) func(value string) error {
 	return func(value string) error {
 		return g.setState(device, value, mode, id)
 	}
 }
 
-func (g *Govee) stateGet(device Device, mode string, id string) models.FuncGet {
+func (g *Govee) stateGet(device Device, mode string, id string) func() (string, error) {
 	return func() (string, error) {
 		return g.getSingleState(device, mode)
 	}
 }
 
-func GenerateAttributes(id string) []*models.Attribute {
-	on := models.Attribute{
+func GenerateAttributes(id string) []*domain.Attribute {
+	on := domain.Attribute{
 		Key:     "on",
 		Value:   "false",
 		Request: "false",
 		Type:    "toggle",
 		Order:   0,
 		Entity:  id,
+		Channel: make(chan domain.Attribute),
 	}
-	dim := models.Attribute{
+	dim := domain.Attribute{
 		Key:     "dim",
 		Value:   "0",
 		Request: "0",
 		Type:    "range",
 		Order:   1,
 		Entity:  id,
+		Channel: make(chan domain.Attribute),
 	}
-	cct := models.Attribute{
+	cct := domain.Attribute{
 		Key:     "cct",
 		Value:   "2000",
 		Request: "2000",
 		Type:    "range",
 		Order:   3,
 		Entity:  id,
+		Channel: make(chan domain.Attribute),
 	}
-	hue := models.Attribute{
+	hue := domain.Attribute{
 		Key:     "hue",
 		Value:   "0",
 		Request: "0",
 		Type:    "range",
 		Order:   4,
 		Entity:  id,
+		Channel: make(chan domain.Attribute),
 	}
-	return []*models.Attribute{&on, &dim, &hue, &cct}
+	return []*domain.Attribute{&on, &dim, &hue, &cct}
 }
 
 func (g *Govee) Setup() (plugin.Config, error) {
@@ -507,16 +511,26 @@ func (g *Govee) Run() error {
 
 	for _, device := range devices {
 
-		s := models.NewSpectrum(device.DeviceName, g.Config.Name)
-		_, err = g.Entities.Register(s)
+		s := &domain.Entity{
+			Name:   device.DeviceName,
+			Type:   "spectrum",
+			Module: g.Config.Name,
+		}
+		err = g.Entities.Register(s)
 		if err != nil {
 			return err
 		}
 		g.devices[s.Id] = device
 		attributes := GenerateAttributes(s.Id)
 		for _, attribute := range attributes {
-			attribute.FnGet(g.stateGet(device, attribute.Key, s.Id))
-			attribute.FnPut(g.statePut(device, attribute.Key, s.Id))
+			go func() {
+				for attr := range attribute.Channel {
+					err = g.statePut(device, attribute.Key, s.Id)(attr.Request)
+					if err != nil {
+						return
+					}
+				}
+			}()
 			err = g.Attributes.Register(attribute)
 			if err != nil {
 				return err

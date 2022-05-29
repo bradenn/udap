@@ -8,34 +8,36 @@ import (
 	"udap/internal/bond"
 	"udap/internal/core/domain"
 	"udap/internal/modules/attribute"
+	"udap/internal/modules/device"
 	"udap/internal/modules/endpoint"
 	"udap/internal/modules/entity"
-	"udap/internal/modules/module"
+	"udap/internal/modules/network"
 	"udap/internal/modules/user"
+	"udap/internal/modules/zone"
 	"udap/internal/pulse"
 )
 
 type Controller struct {
-	Devices       *Devices
-	Zones         *Zones
-	Networks      *Networks
-	Attributes    domain.AttributeService
-	Modules       domain.ModuleService
-	Entities      domain.EntityService
-	Endpoints     domain.EndpointService
-	ModuleService domain.ModuleService
-	Users         domain.UserService
-	event         chan bond.Msg
+	Attributes domain.AttributeService
+	Devices    domain.DeviceService
+	Endpoints  domain.EndpointService
+	Entities   domain.EntityService
+	Networks   domain.NetworkService
+	Users      domain.UserService
+	Zones      domain.ZoneService
+	event      chan bond.Msg
 }
 
 func NewController(db *gorm.DB) (*Controller, error) {
 	c := &Controller{}
 
-	c.Users = user.New(db)
-	c.Endpoints = endpoint.New(db)
 	c.Attributes = attribute.New(db)
+	c.Devices = device.New(db)
+	c.Endpoints = endpoint.New(db)
 	c.Entities = entity.New(db)
-	c.Modules = module.New(db)
+	c.Networks = network.New(db)
+	c.Users = user.New(db)
+	c.Zones = zone.New(db)
 
 	return c, nil
 }

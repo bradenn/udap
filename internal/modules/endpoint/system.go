@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package server
+package endpoint
 
 import (
 	"fmt"
@@ -11,7 +11,12 @@ import (
 
 func GetOutboundIP() (net.IP, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
-	defer conn.Close()
+	defer func(conn net.Conn) {
+		err = conn.Close()
+		if err != nil {
+
+		}
+	}(conn)
 	if err != nil {
 		return nil, err
 	}

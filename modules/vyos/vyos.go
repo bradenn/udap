@@ -14,8 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"udap/internal/core/domain"
 	"udap/internal/log"
-	"udap/internal/models"
 	"udap/pkg/plugin"
 )
 
@@ -54,7 +54,7 @@ func (v *Vyos) Run() error {
 	return nil
 }
 
-func (v *Vyos) scanSubnet(network models.Network) error {
+func (v *Vyos) scanSubnet(network domain.Network) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -80,7 +80,8 @@ func (v *Vyos) scanSubnet(network models.Network) error {
 	}
 	// Use the results to print an example output
 	for _, host := range result.Hosts {
-		device := models.NewDevice()
+
+		device := domain.Device{}
 
 		for _, addr := range host.Addresses {
 			switch addr.AddrType {
@@ -94,7 +95,7 @@ func (v *Vyos) scanSubnet(network models.Network) error {
 		}
 
 		device.NetworkId = network.Id
-		_, err = v.Devices.Register(device)
+		err = v.Devices.Register(&device)
 		if err != nil {
 			return err
 		}
@@ -162,7 +163,7 @@ func (v *Vyos) fetchNetworks() error {
 	wg := sync.WaitGroup{}
 
 	for name, lan := range d.Networks {
-		network := models.Network{}
+		network := domain.Network{}
 		network.Name = name
 		network.Dns = strings.Join(lan.NameServer, ",")
 		for s, subnet := range lan.Subnets {
@@ -173,7 +174,7 @@ func (v *Vyos) fetchNetworks() error {
 			break
 		}
 
-		_, err = v.Networks.Register(&network)
+		err = v.Networks.Register(&network)
 		if err != nil {
 			log.Err(err)
 		}

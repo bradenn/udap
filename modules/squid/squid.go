@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"udap/internal/core/domain"
 	"udap/internal/log"
-	"udap/internal/models"
 	"udap/pkg/dmx"
 	"udap/pkg/dmx/ft232"
 	"udap/pkg/plugin"
@@ -170,43 +170,60 @@ func (s *Squid) registerDevices() error {
 	}
 	for i := 1; i <= 16; i++ {
 
-		entity := models.NewDimmer(fmt.Sprintf("ch%d", i), s.Config.Name)
-
-		res, err := s.Entities.Register(entity)
+		entity := &domain.Entity{
+			Name:   fmt.Sprintf("ch%d", i),
+			Module: s.Config.Name,
+			Type:   "dimmer",
+		}
+		err := s.Entities.Register(entity)
 		if err != nil {
 			return err
 		}
 
-		on := models.Attribute{
+		on := domain.Attribute{
 			Key:     "on",
 			Value:   "false",
 			Request: "false",
 			Type:    "toggle",
 			Order:   0,
-			Entity:  res.Id,
+			Entity:  entity.Id,
+			Channel: make(chan domain.Attribute),
 		}
 
-		s.entities[i] = res.Id
+		s.entities[i] = entity.Id
 
-		on.FnGet(s.remoteGetOn(i))
-		on.FnPut(s.remotePutOn(i))
+		go func() {
+			for attribute := range on.Channel {
+				err = s.remotePutOn(i)(attribute.Request)
+				if err != nil {
+					return
+				}
+			}
+		}()
 
 		err = s.Attributes.Register(&on)
 		if err != nil {
 			return err
 		}
 
-		dim := models.Attribute{
+		dim := domain.Attribute{
 			Key:     "dim",
 			Value:   "0",
 			Request: "0",
 			Type:    "range",
 			Order:   1,
-			Entity:  res.Id,
+			Entity:  entity.Id,
+			Channel: make(chan domain.Attribute),
 		}
 
-		dim.FnGet(s.remoteGetDim(i))
-		dim.FnPut(s.remotePutDim(i))
+		go func() {
+			for attribute := range dim.Channel {
+				err = s.remotePutDim(i)(attribute.Request)
+				if err != nil {
+					return
+				}
+			}
+		}()
 
 		err = s.Attributes.Register(&dim)
 		if err != nil {
@@ -231,7 +248,6 @@ func (s *Squid) connect() error {
 	s.connected = false
 
 	so := os.Stdout
-	os.Stdout = os.DevNull
 
 	config := dmx.NewConfig(0x02)
 	config.GetUSBContext()

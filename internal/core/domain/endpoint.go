@@ -2,6 +2,12 @@
 
 package domain
 
+import (
+	"github.com/gorilla/websocket"
+	"math/rand"
+	"time"
+)
+
 type Endpoint struct {
 	Persistent
 	Name      string `json:"name" gorm:"unique"`
@@ -10,8 +16,30 @@ type Endpoint struct {
 	Key       string `json:"key"`
 }
 
+func randomSequence() string {
+	template := "abcdefghijklmnopqrstuvwxyz"
+	var out string
+	rand.Seed(time.Now().Unix())
+	for i := 0; i < 8; i++ {
+		r := rand.Intn(26)
+		u := template[r]
+		out += string(u)
+	}
+	return out
+}
+
+func NewEndpoint(name string, variant string) *Endpoint {
+	return &Endpoint{
+		Persistent: Persistent{},
+		Name:       name,
+		Type:       variant,
+		Connected:  false,
+		Key:        randomSequence(),
+	}
+}
+
 type EndpointRepository interface {
-	FindAll() ([]*Endpoint, error)
+	FindAll() (*[]Endpoint, error)
 	FindById(id string) (*Endpoint, error)
 	FindByKey(key string) (*Endpoint, error)
 	Create(*Endpoint) error
@@ -20,13 +48,19 @@ type EndpointRepository interface {
 	Delete(*Endpoint) error
 }
 
+type EndpointOperator interface {
+	Enroll(*Endpoint, *websocket.Conn) error
+	Send(id string, operation string, payload any) error
+}
+
 type EndpointService interface {
-	FindAll() ([]*Endpoint, error)
+	FindAll() (*[]Endpoint, error)
 	FindById(id string) (*Endpoint, error)
 	FindByKey(key string) (*Endpoint, error)
 	Create(*Endpoint) error
 
-	Enroll(key string) (*Endpoint, error)
+	Enroll(id string, conn *websocket.Conn) error
+	Send(id string, operation string, payload any) error
 	Disconnect(key string) error
 
 	FindOrCreate(*Endpoint) error

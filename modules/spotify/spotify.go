@@ -16,7 +16,6 @@ import (
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
-	"udap/internal/models"
 	"udap/pkg/plugin"
 )
 
@@ -40,7 +39,7 @@ func init() {
 	Module.Config = config
 }
 
-func (s *Spotify) PutAttribute(key string) models.FuncPut {
+func (s *Spotify) PutAttribute(key string) func(str string) error {
 	return func(str string) error {
 		switch key {
 		case "current":
@@ -82,7 +81,7 @@ func (s *Spotify) PutAttribute(key string) models.FuncPut {
 	}
 }
 
-func (s *Spotify) GetAttribute(key string) models.FuncGet {
+func (s *Spotify) GetAttribute(key string) func() (string, error) {
 	return func() (string, error) {
 		switch key {
 		case "current":
@@ -314,7 +313,7 @@ func (s *Spotify) Run() error {
 		Type:   "media",
 		Module: "spotify",
 	}
-	_, err := s.Entities.Register(e)
+	err := s.Entities.Register(e)
 	if err != nil {
 		return err
 	}

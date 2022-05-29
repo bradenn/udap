@@ -26,9 +26,22 @@ type ModuleRepository interface {
 	Delete(*Module) error
 }
 
+type ModuleOperator interface {
+	Build(module *Module) error
+	Load(module *Module) error
+	Update(module *Module) error
+	Run(module *Module) error
+}
+
 type ModuleService interface {
 	Discover() error
 	Build(module *Module) error
+	Load(module *Module) error
+	Update(module *Module) error
+	Run(module *Module) error
+	UpdateAll() error
+	RunAll() error
+	LoadAll() error
 	BuildAll() error
 	FindAll() (*[]Module, error)
 	FindByName(name string) (*Module, error)

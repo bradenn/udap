@@ -4,11 +4,13 @@ package module
 
 import (
 	"gorm.io/gorm"
+	"udap/internal/controller"
 	"udap/internal/core/domain"
 )
 
-func New(db *gorm.DB) domain.ModuleService {
+func New(db *gorm.DB, controller *controller.Controller) domain.ModuleService {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	operator := NewOperator(controller)
+	service := NewService(repo, operator)
 	return service
 }

@@ -2,21 +2,48 @@
 
 package domain
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 type Attribute struct {
 	Persistent
-	Value     string    `json:"value"`
-	Updated   time.Time `json:"updated"`
-	Request   string    `json:"request"`
-	Requested time.Time `json:"requested"`
-	Entity    string    `json:"entity"`
-	Key       string    `json:"key"`
-	Type      string    `json:"type"`
-	Order     int       `json:"order"`
-	Channel   chan Attribute
+	Value     string         `json:"value"`
+	Updated   time.Time      `json:"updated"`
+	Request   string         `json:"request"`
+	Requested time.Time      `json:"requested"`
+	Entity    string         `json:"entity"`
+	Key       string         `json:"key"`
+	Type      string         `json:"type"`
+	Order     int            `json:"order"`
+	Channel   chan Attribute `gorm:"-"`
 	// put       FuncPut
 	// get       FuncGet
+}
+
+func (a *Attribute) AsInt() int {
+	parsed, err := strconv.ParseInt(a.Value, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return int(parsed)
+}
+
+func (a *Attribute) AsFloat() float64 {
+	parsed, err := strconv.ParseFloat(a.Value, 64)
+	if err != nil {
+		return 0.0
+	}
+	return parsed
+}
+
+func (a *Attribute) AsBool() bool {
+	parsed, err := strconv.ParseBool(a.Value)
+	if err != nil {
+		return false
+	}
+	return parsed
 }
 
 type AttributeRepository interface {
@@ -25,13 +52,23 @@ type AttributeRepository interface {
 	FindById(id string) (*Attribute, error)
 	FindByComposite(entity string, key string) (*Attribute, error)
 	Create(*Attribute) error
+	Register(*Attribute) error
 	FindOrCreate(*Attribute) error
 	Update(*Attribute) error
 	Delete(*Attribute) error
 }
 
+type AttributeOperator interface {
+	Register(attribute *Attribute) error
+	Request(*Attribute, string) error
+	Set(*Attribute, string) error
+	Update(*Attribute, string, time.Time) error
+}
+
 type AttributeService interface {
 	FindAll() (*[]Attribute, error)
+	EmitAll() error
+	Watch(chan<- Attribute) error
 	FindAllByEntity(entity string) (*[]Attribute, error)
 	FindById(id string) (*Attribute, error)
 	Create(*Attribute) error

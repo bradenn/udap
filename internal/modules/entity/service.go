@@ -4,6 +4,7 @@ package entity
 
 import (
 	"udap/internal/core/domain"
+	"udap/internal/log"
 )
 
 type entityService struct {
@@ -23,9 +24,13 @@ func (u entityService) Config(id string, value string) error {
 	return nil
 }
 
-func (u entityService) Register(entity *domain.Entity) (*domain.Entity, error) {
-	// TODO implement me
-	panic("implement me")
+func (u entityService) Register(entity *domain.Entity) error {
+	err := u.repository.Register(entity)
+	if err != nil {
+		return err
+	}
+	log.Event("Entity '%s' registered.", entity.Name)
+	return nil
 }
 
 func NewService(repository domain.EntityRepository) domain.EntityService {

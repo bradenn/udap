@@ -181,7 +181,7 @@ func (v *Weather) Run() error {
 		Module: "weather",
 		Type:   "media",
 	}
-	_, err = v.Entities.Register(e)
+	err = v.Entities.Register(e)
 	if err != nil {
 		return err
 	}

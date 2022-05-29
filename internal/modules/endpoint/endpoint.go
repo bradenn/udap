@@ -9,6 +9,7 @@ import (
 
 func New(db *gorm.DB) domain.EndpointService {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	operator := NewOperator()
+	service := NewService(repo, operator)
 	return service
 }

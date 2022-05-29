@@ -3,51 +3,112 @@
 package attribute
 
 import (
-	"fmt"
 	"time"
 	"udap/internal/core/domain"
 )
 
 type attributeService struct {
 	repository domain.AttributeRepository
-	hooks      map[string]chan domain.Attribute
+	operator   domain.AttributeOperator
+	channel    chan<- domain.Attribute
+}
+
+func (u *attributeService) EmitAll() error {
+	all, err := u.FindAll()
+	if err != nil {
+		return err
+	}
+	attributes := *all
+	for _, attribute := range attributes {
+		err = u.push(&attribute)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *attributeService) push(attribute *domain.Attribute) error {
+	u.channel <- *attribute
+	return nil
+}
+
+func (u *attributeService) Watch(channel chan<- domain.Attribute) error {
+	u.channel = channel
+	return nil
 }
 
 func (u attributeService) FindAllByEntity(entity string) (*[]domain.Attribute, error) {
 	return u.repository.FindAllByEntity(entity)
 }
 
-func NewService(repository domain.AttributeRepository) domain.AttributeService {
-	return attributeService{
+func NewService(repository domain.AttributeRepository, operator domain.AttributeOperator) domain.AttributeService {
+	return &attributeService{
 		repository: repository,
-		hooks:      map[string]chan domain.Attribute{},
+		operator:   operator,
+		channel:    nil,
 	}
 }
 
 func (u attributeService) Register(attribute *domain.Attribute) error {
-	attribute, err := u.repository.FindByComposite(attribute.Entity, attribute.Key)
+	err := u.repository.Register(attribute)
 	if err != nil {
 		return err
 	}
-	if u.hooks[attribute.Id] != nil {
-		return fmt.Errorf("attribute already registered")
+	err = u.operator.Register(attribute)
+	if err != nil {
+		return err
 	}
-	u.hooks[attribute.Id] = attribute.Channel
-	attribute.Channel = nil
+
 	return nil
 }
 
 func (u attributeService) Request(entity string, key string, value string) error {
+	e, err := u.repository.FindByComposite(entity, key)
+	if err != nil {
+		return err
+	}
+	err = u.operator.Request(e, value)
+	if err != nil {
+		return err
+	}
+	err = u.push(e)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (u attributeService) Set(entity string, key string, value string) error {
+	e, err := u.repository.FindByComposite(entity, key)
+	if err != nil {
+		return err
+	}
+	err = u.operator.Set(e, value)
+	if err != nil {
+		return err
+	}
+	err = u.push(e)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (u attributeService) Update(entity string, key string, value string, stamp time.Time) error {
-	// TODO implement me
-	panic("implement me")
+	e, err := u.repository.FindByComposite(entity, key)
+	if err != nil {
+		return err
+	}
+	err = u.operator.Update(e, value, stamp)
+	if err != nil {
+		return err
+	}
+	err = u.push(e)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Repository Mapping

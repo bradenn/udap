@@ -19,4 +19,14 @@ func NewModuleRuntime(service domain.ModuleService) {
 		return
 	}
 
+	err = service.LoadAll()
+	if err != nil {
+		return
+	}
+
+	err = service.RunAll()
+	if err != nil {
+		return
+	}
+
 }

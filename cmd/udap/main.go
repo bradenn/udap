@@ -23,7 +23,7 @@ func main() {
 	o := orchestrator.NewOrchestrator()
 
 	// Initialize services
-	err = o.Init()
+	err = o.Start()
 	if err != nil {
 		return
 	}

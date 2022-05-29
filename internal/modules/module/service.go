@@ -3,15 +3,10 @@
 package module
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
 )
@@ -20,10 +15,96 @@ const DIR = "modules"
 
 type moduleService struct {
 	repository domain.ModuleRepository
+	operator   domain.ModuleOperator
 }
 
-func NewService(repository domain.ModuleRepository) domain.ModuleService {
-	return moduleService{repository: repository}
+func (u *moduleService) Update(module *domain.Module) error {
+	return u.operator.Update(module)
+}
+
+func (u *moduleService) Run(module *domain.Module) error {
+	return u.operator.Run(module)
+}
+
+func (u *moduleService) Load(module *domain.Module) error {
+	err := u.operator.Load(module)
+	if err != nil {
+		return err
+	}
+	err = u.repository.Update(module)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *moduleService) Build(module *domain.Module) error {
+	return u.operator.Build(module)
+}
+
+func (u *moduleService) UpdateAll() error {
+	modules, err := u.repository.FindAll()
+	if err != nil {
+		return err
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(len(*modules))
+	for _, module := range *modules {
+		go func(mod domain.Module) {
+			defer wg.Done()
+			err = u.Update(&mod)
+			if err != nil {
+				log.Err(err)
+			}
+		}(module)
+	}
+	wg.Wait()
+	return nil
+}
+
+func (u *moduleService) RunAll() error {
+	modules, err := u.repository.FindAll()
+	if err != nil {
+		return err
+	}
+
+	for _, module := range *modules {
+		go func(mod domain.Module) {
+			err = u.Run(&mod)
+			if err != nil {
+				log.Err(err)
+			}
+		}(module)
+	}
+
+	return nil
+}
+
+func (u *moduleService) LoadAll() error {
+	modules, err := u.repository.FindAll()
+	if err != nil {
+		return err
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(len(*modules))
+	for _, module := range *modules {
+		go func(mod domain.Module) {
+			defer wg.Done()
+			err = u.Load(&mod)
+			if err != nil {
+				log.Err(err)
+			}
+		}(module)
+	}
+	wg.Wait()
+	return nil
+}
+
+func NewService(repository domain.ModuleRepository, operator domain.ModuleOperator) domain.ModuleService {
+	return &moduleService{
+		repository: repository,
+		operator:   operator,
+	}
 }
 
 func (u moduleService) Discover() error {
@@ -48,30 +129,6 @@ func (u moduleService) Discover() error {
 			}
 		}
 	}
-	return nil
-}
-
-func (u moduleService) Build(module *domain.Module) error {
-	start := time.Now()
-	if _, err := os.Stat(module.Path); err != nil {
-		return err
-	}
-	// Create a timeout to prevent modules from taking too long to build
-	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*15)
-	// Cancel the timeout of it exits before the timeout is up
-	defer cancelFunc()
-	binary := strings.Replace(module.Path, ".go", ".so", 1)
-	// Prepare the command arguments
-	args := []string{"build", "-v", "-buildmode=plugin", "-o", binary, module.Path}
-	// Initialize the command structure
-	cmd := exec.CommandContext(timeout, "go", args...)
-	// Run and get the stdout and stderr from the output
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.ErrF(errors.New(string(output)), "Module '%s' build failed:", module.Name)
-		return nil
-	}
-	log.Event("Module '%s' compiled successfully (%s)", module.Name, time.Since(start).Truncate(time.Millisecond).String())
 	return nil
 }
 

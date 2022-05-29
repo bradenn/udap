@@ -27,6 +27,7 @@ type DeviceService interface {
 	FindById(id string) (*Device, error)
 	Create(*Device) error
 	FindOrCreate(*Device) error
+	Register(*Device) error
 	Update(*Device) error
 	Delete(*Device) error
 }

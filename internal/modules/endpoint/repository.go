@@ -18,27 +18,27 @@ func NewRepository(db *gorm.DB) domain.EndpointRepository {
 }
 
 func (u endpointRepo) FindByKey(key string) (*domain.Endpoint, error) {
-	var target *domain.Endpoint
-	if err := u.db.Where("key = ?", key).First(target).Error; err != nil {
+	var target domain.Endpoint
+	if err := u.db.Where("key = ?", key).First(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
-func (u endpointRepo) FindAll() ([]*domain.Endpoint, error) {
-	var target []*domain.Endpoint
-	if err := u.db.First(target).Error; err != nil {
+func (u endpointRepo) FindAll() (*[]domain.Endpoint, error) {
+	var target []domain.Endpoint
+	if err := u.db.First(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
 func (u endpointRepo) FindById(id string) (*domain.Endpoint, error) {
-	var target *domain.Endpoint
-	if err := u.db.Where("id = ?", id).First(target).Error; err != nil {
+	var target domain.Endpoint
+	if err := u.db.Model(&domain.Endpoint{}).Where("id = ?", id).First(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
 func (u endpointRepo) Create(endpoint *domain.Endpoint) error {

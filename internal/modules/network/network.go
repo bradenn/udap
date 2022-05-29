@@ -1,15 +1,14 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package attribute
+package network
 
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 )
 
-func New(db *gorm.DB) domain.AttributeService {
+func New(db *gorm.DB) domain.NetworkService {
 	repo := NewRepository(db)
-	operators := NewOperator()
-	service := NewService(repo, operators)
+	service := NewService(repo)
 	return service
 }

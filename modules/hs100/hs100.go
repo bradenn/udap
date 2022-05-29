@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 	"udap/internal/core/domain"
-	"udap/internal/models"
 	"udap/pkg/plugin"
 )
 
@@ -53,7 +52,7 @@ func (h *HS100) findDevices() error {
 			Type:   "switch",
 			Module: "hs100",
 		}
-		_, err = h.Entities.Register(&newSwitch)
+		err = h.Entities.Register(&newSwitch)
 		if err != nil {
 			return err
 		}
@@ -132,7 +131,7 @@ func (h *HS100) Run() (err error) {
 	return nil
 }
 
-func (h *HS100) put(device *hs100.Hs100) models.FuncPut {
+func (h *HS100) put(device *hs100.Hs100) func(s string) error {
 	return func(s string) error {
 
 		parseBool, err := strconv.ParseBool(s)
@@ -154,7 +153,7 @@ func (h *HS100) put(device *hs100.Hs100) models.FuncPut {
 	}
 }
 
-func (h *HS100) get(device *hs100.Hs100) models.FuncGet {
+func (h *HS100) get(device *hs100.Hs100) func() (string, error) {
 	return func() (string, error) {
 		on, err := device.IsOn()
 		if err != nil {
