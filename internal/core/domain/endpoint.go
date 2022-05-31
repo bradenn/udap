@@ -6,10 +6,11 @@ import (
 	"github.com/gorilla/websocket"
 	"math/rand"
 	"time"
+	"udap/internal/core/domain/common"
 )
 
 type Endpoint struct {
-	Persistent
+	common.Persistent
 	Name      string `json:"name" gorm:"unique"`
 	Type      string `json:"type" gorm:"default:'terminal'"`
 	Connected bool   `json:"connected"`
@@ -30,7 +31,7 @@ func randomSequence() string {
 
 func NewEndpoint(name string, variant string) *Endpoint {
 	return &Endpoint{
-		Persistent: Persistent{},
+		Persistent: common.Persistent{},
 		Name:       name,
 		Type:       variant,
 		Connected:  false,
@@ -39,18 +40,15 @@ func NewEndpoint(name string, variant string) *Endpoint {
 }
 
 type EndpointRepository interface {
-	FindAll() (*[]Endpoint, error)
-	FindById(id string) (*Endpoint, error)
+	common.Persist[Endpoint]
 	FindByKey(key string) (*Endpoint, error)
-	Create(*Endpoint) error
-	FindOrCreate(*Endpoint) error
-	Update(*Endpoint) error
-	Delete(*Endpoint) error
 }
 
 type EndpointOperator interface {
 	Enroll(*Endpoint, *websocket.Conn) error
+	Unenroll(id string) error
 	Send(id string, operation string, payload any) error
+	SendAll(id string, operation string, payload any) error
 }
 
 type EndpointService interface {
@@ -59,7 +57,11 @@ type EndpointService interface {
 	FindByKey(key string) (*Endpoint, error)
 	Create(*Endpoint) error
 
+	Observable
+
 	Enroll(id string, conn *websocket.Conn) error
+
+	SendAll(target string, operation string, payload any) error
 	Send(id string, operation string, payload any) error
 	Disconnect(key string) error
 

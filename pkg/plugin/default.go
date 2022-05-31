@@ -31,7 +31,7 @@ func (m *Module) UpdateInterval(frequency int) error {
 
 // Ready is called once at the launch of the module
 func (m *Module) Ready() bool {
-	return time.Since(m.LastUpdate) > time.Duration(m.Frequency)*time.Millisecond
+	return time.Since(m.LastUpdate).Milliseconds() >= (time.Duration(m.Frequency) * time.Millisecond).Milliseconds()
 }
 
 // Connect is called once at the launch of the module

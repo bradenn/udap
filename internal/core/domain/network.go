@@ -2,8 +2,10 @@
 
 package domain
 
+import "udap/internal/core/domain/common"
+
 type Network struct {
-	Persistent
+	common.Persistent
 	Name   string `json:"name"`
 	Dns    string `json:"dns"`
 	Router string `json:"index"`
@@ -13,18 +15,14 @@ type Network struct {
 }
 
 type NetworkRepository interface {
-	FindAll() ([]*Network, error)
-	FindById(id string) (*Network, error)
+	common.Persist[Network]
 	FindByName(name string) (*Network, error)
-	Create(*Network) error
 	Register(*Network) error
-	FindOrCreate(*Network) error
-	Update(*Network) error
-	Delete(*Network) error
 }
 
 type NetworkService interface {
-	FindAll() ([]*Network, error)
+	Observable
+	FindAll() (*[]Network, error)
 	FindById(id string) (*Network, error)
 	Create(*Network) error
 	FindOrCreate(*Network) error

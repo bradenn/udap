@@ -2,8 +2,10 @@
 
 package domain
 
+import "udap/internal/core/domain/common"
+
 type User struct {
-	Persistent
+	common.Persistent
 	Username string `json:"username"`
 	First    string `json:"first"`
 	Middle   string `json:"middle"`
@@ -13,18 +15,14 @@ type User struct {
 }
 
 type UserRepository interface {
-	FindAll() ([]*User, error)
-	FindById(id string) (*User, error)
-	Create(*User) error
-	FindOrCreate(*User) error
-	Update(*User) error
-	Delete(*User) error
+	common.Persist[User]
 }
 
 type UserService interface {
+	Observable
 	Register(*User) error
 	Authenticate(*User) error
-	FindAll() ([]*User, error)
+	FindAll() (*[]User, error)
 	FindById(id string) (*User, error)
 	Create(*User) error
 	FindOrCreate(*User) error

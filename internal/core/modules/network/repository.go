@@ -31,11 +31,11 @@ func (u networkRepo) Register(network *domain.Network) error {
 }
 
 func (u networkRepo) FindByName(name string) (*domain.Network, error) {
-	var target *domain.Network
-	if err := u.db.Where("name = ?", name).Find(target).Error; err != nil {
+	var target domain.Network
+	if err := u.db.Where("name = ?", name).Find(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
 func NewRepository(db *gorm.DB) domain.NetworkRepository {
@@ -44,12 +44,12 @@ func NewRepository(db *gorm.DB) domain.NetworkRepository {
 	}
 }
 
-func (u networkRepo) FindAll() ([]*domain.Network, error) {
-	var target []*domain.Network
-	if err := u.db.First(target).Error; err != nil {
+func (u networkRepo) FindAll() (*[]domain.Network, error) {
+	var target []domain.Network
+	if err := u.db.First(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
 func (u networkRepo) FindById(id string) (*domain.Network, error) {

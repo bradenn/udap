@@ -183,7 +183,7 @@ func (v *Vyos) fetchNetworks() error {
 			defer wg.Done()
 			err = v.scanSubnet(network)
 			if err != nil {
-				log.Err(err)
+				return
 			}
 		}()
 

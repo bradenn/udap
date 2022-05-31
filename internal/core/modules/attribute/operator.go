@@ -18,12 +18,15 @@ func NewOperator() domain.AttributeOperator {
 	}
 }
 
-func (a attributeOperator) Register(attribute *domain.Attribute) error {
+func (a *attributeOperator) Register(attribute *domain.Attribute) error {
+	if attribute.Id == "" {
+		return fmt.Errorf("invalid attribute id")
+	}
 	a.hooks[attribute.Id] = attribute.Channel
 	return nil
 }
 
-func (a attributeOperator) Request(attribute *domain.Attribute, s string) error {
+func (a *attributeOperator) Request(attribute *domain.Attribute, s string) error {
 	err := a.Set(attribute, s)
 	if err != nil {
 		return err
@@ -31,7 +34,7 @@ func (a attributeOperator) Request(attribute *domain.Attribute, s string) error 
 	return nil
 }
 
-func (a attributeOperator) Set(attribute *domain.Attribute, s string) error {
+func (a *attributeOperator) Set(attribute *domain.Attribute, s string) error {
 	// If the attribute handler is not set, return an error
 	channel := a.hooks[attribute.Id]
 
@@ -42,7 +45,7 @@ func (a attributeOperator) Set(attribute *domain.Attribute, s string) error {
 	attribute.Requested = time.Now()
 
 	if channel == nil {
-		return fmt.Errorf("channel is not open")
+		return nil
 	}
 
 	channel <- *attribute
@@ -50,7 +53,7 @@ func (a attributeOperator) Set(attribute *domain.Attribute, s string) error {
 	return nil
 }
 
-func (a attributeOperator) Update(attribute *domain.Attribute, val string, stamp time.Time) error {
+func (a *attributeOperator) Update(attribute *domain.Attribute, val string, stamp time.Time) error {
 	// If a request has been made in the last five seconds, and has been unresolved, ignore this update
 	if attribute.Requested.Before(stamp) && attribute.Request != val && time.Since(attribute.Requested) < 5*time.Second {
 		return fmt.Errorf("OVERWRITES REQUEST")

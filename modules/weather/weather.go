@@ -162,7 +162,11 @@ func (v *Weather) pull() error {
 }
 func (v *Weather) Update() error {
 	if v.Ready() {
-		err := v.pull()
+		err := v.UpdateInterval(15000)
+		if err != nil {
+			return err
+		}
+		err = v.pull()
 		if err != nil {
 			return err
 		}
@@ -189,7 +193,8 @@ func (v *Weather) Run() error {
 	if err != nil {
 		return err
 	}
-	forecast := domain.Attribute{
+
+	forecast := &domain.Attribute{
 		Key:     "forecast",
 		Value:   buffer,
 		Request: buffer,
@@ -199,7 +204,7 @@ func (v *Weather) Run() error {
 	}
 	v.eId = e.Id
 
-	err = v.Attributes.Register(&forecast)
+	err = v.Attributes.Register(forecast)
 	if err != nil {
 		return err
 	}

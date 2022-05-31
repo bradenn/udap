@@ -17,12 +17,12 @@ func NewRepository(db *gorm.DB) domain.DeviceRepository {
 	}
 }
 
-func (u deviceRepo) FindAll() ([]*domain.Device, error) {
-	var target []*domain.Device
-	if err := u.db.First(target).Error; err != nil {
+func (u deviceRepo) FindAll() (*[]domain.Device, error) {
+	var target []domain.Device
+	if err := u.db.First(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
 func (u deviceRepo) FindById(id string) (*domain.Device, error) {

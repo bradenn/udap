@@ -3,12 +3,50 @@
 package entity
 
 import (
+	"fmt"
 	"udap/internal/core/domain"
 	"udap/internal/log"
 )
 
 type entityService struct {
 	repository domain.EntityRepository
+	channel    chan<- domain.Mutation
+}
+
+func (u *entityService) EmitAll() error {
+	all, err := u.FindAll()
+	if err != nil {
+		return err
+	}
+	for _, entity := range *all {
+		err = u.emit(&entity)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *entityService) emit(entity *domain.Entity) error {
+	if u.channel == nil {
+		return nil
+	}
+	u.channel <- domain.Mutation{
+		Status:    "update",
+		Operation: "entity",
+		Body:      *entity,
+		Id:        entity.Id,
+	}
+	return nil
+}
+
+func (u *entityService) Watch(mut chan<- domain.Mutation) error {
+	if u.channel != nil {
+		return fmt.Errorf("channel already set")
+	}
+	u.channel = mut
+
+	return nil
 }
 
 func (u entityService) Config(id string, value string) error {
@@ -21,6 +59,10 @@ func (u entityService) Config(id string, value string) error {
 	if err != nil {
 		return err
 	}
+	err = u.emit(entity)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -30,11 +72,15 @@ func (u entityService) Register(entity *domain.Entity) error {
 		return err
 	}
 	log.Event("Entity '%s' registered.", entity.Name)
+	err = u.emit(entity)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func NewService(repository domain.EntityRepository) domain.EntityService {
-	return entityService{repository: repository}
+	return &entityService{repository: repository}
 }
 
 // Repository Mapping

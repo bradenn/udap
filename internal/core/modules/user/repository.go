@@ -17,12 +17,12 @@ func NewRepository(db *gorm.DB) domain.UserRepository {
 	}
 }
 
-func (u userRepo) FindAll() ([]*domain.User, error) {
-	var target []*domain.User
-	if err := u.db.First(target).Error; err != nil {
+func (u userRepo) FindAll() (*[]domain.User, error) {
+	var target []domain.User
+	if err := u.db.Find(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
 func (u userRepo) FindById(id string) (*domain.User, error) {

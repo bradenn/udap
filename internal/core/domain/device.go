@@ -2,8 +2,10 @@
 
 package domain
 
+import "udap/internal/core/domain/common"
+
 type Device struct {
-	Persistent
+	common.Persistent
 	NetworkId string `json:"networkId" gorm:"-"`
 	EntityId  string `json:"entityId" gorm:"-"`
 	Name      string `json:"name"`
@@ -14,16 +16,12 @@ type Device struct {
 }
 
 type DeviceRepository interface {
-	FindAll() ([]*Device, error)
-	FindById(id string) (*Device, error)
-	Create(*Device) error
-	FindOrCreate(*Device) error
-	Update(*Device) error
-	Delete(*Device) error
+	common.Persist[Device]
 }
 
 type DeviceService interface {
-	FindAll() ([]*Device, error)
+	Observable
+	FindAll() (*[]Device, error)
 	FindById(id string) (*Device, error)
 	Create(*Device) error
 	FindOrCreate(*Device) error

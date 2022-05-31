@@ -2,8 +2,10 @@
 
 package domain
 
+import "udap/internal/core/domain/common"
+
 type Module struct {
-	Persistent
+	common.Persistent
 	Name        string      `json:"name"`
 	Path        string      `json:"path"`
 	Type        string      `json:"type"`
@@ -17,13 +19,8 @@ type Module struct {
 }
 
 type ModuleRepository interface {
-	FindAll() (*[]Module, error)
+	common.Persist[Module]
 	FindByName(name string) (*Module, error)
-	FindById(id string) (*Module, error)
-	Create(*Module) error
-	FindOrCreate(*Module) error
-	Update(*Module) error
-	Delete(*Module) error
 }
 
 type ModuleOperator interface {
@@ -34,6 +31,7 @@ type ModuleOperator interface {
 }
 
 type ModuleService interface {
+	Observable
 	Discover() error
 	Build(module *Module) error
 	Load(module *Module) error

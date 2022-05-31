@@ -3,6 +3,7 @@
 package attribute
 
 import (
+	"fmt"
 	"time"
 	"udap/internal/core/domain"
 )
@@ -10,7 +11,7 @@ import (
 type attributeService struct {
 	repository domain.AttributeRepository
 	operator   domain.AttributeOperator
-	channel    chan<- domain.Attribute
+	channel    chan<- domain.Mutation
 }
 
 func (u *attributeService) EmitAll() error {
@@ -18,9 +19,8 @@ func (u *attributeService) EmitAll() error {
 	if err != nil {
 		return err
 	}
-	attributes := *all
-	for _, attribute := range attributes {
-		err = u.push(&attribute)
+	for _, attribute := range *all {
+		err = u.emit(&attribute)
 		if err != nil {
 			return err
 		}
@@ -28,17 +28,28 @@ func (u *attributeService) EmitAll() error {
 	return nil
 }
 
-func (u *attributeService) push(attribute *domain.Attribute) error {
-	u.channel <- *attribute
+func (u *attributeService) emit(attribute *domain.Attribute) error {
+	if u.channel == nil {
+		return fmt.Errorf("channel is null")
+	}
+	u.channel <- domain.Mutation{
+		Status:    "update",
+		Operation: "attribute",
+		Body:      *attribute,
+		Id:        attribute.Id,
+	}
 	return nil
 }
 
-func (u *attributeService) Watch(channel chan<- domain.Attribute) error {
-	u.channel = channel
+func (u *attributeService) Watch(ref chan<- domain.Mutation) error {
+	if u.channel != nil {
+		return fmt.Errorf("channel in use")
+	}
+	u.channel = ref
 	return nil
 }
 
-func (u attributeService) FindAllByEntity(entity string) (*[]domain.Attribute, error) {
+func (u *attributeService) FindAllByEntity(entity string) (*[]domain.Attribute, error) {
 	return u.repository.FindAllByEntity(entity)
 }
 
@@ -50,7 +61,7 @@ func NewService(repository domain.AttributeRepository, operator domain.Attribute
 	}
 }
 
-func (u attributeService) Register(attribute *domain.Attribute) error {
+func (u *attributeService) Register(attribute *domain.Attribute) error {
 	err := u.repository.Register(attribute)
 	if err != nil {
 		return err
@@ -59,11 +70,14 @@ func (u attributeService) Register(attribute *domain.Attribute) error {
 	if err != nil {
 		return err
 	}
-
+	err = u.emit(attribute)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (u attributeService) Request(entity string, key string, value string) error {
+func (u *attributeService) Request(entity string, key string, value string) error {
 	e, err := u.repository.FindByComposite(entity, key)
 	if err != nil {
 		return err
@@ -72,14 +86,14 @@ func (u attributeService) Request(entity string, key string, value string) error
 	if err != nil {
 		return err
 	}
-	err = u.push(e)
+	err = u.emit(e)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u attributeService) Set(entity string, key string, value string) error {
+func (u *attributeService) Set(entity string, key string, value string) error {
 	e, err := u.repository.FindByComposite(entity, key)
 	if err != nil {
 		return err
@@ -88,14 +102,14 @@ func (u attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
-	err = u.push(e)
+	err = u.emit(e)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u attributeService) Update(entity string, key string, value string, stamp time.Time) error {
+func (u *attributeService) Update(entity string, key string, value string, stamp time.Time) error {
 	e, err := u.repository.FindByComposite(entity, key)
 	if err != nil {
 		return err
@@ -104,7 +118,8 @@ func (u attributeService) Update(entity string, key string, value string, stamp 
 	if err != nil {
 		return err
 	}
-	err = u.push(e)
+
+	err = u.emit(e)
 	if err != nil {
 		return err
 	}

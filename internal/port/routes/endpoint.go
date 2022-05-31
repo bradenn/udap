@@ -21,12 +21,12 @@ type endpointRouter struct {
 }
 
 func NewEndpointRouter(service domain.EndpointService) EndpointRouter {
-	return endpointRouter{
+	return &endpointRouter{
 		service: service,
 	}
 }
 
-func (r endpointRouter) RouteEndpoints(router chi.Router) {
+func (r *endpointRouter) RouteEndpoints(router chi.Router) {
 	router.Get("/socket/{token}", r.enroll)
 	router.Route("/endpoints", func(local chi.Router) {
 		local.Get("/register/{key}", r.authenticate)
@@ -37,7 +37,7 @@ type authenticationResponse struct {
 	Token string `json:"token"`
 }
 
-func (r endpointRouter) authenticate(w http.ResponseWriter, req *http.Request) {
+func (r *endpointRouter) authenticate(w http.ResponseWriter, req *http.Request) {
 	key := chi.URLParam(req, "key")
 	if key == "" {
 		http.Error(w, "access key not provided", 401)
@@ -72,7 +72,7 @@ func (r endpointRouter) authenticate(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(200)
 }
 
-func (r endpointRouter) enroll(w http.ResponseWriter, req *http.Request) {
+func (r *endpointRouter) enroll(w http.ResponseWriter, req *http.Request) {
 	// Initialize an error to manage returns
 	var err error
 	// Convert the basic GET request into a WebSocket session
@@ -103,4 +103,8 @@ func (r endpointRouter) enroll(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	err = r.service.Disconnect(id)
+	if err != nil {
+		return
+	}
 }

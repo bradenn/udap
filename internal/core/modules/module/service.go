@@ -16,6 +16,42 @@ const DIR = "modules"
 type moduleService struct {
 	repository domain.ModuleRepository
 	operator   domain.ModuleOperator
+	channel    chan<- domain.Mutation
+}
+
+func (u *moduleService) Watch(ref chan<- domain.Mutation) error {
+	if u.channel != nil {
+		return fmt.Errorf("channel in use")
+	}
+	u.channel = ref
+	return nil
+}
+
+func (u *moduleService) EmitAll() error {
+	all, err := u.FindAll()
+	if err != nil {
+		return err
+	}
+	for _, module := range *all {
+		err = u.emit(&module)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *moduleService) emit(module *domain.Module) error {
+	if u.channel == nil {
+		return fmt.Errorf("channel is null")
+	}
+	u.channel <- domain.Mutation{
+		Status:    "update",
+		Operation: "module",
+		Body:      *module,
+		Id:        module.Id,
+	}
+	return nil
 }
 
 func (u *moduleService) Update(module *domain.Module) error {
@@ -52,9 +88,12 @@ func (u *moduleService) UpdateAll() error {
 	for _, module := range *modules {
 		go func(mod domain.Module) {
 			defer wg.Done()
-			err = u.Update(&mod)
-			if err != nil {
-				log.Err(err)
+			if mod.Enabled {
+				err = u.Update(&mod)
+				if err != nil {
+					log.Err(err)
+					return
+				}
 			}
 		}(module)
 	}
@@ -121,6 +160,7 @@ func (u moduleService) Discover() error {
 		var target *domain.Module
 		target, err = u.repository.FindByName(name)
 		if err != nil {
+			target = &domain.Module{}
 			target.Name = name
 			target.Path = p
 			err = u.repository.Create(target)

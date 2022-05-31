@@ -130,7 +130,9 @@ func ErrF(err error, format string, args ...interface{}) {
 func Err(err error) {
 	_, file, ln, ok := runtime.Caller(1)
 	if ok {
-		fmt.Printf("%s%s%s %s%s\n", Reset+BoldRed, fmt.Sprintf("Error (%s:%d)", filepath.Base(file), ln),
+		fmt.Printf("%s%s%s %s%s\n",
+			Reset+BoldRed,
+			fmt.Sprintf("[ERR*] (%s:%d)", filepath.Base(file), ln),
 			Reset+FaintRed,
 			fmt.Sprintf(err.Error()), Reset)
 	}

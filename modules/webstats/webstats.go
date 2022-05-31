@@ -4,7 +4,6 @@ package main
 
 import (
 	"time"
-	"udap/internal/log"
 	"udap/pkg/plugin"
 )
 
@@ -50,8 +49,5 @@ func (w *WebStats) Update() error {
 }
 
 func (w *WebStats) Run() error {
-	log.Log("Webstats running")
-	time.Sleep(time.Second * 2)
-	log.Log("Webstats exiting")
 	return nil
 }

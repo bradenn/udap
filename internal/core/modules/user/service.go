@@ -10,10 +10,47 @@ import (
 
 type userService struct {
 	repository domain.UserRepository
+	channel    chan<- domain.Mutation
+}
+
+func (u *userService) EmitAll() error {
+	all, err := u.FindAll()
+	if err != nil {
+		return err
+	}
+	for _, user := range *all {
+		err = u.emit(&user)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *userService) emit(user *domain.User) error {
+	if u.channel == nil {
+		return nil
+	}
+	u.channel <- domain.Mutation{
+		Status:    "update",
+		Operation: "user",
+		Body:      *user,
+		Id:        user.Id,
+	}
+	return nil
+}
+
+func (u *userService) Watch(mut chan<- domain.Mutation) error {
+	if u.channel != nil {
+		return fmt.Errorf("channel already set")
+	}
+	u.channel = mut
+
+	return nil
 }
 
 func NewService(repository domain.UserRepository) domain.UserService {
-	return userService{repository: repository}
+	return &userService{repository: repository}
 }
 
 // Services
@@ -55,7 +92,7 @@ func CheckPasswordHash(password, hash string) bool {
 
 // Repository Mapping
 
-func (u userService) FindAll() ([]*domain.User, error) {
+func (u userService) FindAll() (*[]domain.User, error) {
 	return u.repository.FindAll()
 }
 

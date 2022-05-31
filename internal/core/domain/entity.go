@@ -2,8 +2,10 @@
 
 package domain
 
+import "udap/internal/core/domain/common"
+
 type Entity struct {
-	Persistent
+	common.Persistent
 	Name      string `gorm:"unique" json:"name"` // Given name from module
 	Alias     string `json:"alias"`              // Name from users
 	Type      string `json:"type"`               // Type of entity {Light, Sensor, Etc}
@@ -18,16 +20,12 @@ type Entity struct {
 }
 
 type EntityRepository interface {
-	FindAll() (*[]Entity, error)
-	FindById(id string) (*Entity, error)
-	Create(*Entity) error
-	FindOrCreate(*Entity) error
+	common.Persist[Entity]
 	Register(*Entity) error
-	Update(*Entity) error
-	Delete(*Entity) error
 }
 
 type EntityService interface {
+	Observable
 	FindAll() (*[]Entity, error)
 	FindById(id string) (*Entity, error)
 	Create(*Entity) error

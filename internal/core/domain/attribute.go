@@ -5,10 +5,11 @@ package domain
 import (
 	"strconv"
 	"time"
+	"udap/internal/core/domain/common"
 )
 
 type Attribute struct {
-	Persistent
+	common.Persistent
 	Value     string         `json:"value"`
 	Updated   time.Time      `json:"updated"`
 	Request   string         `json:"request"`
@@ -17,7 +18,7 @@ type Attribute struct {
 	Key       string         `json:"key"`
 	Type      string         `json:"type"`
 	Order     int            `json:"order"`
-	Channel   chan Attribute `gorm:"-"`
+	Channel   chan Attribute `json:"-" gorm:"-"`
 	// put       FuncPut
 	// get       FuncGet
 }
@@ -47,15 +48,10 @@ func (a *Attribute) AsBool() bool {
 }
 
 type AttributeRepository interface {
-	FindAll() (*[]Attribute, error)
+	common.Persist[Attribute]
 	FindAllByEntity(entity string) (*[]Attribute, error)
-	FindById(id string) (*Attribute, error)
 	FindByComposite(entity string, key string) (*Attribute, error)
-	Create(*Attribute) error
 	Register(*Attribute) error
-	FindOrCreate(*Attribute) error
-	Update(*Attribute) error
-	Delete(*Attribute) error
 }
 
 type AttributeOperator interface {
@@ -66,9 +62,8 @@ type AttributeOperator interface {
 }
 
 type AttributeService interface {
+	Observable
 	FindAll() (*[]Attribute, error)
-	EmitAll() error
-	Watch(chan<- Attribute) error
 	FindAllByEntity(entity string) (*[]Attribute, error)
 	FindById(id string) (*Attribute, error)
 	Create(*Attribute) error
