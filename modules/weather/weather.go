@@ -14,9 +14,8 @@ var Module Weather
 
 type Weather struct {
 	plugin.Module
-	forecast     WeatherAPI
-	localDisplay bool
-	eId          string
+	forecast WeatherAPI
+	eId      string
 }
 
 const weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=39.73&longitude=-121.85&hourly=temperature_2m,relativehumidity_2m,precipitation,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timeformat=unixtime&timezone=America%2FLos_Angeles"
@@ -95,6 +94,7 @@ func init() {
 		Author:      "Braden Nicholson",
 	}
 	Module.forecast = WeatherAPI{}
+	Module.eId = ""
 	Module.Config = config
 }
 
@@ -185,10 +185,19 @@ func (v *Weather) Run() error {
 		return err
 	}
 
+	err = v.fetchWeather()
+	if err != nil {
+		return err
+	}
+	buffer, err := v.forecastBuffer()
+	if err != nil {
+		return err
+	}
+
 	forecast := &domain.Attribute{
 		Key:     "forecast",
-		Value:   "{}",
-		Request: "{}",
+		Value:   buffer,
+		Request: buffer,
 		Type:    "media",
 		Order:   0,
 		Entity:  e.Id,

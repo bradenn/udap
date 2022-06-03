@@ -126,7 +126,7 @@ type SpotifyState struct {
 
 func (s *Spotify) Setup() (plugin.Config, error) {
 
-	s.Frequency = 5000
+	s.Frequency = 5000 * time.Millisecond
 	return s.Config, nil
 }
 
@@ -222,7 +222,7 @@ type CurrentResponse struct {
 }
 
 func (s *Spotify) Update() error {
-	if time.Since(s.Module.LastUpdate) >= time.Duration(s.Frequency)*time.Millisecond {
+	if time.Since(s.Module.LastUpdate) >= s.Frequency {
 		s.Module.LastUpdate = time.Now()
 		return s.push()
 	}
@@ -294,10 +294,10 @@ func (s *Spotify) push() error {
 	}
 	res := "false"
 	if sp.Playing {
-		s.Frequency = 3000
+		s.Frequency = time.Millisecond * 3000
 		res = "true"
 	} else {
-		s.Frequency = 15000
+		s.Frequency = time.Millisecond * 15000
 	}
 	err = s.Attributes.Set(s.id, "playing", res)
 	if err != nil {
@@ -322,6 +322,7 @@ func (s *Spotify) Run() error {
 		Key:     "current",
 		Value:   "{}",
 		Request: "{}",
+		Type:    "media",
 		Entity:  e.Id,
 		Channel: make(chan domain.Attribute),
 	}
@@ -329,6 +330,7 @@ func (s *Spotify) Run() error {
 		for attribute := range current.Channel {
 			err := s.PutAttribute(current.Key)(attribute.Request)
 			if err != nil {
+				log.Err(err)
 				return
 			}
 		}
@@ -349,6 +351,7 @@ func (s *Spotify) Run() error {
 		for attribute := range playing.Channel {
 			err := s.PutAttribute(playing.Key)(attribute.Request)
 			if err != nil {
+				log.Err(err)
 				return
 			}
 		}
@@ -370,6 +373,7 @@ func (s *Spotify) Run() error {
 		for attribute := range cmd.Channel {
 			err := s.PutAttribute(cmd.Key)(attribute.Request)
 			if err != nil {
+				log.Err(err)
 				return
 			}
 		}
@@ -386,7 +390,12 @@ func (s *Spotify) Run() error {
 			a := SpotifyApi{}
 			m, _ := json.Marshal(&a)
 			e.Config = string(m)
-			return err
+			s.api.Authenticate()
+			err = s.Entities.Config(s.id, string(m))
+			if err != nil {
+				return err
+			}
+			return nil
 		}
 		a := SpotifyApi{}
 		err = json.Unmarshal([]byte(e.Config), &a)
@@ -396,6 +405,7 @@ func (s *Spotify) Run() error {
 		s.api = a
 
 	}
+
 	s.api.Authenticate()
 	marshal, err := json.Marshal(s.api)
 	if err != nil {

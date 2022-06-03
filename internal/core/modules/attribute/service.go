@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/log"
 )
 
 type attributeService struct {
@@ -32,6 +33,7 @@ func (u *attributeService) emit(attribute *domain.Attribute) error {
 	if u.channel == nil {
 		return fmt.Errorf("channel is null")
 	}
+	log.Event("EMMITING %s", attribute.Key)
 	u.channel <- domain.Mutation{
 		Status:    "update",
 		Operation: "attribute",
@@ -103,8 +105,10 @@ func (u *attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
-	e.Request = value
-	e.Value = value
+	err = u.operator.Update(e, value, time.Now())
+	if err != nil {
+		return err
+	}
 	err = u.repository.Update(e)
 	if err != nil {
 		return err

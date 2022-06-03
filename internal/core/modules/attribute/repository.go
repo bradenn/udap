@@ -21,7 +21,8 @@ func NewRepository(db *gorm.DB) domain.AttributeRepository {
 }
 
 func (u *attributeRepo) Register(attribute *domain.Attribute) error {
-	err := u.db.Model(&domain.Attribute{}).Where(attribute).FirstOrCreate(attribute).Error
+
+	err := u.db.Model(&domain.Attribute{}).Where("entity = ? AND key = ?", attribute.Entity, attribute.Key).FirstOrCreate(attribute).Error
 	if err != nil {
 		return err
 	}
