@@ -37,9 +37,7 @@ function handleUpdates(remote: Remote) {
 
 function setAttributes(key: string, value: string) {
   remote.attributes.filter((a: Attribute) => a.key == key && state.targets.includes(a.entity)).forEach(v => {
-    let copy = v
-    copy.request = value
-    remote.nexus.requestId("attribute", "request", copy, v.entity)
+    remote.nexus.requestAttribute(v.entity, key, value)
 
   })
 }

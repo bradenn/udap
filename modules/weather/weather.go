@@ -6,18 +6,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"time"
-	"udap/internal/models"
-	"udap/pkg/plugin"
+	"udap/internal/core/domain"
+	"udap/internal/plugin"
 )
 
 var Module Weather
 
 type Weather struct {
 	plugin.Module
-	forecast     WeatherAPI
-	localDisplay bool
-	eId          string
+	forecast WeatherAPI
+	eId      string
 }
 
 const weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=39.73&longitude=-121.85&hourly=temperature_2m,relativehumidity_2m,precipitation,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timeformat=unixtime&timezone=America%2FLos_Angeles"
@@ -96,6 +94,7 @@ func init() {
 		Author:      "Braden Nicholson",
 	}
 	Module.forecast = WeatherAPI{}
+	Module.eId = ""
 	Module.Config = config
 }
 
@@ -138,7 +137,10 @@ func (v *Weather) fetchWeather() error {
 }
 
 func (v *Weather) Setup() (plugin.Config, error) {
-
+	err := v.UpdateInterval(15000)
+	if err != nil {
+		return plugin.Config{}, err
+	}
 	return v.Config, nil
 }
 
@@ -151,29 +153,39 @@ func (v *Weather) pull() error {
 	if err != nil {
 		return err
 	}
-	err = v.Attributes.Update(v.eId, "forecast", buffer, time.Now())
+	err = v.Attributes.Set(v.eId, "forecast", buffer)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 func (v *Weather) Update() error {
-
-	if time.Since(v.Module.LastUpdate) >= time.Minute*15 {
-		v.Module.LastUpdate = time.Now()
-		return v.pull()
+	if v.Ready() {
+		err := v.UpdateInterval(15000)
+		if err != nil {
+			return err
+		}
+		err = v.pull()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (v *Weather) Run() error {
-	err := v.fetchWeather()
+
+	e := &domain.Entity{
+		Name:   "weather",
+		Module: "weather",
+		Type:   "media",
+	}
+	err := v.Entities.Register(e)
 	if err != nil {
 		return err
 	}
 
-	e := models.NewMediaEntity("weather", "weather")
-	_, err = v.Entities.Register(e)
+	err = v.fetchWeather()
 	if err != nil {
 		return err
 	}
@@ -181,7 +193,8 @@ func (v *Weather) Run() error {
 	if err != nil {
 		return err
 	}
-	forecast := models.Attribute{
+
+	forecast := &domain.Attribute{
 		Key:     "forecast",
 		Value:   buffer,
 		Request: buffer,
@@ -191,15 +204,12 @@ func (v *Weather) Run() error {
 	}
 	v.eId = e.Id
 
-	forecast.FnGet(func() (string, error) {
-		return v.forecastBuffer()
-	})
+	err = v.Attributes.Register(forecast)
+	if err != nil {
+		return err
+	}
 
-	forecast.FnPut(func(value string) error {
-		return nil
-	})
-
-	err = v.Attributes.Register(&forecast)
+	err = v.pull()
 	if err != nil {
 		return err
 	}

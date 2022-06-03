@@ -1,12 +1,12 @@
 // Copyright (c) 2022 Braden Nicholson
 
 // Static
-$element-bg: hsla(214, 16, 12, 0.4);
-$element-fg: hsla(214, 8, 16, 0.3);
-$element-shadow: hsla(214, 16, 2, 0.1);
-$element-bg-active: hsla(214, 16, 24, 0.25);
+$element-bg: rgba(28, 33, 36, 0.2);
+$element-fg: lighten($element-bg, 8%);
+$element-bg-active: lighten($element-bg, 10%);
+$element-shadow: rgba(0, 0, 0, 0.2);
 
-$element-border: hsla(214, 16, 64, 0.07);
+$element-border: lighten($element-bg, 18%);
 
 $element-border-radius: 0.25rem;
 
@@ -17,18 +17,31 @@ $element-bg-hover: rgba(255, 128, 0, 0.280);
 
 // Options
 
+$loadInDistance: 0.95;
 /* Blur Definitions */
 .bg-blur {
   position: relative;
+  box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 1px $element-border !important;
+  transform: translate3d(0, 0, 0) translateZ(0);
+  backface-visibility: visible;
   -webkit-backface-visibility: hidden;
   -webkit-perspective: 1000px;
-  transform: translate3d(0, 0, 0) translateZ(0);
-  backface-visibility: hidden;
+
   perspective: 1000px;
-  backdrop-filter: blur(24px) contrast(98%);
+  overflow: hidden;
+  content: ' ';
+  border-radius: inherit;
+
+  //contrast(98%);
+  backdrop-filter: blur(24px);
 }
 
-$loadInDistance: 0.95;
+.bg-blur:before {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+}
 
 
 @keyframes loadIn {
@@ -41,25 +54,7 @@ $loadInDistance: 0.95;
 }
 
 //
-//.bg-blur::before {
-//  position: absolute;
-//  top: 0;
-//  right: 0;
-//
-//  transform: translate3d(0, 0, 0) translateZ(0);
-//  backface-visibility: visible;
-//  -webkit-backface-visibility: hidden;
-//  -webkit-perspective: 1000px;
-//
-//  perspective: 1000px;
-//  overflow: hidden;
-//  content: ' ';
-//  border-radius: inherit;
-//  z-index: -1;
-//  width: 100%;
-//  height: 100%;
-//  //backdrop-filter: blur(24px);
-//}
+
 
 /* Theme Definitions */
 $themes: (
@@ -76,11 +71,6 @@ $themes: (
 
     }
 
-    .element.active {
-      //box-shadow: 0 0 2px 1px $element-shadow, inset 0 0 2px 1.25px $element-border;
-      background-color: $element-bg-active !important;
-    }
-
 
   }
 }
@@ -91,7 +81,7 @@ $themes: (
 
 .element-secondary {
   background-color: $element-fg;
-  box-shadow: 0 0 8px 1px $element-shadow, inset 0 0 2px 1px $element-border;
+  box-shadow: 0 0 4px 0.2px opacify($element-shadow, 0.005), inset 0 0 2px 1px $element-border !important;
 }
 
 //.element-secondary:active {
@@ -103,8 +93,10 @@ $themes: (
 // Element Definition
 
 .element {
+
   @extend .bg-blur;
-  box-shadow: 0 0 8px 1px $element-shadow, inset 0 0 2px 1px $element-border;
+  position: relative;
+
   animation: loadIn 150ms forwards;
   padding: 0.25rem;
   border-radius: 0.5rem;
@@ -147,9 +139,6 @@ $themes: (
   }
   15% {
     transform: scale(0.96);
-  }
-  25% {
-    transform: scale(0.97);
   }
   100% {
     transform: scale(0.96);

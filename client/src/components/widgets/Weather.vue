@@ -91,7 +91,7 @@ function parseWeather(we: Weather) {
   state.current = we.current_weather
 
   if (we.hourly.temperature_2m.length <= 0) return
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < Math.min(we.hourly.temperature_2m.length, 24); i++) {
     if (state.ranges.temp.max < we.hourly.temperature_2m[i]) {
       state.ranges.temp.max = we.hourly.temperature_2m[i]
     } else if (state.ranges.temp.min > we.hourly.temperature_2m[i]) {
@@ -263,7 +263,7 @@ function toggleMenu() {
 
           <div class="label-c2 label-o4">{{ getWeatherIcon(state.weather.hourly.weathercode[v], v) }}</div>
           <div v-if="state.weather.hourly.precipitation[v] === 0" class="label-c4 label-o3 label-w500">
-            &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[v]) }}°
+            &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[new Date().getHours() + v]) }}°
           </div>
           <div v-else class="label-c4 label-o3 label-w500 rain">{{
               state.weather.hourly.precipitation[v]

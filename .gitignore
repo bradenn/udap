@@ -20,6 +20,7 @@ spotify.json
 
 # Client Ignore
 
+/client/node_modules/**
 /client/src/assets/js/
 /client/src/assets/**.css
 /client/src/assets/**.css.map

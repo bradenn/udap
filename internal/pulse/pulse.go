@@ -12,17 +12,17 @@ var Timings Timing
 
 func init() {
 	Timings = Timing{}
-	Timings.mt = sync.Mutex{}
+	Timings.mt = sync.RWMutex{}
 	Timings.history = map[string]Proc{}
 	Timings.waiting = map[string]Proc{}
-	Timings.handler = make(chan Proc)
+	Timings.handler = make(chan Proc, 4)
 	go Timings.handle()
 }
 
 type Timing struct {
 	waiting map[string]Proc
 	handler chan Proc
-	mt      sync.Mutex
+	mt      sync.RWMutex
 	history map[string]Proc
 }
 
@@ -39,11 +39,11 @@ type Proc struct {
 
 func (h *Timing) Timings() (a map[string]Proc) {
 	a = map[string]Proc{}
-	h.mt.Lock()
+	h.mt.RLock()
 	for i, u := range h.history {
 		a[i] = u
 	}
-	h.mt.Unlock()
+	h.mt.RUnlock()
 	return
 }
 

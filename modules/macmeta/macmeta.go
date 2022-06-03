@@ -4,8 +4,8 @@ package main
 
 import (
 	"os/exec"
-	"udap/internal/models"
-	"udap/pkg/plugin"
+	"udap/internal/core/domain"
+	"udap/internal/plugin"
 )
 
 var Module MacMeta
@@ -27,42 +27,41 @@ func init() {
 }
 
 func (v *MacMeta) createDisplaySwitch() error {
-	newSwitch := models.NewSwitch("terminal", "macmeta")
-	_, err := v.Entities.Register(newSwitch)
+
+	newSwitch := &domain.Entity{
+		Name:   "terminal",
+		Type:   "switch",
+		Module: "macmeta",
+	}
+	err := v.Entities.Register(newSwitch)
 	if err != nil {
 		return err
 	}
-	on := &models.Attribute{
+	on := &domain.Attribute{
 		Key:     "on",
 		Value:   "true",
 		Request: "true",
 		Type:    "toggle",
+		Channel: make(chan domain.Attribute),
 		Order:   0,
 		Entity:  newSwitch.Id,
 	}
 
-	on.FnGet(func() (string, error) {
-		if v.localDisplay {
-			return "true", nil
-		} else {
-			return "false", nil
-		}
-	})
-
-	on.FnPut(func(value string) error {
-		if value == "true" {
-			err = v.displayOn()
-			if err != nil {
-				return err
-			}
-		} else {
-			err = v.displayOff()
-			if err != nil {
-				return err
+	go func() {
+		for attribute := range on.Channel {
+			if attribute.Request == "true" {
+				err = v.displayOn()
+				if err != nil {
+					continue
+				}
+			} else {
+				err = v.displayOff()
+				if err != nil {
+					continue
+				}
 			}
 		}
-		return nil
-	})
+	}()
 
 	err = v.Attributes.Register(on)
 	if err != nil {

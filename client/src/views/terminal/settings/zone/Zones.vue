@@ -76,7 +76,7 @@ function toggleShowDeleted() {
       </div>
 
     </div>
-    <div v-else-if="state.mode === 'create'" class="d-flex justify-content-center">
+    <div v-else-if="state.mode === 'create'" class="d-flex justify-content-center btn-outline-primary">
       <CreateZone :done="() => state.mode = 'list'">
       </CreateZone>
     </div>

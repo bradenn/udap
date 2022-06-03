@@ -3,82 +3,91 @@
 package controller
 
 import (
-	"fmt"
-	"udap/internal/bond"
-	"udap/internal/pulse"
+	"gorm.io/gorm"
+	"udap/internal/core/domain"
+	"udap/internal/core/modules/attribute"
+	"udap/internal/core/modules/device"
+	"udap/internal/core/modules/entity"
+	"udap/internal/core/modules/network"
+	"udap/internal/core/modules/user"
+	"udap/internal/core/modules/zone"
 )
 
 type Controller struct {
-	Entities   *Entities
-	Attributes *Attributes
-	Modules    *Modules
-	Endpoints  *Endpoints
-	Devices    *Devices
-	Zones      *Zones
-	Networks   *Networks
-	Users      *Users
-	event      chan bond.Msg
+	Attributes domain.AttributeService
+	Devices    domain.DeviceService
+	Entities   domain.EntityService
+	Networks   domain.NetworkService
+	Users      domain.UserService
+	Zones      domain.ZoneService
+	Endpoints  domain.EndpointService
+	Modules    domain.ModuleService
 }
 
-func NewController() (*Controller, error) {
+func NewController(db *gorm.DB) (*Controller, error) {
 	c := &Controller{}
-	c.Entities = LoadEntities()
-	c.Modules = LoadModules()
-	c.Attributes = LoadAttributes()
-	c.Endpoints = LoadEndpoints()
-	c.Devices = LoadDevices()
-	c.Networks = LoadNetworks()
-	c.Users = LoadUsers()
-	c.Zones = LoadZones()
-	c.Modules = LoadModules()
+	c.Attributes = attribute.New(db)
+	c.Entities = entity.New(db)
+	c.Devices = device.New(db)
+	c.Networks = network.New(db)
+	c.Users = user.New(db)
+	c.Zones = zone.New(db)
+
 	return c, nil
 }
 
-func (c *Controller) Handle(msg bond.Msg) (interface{}, error) {
+func (c *Controller) WatchAll(resp chan domain.Mutation) {
 
-	pulse.LogGlobal("-> Ctrl::%s %s", msg.Target, msg.Operation)
-
-	switch t := msg.Target; t {
-	case "user":
-		return c.Users.Handle(msg)
-	case "entity":
-		return c.Entities.Handle(msg)
-	case "attribute":
-		return c.Attributes.Handle(msg)
-	case "module":
-		return c.Modules.Handle(msg)
-	case "endpoint":
-		return c.Endpoints.Handle(msg)
-	case "device":
-		return c.Devices.Handle(msg)
-	case "network":
-		return c.Networks.Handle(msg)
-	case "zone":
-		return c.Zones.Handle(msg)
-	default:
-		return nil, fmt.Errorf("unknown target '%s'", t)
+	err := c.Attributes.Watch(resp)
+	if err != nil {
+		return
 	}
+
+	err = c.Entities.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Modules.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Endpoints.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Devices.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Networks.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Zones.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Users.Watch(resp)
+	if err != nil {
+		return
+	}
+
 }
 
 func (c *Controller) EmitAll() error {
-	var err error
+
+	err := c.Attributes.EmitAll()
+	if err != nil {
+		return err
+	}
 
 	err = c.Entities.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Attributes.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Networks.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Devices.EmitAll()
 	if err != nil {
 		return err
 	}
@@ -93,12 +102,12 @@ func (c *Controller) EmitAll() error {
 		return err
 	}
 
-	err = c.Endpoints.EmitAll()
+	err = c.Users.EmitAll()
 	if err != nil {
 		return err
 	}
 
-	err = c.Users.EmitAll()
+	err = c.Networks.EmitAll()
 	if err != nil {
 		return err
 	}
@@ -108,12 +117,10 @@ func (c *Controller) EmitAll() error {
 		return err
 	}
 
-	return nil
-}
-
-func (c *Controller) Meta(msg bond.Msg) error {
-	switch t := msg.Operation; t {
-	default:
-		return fmt.Errorf("unknown operation '%s'", t)
+	err = c.Devices.EmitAll()
+	if err != nil {
+		return err
 	}
+
+	return nil
 }

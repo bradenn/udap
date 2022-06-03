@@ -1,23 +1,29 @@
 <script lang="ts" setup>
 
-import {inject, onMounted, reactive} from "vue";
+import {inject, onMounted, reactive, watchEffect} from "vue";
 import IdHash from "@/components/IdHash.vue"
 import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
-
-let remote: any = inject('remote')
-let system: any = inject('system')
+import type {Remote} from "@/types";
 
 let state = reactive({
   menu: false,
-  reloading: true
-
+  reloading: true,
+  connected: false,
 })
+
 let ui: any = inject("ui")
+let remote: Remote = inject('remote') as Remote
+let system: any = inject('system')
 
 onMounted(() => {
   state.reloading = false
+})
+
+watchEffect(() => {
+  state.connected = remote.connected
+  return state.connected
 })
 
 function toggleMenu() {
@@ -44,9 +50,11 @@ function reload() {
     <div class="d-flex flex-column gap-0">
       <div class="label-c2 label-o5 lh-1 label-r">Braden Nicholson</div>
       <div class="label-c3 label-o2 label-r label-w500 lh-1"
-           style="font-family: 'Roboto Light', sans-serif;">NFC Authenticated</div>
+           style="font-family: 'Roboto Light', sans-serif;"><span v-if="state.connected">Connected</span><span v-else>Disconnected</span>
+      </div>
     </div>
     <div class="flex-grow-1"></div>
+
     <div v-if="remote.nexus.state > 1" class="d-flex flex-column gap-0 justify-content-end align-items-end ">
       <div class="label-c3 label-o2 px-1">
         <span class="label-c3 label-w300">&nbsp;DOWN</span>
@@ -134,7 +142,7 @@ function reload() {
       <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
       <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Outlines"></Toggle>
       <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
-      <Toggle :active="ui.night" :fn="() => ui.night = !ui.night" title="Night"></Toggle>
+      <Toggle :active="ui.blurBg" :fn="() => ui.blurBg = !ui.blurBg" title="Bg Blur"></Toggle>
     </Plot>
 
   </div>

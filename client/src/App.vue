@@ -6,6 +6,7 @@ import {version} from "../package.json";
 
 interface Preferences {
   ui: {
+    blurBg: boolean
     background: string
     theme: string
     mode: string
@@ -20,6 +21,7 @@ interface Preferences {
 
 const preferenceDefaults: Preferences = {
   ui: {
+    blurBg: false,
     blur: 6,
     background: "milk",
     mode: "cursor",
@@ -123,7 +125,8 @@ provide('hideHome', hideHome)
   <div
       :class="`${preferences.ui.night?'night-vision':''} theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness}`"
       class="root">
-    <img :src="`/custom/${preferences.ui.background}@4x.png`" alt="Background" class="backdrop "/>
+    <img :class="`${preferences.ui.blurBg?'backdrop-blurred':''}`" :src="`/custom/${preferences.ui.background}@4x.png`"
+         alt="Background" class="backdrop "/>
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
         <!--        <div>NEXUS v{{ state.system.nexus.system.version }}</div>-->
@@ -169,6 +172,10 @@ provide('hideHome', hideHome)
   margin: 0;
   padding: 0;
   animation: switch 0.25s ease-in-out forwards;
+}
+
+.backdrop-blurred {
+  filter: blur(4px);
 }
 
 .backdrop:after {

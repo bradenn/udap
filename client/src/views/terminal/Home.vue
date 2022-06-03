@@ -2,13 +2,14 @@
 
 <script lang="ts" setup>
 import Light from "@/components/widgets/Light.vue";
-import {inject, onMounted, reactive, watch} from "vue";
+import {inject, onMounted, reactive, watchEffect} from "vue";
 import Weather from "@/components/widgets/Weather.vue";
 import router from "@/router";
 import Widget from "@/components/widgets/Widget.vue";
 import App from "@/components/App.vue";
 import Spotify from "@/components/widgets/Spotify.vue";
 import Macros from "@/components/widgets/Macros.vue";
+import type {Attribute, Entity, Remote} from "@/types";
 
 // Define the local reactive data for this view
 let state = reactive<{
@@ -16,11 +17,13 @@ let state = reactive<{
   hideHome: boolean
   apps: any[]
   shortcuts: any[]
+  atlas: string,
   page?: string
 }>({
   lights: [],
   hideHome: false,
   apps: [],
+  atlas: "",
   shortcuts: [
     {
       name: "Good night",
@@ -40,7 +43,7 @@ function compareName(a: any, b: any): number {
 }
 
 // Inject the remote udap context
-let remote: any = inject('remote')
+let remote: Remote = inject('remote') as Remote
 
 
 // Force the light state to be read on load
@@ -51,16 +54,24 @@ onMounted(() => {
 })
 
 // Update the Lights based on the remote injection changes
-watch(remote.entities, (newEntities, oldEntities) => {
-  updateLights(newEntities)
-})
+watchEffect(() => updateLights(remote.entities))
+
+watchEffect(() => updateAtlas(remote.attributes))
+
+function updateAtlas(attributes: Attribute[]) {
+  let target = attributes.find(a => a.key === "buffer")
+  if (!target) return;
+
+  state.atlas = target.value
+}
 
 // Update the current set of lights based on the entities provided
-function updateLights(entities: any) {
+function updateLights(entities: Entity[]) {
   // Find all applicable entities
-  let candidates = entities.filter((f: any) => f.type === 'spectrum' || f.type === 'switch' || f.type === 'dimmer');
+  let candidates = entities.filter((f: Entity) => f.type === 'spectrum' || f.type === 'switch' || f.type === 'dimmer');
   // Sort and assign them to the reactive object
   state.lights = candidates.sort(compareName)
+  return entities
 }
 
 function getRoutes() {
@@ -81,12 +92,13 @@ let ui: any = inject("ui")
     <div class="widget-grid flex-grow-1">
       <Widget :cols="4" :rows="5" class="d-flex flex-column" size="sm">
 
-        <Light v-for="light in state.lights.slice(0, 5).filter(l => l.name !== 'Kitchen')" :key="light.id"
+        <Light v-for="light in state.lights.slice(0, 5).filter(l => l.name !== 'Kitchen')"
+               :key="light.id"
                :entity="light"></Light>
         <Macros></Macros>
       </Widget>
 
-
+      {{ state.atlas }}
       <!--      <Widget :cols="3" :rows="1" size="sm">-->
       <!--        <Shortcut v-for="i in state.shortcuts" :icon="i.icon || 'fa-square'" :name="i.name"></Shortcut>-->
       <!--      </Widget>-->

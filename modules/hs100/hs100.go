@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"udap/internal/models"
-	"udap/pkg/plugin"
+	"udap/internal/core/domain"
+	"udap/internal/plugin"
 )
 
 var Module HS100
@@ -47,25 +47,36 @@ func (h *HS100) findDevices() error {
 			return err
 		}
 
-		newSwitch := models.NewSwitch(strings.ToLower(name), "hs100")
-
-		_, err = h.Entities.Register(newSwitch)
+		newSwitch := domain.Entity{
+			Name:   strings.ToLower(name),
+			Type:   "switch",
+			Module: "hs100",
+		}
+		err = h.Entities.Register(&newSwitch)
 		if err != nil {
 			return err
 		}
 
 		h.devices[newSwitch.Id] = device
-		on := &models.Attribute{
+		channel := make(chan domain.Attribute)
+		on := &domain.Attribute{
 			Key:     "on",
 			Value:   "false",
 			Request: "false",
 			Order:   0,
 			Type:    "toggle",
 			Entity:  newSwitch.Id,
+			Channel: channel,
 		}
 
-		on.FnGet(h.get(device))
-		on.FnPut(h.put(device))
+		go func() {
+			for attribute := range channel {
+				err = h.put(device)(attribute.Request)
+				if err != nil {
+					return
+				}
+			}
+		}()
 
 		err = h.Attributes.Register(on)
 		if err != nil {
@@ -120,7 +131,7 @@ func (h *HS100) Run() (err error) {
 	return nil
 }
 
-func (h *HS100) put(device *hs100.Hs100) models.FuncPut {
+func (h *HS100) put(device *hs100.Hs100) func(s string) error {
 	return func(s string) error {
 
 		parseBool, err := strconv.ParseBool(s)
@@ -142,7 +153,7 @@ func (h *HS100) put(device *hs100.Hs100) models.FuncPut {
 	}
 }
 
-func (h *HS100) get(device *hs100.Hs100) models.FuncGet {
+func (h *HS100) get(device *hs100.Hs100) func() (string, error) {
 	return func() (string, error) {
 		on, err := device.IsOn()
 		if err != nil {

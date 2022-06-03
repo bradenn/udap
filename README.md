@@ -1,4 +1,4 @@
-# UDAP v2.12
+# UDAP v2.13
 [![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/go.yml)
 [![Go CodeQL](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml)
 [![Typescript](https://github.com/bradenn/udap/actions/workflows/ts.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/ts.yml)
@@ -30,5 +30,15 @@ resolving each attribute.
 Both modules and Endpoints are permitted to make modification to entities and attributes. Any module and any endpoint
 can concurrently modify multiple entities and attributes at a time. The command buffer can be modified to accept 4096
 concurrent commands, but for larger loads, instancing is recommended.
+
+## Glossary
+
+| Command  | Description |
+|----------| --- |
+| U.D.A.P. | Universal Device Aggregation Platform (encompasses all below terms) |
+| Core     | The physical running UDAP program instance |
+| Nexus    | The front-end interface for all of UDAP |
+| Terminal | An authoritative nexus instance (Used for configuration and management) |
+| Pad      | A general use nexus instance, can be used by anyone without authentication if configured by terminal. |
 
 #### Copyright &copy; 2019-2022 Braden Nicholson

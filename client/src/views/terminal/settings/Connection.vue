@@ -39,8 +39,8 @@ watchEffect(() => {
       </div>
     </div>
     <div class="move">
-      <div class="element " style="width: 12rem; height: 5rem;">
-        dd
+      <div class="element" style="width: 12rem; height: 5rem;">
+        ddd
       </div>
     </div>
 
@@ -49,19 +49,21 @@ watchEffect(() => {
 
 <style scoped>
 
-.move .element {
+.element {
+
   animation: moveIt 1s forwards infinite;
 }
 
+
 @keyframes moveIt {
   0% {
-    transform: translate3d(50px, 0, 0);
+    transform: translateX(50px);
   }
   50% {
-    transform: translate3d(25px, 0, 0);
+    transform: translateX(25px);
   }
   100% {
-    transform: translate3d(50px, 0, 0);
+    transform: translateX(50px);
   }
 }
 

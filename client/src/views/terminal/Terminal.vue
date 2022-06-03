@@ -18,11 +18,14 @@ import Sideapp from "@/views/terminal/Sideapp.vue";
 let audio: HTMLAudioElement;
 onMounted(() => {
   audio = new Audio('/sound/selection.mp3');
+
+  remote.nexus = new Nexus(handleMessage)
 })
 
 
 // Define the reactive components for the remote data
 let remote = reactive<Remote>({
+  connected: false,
   metadata: {} as Metadata,
   entities: [],
   attributes: [],
@@ -32,7 +35,7 @@ let remote = reactive<Remote>({
   timings: [],
   modules: [],
   zones: [],
-  nexus: new Nexus(handleMessage)
+  nexus: {} as Nexus
 });
 
 
@@ -42,7 +45,11 @@ let system: any = inject("system")
 // Handle and route incoming messages to the local cache
 function handleMessage(target: Target, data: any) {
   state.lastUpdate = new Date().valueOf()
+  remote.connected = true
   switch (target) {
+    case Target.Close:
+      remote.connected = false
+      break
     case Target.Metadata:
       system.udap.system = data.system as Metadata
       remote.metadata = data as Metadata
@@ -108,6 +115,7 @@ function handleMessage(target: Target, data: any) {
 }
 
 
+
 // -- Gesture Navigation --
 
 let fps = 0;
@@ -136,6 +144,7 @@ let state = reactive({
     y: 0
   }
 });
+
 
 watch(() => router.currentRoute.value, () => {
   state.showClock = router.currentRoute.value.path === '/terminal/home'
@@ -314,7 +323,7 @@ provide('remote', remote)
         </Sideapp>
       </div>
       <router-view v-slot="{ Component }">
-          <component :is="Component"/>
+        <component :is="Component"/>
       </router-view>
 
 

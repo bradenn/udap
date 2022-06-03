@@ -66,9 +66,6 @@ function up() {
   25% {
     transform: scale(0.98);
   }
-  30% {
-    transform: scale(0.97);
-  }
   100% {
     transform: scale(1);
   }

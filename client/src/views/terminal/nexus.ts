@@ -3,6 +3,7 @@
 import {Preference} from "@/preferences"
 
 import {PreferenceTypes} from "@/types";
+import axios from "axios";
 
 export enum NexusState {
     Connecting,
@@ -20,6 +21,7 @@ export enum Target {
     Network = "network",
     Endpoint = "endpoint",
     Timing = "timing",
+    Close = "close",
 }
 
 function parseJwt(token: string): string {
@@ -55,7 +57,9 @@ export class Nexus {
     constructor(fn: (target: Target, data: any) => void) {
         this.state = NexusState.Connecting
         this.ws = new WebSocket(connectionString())
-        this.ws.onopen = this.onOpen
+        this.ws.onopen = (event: Event) => {
+            this.state = NexusState.Connected
+        }
         this.ws.onmessage = (event: MessageEvent) => {
             if (typeof event.data === "string") {
                 let data: any = JSON.parse(event.data)
@@ -68,7 +72,9 @@ export class Nexus {
                 fn(target, data.body)
             }
         }
-        this.ws.onclose = this.onClose
+        this.ws.onclose = (event: CloseEvent) => {
+            fn(Target.Close, "")
+        }
     }
 
     public requestDefault(target: string, operation: string, data: any) {
@@ -81,14 +87,14 @@ export class Nexus {
         this.request(r)
     }
 
-    public requestId(target: string, operation: string, data: any, id: string) {
-        const request: NexusRequest = {
-            target: target,
-            operation: operation,
-            payload: JSON.stringify(data),
-            id: id
-        }
-        this.request(request)
+    public requestAttribute(entity: string, key: string, value: string) {
+
+        let nexus = new Preference(PreferenceTypes.Controller).get()
+        axios.post(`http://${nexus}/entities/${entity}/attributes/${key}/request`, value).then(r => {
+            console.log(r)
+        }).catch(r => {
+            console.log(r)
+        })
     }
 
     private request(request: NexusRequest) {
@@ -100,6 +106,7 @@ export class Nexus {
     }
 
     private onClose(_: CloseEvent): void {
+        console.log("CLOSED")
         this.state = NexusState.Disconnected
     }
 
