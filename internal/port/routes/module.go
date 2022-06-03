@@ -17,26 +17,24 @@ type moduleRouter struct {
 }
 
 func NewModuleRouter(service domain.ModuleService) ModuleRouter {
-	return moduleRouter{
+	return &moduleRouter{
 		service: service,
 	}
 }
 
-func (r moduleRouter) RouteModules(router chi.Router) {
-	router.Route("/modules", func(local chi.Router) {
-		local.Route("/{name}", func(named chi.Router) {
-			named.Post("/build", r.build)
-			named.Post("/disable", r.disable)
-			named.Post("/enable", r.enable)
-			named.Post("/halt", r.halt)
-		})
+func (r *moduleRouter) RouteModules(router chi.Router) {
+	router.Route("/modules/{id}", func(local chi.Router) {
+		local.Post("/build", r.build)
+		local.Post("/disable", r.disable)
+		local.Post("/enable", r.enable)
+		local.Post("/halt", r.halt)
 	})
 }
 
 func (r moduleRouter) build(w http.ResponseWriter, req *http.Request) {
-	name := chi.URLParam(req, "name")
-	if name != "" {
-		mod, err := r.service.FindByName(name)
+	id := chi.URLParam(req, "id")
+	if id != "" {
+		mod, err := r.service.FindByName(id)
 		if err != nil {
 			return
 		}
@@ -49,9 +47,9 @@ func (r moduleRouter) build(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r moduleRouter) enable(w http.ResponseWriter, req *http.Request) {
-	name := chi.URLParam(req, "name")
-	if name != "" {
-		err := r.service.Enable(name)
+	id := chi.URLParam(req, "id")
+	if id != "" {
+		err := r.service.Enable(id)
 		if err != nil {
 			http.Error(w, "invalid module name", 401)
 		}
@@ -60,9 +58,9 @@ func (r moduleRouter) enable(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r moduleRouter) disable(w http.ResponseWriter, req *http.Request) {
-	name := chi.URLParam(req, "name")
-	if name != "" {
-		err := r.service.Disable(name)
+	id := chi.URLParam(req, "id")
+	if id != "" {
+		err := r.service.Disable(id)
 		if err != nil {
 			http.Error(w, "invalid module name", 401)
 		}
@@ -71,9 +69,9 @@ func (r moduleRouter) disable(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r moduleRouter) halt(w http.ResponseWriter, req *http.Request) {
-	name := chi.URLParam(req, "name")
-	if name != "" {
-		err := r.service.Halt(name)
+	id := chi.URLParam(req, "id")
+	if id != "" {
+		err := r.service.Halt(id)
 		if err != nil {
 			http.Error(w, "invalid module name", 401)
 		}

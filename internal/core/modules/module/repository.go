@@ -34,11 +34,11 @@ func (m moduleRepo) FindAll() (*[]domain.Module, error) {
 }
 
 func (m moduleRepo) FindById(id string) (*domain.Module, error) {
-	var target *domain.Module
-	if err := m.db.Where("id = ?", id).First(target).Error; err != nil {
+	var target domain.Module
+	if err := m.db.Where("id = ?", id).First(&target).Error; err != nil {
 		return nil, err
 	}
-	return target, nil
+	return &target, nil
 }
 
 func (m moduleRepo) Create(module *domain.Module) error {

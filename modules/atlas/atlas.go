@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/kevwan/chatbot/bot"
 	"net/url"
-	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -22,6 +22,7 @@ type Atlas struct {
 	plugin.Module
 	eId        string
 	lastSpoken string
+	chatbot    *bot.ChatBot
 }
 
 type Message struct {
@@ -54,16 +55,14 @@ func (w *Atlas) Setup() (plugin.Config, error) {
 }
 
 func (w *Atlas) pull() error {
-	time.Sleep(250 * time.Millisecond)
+
 	return nil
 }
 
 func (w *Atlas) Update() error {
-	if w.Ready() {
-		err := w.pull()
-		if err != nil {
-			return err
-		}
+	if time.Since(w.Module.LastUpdate) >= time.Second*2 {
+		w.Module.LastUpdate = time.Now()
+		return w.pull()
 	}
 	return nil
 }
@@ -87,6 +86,25 @@ func (w *Atlas) speak(text string) error {
 }
 
 func (w *Atlas) retort(text string) error {
+
+	// responses := map[string]string{}
+	//
+	// if text == "" {
+	//
+	// }
+	// responses["what is the meaning of life"] = "the definitive answer to the meaning of life is forty two."
+	// responses["fuck you"] = "I'd rather not"
+	// responses["fuck yourself"] = "Since I do not physically exist, that would be quite difficult."
+	//
+	// for s := range responses {
+	// 	if s == text {
+	// 		err := w.speak(responses[s])
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		return nil
+	// 	}
+	// }
 
 	return nil
 }
@@ -129,12 +147,8 @@ func (w *Atlas) register() error {
 }
 
 func (w *Atlas) Run() error {
-	getwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	fmt.Println(getwd)
-	err = w.register()
+
+	err := w.register()
 	if err != nil {
 		return err
 	}
@@ -160,11 +174,11 @@ func (w *Atlas) Run() error {
 		}
 
 		if strings.Contains(msg.Text, "atlas") {
-			if msg.Text == w.lastSpoken {
-				continue
+			if strings.HasPrefix(msg.Text, "the") {
+				msg.Text = strings.Replace(msg.Text, "the ", "", 1)
 			}
-			out := strings.Replace(msg.Text, "atlas", "", 1)
-			err = w.speak(out)
+			msg.Text = strings.Replace(msg.Text, "atlas ", "", 1)
+			err = w.retort(msg.Text)
 			if err != nil {
 				return err
 			}
@@ -173,5 +187,4 @@ func (w *Atlas) Run() error {
 		log.Event("ATLAS: %s", msg.Text)
 	}
 
-	return nil
 }

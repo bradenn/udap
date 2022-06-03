@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"time"
 	"udap/internal/core/domain"
 	"udap/pkg/plugin"
 )
@@ -154,7 +153,7 @@ func (v *Weather) pull() error {
 	if err != nil {
 		return err
 	}
-	err = v.Attributes.Update(v.eId, "forecast", buffer, time.Now())
+	err = v.Attributes.Set(v.eId, "forecast", buffer)
 	if err != nil {
 		return err
 	}
@@ -175,29 +174,21 @@ func (v *Weather) Update() error {
 }
 
 func (v *Weather) Run() error {
-	err := v.fetchWeather()
-	if err != nil {
-		return err
-	}
 
 	e := &domain.Entity{
 		Name:   "weather",
 		Module: "weather",
 		Type:   "media",
 	}
-	err = v.Entities.Register(e)
-	if err != nil {
-		return err
-	}
-	buffer, err := v.forecastBuffer()
+	err := v.Entities.Register(e)
 	if err != nil {
 		return err
 	}
 
 	forecast := &domain.Attribute{
 		Key:     "forecast",
-		Value:   buffer,
-		Request: buffer,
+		Value:   "{}",
+		Request: "{}",
 		Type:    "media",
 		Order:   0,
 		Entity:  e.Id,
@@ -205,6 +196,11 @@ func (v *Weather) Run() error {
 	v.eId = e.Id
 
 	err = v.Attributes.Register(forecast)
+	if err != nil {
+		return err
+	}
+
+	err = v.pull()
 	if err != nil {
 		return err
 	}

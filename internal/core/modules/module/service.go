@@ -84,20 +84,36 @@ func (u *moduleService) UpdateAll() error {
 		return err
 	}
 	wg := sync.WaitGroup{}
-	wg.Add(len(*modules))
-	for _, module := range *modules {
+	ref := *modules
+	wg.Add(len(ref))
+	for _, module := range ref {
 		go func(mod domain.Module) {
 			defer wg.Done()
-			if mod.Enabled {
-				err = u.Update(&mod)
-				if err != nil {
-					log.Err(err)
-					return
-				}
+			err = u.Update(&mod)
+			if err != nil {
+				log.Err(err)
 			}
 		}(module)
 	}
 	wg.Wait()
+	return nil
+}
+
+const (
+	DISCOVERED    = "discovered"
+	UNINITIALIZED = "uninitialized"
+	IDLE          = "idle"
+	RUNNING       = "running"
+	STOPPED       = "stopped"
+	ERROR         = "error"
+)
+
+func (u *moduleService) setState(module *domain.Module, state string) error {
+	module.State = state
+	err := u.repository.Update(module)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -108,6 +124,10 @@ func (u *moduleService) RunAll() error {
 	}
 
 	for _, module := range *modules {
+		err = u.setState(&module, RUNNING)
+		if err != nil {
+			return err
+		}
 		go func(mod domain.Module) {
 			err = u.Run(&mod)
 			if err != nil {
@@ -132,6 +152,11 @@ func (u *moduleService) LoadAll() error {
 			err = u.Load(&mod)
 			if err != nil {
 				log.Err(err)
+				return
+			}
+			err = u.setState(&mod, IDLE)
+			if err != nil {
+				return
 			}
 		}(module)
 	}
@@ -163,6 +188,7 @@ func (u moduleService) Discover() error {
 			target = &domain.Module{}
 			target.Name = name
 			target.Path = p
+			target.State = DISCOVERED
 			err = u.repository.Create(target)
 			if err != nil {
 				return err
@@ -172,7 +198,7 @@ func (u moduleService) Discover() error {
 	return nil
 }
 
-func (u moduleService) BuildAll() error {
+func (u *moduleService) BuildAll() error {
 	modules, err := u.repository.FindAll()
 	if err != nil {
 		return err
@@ -185,6 +211,15 @@ func (u moduleService) BuildAll() error {
 			err = u.Build(&mod)
 			if err != nil {
 				log.Err(err)
+				err = u.setState(&mod, ERROR)
+				if err != nil {
+					return
+				}
+				return
+			}
+			err = u.setState(&mod, UNINITIALIZED)
+			if err != nil {
+				return
 			}
 		}(module)
 	}
@@ -202,22 +237,54 @@ func (u moduleService) FindByName(name string) (*domain.Module, error) {
 	return u.repository.FindByName(name)
 }
 
-func (u moduleService) Disable(name string) error {
-	_, err := u.FindByName(name)
+func (u moduleService) Disable(id string) error {
+	module, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	module.Enabled = false
+	err = u.repository.Update(module)
+	if err != nil {
+		return err
+	}
+	err = u.emit(module)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u moduleService) Enable(name string) error {
-	// TODO implement me
-	panic("implement me")
+func (u moduleService) save(module *domain.Module) error {
+	err := u.repository.Update(module)
+	if err != nil {
+		return err
+	}
+	err = u.emit(module)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u moduleService) Enable(id string) error {
+	module, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	module.Enabled = true
+	err = u.repository.Update(module)
+	if err != nil {
+		return err
+	}
+	err = u.emit(module)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u moduleService) Reload(name string) error {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (u moduleService) Halt(name string) error {

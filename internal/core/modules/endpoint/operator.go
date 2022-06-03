@@ -160,14 +160,17 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 	log.Event("Endpoint '%s' connected.", endpoint.Name)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
 		connection.Watch()
 	}()
+
 	err = m.controller.EmitAll()
 	if err != nil {
 		return err
 	}
+
 	wg.Wait()
 	return nil
 }

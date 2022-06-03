@@ -18,20 +18,20 @@ type Config struct {
 type Module struct {
 	Config
 	LastUpdate time.Time
-	Frequency  int
+	Frequency  time.Duration
 	*controller.Controller
 }
 
 // UpdateInterval is called once at the launch of the module
-func (m *Module) UpdateInterval(frequency int) error {
+func (m *Module) UpdateInterval(frequency time.Duration) error {
 	m.LastUpdate = time.Now()
-	m.Frequency = frequency
+	m.Frequency = time.Millisecond * frequency
 	return nil
 }
 
 // Ready is called once at the launch of the module
 func (m *Module) Ready() bool {
-	return time.Since(m.LastUpdate).Milliseconds() >= (time.Duration(m.Frequency) * time.Millisecond).Milliseconds()
+	return time.Since(m.LastUpdate) >= m.Frequency
 }
 
 // Connect is called once at the launch of the module

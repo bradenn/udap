@@ -491,7 +491,13 @@ func (g *Govee) push() error {
 			}
 		}(d, s)
 	}
-	wg.Wait()
+	select {
+	case <-time.After(time.Millisecond * 1000):
+		return nil
+	default:
+		wg.Wait()
+	}
+
 	return nil
 }
 
@@ -510,7 +516,6 @@ func (g *Govee) Run() error {
 	}
 
 	for _, device := range devices {
-
 		s := &domain.Entity{
 			Name:   device.DeviceName,
 			Type:   "spectrum",
@@ -523,20 +528,26 @@ func (g *Govee) Run() error {
 		g.devices[s.Id] = device
 		attributes := GenerateAttributes(s.Id)
 		for _, attribute := range attributes {
-			go func() {
-				for attr := range attribute.Channel {
-					err = g.statePut(device, attribute.Key, s.Id)(attr.Request)
+			go func(dev Device, channel chan domain.Attribute) {
+				for attr := range channel {
+					log.Event("Request %s.%s=%s", dev.DeviceName, attr.Key, attr.Request)
+					err = g.statePut(dev, attr.Key, s.Id)(attr.Request)
 					if err != nil {
-						return
+						log.Err(err)
+						continue
 					}
 				}
-			}()
+			}(device, attribute.Channel)
 			err = g.Attributes.Register(attribute)
 			if err != nil {
 				return err
 			}
 		}
 
+	}
+	err = g.push()
+	if err != nil {
+		return err
 	}
 	return nil
 }

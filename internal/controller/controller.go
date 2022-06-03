@@ -40,12 +40,7 @@ func NewController(db *gorm.DB) (*Controller, error) {
 
 func (c *Controller) Listen(resp chan domain.Mutation) {
 
-	err := c.Modules.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Endpoints.Watch(resp)
+	err := c.Attributes.Watch(resp)
 	if err != nil {
 		return
 	}
@@ -55,7 +50,12 @@ func (c *Controller) Listen(resp chan domain.Mutation) {
 		return
 	}
 
-	err = c.Attributes.Watch(resp)
+	err = c.Modules.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Endpoints.Watch(resp)
 	if err != nil {
 		return
 	}
@@ -64,12 +64,12 @@ func (c *Controller) Listen(resp chan domain.Mutation) {
 
 func (c *Controller) EmitAll() error {
 
-	err := c.Entities.EmitAll()
+	err := c.Attributes.EmitAll()
 	if err != nil {
 		return err
 	}
 
-	err = c.Attributes.EmitAll()
+	err = c.Entities.EmitAll()
 	if err != nil {
 		return err
 	}

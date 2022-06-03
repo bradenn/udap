@@ -30,22 +30,26 @@ func NewOperator(ctrl *controller.Controller) domain.ModuleOperator {
 }
 
 func (m *moduleOperator) Update(module *domain.Module) error {
-	if m.modules[module.Name] == nil {
-		return fmt.Errorf("nothing to update")
-	}
-	pulse.Begin(module.Id)
-	err := m.modules[module.Name].Update()
-	pulse.End(module.Id)
-	if err != nil {
-		return err
+	if module.Enabled {
+		if m.modules[module.Name] == nil {
+			return fmt.Errorf("nothing to update")
+		}
+		pulse.Begin(module.Id)
+		err := m.modules[module.Name].Update()
+		pulse.End(module.Id)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (m *moduleOperator) Run(module *domain.Module) error {
-	err := m.modules[module.Name].Run()
-	if err != nil {
-		return err
+	if module.Enabled {
+		err := m.modules[module.Name].Run()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

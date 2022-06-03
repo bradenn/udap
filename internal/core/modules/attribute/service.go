@@ -70,6 +70,7 @@ func (u *attributeService) Register(attribute *domain.Attribute) error {
 	if err != nil {
 		return err
 	}
+
 	err = u.emit(attribute)
 	if err != nil {
 		return err
@@ -86,6 +87,10 @@ func (u *attributeService) Request(entity string, key string, value string) erro
 	if err != nil {
 		return err
 	}
+	err = u.repository.Update(e)
+	if err != nil {
+		return err
+	}
 	err = u.emit(e)
 	if err != nil {
 		return err
@@ -98,7 +103,9 @@ func (u *attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
-	err = u.operator.Set(e, value)
+	e.Request = value
+	e.Value = value
+	err = u.repository.Update(e)
 	if err != nil {
 		return err
 	}
@@ -118,7 +125,10 @@ func (u *attributeService) Update(entity string, key string, value string, stamp
 	if err != nil {
 		return err
 	}
-
+	err = u.repository.Update(e)
+	if err != nil {
+		return err
+	}
 	err = u.emit(e)
 	if err != nil {
 		return err
