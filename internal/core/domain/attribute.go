@@ -24,7 +24,7 @@ type Attribute struct {
 }
 
 func (a *Attribute) AsInt() int {
-	parsed, err := strconv.ParseInt(a.Value, 10, 64)
+	parsed, err := strconv.ParseInt(a.Value, 10, 0)
 	if err != nil {
 		return 0
 	}
