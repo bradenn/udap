@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 	"udap/internal/core/domain"
-	"udap/pkg/plugin"
+	"udap/internal/plugin"
 )
 
 var Module HS100

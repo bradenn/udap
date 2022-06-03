@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"udap/internal/core/domain"
-	"udap/pkg/plugin"
+	"udap/internal/plugin"
 )
 
 var Module Weather

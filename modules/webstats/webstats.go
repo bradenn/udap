@@ -4,7 +4,7 @@ package main
 
 import (
 	"time"
-	"udap/pkg/plugin"
+	"udap/internal/plugin"
 )
 
 var Module WebStats

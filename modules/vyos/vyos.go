@@ -16,7 +16,7 @@ import (
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
-	"udap/pkg/plugin"
+	"udap/internal/plugin"
 )
 
 var Module Vyos

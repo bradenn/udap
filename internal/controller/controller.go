@@ -4,7 +4,6 @@ package controller
 
 import (
 	"gorm.io/gorm"
-	"udap/internal/bond"
 	"udap/internal/core/domain"
 	"udap/internal/core/modules/attribute"
 	"udap/internal/core/modules/device"
@@ -23,7 +22,6 @@ type Controller struct {
 	Zones      domain.ZoneService
 	Endpoints  domain.EndpointService
 	Modules    domain.ModuleService
-	event      chan bond.Msg
 }
 
 func NewController(db *gorm.DB) (*Controller, error) {
@@ -38,7 +36,7 @@ func NewController(db *gorm.DB) (*Controller, error) {
 	return c, nil
 }
 
-func (c *Controller) Listen(resp chan domain.Mutation) {
+func (c *Controller) WatchAll(resp chan domain.Mutation) {
 
 	err := c.Attributes.Watch(resp)
 	if err != nil {
@@ -56,6 +54,26 @@ func (c *Controller) Listen(resp chan domain.Mutation) {
 	}
 
 	err = c.Endpoints.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Devices.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Networks.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Zones.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Users.Watch(resp)
 	if err != nil {
 		return
 	}
@@ -80,6 +98,26 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Endpoints.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Users.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Networks.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Zones.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Devices.EmitAll()
 	if err != nil {
 		return err
 	}

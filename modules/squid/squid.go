@@ -11,9 +11,9 @@ import (
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
+	"udap/internal/plugin"
 	"udap/pkg/dmx"
 	"udap/pkg/dmx/ft232"
-	"udap/pkg/plugin"
 )
 
 var Module Squid

@@ -5,10 +5,19 @@ package network
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type networkRepo struct {
+	generic.Store[domain.Network]
 	db *gorm.DB
+}
+
+func NewRepository(db *gorm.DB) domain.NetworkRepository {
+	return &networkRepo{
+		db:    db,
+		Store: generic.NewStore[domain.Network](db),
+	}
 }
 
 func (u networkRepo) Register(network *domain.Network) error {
@@ -36,54 +45,4 @@ func (u networkRepo) FindByName(name string) (*domain.Network, error) {
 		return nil, err
 	}
 	return &target, nil
-}
-
-func NewRepository(db *gorm.DB) domain.NetworkRepository {
-	return &networkRepo{
-		db: db,
-	}
-}
-
-func (u networkRepo) FindAll() (*[]domain.Network, error) {
-	var target []domain.Network
-	if err := u.db.First(&target).Error; err != nil {
-		return nil, err
-	}
-	return &target, nil
-}
-
-func (u networkRepo) FindById(id string) (*domain.Network, error) {
-	var target *domain.Network
-	if err := u.db.Where("id = ?", id).First(target).Error; err != nil {
-		return nil, err
-	}
-	return target, nil
-}
-
-func (u networkRepo) Create(network *domain.Network) error {
-	if err := u.db.Create(network).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u networkRepo) FindOrCreate(network *domain.Network) error {
-	if err := u.db.FirstOrCreate(network).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u networkRepo) Update(network *domain.Network) error {
-	if err := u.db.Save(network).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u networkRepo) Delete(network *domain.Network) error {
-	if err := u.db.Delete(network).Error; err != nil {
-		return err
-	}
-	return nil
 }

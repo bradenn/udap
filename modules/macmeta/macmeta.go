@@ -5,7 +5,7 @@ package main
 import (
 	"os/exec"
 	"udap/internal/core/domain"
-	"udap/pkg/plugin"
+	"udap/internal/plugin"
 )
 
 var Module MacMeta

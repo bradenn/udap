@@ -22,14 +22,16 @@ import (
 )
 
 type orchestrator struct {
-	db     *gorm.DB
-	router chi.Router
-	server *http.Server
-
+	db         *gorm.DB
+	router     chi.Router
+	server     *http.Server
+	maxTick    time.Duration
 	controller *controller.Controller
 
 	modules   domain.ModuleService
 	endpoints domain.EndpointService
+
+	mutations chan domain.Mutation
 }
 
 type Orchestrator interface {
@@ -50,6 +52,8 @@ func NewOrchestrator() Orchestrator {
 		db:         db,
 		router:     r,
 		controller: nil,
+		maxTick:    time.Second,
+		mutations:  make(chan domain.Mutation, 16),
 	}
 }
 
@@ -82,21 +86,70 @@ func (o *orchestrator) Update() error {
 	return nil
 }
 
+func (o *orchestrator) broadcastTimings() error {
+	timings := pulse.Timings.Timings()
+	for s, proc := range timings {
+		o.mutations <- domain.Mutation{
+			Status:    "update",
+			Operation: "timing",
+			Body:      proc,
+			Id:        s,
+		}
+	}
+	return nil
+}
+
+func (o *orchestrator) runServer() error {
+	o.server = &http.Server{Addr: ":3020", Handler: o.router}
+	err := o.server.ListenAndServe()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *orchestrator) handleMutations() error {
+	for response := range o.mutations {
+		err := o.endpoints.SendAll(response.Id, response.Operation, response.Body)
+		if err != nil {
+			log.Err(err)
+			continue
+		}
+	}
+	return nil
+}
+
+func (o *orchestrator) tick() <-chan error {
+	out := make(chan error)
+	go func() {
+		start := time.Now()
+		err := o.Update()
+		if err != nil {
+			out <- err
+		}
+		delta := time.Since(start)
+		log.Event("Elapsed: %s", delta.String())
+		if delta < o.maxTick && o.maxTick-delta > 250*time.Millisecond {
+			time.Sleep(o.maxTick - delta - time.Millisecond*250)
+		}
+		out <- nil
+	}()
+	return out
+}
+
 func (o *orchestrator) Run() error {
 
-	resp := make(chan domain.Mutation, 20)
-	o.controller.Listen(resp)
+	o.controller.WatchAll(o.mutations)
+
 	wg := sync.WaitGroup{}
 
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		for response := range resp {
-			err := o.endpoints.SendAll(response.Id, response.Operation, response.Body)
-			if err != nil {
-				log.Err(err)
-				continue
-			}
+		err := o.handleMutations()
+		if err != nil {
+			log.Err(err)
+			return
 		}
 	}()
 
@@ -108,54 +161,34 @@ func (o *orchestrator) Run() error {
 
 	runtimes.NewModuleRuntime(o.modules)
 
-	o.server = &http.Server{Addr: ":3020", Handler: o.router}
-
 	go func() {
 		defer wg.Done()
-		err := o.server.ListenAndServe()
+		err := o.runServer()
 		if err != nil {
-			log.ErrF(err, "http server exited with error:\n")
+			log.Err(err)
+			return
 		}
-		log.Event("Server exited")
 	}()
 
 	go func() {
 		defer wg.Done()
-		delay := time.Millisecond * 1000
 		for {
 			pulse.Begin("update")
 			select {
-			case <-time.After(delay):
+			case <-time.After(o.maxTick + time.Millisecond*100):
 				log.Event("Orchestrator event loop timed out")
 				continue
-			default:
-				start := time.Now()
-
-				err := o.Update()
+			case err := <-o.tick():
 				if err != nil {
-					log.ErrF(err, "runtime update error: %s")
+					log.Err(err)
 				}
-
-				delta := time.Since(start)
-				duration := delay - delta
-				log.Event("Tick Complete (%s)", delta)
-				if duration > 0 && duration < delay {
-					time.Sleep(duration)
-				}
-				break
 			}
 			pulse.End("update")
-			timings := pulse.Timings.Timings()
-			for s, proc := range timings {
-				resp <- domain.Mutation{
-					Status:    "update",
-					Operation: "timing",
-					Body:      proc,
-					Id:        s,
-				}
+			err := o.broadcastTimings()
+			if err != nil {
+				log.Err(err)
 			}
 		}
-		log.Event("Event loops exited")
 	}()
 
 	wg.Wait()

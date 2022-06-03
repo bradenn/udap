@@ -5,9 +5,11 @@ package entity
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type entityRepo struct {
+	generic.Store[domain.Entity]
 	db *gorm.DB
 }
 
@@ -32,50 +34,7 @@ func (u entityRepo) Register(e *domain.Entity) error {
 
 func NewRepository(db *gorm.DB) domain.EntityRepository {
 	return &entityRepo{
-		db: db,
+		db:    db,
+		Store: generic.NewStore[domain.Entity](db),
 	}
-}
-
-func (u entityRepo) FindAll() (*[]domain.Entity, error) {
-	var target []domain.Entity
-	if err := u.db.Find(&target).Error; err != nil {
-		return nil, err
-	}
-	return &target, nil
-}
-
-func (u entityRepo) FindById(id string) (*domain.Entity, error) {
-	var target *domain.Entity
-	if err := u.db.Where("id = ?", id).First(target).Error; err != nil {
-		return nil, err
-	}
-	return target, nil
-}
-
-func (u entityRepo) Create(entity *domain.Entity) error {
-	if err := u.db.Create(entity).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u entityRepo) FindOrCreate(entity *domain.Entity) error {
-	if err := u.db.FirstOrCreate(entity).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u entityRepo) Update(entity *domain.Entity) error {
-	if err := u.db.Save(entity).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u entityRepo) Delete(entity *domain.Entity) error {
-	if err := u.db.Delete(entity).Error; err != nil {
-		return err
-	}
-	return nil
 }

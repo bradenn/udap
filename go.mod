@@ -3,6 +3,7 @@ module udap
 go 1.18
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Ullaakut/nmap/v2 v2.2.0
 	github.com/brutella/hc v1.2.4
 	github.com/gerow/go-color v0.0.0-20140219113758-125d37f527f1
@@ -14,7 +15,6 @@ require (
 	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
 	github.com/kevwan/chatbot v1.0.2
-	github.com/shirou/gopsutil v3.21.11+incompatible
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15
@@ -23,8 +23,8 @@ require (
 require (
 	github.com/brutella/dnssd v1.2.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
-	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/goccy/go-json v0.7.6 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -45,11 +45,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/tadglines/go-pkgs v0.0.0-20140924210655-1f86682992f1 // indirect
-	github.com/tklauser/go-sysconf v0.3.10 // indirect
-	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/wangbin/jiebago v0.3.2 // indirect
 	github.com/xiam/to v0.0.0-20191116183551-8328998fc0ed // indirect
-	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	github.com/zeromicro/go-zero v1.3.0 // indirect
 	go.opentelemetry.io/otel v1.3.0 // indirect
 	go.opentelemetry.io/otel/trace v1.3.0 // indirect

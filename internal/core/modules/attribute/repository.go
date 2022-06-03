@@ -5,15 +5,18 @@ package attribute
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type attributeRepo struct {
+	generic.Store[domain.Attribute]
 	db *gorm.DB
 }
 
 func NewRepository(db *gorm.DB) domain.AttributeRepository {
 	return &attributeRepo{
-		db: db,
+		db:    db,
+		Store: generic.NewStore[domain.Attribute](db),
 	}
 }
 
@@ -40,48 +43,4 @@ func (u *attributeRepo) FindAllByEntity(entity string) (*[]domain.Attribute, err
 		return nil, err
 	}
 	return &target, nil
-}
-
-func (u *attributeRepo) FindAll() (*[]domain.Attribute, error) {
-	var target []domain.Attribute
-	if err := u.db.Find(&target).Error; err != nil {
-		return nil, err
-	}
-	return &target, nil
-}
-
-func (u *attributeRepo) FindById(id string) (*domain.Attribute, error) {
-	var target domain.Attribute
-	if err := u.db.Where("id = ?", id).First(&target).Error; err != nil {
-		return nil, err
-	}
-	return &target, nil
-}
-
-func (u *attributeRepo) Create(attribute *domain.Attribute) error {
-	if err := u.db.Create(attribute).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *attributeRepo) FindOrCreate(attribute *domain.Attribute) error {
-	if err := u.db.FirstOrCreate(attribute).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *attributeRepo) Update(attribute *domain.Attribute) error {
-	if err := u.db.Save(attribute).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *attributeRepo) Delete(attribute *domain.Attribute) error {
-	if err := u.db.Delete(attribute).Error; err != nil {
-		return err
-	}
-	return nil
 }

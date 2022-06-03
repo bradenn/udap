@@ -13,8 +13,8 @@ import (
 	"udap/internal/controller"
 	"udap/internal/core/domain"
 	"udap/internal/log"
+	"udap/internal/plugin"
 	"udap/internal/pulse"
-	"udap/pkg/plugin"
 )
 
 type moduleOperator struct {
