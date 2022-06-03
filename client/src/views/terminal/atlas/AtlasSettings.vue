@@ -101,7 +101,7 @@ function setVoice(path: string) {
 
     <div class="w-100">
       <div class="label-lg mb-1">Voice Selection</div>
-      <Plot cols="9" rows="2">
+      <Plot :cols="9" :rows="2">
         <Subplot v-for="voice in voices" :active="state.voice === voice.path" :fn="() => setVoice(voice.path)"
                  :name="voice.name"></Subplot>
       </Plot>
