@@ -4,23 +4,18 @@ package main
 
 import (
 	"fmt"
-	"math"
-	"os"
 	"strconv"
 	"sync"
 	"time"
 	"udap/internal/core/domain"
-	"udap/internal/log"
 	"udap/internal/plugin"
-	"udap/pkg/dmx"
-	"udap/pkg/dmx/ft232"
 )
 
 var Module Squid
 
 type Squid struct {
 	plugin.Module
-	dmx        ft232.DMXController
+	// dmx        ft232.DMXController
 	state      map[int]int
 	entities   map[int]string
 	stateMutex sync.Mutex
@@ -55,13 +50,13 @@ func (s *Squid) setChannelValue(channel int, value int) (err error) {
 	if value > 100 || value < 0 {
 		return fmt.Errorf("desired value '%d' is invalid", value)
 	}
-	var adjustedValue byte
-	adjustedValue = uint8(math.Round((float64(value) / 100.0) * 255.0))
-
-	err = s.dmx.SetChannel(int16(channel), adjustedValue)
-	if err != nil {
-		return err
-	}
+	// var adjustedValue byte
+	// adjustedValue = uint8(math.Round((float64(value) / 100.0) * 255.0))
+	//
+	// err = s.dmx.SetChannel(int16(channel), adjustedValue)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -244,50 +239,49 @@ func (s *Squid) Setup() (plugin.Config, error) {
 	return s.Config, nil
 }
 
-func (s *Squid) connect() error {
-	s.connected = false
-
-	so := os.Stdout
-
-	config := dmx.NewConfig(0x02)
-	config.GetUSBContext()
-
-	os.Stdout = so
-
-	defer func() {
-		if r := recover(); r != nil {
-			s.connected = false
-			log.Err(fmt.Errorf("DMX Panicked: %s", r))
-			return
-		}
-	}()
-
-	s.dmx = ft232.NewDMXController(config)
-
-	err := s.dmx.Connect()
-	if err != nil {
-		return err
-	}
-
-	s.connected = true
-	s.update = make(chan Command, 4)
-
-	s.stateMutex = sync.Mutex{}
-	s.stateMutex.Lock()
-	s.state = map[int]int{}
-	s.stateMutex.Unlock()
-
-	s.entities = map[int]string{}
-
-	go s.mux()
-
-	err = s.registerDevices()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+// func (s *Squid) connect() error {
+// 	s.connected = false
+//
+// 	so := os.Stdout
+// 	config := dmx.NewConfig(0x02)
+// 	config.GetUSBContext()
+//
+// 	os.Stdout = so
+//
+// 	defer func() {
+// 		if r := recover(); r != nil {
+// 			s.connected = false
+// 			log.Err(fmt.Errorf("DMX Panicked: %s", r))
+// 			return
+// 		}
+// 	}()
+//
+// 	s.dmx = ft232.NewDMXController(config)
+//
+// 	err := s.dmx.Connect()
+// 	if err != nil {
+// 		return err
+// 	}
+//
+// 	s.connected = true
+// 	s.update = make(chan Command, 4)
+//
+// 	s.stateMutex = sync.Mutex{}
+// 	s.stateMutex.Lock()
+// 	s.state = map[int]int{}
+// 	s.stateMutex.Unlock()
+//
+// 	s.entities = map[int]string{}
+//
+// 	go s.mux()
+//
+// 	err = s.registerDevices()
+// 	if err != nil {
+// 		return err
+// 	}
+//
+// 	return nil
+// }
 
 func (s *Squid) mux() {
 	for cmd := range s.update {
@@ -344,39 +338,39 @@ func (s *Squid) Update() error {
 // Run is called after Setup, concurrent with Update
 func (s *Squid) Run() (err error) {
 
-	err = s.connect()
-	if err != nil {
-		return err
-	}
-
-	for {
-
-		if !s.connected {
-			break
-		}
-
-		s.stateMutex.Lock()
-		for k, v := range s.state {
-			err = s.setChannelValue(k, v)
-			if err != nil {
-				return err
-			}
-		}
-		s.stateMutex.Unlock()
-
-		err = s.dmx.Render()
-		if err != nil {
-			log.Err(err)
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-
-	}
-
-	err = s.dmx.Close()
-	if err != nil {
-		return err
-	}
+	// err = s.connect()
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// for {
+	//
+	// 	if !s.connected {
+	// 		break
+	// 	}
+	//
+	// 	s.stateMutex.Lock()
+	// 	for k, v := range s.state {
+	// 		err = s.setChannelValue(k, v)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// 	s.stateMutex.Unlock()
+	//
+	// 	err = s.dmx.Render()
+	// 	if err != nil {
+	// 		log.Err(err)
+	// 		break
+	// 	}
+	// 	time.Sleep(50 * time.Millisecond)
+	//
+	// }
+	//
+	// err = s.dmx.Close()
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
