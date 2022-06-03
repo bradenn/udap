@@ -12,6 +12,7 @@ export interface Controller {
 }
 
 export interface Remote {
+    connected: boolean,
     metadata: Metadata,
     entities: Entity[],
     attributes: Attribute[],

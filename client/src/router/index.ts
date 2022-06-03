@@ -41,10 +41,15 @@ import WeatherApp from "../views/terminal/weather/Weather.vue";
 import Summary from "../views/terminal/weather/Summary.vue";
 
 // Whiteboard Routes
-import Whiteboard from "../views/terminal/whiteboard/Whiteboard.vue";
+import Whiteboard from "@/views/terminal/whiteboard/Whiteboard.vue";
 
 // Calculator Routes
-import Calculator from "../views/terminal/calculator/Calculator.vue";
+import Calculator from "@/views/terminal/calculator/Calculator.vue";
+
+// Calculator Routes
+import Atlas from "@/views/terminal/atlas/Atlas.vue";
+import AtlasSettings from "@/views/terminal/atlas/AtlasSettings.vue";
+import AtlasOverview from "@/views/terminal/atlas/AtlasOverview.vue";
 
 const defaultRoute = {
     path: '/',
@@ -182,6 +187,26 @@ const weatherRoutes = {
     ]
 }
 
+const atlasRoutes = {
+    path: '/terminal/atlas',
+    name: 'Atlas',
+    redirect: '/terminal/atlas/overview',
+    component: Atlas,
+    icon: 'fa-atom',
+    children: [
+        {
+            path: '/terminal/atlas/overview',
+            name: 'AtlasOverview',
+            component: AtlasOverview,
+        },
+        {
+            path: '/terminal/atlas/settings',
+            name: 'AtlasSettings',
+            component: AtlasSettings,
+        },
+    ]
+}
+
 const whiteboardRoutes = {
     path: '/terminal/whiteboard',
     name: 'Whiteboard',
@@ -225,7 +250,8 @@ const terminalRoutes = {
         exogeologyRoutes,
         weatherRoutes,
         whiteboardRoutes,
-        calculatorRoute
+        calculatorRoute,
+        atlasRoutes,
     ],
 }
 

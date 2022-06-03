@@ -15,11 +15,11 @@ let props = defineProps<ZoneProps>()
 let remote = inject('remote') as Remote
 
 function restoreZone(id: string) {
-  remote.nexus.requestId("zone", "restore", "", id)
+  // remote.nexus.requestId("zone", "restore", "", id)
 }
 
 function deleteZone(id: string) {
-  remote.nexus.requestId("zone", "delete", "", id)
+  // remote.nexus.requestId("zone", "delete", "", id)
 }
 
 </script>

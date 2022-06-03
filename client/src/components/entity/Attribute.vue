@@ -19,7 +19,7 @@ let remote: any = inject('remote')
 function commitChange(attribute: Attribute) {
   // Make the request to the websocket object
   let id: string = props.entityId
-  remote.nexus.requestId("attribute", "request", attribute, id)
+  remote.nexus.requestAttribute(id, attribute.key, attribute.request)
 }
 
 </script>

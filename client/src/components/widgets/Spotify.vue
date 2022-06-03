@@ -2,6 +2,8 @@
 import moment from "moment";
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Attribute, Remote} from "@/types";
+import Plot from "@/components/plot/Plot.vue";
+import Subplot from "@/components/plot/Subplot.vue";
 
 export interface Spotify {
   title: string;
@@ -71,25 +73,19 @@ function updateTime() {
 // Apply changes made to an attribute
 function togglePlayback() {
   // Make the request to the websocket object
-  state.playing.request = `${state.playing.value}`
-  remote.nexus.requestId("attribute", "request", state.playing, state.playing.entity)
+  state.playing.request = `${state.playing.value === 'true' ? 'false' : 'true'}`
+  remote.nexus.requestAttribute(state.playing.entity, state.playing.key, state.playing.request)
 }
 
 
 </script>
 
 <template>
-  <div v-if="state.metadata.title !== ''" class="element label-c2 flex-grow-1" @click="state.menu = !state.menu">
+  <div v-if="state.metadata.title !== ''" class="element label-c2 flex-grow-1" @mousedown="state.menu = !state.menu">
 
     <div class="d-flex flex-row gap-1 justify-content-start align-items-center">
-      <div v-if="state.metadata.playing" class="">
+      <div v-if="state.metadata" class="">
         <div :style="`background-image: url('${state.metadata.thumbnail}')`" class="album-sm ">
-        </div>
-      </div>
-      <div v-else class="">
-        <div :style="`background-image: url('${state.metadata.thumbnail}')`" class="album-sm paused"
-             @click="togglePlayback">
-          <span>􀊄</span>
         </div>
       </div>
 
@@ -123,19 +119,13 @@ function togglePlayback() {
         </div>
 
       </div>
-      <div v-else class="d-flex flex-column align-content-start justify-content-between w-100 h-100">
-        <div class="d-flex flex-row align-content-start justify-content-between w-100">
-          <div>
-            <div class="label-c2 label-w600 label-o5 overflow-ellipsis">{{ state.metadata.title }}<span
-                v-if="state.metadata.explicit" class="text-danger label-c3 px-1">E</span></div>
-            <div class="label-c3 label-w400 label-o4 lh-1">{{ state.metadata.artists }}</div>
-          </div>
-          <div><i class="fa-solid fa-circle-xmark label-o3 label-c1 label-w400 px-1"></i></div>
-        </div>
-        <div>
 
-        </div>
-      </div>
+      <Plot v-else :cols="3" :rows="1" class="w-100" @mousedown.stop>
+        <Subplot :active="true" :fn="() => togglePlayback()" name="􀊎"></Subplot>
+        <Subplot :active="true" :fn="() => togglePlayback()" :name="state.metadata.playing?'􀊆':'􀊄'"></Subplot>
+        <Subplot :active="true" :fn="() => togglePlayback()" name="􀊐"></Subplot>
+
+      </Plot>
 
 
     </div>

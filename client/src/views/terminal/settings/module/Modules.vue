@@ -6,6 +6,7 @@ import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import Confirm from "@/components/plot/Confirm.vue";
+import axios from "axios";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -44,7 +45,11 @@ function handleUpdates(remote: Remote) {
 }
 
 function toggleEnabled(id: string, enabled: boolean) {
-  remote.nexus.requestId("module", "enabled", enabled, id)
+  if (enabled) {
+    axios.post(`http://localhost:3020/modules/${id}/enable`)
+  } else {
+    axios.post(`http://localhost:3020/modules/${id}/disable`)
+  }
 }
 
 // groupBy creates several arrays of elements based on the value of a key
@@ -63,7 +68,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
         <div class="label-w500 label-o3 label-xxl"><i :class="`fa-solid fa-layer-group fa-fw`"></i></div>
         <div class="label-w500 opacity-100 label-xxl px-2">Modules</div>
       </div>
-      <div class="w-50">
+      <div v-if="!state.loading" class="w-50">
         <div class="activity-container">
           <div v-for="(thread, k) in remote.metadata.system.threads" class="element tick-track"
                style="border-radius: 10px; padding-inline: 7px;">
@@ -88,9 +93,9 @@ function groupBy<T>(xs: T[], key: string): T[] {
 
       <div class="module-container">
 
-        <div v-for="module in state.modules" v-if="state.modules" class="">
+        <div v-for="module in state.modules" class="">
 
-          <Plot :cols="2" :rows="1">
+          <Plot :key="module.id" :cols="2" :rows="1">
             <div class="subplot subplot-inline px-0">
               <div :style="`background-color: rgba(${module.enabled?'25, 135, 84':'135, 100, 2'}, 0.53);`"
                    class="status-marker"></div>
@@ -159,7 +164,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
   width: 100%;
   background-color: rgba(25, 135, 84, 0.3);
   border-radius: 2px;
-
+  transition: width 250ms ease-in-out;
 }
 
 .tick-track {
@@ -177,6 +182,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
   width: 100%;
   background-color: rgba(64, 64, 64, 0.2);
   border-radius: 2px;
+  transition: width 250ms ease-in-out;
 }
 
 .overflow-ellipse {

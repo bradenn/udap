@@ -91,7 +91,7 @@ function toggleEntity(id: string) {
 <template>
   <div v-if="state.mode === 'name'">
     <div class="d-flex justify-content-center">
-      <div class="element p-2" style="width: 20rem">
+      <div class="element p-2" style="width: 20rem;">
         <div class="text-input w-100"
              style="font-size: 0.9rem;">
           <div v-html="state.zone.name"></div>
@@ -106,12 +106,10 @@ function toggleEntity(id: string) {
           class="element label-o3 label-c1 label-r d-flex justify-content-center align-items-center px-3 mx-1"
           @click="() => nextStep()">Next</div>
     </div>
+    <SimpleKeyboard :input="enterChar" class="position-absolute" keySet="d"
+                    keyboardClass="simple-keyboard"
+    ></SimpleKeyboard>
 
-    <div>
-
-      <SimpleKeyboard :input="enterChar" keySet="d" keyboardClass="simple-keyboard"
-      ></SimpleKeyboard>
-    </div>
   </div>
   <div v-else-if="state.mode === 'select'" class="h-100">
     <div class="d-flex flex-row gap">
@@ -152,6 +150,7 @@ function toggleEntity(id: string) {
     </div>
 
   </div>
+
 </template>
 
 <style lang="scss" scoped>

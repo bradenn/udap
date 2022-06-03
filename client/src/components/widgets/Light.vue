@@ -58,14 +58,14 @@ function compareOrder(a: any, b: any): number {
 }
 
 // Update the reactive model for the light
-function updateLight(attributes: Attribute[]): void {
+function updateLight(attributes: Attribute[]): Attribute[] {
   // Define the attributes for the light
   state.attributes = attributes.filter((a: Attribute) => a.entity === props.entity.id).sort(compareOrder)
   // Get the current power state of the light
   let on = state.attributes.find((a: Attribute) => a.key === 'on')
   let dim = state.attributes.find((a: Attribute) => a.key === 'dim')
   // Assign the power state to a local attribute
-  if (!on) return
+  if (!on) return []
   state.powerAttribute = on as Attribute
   if (dim) {
     state.levelAttribute = dim as Attribute
@@ -73,6 +73,7 @@ function updateLight(attributes: Attribute[]): void {
   state.active = on.value === "true" || on.request === "true"
   generateState()
   state.loading = false
+  return state.attributes
 }
 
 // Toggle the state of the context menu
@@ -81,20 +82,6 @@ function toggleMenu(): void {
   // context(state.showMenu)
 }
 
-// Apply changes made to an attribute
-function togglePower() {
-  let newAttr = state.powerAttribute;
-  if (state.powerAttribute.id == "") return
-  newAttr.request = state.powerAttribute.value === 'true' ? 'false' : 'true'
-  // Make the request to the websocket object
-  remote.nexus.requestId("attribute", "request", newAttr, newAttr.entity)
-}
-
-// Apply changes made to an attribute
-function commitChange(attribute: Attribute) {
-  // Make the request to the websocket object
-  remote.nexus.requestId("attribute", "request", attribute, attribute.entity)
-}
 
 </script>
 

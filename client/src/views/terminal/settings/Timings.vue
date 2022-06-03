@@ -23,7 +23,7 @@ watchEffect(() => handleUpdates(remote))
 function handleUpdates(remote: Remote) {
   state.timings = remote.timings
   state.loading = false
-  return remote
+  return remote.timings
 }
 
 function groupBy<T>(xs: T[], key: string): T[] {
@@ -46,7 +46,6 @@ function groupBy<T>(xs: T[], key: string): T[] {
           v-for="(timings, name) in groupBy(state.timings, 'name')">
         <div class="label-o6 label-c1">{{ name }}</div>
         <div v-if="timings">
-
         </div>
       </div>
 
