@@ -1,4 +1,4 @@
-# UDAP v2.13 beta-2
+# UDAP v2.13
 [![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/go.yml)
 [![Go CodeQL](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml)
 [![Typescript](https://github.com/bradenn/udap/actions/workflows/ts.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/ts.yml)
