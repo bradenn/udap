@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 	"udap/internal/core/domain"
-	"udap/internal/log"
 )
 
 type attributeService struct {
@@ -33,7 +32,6 @@ func (u *attributeService) emit(attribute *domain.Attribute) error {
 	if u.channel == nil {
 		return fmt.Errorf("channel is null")
 	}
-	log.Event("EMMITING %s", attribute.Key)
 	u.channel <- domain.Mutation{
 		Status:    "update",
 		Operation: "attribute",
