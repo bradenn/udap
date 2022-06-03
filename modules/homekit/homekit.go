@@ -135,6 +135,14 @@ func syncSwitch(p *service.Switch, a domain.AttributeService, id string) {
 		}
 	})
 
+	p.On.OnValueRemoteGet(func() bool {
+		attr, err := a.FindById(id)
+		if err != nil {
+			return false
+		}
+		return attr.AsBool()
+	})
+
 	// a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
 	// 	attr := *data.(*models.Attribute)
 	// 	p.On.UpdateValue(attr.Request)
@@ -161,11 +169,27 @@ func (s *spectrumLight) syncAttributes(a domain.AttributeService, id string) err
 		}
 	})
 
+	s.spectrum.On.OnValueRemoteGet(func() bool {
+		attr, err := a.FindById(id)
+		if err != nil {
+			return false
+		}
+		return attr.AsBool()
+	})
+
 	s.spectrum.Dim.OnValueRemoteUpdate(func(value int) {
 		err := a.Request(id, "dim", fmt.Sprintf("%d", int(value/5)*5))
 		if err != nil {
 			log.Err(err)
 		}
+	})
+
+	s.spectrum.Dim.OnValueRemoteGet(func() int {
+		attr, err := a.FindById(id)
+		if err != nil {
+			return 0
+		}
+		return attr.AsInt()
 	})
 
 	// a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
