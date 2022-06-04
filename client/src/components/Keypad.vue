@@ -24,7 +24,7 @@ function randomize() {
   state.keyset = state.keyset.sort(sortRandom)
 }
 
-function enterKey(a: number) {
+function enterKey(a: string) {
   if (state.cursor < 6) {
     state.entry[state.cursor] = a
     state.cursor++
