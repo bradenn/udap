@@ -314,7 +314,6 @@ provide('remote', remote)
     </div>
 
     <div
-        :style="`transform: translate(${Math.round(0)}px,${0}px);`"
         class="route-view">
       <div>
 

@@ -149,8 +149,8 @@ $fontColors: (
 
 
 .context.context-light {
-  backdrop-filter: blur(0);
-  z-index: 0 !important;
+  backdrop-filter: blur(18px);
+  z-index: 1 !important;
 }
 
 .context.context-id {
@@ -326,7 +326,7 @@ $fontColors: (
   background-color: $element-bg;
   border-radius: 1rem;
   box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+
   height: 1.4rem;
   font-weight: 500;
   font-size: 0.625rem;
@@ -346,7 +346,7 @@ $fontColors: (
 }
 
 .slider-dim {
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(213, 230, 255, 0.75) 100%) !important;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 1%, rgba(213, 230, 255, 0.75) 100%);
 }
 
 .slider-cct {
