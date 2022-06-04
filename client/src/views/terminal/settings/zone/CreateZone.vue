@@ -4,6 +4,7 @@ import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Entity, Remote, Zone} from "@/types";
 import SimpleKeyboard from "@/components/Keyboard.vue";
 import Plot from "@/components/plot/Plot.vue";
+import axios from "axios";
 
 
 interface NewZone {
@@ -71,9 +72,13 @@ function createZone() {
     user: state.zone.user,
     entities: remote.entities.filter((e) => state.zone.entities.includes(e.id))
   } as Zone
+  let payload = JSON.stringify(protoZone)
+  axios.post("http://localhost:3020/zones/create", payload).then(res => {
+    props.done();
+  }).catch(err => {
+    console.log(err)
+  })
 
-  remote.nexus.requestDefault("zone", "create", protoZone)
-  props.done();
 }
 
 

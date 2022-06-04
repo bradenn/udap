@@ -6,6 +6,8 @@ import (
 	"github.com/go-chi/chi"
 	"gorm.io/gorm"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
 	"time"
 	"udap/internal/controller"
@@ -39,6 +41,10 @@ type Orchestrator interface {
 	Run() error
 }
 
+func (o *orchestrator) Terminate(reason string) {
+
+}
+
 func NewOrchestrator() Orchestrator {
 	// Initialize Database
 	db, err := database.New()
@@ -58,6 +64,15 @@ func NewOrchestrator() Orchestrator {
 }
 
 func (o *orchestrator) Start() error {
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			_ = o.server.Close()
+			os.Exit(0)
+		}
+	}()
 
 	err := core.MigrateModels(o.db)
 	if err != nil {
@@ -156,6 +171,7 @@ func (o *orchestrator) Run() error {
 	// Initialize and route applicable domains
 	routes.NewUserRouter(o.controller.Users).RouteUsers(o.router)
 	routes.NewAttributeRouter(o.controller.Attributes).RouteAttributes(o.router)
+	routes.NewZoneRouter(o.controller.Zones).RouteZones(o.router)
 	routes.NewEndpointRouter(o.endpoints).RouteEndpoints(o.router)
 	routes.NewModuleRouter(o.modules).RouteModules(o.router)
 
