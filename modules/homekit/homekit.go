@@ -56,6 +56,8 @@ func (h *Homekit) Setup() (plugin.Config, error) {
 }
 
 func (h *Homekit) Update() error {
+	if h.Ready() {
+	}
 	return nil
 }
 
@@ -115,7 +117,6 @@ func (h *Homekit) Run() error {
 	hc.OnTermination(func() {
 		log.Event("Module 'homekit' is terminating.")
 		<-t.Stop()
-		os.Exit(0)
 	})
 
 	t.Start()

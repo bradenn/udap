@@ -3,11 +3,14 @@
 package orchestrator
 
 import (
+	"fmt"
 	"github.com/go-chi/chi"
 	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/pprof"
 	"sync"
 	"time"
 	"udap/internal/controller"
@@ -45,11 +48,11 @@ func (o *orchestrator) Terminate(reason string) {
 
 }
 
-func NewOrchestrator() Orchestrator {
+func NewOrchestrator() (Orchestrator, error) {
 	// Initialize Database
 	db, err := database.New()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	// Initialize Router
 	r := router.New()
@@ -60,7 +63,7 @@ func NewOrchestrator() Orchestrator {
 		controller: nil,
 		maxTick:    time.Second,
 		mutations:  make(chan domain.Mutation, 16),
-	}
+	}, nil
 }
 
 func (o *orchestrator) Start() error {
@@ -70,6 +73,7 @@ func (o *orchestrator) Start() error {
 	go func() {
 		for range c {
 			_ = o.server.Close()
+			fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
 			os.Exit(0)
 		}
 	}()
@@ -116,6 +120,10 @@ func (o *orchestrator) broadcastTimings() error {
 
 func (o *orchestrator) runServer() error {
 	o.server = &http.Server{Addr: ":3020", Handler: o.router}
+	o.server.ReadTimeout = time.Second
+	o.server.WriteTimeout = time.Second * 2
+	o.server.IdleTimeout = time.Second * 30
+	o.server.ReadHeaderTimeout = time.Second * 2
 	err := o.server.ListenAndServe()
 	if err != nil {
 		return err
@@ -141,10 +149,11 @@ func (o *orchestrator) tick() <-chan error {
 		err := o.Update()
 		if err != nil {
 			out <- err
+			return
 		}
 		delta := time.Since(start)
-		log.Event("Elapsed: %s", delta.String())
 		if delta < o.maxTick && o.maxTick-delta > 250*time.Millisecond {
+			log.Event("Elapsed: %s", delta.String())
 			time.Sleep(o.maxTick - delta - time.Millisecond*250)
 		}
 		out <- nil
@@ -176,12 +185,14 @@ func (o *orchestrator) Run() error {
 	routes.NewModuleRouter(o.modules).RouteModules(o.router)
 
 	runtimes.NewModuleRuntime(o.modules)
-
 	go func() {
 		defer wg.Done()
 		err := o.runServer()
 		if err != nil {
 			log.Err(err)
+			pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
+			fmt.Printf("\nThreads @ exit: %d\n", runtime.NumGoroutine())
+			os.Exit(1)
 			return
 		}
 	}()

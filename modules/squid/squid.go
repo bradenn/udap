@@ -323,14 +323,7 @@ func (s *Squid) pull() error {
 // Update is called every cycle
 func (s *Squid) Update() error {
 	if s.Ready() {
-		err := s.UpdateInterval(2000)
-		if err != nil {
-			return err
-		}
-		err = s.pull()
-		if err != nil {
-			return err
-		}
+		return s.pull()
 	}
 	return nil
 }

@@ -75,6 +75,7 @@ func (r *endpointRouter) authenticate(w http.ResponseWriter, req *http.Request) 
 func (r *endpointRouter) enroll(w http.ResponseWriter, req *http.Request) {
 	// Initialize an error to manage returns
 	var err error
+	defer req.Body.Close()
 	// Convert the basic GET request into a WebSocket session
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -107,4 +108,5 @@ func (r *endpointRouter) enroll(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
+
 }

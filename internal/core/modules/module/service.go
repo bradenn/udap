@@ -128,10 +128,15 @@ func (u *moduleService) RunAll() error {
 		if err != nil {
 			return err
 		}
+
 		go func(mod domain.Module) {
 			err = u.Run(&mod)
 			if err != nil {
 				log.Err(err)
+				err = u.setState(&mod, ERROR)
+				if err != nil {
+					return
+				}
 			}
 		}(module)
 	}

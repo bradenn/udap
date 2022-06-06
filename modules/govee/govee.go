@@ -475,7 +475,10 @@ func GenerateAttributes(id string) []*domain.Attribute {
 
 func (g *Govee) Setup() (plugin.Config, error) {
 	g.devices = map[string]Device{}
-
+	err := g.UpdateInterval(1000 * 60)
+	if err != nil {
+		return plugin.Config{}, err
+	}
 	return g.Config, nil
 }
 
@@ -491,19 +494,13 @@ func (g *Govee) push() error {
 			}
 		}(d, s)
 	}
-	select {
-	case <-time.After(time.Millisecond * 1000):
-		return nil
-	default:
-		wg.Wait()
-	}
+	wg.Wait()
 
 	return nil
 }
 
 func (g *Govee) Update() error {
-	if time.Since(g.Module.LastUpdate) >= time.Minute*1 {
-		g.Module.LastUpdate = time.Now()
+	if g.Ready() {
 		return g.push()
 	}
 	return nil
@@ -530,7 +527,6 @@ func (g *Govee) Run() error {
 		for _, attribute := range attributes {
 			go func(dev Device, channel chan domain.Attribute) {
 				for attr := range channel {
-					log.Event("Request %s.%s=%s", dev.DeviceName, attr.Key, attr.Request)
 					err = g.statePut(dev, attr.Key, s.Id)(attr.Request)
 					if err != nil {
 						log.Err(err)
