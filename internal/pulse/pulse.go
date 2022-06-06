@@ -15,7 +15,7 @@ func init() {
 	Timings.mt = sync.RWMutex{}
 	Timings.history = map[string]Proc{}
 	Timings.waiting = map[string]Proc{}
-	Timings.handler = make(chan Proc, 4)
+	Timings.handler = make(chan Proc, 16)
 	go Timings.handle()
 }
 
@@ -66,19 +66,8 @@ func (h *Timing) handle() {
 	}
 }
 
-func (h *Timing) beginFixed(freq int, ref string) {
-	proc := Proc{}
-	proc.Frequency = freq
-	proc.Pointer = ref
-	proc.Start = time.Now()
-	proc.Complete = false
-	proc.Name = ref
-	h.handler <- proc
-}
-
 func (h *Timing) begin(ref string) {
 	proc := Proc{}
-	proc.Frequency = 2000
 	proc.Pointer = ref
 	proc.Start = time.Now()
 	proc.Complete = false
