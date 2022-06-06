@@ -9,7 +9,6 @@ interface Toggle {
   fn?: () => void
 }
 
-
 let props = defineProps<Toggle>()
 
 let state = reactive({
@@ -62,10 +61,10 @@ function countdown() {
       <div v-if="props.title" class="label-o4">{{ props.title }}</div>
     </div>
     <div v-else-if="state.aborted" class="load-in">
-      <div class="label-o3 label-c2">􀣔 Operation Timed Out</div>
+      <div class="label-o3 label-c2">􀣔 Timed Out</div>
     </div>
     <div v-else class="pulse load-in">
-      􀬂 Tap to Authorize
+      􀬂 Authorize
     </div>
   </div>
 </template>
