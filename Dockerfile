@@ -4,6 +4,6 @@ WORKDIR /udap
 COPY . .
 
 RUN go get -d -v ./...
-RUN go install ./main.go
+RUN go install ./cmd/udap/main.go
 
 CMD ["main"]

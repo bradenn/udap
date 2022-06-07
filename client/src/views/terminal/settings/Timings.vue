@@ -48,11 +48,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
         <div v-if="timings">
         </div>
       </div>
-      {{
-        state.timings.sort((a, b) => {
-          a.start - b.start
-        }).map(t => t.name)
-      }}
+
 
     </div>
     <div v-else class="element p-2">

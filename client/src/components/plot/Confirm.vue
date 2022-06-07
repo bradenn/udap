@@ -5,6 +5,7 @@ import {reactive} from "vue";
 interface Toggle {
   title?: string
   icon?: string
+  disabled?: boolean
   active?: boolean
   fn?: () => void
 }
@@ -33,7 +34,7 @@ function reset() {
 }
 
 function initialIntention(e: MouseEvent) {
-  if (state.intent) {
+  if (state.intent || props.disabled) {
     abort(e)
     return
   }

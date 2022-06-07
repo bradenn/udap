@@ -69,6 +69,7 @@ function updateAtlas(attributes: Attribute[]) {
 function updateLights(entities: Entity[]) {
   // Find all applicable entities
   let candidates = entities.filter((f: Entity) => f.type === 'spectrum' || f.type === 'switch' || f.type === 'dimmer');
+  candidates = candidates.filter((e: Entity) => remote.attributes.filter((a: Attribute) => a.entity === e.id).length >= 1)
   // Sort and assign them to the reactive object
   state.lights = candidates.sort(compareName)
   return entities

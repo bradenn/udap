@@ -213,7 +213,7 @@ const atlasRoutes = {
 
 const defenseRoutes = {
     path: '/terminal/defense',
-    name: 'Defense',
+    name: 'Sentry',
     redirect: '/terminal/defense/overview',
     component: Defense,
     icon: 'fa-shield',

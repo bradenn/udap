@@ -148,7 +148,7 @@ function downloadImage(url: string) {
   axios.get(url).then(res => {
     let lastModified: Date = new Date(res.headers['last-modified'])
     state.lastDate = lastModified.valueOf()
-    state.currentSize = res.headers['content-length']
+    state.currentSize = parseInt(`${res.headers['content-length']}`, 10)
     state.lastUpdated = moment(lastModified).fromNow(false)
     state.nextUpdate = moment(lastModified).add(1000 * 60 * 10).fromNow(false)
     updateData()
