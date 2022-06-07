@@ -35,7 +35,7 @@ watch(session, (current: Session, previous: Session) => {
 })
 
 function verifyAuth(current: Session) {
-  state.auth = (current.user.id != "")
+  state.auth = (!!current.user.id)
 }
 
 function query() {
