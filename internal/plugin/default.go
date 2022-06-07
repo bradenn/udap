@@ -24,14 +24,18 @@ type Module struct {
 
 // UpdateInterval is called once at the launch of the module
 func (m *Module) UpdateInterval(frequency time.Duration) error {
-	m.LastUpdate = time.Now()
 	m.Frequency = time.Millisecond * frequency
+	m.LastUpdate = time.Now().Add(-m.Frequency)
 	return nil
 }
 
-// Ready is called once at the launch of the module
+// Ready is used to determine whether the module should update
 func (m *Module) Ready() bool {
-	return time.Since(m.LastUpdate) >= m.Frequency
+	if time.Since(m.LastUpdate) >= m.Frequency {
+		m.LastUpdate = time.Now()
+		return true
+	}
+	return false
 }
 
 // Connect is called once at the launch of the module

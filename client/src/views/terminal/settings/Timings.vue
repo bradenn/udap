@@ -49,6 +49,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
         </div>
       </div>
 
+
     </div>
     <div v-else class="element p-2">
       <div class="label-c1 label-o4 d-flex align-content-center gap-1">

@@ -123,7 +123,7 @@ function toggleMenu(): void {
         </div>
       </div>
     </div>
-    <div v-else class="entity-small element quickedit">
+    <div v-else class="entity-small element quickedit" style="z-index: 999999 !important;">
       <div class="entity-header mb-1 d-flex justify-content-between align-items-center w-100">
         <div class="d-flex">
           <div class="label-o5">
@@ -135,13 +135,13 @@ function toggleMenu(): void {
         </div>
         <AttributeComponent :attribute="state.powerAttribute" :entity-id="props.entity.id"
                             small></AttributeComponent>
-        <div class="" @click="toggleMenu">
-          <i class="fa-solid fa-circle-xmark label-o3 label-c1 label-w400 px-1"></i>
-        </div>
+        <!--        <div class="" @click="toggleMenu">-->
+        <!--          <i class="fa-solid fa-circle-xmark label-o3 label-c1 label-w400 px-1"></i>-->
+        <!--        </div>-->
       </div>
       <div class="w-100 d-flex flex-column gap">
         <div
-            v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key === 'dim' )">
+            v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key === 'dim' || attribute.key === 'cct' || attribute.key === 'hue')">
           <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
                               small></AttributeComponent>
         </div>
@@ -201,6 +201,7 @@ function toggleMenu(): void {
 
 .entity-context {
   position: absolute;
+  backdrop-filter: blur(22px);
   top: 0;
   width: 100%;
   padding: 1rem;

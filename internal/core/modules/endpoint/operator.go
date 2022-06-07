@@ -32,6 +32,7 @@ func NewConnection(ws *websocket.Conn) *Connection {
 	ch := make(chan any, 8)
 	d := make(chan bool)
 	a := true
+
 	c := &Connection{
 		WS:     ws,
 		edit:   ch,
@@ -42,28 +43,39 @@ func NewConnection(ws *websocket.Conn) *Connection {
 }
 
 func (c *Connection) Close() {
-	if c.edit != nil {
+	if c.edit == nil {
 		return
 	}
 	err := c.WS.Close()
 	if err != nil {
 		return
 	}
-	close(c.edit)
-	close(c.done)
+
+	c.done <- true
+
+	c.WS = nil
+	c.edit = nil
+	c.done = nil
 	a := false
 	c.active = &a
 }
 
 func (c *Connection) Watch() {
-	for a := range c.edit {
-		if c.WS == nil {
+	for {
+		select {
+		case req := <-c.edit:
+			err := c.WS.WriteJSON(req)
+			if err != nil {
+				log.Err(err)
+				break
+			}
+		case <-c.done:
+			close(c.done)
+			close(c.edit)
 			return
 		}
-		err := c.WS.WriteJSON(a)
-		if err != nil {
-			log.Err(err)
-			continue
+		if c.WS == nil {
+			break
 		}
 	}
 }
@@ -83,6 +95,7 @@ func (m *endpointOperator) getConnection(id string) (*Connection, error) {
 
 func (m *endpointOperator) setConnection(id string, connection *Connection) error {
 	m.connections[id] = connection
+
 	return nil
 }
 
@@ -158,11 +171,10 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 	}
 
 	log.Event("Endpoint '%s' connected.", endpoint.Name)
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-
 	go func() {
-		defer wg.Done()
 		connection.Watch()
 	}()
 
@@ -170,7 +182,6 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 	if err != nil {
 		return err
 	}
-
 	wg.Wait()
 	return nil
 }

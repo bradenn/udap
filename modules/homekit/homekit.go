@@ -56,6 +56,8 @@ func (h *Homekit) Setup() (plugin.Config, error) {
 }
 
 func (h *Homekit) Update() error {
+	if h.Ready() {
+	}
 	return nil
 }
 
@@ -115,7 +117,6 @@ func (h *Homekit) Run() error {
 	hc.OnTermination(func() {
 		log.Event("Module 'homekit' is terminating.")
 		<-t.Stop()
-		os.Exit(0)
 	})
 
 	t.Start()
@@ -136,11 +137,11 @@ func syncSwitch(p *service.Switch, a domain.AttributeService, id string) {
 	})
 
 	p.On.OnValueRemoteGet(func() bool {
-		attr, err := a.FindById(id)
+		composite, err := a.FindByComposite(id, "on")
 		if err != nil {
 			return false
 		}
-		return attr.AsBool()
+		return composite.AsBool()
 	})
 
 	// a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {
@@ -170,11 +171,11 @@ func (s *spectrumLight) syncAttributes(a domain.AttributeService, id string) err
 	})
 
 	s.spectrum.On.OnValueRemoteGet(func() bool {
-		attr, err := a.FindById(id)
+		composite, err := a.FindByComposite(id, "on")
 		if err != nil {
 			return false
 		}
-		return attr.AsBool()
+		return composite.AsBool()
 	})
 
 	s.spectrum.Dim.OnValueRemoteUpdate(func(value int) {
@@ -185,11 +186,11 @@ func (s *spectrumLight) syncAttributes(a domain.AttributeService, id string) err
 	})
 
 	s.spectrum.Dim.OnValueRemoteGet(func() int {
-		attr, err := a.FindById(id)
+		composite, err := a.FindByComposite(id, "dim")
 		if err != nil {
 			return 0
 		}
-		return attr.AsInt()
+		return composite.AsInt()
 	})
 
 	// a.WatchSingle(fmt.Sprintf("%s.%s", id, "on"), func(data interface{}) error {

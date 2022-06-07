@@ -41,27 +41,25 @@ function groupBy<T>(xs: T[], key: string): T[] {
   <div>
     <div class="d-flex justify-content-start py-2 px-1">
       <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-layer-group fa-fw`"></i></div>
-      <div class="label-w500 opacity-100 label-xxl px-2">Modules</div>
+      <div class="label-w500 opacity-100 label-xxl px-2">Entities</div>
     </div>
 
-    <div v-if="!state.loading" class="d-flex flex-column gap-1">
+    <div v-if="!state.loading" class="entity-grid">
 
-      <div v-for="(entities, module) in state.modules" v-if="state.modules"
-           class=" d-flex justify-content-start flex-column">
-        <div v-if="entities" class="d-flex flex-column gap">
-          <div class="label-xs label-r px-1 " style="text-transform: capitalize;">{{ module }}</div>
-          <Plot :cols="5" :rows="1">
-            <div v-for="entity in entities" class="subplot">
+      <div v-for="(entities, module) in state.modules" v-if="state.modules">
+        <div v-if="entities" class="">
+          <Plot :cols="2" :rows="2" :title="`${module}`">
+            <div v-for="entity in entities.slice(0,4)" class="subplot">
               <div class="d-flex justify-content-start align-items-center flex-row px-1 w-100">
-                <div class="label-w500 label-o3 label-c1">{{ (entity.icon) || "" }}&nbsp;</div>
-                <div class="label-w500 label-c1">{{ (entity.name) || "" }}</div>
+                <div class="label-w500 label-o3 label-c1">{{ entity.icon }}&nbsp;</div>
+                <div class="label-w500 label-c1">{{ entity.name }}</div>
                 <div class="flex-grow-1"></div>
                 <div class="label-w500 label-c2 label-o2"><i class="fa-solid fa-gear"></i></div>
               </div>
             </div>
           </Plot>
-
         </div>
+
       </div>
 
 
@@ -78,6 +76,14 @@ function groupBy<T>(xs: T[], key: string): T[] {
 </template>
 
 <style scoped>
+.entity-grid {
+  width: 100%;
 
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+}
 
 </style>

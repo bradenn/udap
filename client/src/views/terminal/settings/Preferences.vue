@@ -126,8 +126,7 @@ function changeTouchmode(mode: string): any {
     <Header class="px-2 pb-1" icon="bars-progress" name="Preferences"></Header>
     <div class="px-2">
       <div>
-        <h4>Background</h4>
-        <Plot :cols="5" :rows="2">
+        <Plot :cols="5" :rows="2" title="Background">
           <div v-for="background in defaults.backgrounds" @click="changeBackground(background.identifier)">
             <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
               <div :class="`${preferences.ui.background === background.identifier?'active':''}`"
@@ -144,25 +143,22 @@ function changeTouchmode(mode: string): any {
         </Plot>
 
       </div>
+      <div class="d-flex w-100 gap justify-content-between mt-2">
 
-      <div class="mt-2">
-        <h4>Themes</h4>
-        <Plot :cols="2" :rows="1">
+        <Plot :cols="2" :rows="1" class="flex-grow-1" title="Themes">
           <Subplot v-for="theme in defaults.themes" :active="preferences.ui.theme === theme.identifier"
                    :fn="() => changeTheme(theme.identifier)"
                    :name="theme.name" @click="">
           </Subplot>
         </Plot>
 
-      </div>
-      <div class="mt-2">
-        <h4>Touch Mode</h4>
-        <Plot :cols="2" :rows="1">
+        <Plot :cols="2" :rows="1" class="flex-grow-1" title="Touch Mode">
           <Subplot v-for="mode in defaults.touchModes" :active="preferences.ui.mode === mode.identifier"
                    :fn="() => changeTouchmode(mode.identifier)"
                    :name="mode.name" @click="">
           </Subplot>
         </Plot>
+
       </div>
     </div>
   </div>

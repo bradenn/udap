@@ -64,6 +64,7 @@ type AttributeOperator interface {
 type AttributeService interface {
 	Observable
 	FindAll() (*[]Attribute, error)
+	FindByComposite(entity string, key string) (*Attribute, error)
 	FindAllByEntity(entity string) (*[]Attribute, error)
 	FindById(id string) (*Attribute, error)
 	Create(*Attribute) error

@@ -181,10 +181,11 @@ func (v *Vyos) fetchNetworks() error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err = v.scanSubnet(network)
-			if err != nil {
-				return
-			}
+
+			// err = v.scanSubnet(network)
+			// if err != nil {
+			// 	return
+			// }
 		}()
 
 	}

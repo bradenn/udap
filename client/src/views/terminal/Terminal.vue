@@ -5,7 +5,7 @@ import router from '@/router'
 import {inject, onMounted, onUpdated, provide, reactive, ref, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
-import type {Identifiable, Metadata, Remote, Timing} from "@/types";
+import type {Identifiable, Metadata, Remote, Session, Timing, User} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
 import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
@@ -32,6 +32,7 @@ let remote = reactive<Remote>({
   devices: [],
   networks: [],
   endpoints: [],
+  users: [],
   timings: [],
   modules: [],
   zones: [],
@@ -66,6 +67,13 @@ function handleMessage(target: Target, data: any) {
         remote.attributes = remote.attributes.map((a: Identifiable) => a.id === data.id ? data : a)
       } else {
         remote.attributes.push(data)
+      }
+      break
+    case Target.User:
+      if (remote.users.find((e: Identifiable) => e.id === data.id)) {
+        remote.users = remote.users.map((a: Identifiable) => a.id === data.id ? data : a)
+      } else {
+        remote.users.push(data)
       }
       break
     case Target.Device:
@@ -115,7 +123,6 @@ function handleMessage(target: Target, data: any) {
 }
 
 
-
 // -- Gesture Navigation --
 
 let fps = 0;
@@ -124,6 +131,13 @@ let lastTick = ref(0);
 onUpdated(() => {
   fps++;
 })
+
+
+let session = reactive<Session>({
+  user: {} as User
+})
+
+provide("session", session)
 
 // Stores the changing components of the main terminal
 let state = reactive({
@@ -314,7 +328,6 @@ provide('remote', remote)
     </div>
 
     <div
-        :style="`transform: translate(${Math.round(0)}px,${0}px);`"
         class="route-view">
       <div>
 

@@ -90,7 +90,10 @@ func (h *HS100) findDevices() error {
 // Setup is called once at the launch of the module
 func (h *HS100) Setup() (plugin.Config, error) {
 	h.devices = map[string]*hs100.Hs100{}
-
+	err := h.UpdateInterval(2000)
+	if err != nil {
+		return plugin.Config{}, err
+	}
 	return h.Config, nil
 }
 
@@ -115,8 +118,7 @@ func (h *HS100) pull() error {
 
 // Update is called every cycle
 func (h *HS100) Update() error {
-	if time.Since(h.Module.LastUpdate) >= time.Second*2 {
-		h.Module.LastUpdate = time.Now()
+	if h.Ready() {
 		return h.pull()
 	}
 	return nil

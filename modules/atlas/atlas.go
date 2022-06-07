@@ -60,8 +60,7 @@ func (w *Atlas) pull() error {
 }
 
 func (w *Atlas) Update() error {
-	if time.Since(w.Module.LastUpdate) >= time.Second*2 {
-		w.Module.LastUpdate = time.Now()
+	if w.Ready() {
 		return w.pull()
 	}
 	return nil

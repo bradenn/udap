@@ -16,6 +16,7 @@ export interface Remote {
     metadata: Metadata,
     entities: Entity[],
     attributes: Attribute[],
+    users: User[],
     devices: Device[],
     networks: Network[],
     modules: Module[],
@@ -179,6 +180,11 @@ export interface Network {
     mask: string;
     range: string;
 }
+
+export interface Session {
+    user: User
+}
+
 
 export interface User {
     created: string;

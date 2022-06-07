@@ -138,6 +138,10 @@ func (u *attributeService) Update(entity string, key string, value string, stamp
 	return nil
 }
 
+func (u attributeService) FindByComposite(entity string, key string) (*domain.Attribute, error) {
+	return u.repository.FindByComposite(entity, key)
+}
+
 // Repository Mapping
 
 func (u attributeService) FindAll() (*[]domain.Attribute, error) {

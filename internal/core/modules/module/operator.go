@@ -19,23 +19,39 @@ import (
 
 type moduleOperator struct {
 	ctrl    *controller.Controller
-	modules map[string]plugin.ModuleInterface
+	runtime map[string]plugin.ModuleInterface
 }
 
 func NewOperator(ctrl *controller.Controller) domain.ModuleOperator {
 	return &moduleOperator{
 		ctrl:    ctrl,
-		modules: map[string]plugin.ModuleInterface{},
+		runtime: map[string]plugin.ModuleInterface{},
 	}
+}
+
+func (m *moduleOperator) getModule(module *domain.Module) (plugin.ModuleInterface, error) {
+	if m.runtime[module.Name] == nil {
+		return nil, fmt.Errorf("module not found")
+	}
+	return m.runtime[module.Name], nil
+}
+
+func (m *moduleOperator) setModule(module *domain.Module, moduleInterface plugin.ModuleInterface) error {
+	m.runtime[module.Name] = moduleInterface
+	return nil
 }
 
 func (m *moduleOperator) Update(module *domain.Module) error {
 	if module.Enabled {
-		if m.modules[module.Name] == nil {
-			return fmt.Errorf("nothing to update")
+		local, err := m.getModule(module)
+		if err != nil {
+			return err
 		}
 		pulse.Begin(module.Id)
-		err := m.modules[module.Name].Update()
+		err = local.Update()
+		if err != nil {
+			return err
+		}
 		pulse.End(module.Id)
 		if err != nil {
 			return err
@@ -46,7 +62,11 @@ func (m *moduleOperator) Update(module *domain.Module) error {
 
 func (m *moduleOperator) Run(module *domain.Module) error {
 	if module.Enabled {
-		err := m.modules[module.Name].Run()
+		local, err := m.getModule(module)
+		if err != nil {
+			return err
+		}
+		err = local.Run()
 		if err != nil {
 			return err
 		}
@@ -102,9 +122,10 @@ func (m *moduleOperator) Load(module *domain.Module) error {
 	module.Version = setup.Version
 	module.Author = setup.Author
 	module.Description = setup.Description
-
-	m.modules[module.Name] = mod
-
+	err = m.setModule(module, mod)
+	if err != nil {
+		return err
+	}
 	log.Event("Module '%s' loaded.", module.Name)
 	return nil
 }

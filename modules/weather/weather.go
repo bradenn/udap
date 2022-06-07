@@ -161,11 +161,7 @@ func (v *Weather) pull() error {
 }
 func (v *Weather) Update() error {
 	if v.Ready() {
-		err := v.UpdateInterval(15000)
-		if err != nil {
-			return err
-		}
-		err = v.pull()
+		err := v.pull()
 		if err != nil {
 			return err
 		}
@@ -187,7 +183,7 @@ func (v *Weather) Run() error {
 
 	err = v.fetchWeather()
 	if err != nil {
-		return err
+
 	}
 	buffer, err := v.forecastBuffer()
 	if err != nil {

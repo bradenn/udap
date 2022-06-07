@@ -10,7 +10,7 @@ import (
 	"udap/internal/orchestrator"
 )
 
-const VERSION = "2.13"
+const VERSION = "2.13.1"
 
 func main() {
 
@@ -20,17 +20,23 @@ func main() {
 	}
 
 	// Initialize Orchestrator
-	o := orchestrator.NewOrchestrator()
+	o, err := orchestrator.NewOrchestrator()
+	if err != nil {
+		log.Err(err)
+		return
+	}
 
 	// Initialize services
 	err = o.Start()
 	if err != nil {
+		log.Err(err)
 		return
 	}
 
 	// Run udap
 	err = o.Run()
 	if err != nil {
+		log.Err(err)
 		return
 	}
 }

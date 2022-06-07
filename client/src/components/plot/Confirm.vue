@@ -5,10 +5,10 @@ import {reactive} from "vue";
 interface Toggle {
   title?: string
   icon?: string
+  disabled?: boolean
   active?: boolean
   fn?: () => void
 }
-
 
 let props = defineProps<Toggle>()
 
@@ -34,7 +34,7 @@ function reset() {
 }
 
 function initialIntention(e: MouseEvent) {
-  if (state.intent) {
+  if (state.intent || props.disabled) {
     abort(e)
     return
   }
@@ -62,10 +62,10 @@ function countdown() {
       <div v-if="props.title" class="label-o4">{{ props.title }}</div>
     </div>
     <div v-else-if="state.aborted" class="load-in">
-      <div class="label-o3 label-c2">􀣔 Operation Timed Out</div>
+      <div class="label-o3 label-c2">􀣔 Timed Out</div>
     </div>
     <div v-else class="pulse load-in">
-      􀬂 Tap to Authorize
+      􀬂 Authorize
     </div>
   </div>
 </template>

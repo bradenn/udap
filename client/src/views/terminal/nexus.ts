@@ -16,6 +16,7 @@ export enum Target {
     Module = "module",
     Zone = "zone",
     Entity = "entity",
+    User = "user",
     Attribute = "attribute",
     Device = "device",
     Network = "network",

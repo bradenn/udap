@@ -63,7 +63,15 @@ func (u zoneService) FindById(id string) (*domain.Zone, error) {
 }
 
 func (u zoneService) Create(zone *domain.Zone) error {
-	return u.repository.Create(zone)
+	err := u.repository.Create(zone)
+	if err != nil {
+		return err
+	}
+	err = u.emit(zone)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u zoneService) FindOrCreate(zone *domain.Zone) error {

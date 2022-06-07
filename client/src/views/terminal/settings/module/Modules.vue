@@ -191,7 +191,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
   white-space: nowrap;
   text-overflow: ellipsis !important;
   text-wrap: none !important;
-  max-width: 6rem;
+  max-width: 5.75rem;
 }
 
 .activity-container {

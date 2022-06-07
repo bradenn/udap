@@ -39,8 +39,7 @@ func (w *WebStats) pull() error {
 }
 
 func (w *WebStats) Update() error {
-	if time.Since(w.Module.LastUpdate) >= time.Second*2 {
-		w.Module.LastUpdate = time.Now()
+	if w.Ready() {
 		return w.pull()
 	}
 	return nil

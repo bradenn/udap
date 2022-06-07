@@ -261,12 +261,14 @@ function toggleMenu() {
           </div>
 
 
-          <div class="label-c2 label-o4">{{ getWeatherIcon(state.weather.hourly.weathercode[v], v) }}</div>
+          <div class="label-c2 label-o4">
+            {{ getWeatherIcon(state.weather.hourly.weathercode[new Date().getHours() + v], v) }}
+          </div>
           <div v-if="state.weather.hourly.precipitation[v] === 0" class="label-c4 label-o3 label-w500">
             &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[new Date().getHours() + v]) }}°
           </div>
           <div v-else class="label-c4 label-o3 label-w500 rain">{{
-              state.weather.hourly.precipitation[v]
+              state.weather.hourly.precipitation[new Date().getHours() + v]
             }}"
           </div>
 

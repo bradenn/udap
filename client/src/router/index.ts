@@ -3,7 +3,7 @@
 import {createRouter, createWebHashHistory} from "vue-router";
 
 // Settings views
-import settings from "@/views/terminal/settings";
+import settings from "@/views/terminal/settings/index";
 
 import Settings from "@/views/terminal/settings/Settings.vue";
 import Preferences from "@/views/terminal/settings/Preferences.vue";
@@ -46,10 +46,14 @@ import Whiteboard from "@/views/terminal/whiteboard/Whiteboard.vue";
 // Calculator Routes
 import Calculator from "@/views/terminal/calculator/Calculator.vue";
 
-// Calculator Routes
+// Atlas Routes
 import Atlas from "@/views/terminal/atlas/Atlas.vue";
 import AtlasSettings from "@/views/terminal/atlas/AtlasSettings.vue";
 import AtlasOverview from "@/views/terminal/atlas/AtlasOverview.vue";
+
+// Defense Routes
+import Defense from "@/views/terminal/defense/Defense.vue";
+import DefenseOverview from "@/views/terminal/defense/DefenseOverview.vue";
 
 const defaultRoute = {
     path: '/',
@@ -207,6 +211,21 @@ const atlasRoutes = {
     ]
 }
 
+const defenseRoutes = {
+    path: '/terminal/defense',
+    name: 'Sentry',
+    redirect: '/terminal/defense/overview',
+    component: Defense,
+    icon: 'fa-shield',
+    children: [
+        {
+            path: '/terminal/defense/overview',
+            name: 'DefenseOverview',
+            component: DefenseOverview,
+        },
+    ]
+}
+
 const whiteboardRoutes = {
     path: '/terminal/whiteboard',
     name: 'Whiteboard',
@@ -252,6 +271,7 @@ const terminalRoutes = {
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,
+        defenseRoutes
     ],
 }
 
