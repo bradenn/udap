@@ -128,7 +128,7 @@ function laserRun() {
     let b1 = map_range(tick, 0, 1000, 90, 145)
     tick += dir ? -state.speed : state.speed;
     if (Math.floor(tick) % 250 == 0) {
-      state.speed = 1 + Math.random() * 10
+      state.speed = Math.random() * 20
     }
     if (Math.floor(tick) >= 1000) {
       dir = true;
@@ -138,11 +138,7 @@ function laserRun() {
     //
     // laserPan(Math.cos(Math.floor(tick)) * map_range(Math.floor((2 * Math.PI / 100) * tick), 0, 100, 15, 1) + a1)
     // laserTilt(Math.sin(Math.floor(tick)) + b1)
-    if (state.speed > 5) {
-      laserPanTilt(95 + Math.sin((2 * Math.PI / (250 - state.speed * 4) * tick)) * map_range(tick, 0, 1000, 20, 5), b1)
-    } else {
-      laserPanTilt(95 + Math.cos((2 * Math.PI / (250 - state.speed * 4) * tick)) * map_range(tick, 0, 1000, 20, 5), b1)
-    }
+    laserPanTilt(80 + Math.sin((2 * Math.PI / 250) * tick) * map_range(tick, 0, 1000, 20, 5), b1)
 
 
   }, 65)
@@ -157,7 +153,7 @@ function laserCircle() {
   let dir = false;
 
   state.runner = setInterval(() => {
-    tick += 1;
+    tick += 10;
 
     if (tick >= 1000) {
       tick = 0;
@@ -166,13 +162,13 @@ function laserCircle() {
     }
 
     // 0 - 180
-    let panTo = map_range(Math.sin((2 * Math.PI / 1000) * tick), -1, 1, 0, 180)
+    let panTo = map_range(Math.cos((2 * Math.PI / 1000) * tick), -1, 1, 75, 105)
     // 90 - 180
-    let tiltTo = map_range(Math.cos((2 * Math.PI / 1000) * tick), -1, 1, 95, 110)
+    let tiltTo = map_range(Math.sin((2 * Math.PI / 1000) * tick), -1, 1, 85, 95)
 
     laserPanTilt(panTo, tiltTo)
 
-  }, 80)
+  }, 65)
 
 }
 
