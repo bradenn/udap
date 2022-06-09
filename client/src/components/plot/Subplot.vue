@@ -32,10 +32,11 @@ const props = defineProps<Props>()
        :class="`${props.active||false?'':'subplot-inline'} ${props.theme?`theme-${props.theme}`:''}`"
        class="subplot p-1"
        @mousedown="props.fn">
-    <div class="d-flex justify-content-start ">
+    <div :class="`${props.alt !== ''?'justify-content-between w-100':'justify-content-start'}`" class="d-flex ">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
       </div>
       <div class="label-w500 label-c1 px-2">{{ props.name }}</div>
+      <div v-if="props.alt" class="label-w400 label-o4 label-c1 px-2">{{ props.alt }}</div>
 
 
     </div>

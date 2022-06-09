@@ -21,6 +21,7 @@
     "sass-loader": "^12.4.0",
     "simple-keyboard": "^3.4.21",
     "stats.js": "^0.17.0",
+    "three": "^0.141.0",
     "vue": "3",
     "vue-chartjs": "^3.5.1",
     "vue-google-charts": "^0.3.3",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/stats.js": "^0.17.0",
+    "@types/three": "^0.141.0",
     "@vitejs/plugin-vue": "^1.6.0",
     "@vue/compiler-sfc": "^3.2.6",
     "@vue/tsconfig": "^0.1.3",

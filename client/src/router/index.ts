@@ -55,6 +55,10 @@ import AtlasOverview from "@/views/terminal/atlas/AtlasOverview.vue";
 import Defense from "@/views/terminal/defense/Defense.vue";
 import DefenseOverview from "@/views/terminal/defense/DefenseOverview.vue";
 
+// Layout Routes
+import Layout from "@/views/terminal/layout/Layout.vue";
+import LayoutOverview from "@/views/terminal/layout/LayoutOverview.vue";
+
 const defaultRoute = {
     path: '/',
     component: Setup,
@@ -191,6 +195,23 @@ const weatherRoutes = {
     ]
 }
 
+
+const layoutRoutes = {
+    path: '/terminal/layout',
+    name: 'Layout',
+    component: Layout,
+    redirect: '/terminal/layout/overview',
+    icon: 'fa-calculator',
+    children: [
+        {
+            path: '/terminal/layout/overview',
+            name: 'LayoutOverview',
+            component: LayoutOverview,
+            icon: 'fa-house',
+        },
+    ]
+};
+
 const atlasRoutes = {
     path: '/terminal/atlas',
     name: 'Atlas',
@@ -271,7 +292,8 @@ const terminalRoutes = {
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,
-        defenseRoutes
+        defenseRoutes,
+        layoutRoutes
     ],
 }
 
