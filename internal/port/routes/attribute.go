@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/core/domain"
-	"udap/internal/log"
 )
 
 type AttributeRouter interface {
@@ -38,7 +37,6 @@ func (r *attributeRouter) request(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(400)
 	}
-	log.Event("Request '%s' = %s", key, buf.String())
 	if id != "" && key != "" {
 		err := r.service.Request(id, key, buf.String())
 		if err != nil {
