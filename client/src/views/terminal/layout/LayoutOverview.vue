@@ -5,6 +5,7 @@ import * as THREE from "three";
 import {onMounted} from "vue";
 
 import Plot from "@/components/plot/Plot.vue";
+import Subplot from "@/components/plot/Subplot.vue";
 
 
 let renderer = {} as THREE.WebGLRenderer
@@ -36,18 +37,22 @@ function render() {
 function drawWall(points: THREE.Vector2[]) {
   const wall1 = new THREE.Shape();
 
+  points.forEach(point => {
+
+  })
+
   wall1.setFromPoints(points)
 
 
   const wallGeometry = new THREE.ExtrudeBufferGeometry([wall1], {
-    depth: 1.2, bevelEnabled: false
+    depth: 0.4, bevelEnabled: false
   });
 
   wallGeometry.scale(s, s, s)
   wallGeometry.translate(-4.37 * s / 2, 3.17 * s / 2, 0.05 * s)
   const wallMesh = new THREE.Mesh(wallGeometry, new THREE.MeshStandardMaterial({
     color: 0xcccccc,
-    opacity: 0.8,
+    opacity: 0.5,
     transparent: true
   }));
   scene.add(wallMesh);
@@ -130,7 +135,7 @@ function loadThree() {
   floorGeometry.scale(s, s, s)
   floorGeometry.translate(-4.37 * s / 2, 3.17 * s / 2, 0)
   const floorMesh = new THREE.Mesh(floorGeometry, new THREE.MeshStandardMaterial({
-    color: 0xD2B48C,
+    color: 0xCCCCCC,
     opacity: 0.8,
     transparent: true
   }));
@@ -147,17 +152,21 @@ function loadThree() {
   drawWall([points[6], points[7]])
   drawWall([points[7], points[0]])
 
-  const light = new THREE.PointLight(0xFFFFFF, 0.5, 50);
-  light.position.set(7, 10, 10);
+  const light = new THREE.PointLight(0xFFFFFF, 0.6, 100);
+  light.position.set(6, 14, 14);
   scene.add(light);
 
-  const light2 = new THREE.PointLight(0xFFFFFF, 0.5, 50);
-  light2.position.set(20, 2, 10);
+  const light2 = new THREE.PointLight(0xFFFFFF, 0.6, 100);
+  light2.position.set(22, 3, 14);
   scene.add(light2);
 
+  const light3 = new THREE.PointLight(0xFFFFFF, 0.6, 100);
+  light3.position.set(-42, -7, 14);
+  scene.add(light3);
 
-  addWindow(-23, 31, s, -23, 0, s)
-  scene.add(new THREE.HemisphereLight(0xffffffcc, 0xcccccccc, 0.2))
+
+  /*addWindow(-23, 31, s, -23, 0, s)
+  scene.add(new THREE.HemisphereLight(0xffffffcc, 0xcccccccc, 0.2))*/
   // animate()
   render()
 
@@ -168,8 +177,9 @@ function loadThree() {
 <template>
   <div class="w-100 h-100 mb-5 d-flex pb-3 pt-1 gap">
     <div>
-      <Plot :cols="1" :rows="4" style="width:13rem;">
-
+      <Plot :cols="1" :rows="4" style="width:13rem;" title="Room">
+        <Subplot :active="true" :fn="() => {}" name="Bedroom"></Subplot>
+        <Subplot :active="false" :fn="() => {}" name="Living Room"></Subplot>
       </Plot>
     </div>
     <div id="three-container" class="flex-grow-1 h-100 mb-5 element"></div>

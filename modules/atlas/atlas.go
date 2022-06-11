@@ -78,7 +78,9 @@ func (w *Atlas) pull() error {
 	if err != nil {
 		return err
 	}
-
+	if w.eId == "" {
+		return nil
+	}
 	err = w.Attributes.Set(w.eId, "status", string(marshal))
 	if err != nil {
 		return err
@@ -157,6 +159,10 @@ func (w *Atlas) listen() {
 			continue
 		case status := <-w.recognizerStatusChannel:
 			w.status.Recognizer = status
+			err := w.pull()
+			if err != nil {
+				return
+			}
 		case rec := <-w.listenChannel:
 			err := w.processRequest(rec)
 			if err != nil {
@@ -276,6 +282,20 @@ func (w *Atlas) Run() error {
 
 	w.status.Recognizer = "offline"
 	w.status.Synthesizer = "idle"
+
+	// recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
+	// done, err := recognizer.Connect("localhost")
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// go func() {
+	// 	err = recognizer.Listen()
+	// 	if err != nil {
+	// 		log.Err(err)
+	// 	}
+	// 	done <- true
+	// }()
 
 	// go func() {
 	// 	for {

@@ -36,7 +36,16 @@ const voices = [
     score: 3,
     path: "ksp",
   },
-
+  {
+    name: "Androgynous Robot",
+    score: 1,
+    path: "rxr",
+  },
+  {
+    name: "Robotic Female 1",
+    score: 1,
+    path: "eey",
+  },
 
 ]
 
@@ -77,11 +86,6 @@ const primaryVoices = [
     path: "clb",
   },
   {
-    name: "Robotic Female 1",
-    score: 1,
-    path: "eey",
-  },
-  {
     name: "Profound US Male",
     score: 3,
     path: "fem",
@@ -96,11 +100,7 @@ const primaryVoices = [
     score: 3,
     path: "rms",
   },
-  {
-    name: "Androgynous Robot",
-    score: 1,
-    path: "rxr",
-  },
+
 ]
 
 
