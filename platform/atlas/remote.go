@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"time"
 	"udap/internal/log"
-	"udap/platform/vad"
 )
 
 type Response struct {
@@ -207,7 +206,7 @@ func (r *RemoteRecognizer) Listen() error {
 		if err != nil {
 			return err
 		}
-		d := vad.NewDetector(len(in))
+		d := NewDetector(len(in))
 		delta := d.Detect(in)
 
 		if r.last == 0 {
