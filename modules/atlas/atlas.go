@@ -4,16 +4,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/kevwan/chatbot/bot"
-	"net/url"
 	"os/exec"
 	"strings"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
 	"udap/internal/plugin"
+	"udap/platform/atlas"
 )
 
 var Module Atlas
@@ -22,7 +21,20 @@ type Atlas struct {
 	plugin.Module
 	eId        string
 	lastSpoken string
-	chatbot    *bot.ChatBot
+
+	bufferChannel chan domain.Attribute
+
+	voiceChannel chan domain.Attribute
+
+	statusChannel chan domain.Attribute
+
+	listenChannel chan atlas.Response
+
+	recognizerStatusChannel chan string
+
+	status Status
+
+	voice string
 }
 
 type Message struct {
@@ -35,6 +47,11 @@ type Message struct {
 	Text string
 }
 
+type Status struct {
+	Synthesizer string `json:"synthesizer"`
+	Recognizer  string `json:"recognizer"`
+}
+
 func init() {
 	config := plugin.Config{
 		Name:        "atlas",
@@ -44,6 +61,7 @@ func init() {
 		Author:      "Braden Nicholson",
 	}
 	Module.Config = config
+	Module.voice = "default"
 }
 
 func (w *Atlas) Setup() (plugin.Config, error) {
@@ -56,6 +74,18 @@ func (w *Atlas) Setup() (plugin.Config, error) {
 
 func (w *Atlas) pull() error {
 
+	marshal, err := json.Marshal(w.status)
+	if err != nil {
+		return err
+	}
+	if w.eId == "" {
+		return nil
+	}
+	err = w.Attributes.Set(w.eId, "status", string(marshal))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -67,12 +97,15 @@ func (w *Atlas) Update() error {
 }
 
 func (w *Atlas) speak(text string) error {
-
+	w.status.Synthesizer = "speaking"
 	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*15)
 	// Cancel the timeout of it exits before the timeout is up
-	defer cancelFunc()
+	defer func() {
+		w.status.Synthesizer = "idle"
+		cancelFunc()
+	}()
 	// Prepare the command arguments
-	args := []string{"-t", text, "-voice", "./pkg/mimic/mycroft_voice_4.0.flitevox"}
+	args := []string{"-t", text, "-voice", fmt.Sprintf("./pkg/mimic/voices/cmu_us_%s.flitevox", w.voice)}
 	// Initialize the command structure
 	cmd := exec.CommandContext(timeout, "./pkg/mimic/mimic", args...)
 	// Run and get the stdout and stderr from the output
@@ -108,7 +141,62 @@ func (w *Atlas) retort(text string) error {
 	return nil
 }
 
+func (w *Atlas) listen() {
+	for {
+		select {
+		case res := <-w.voiceChannel:
+			w.voice = res.Request
+			err := w.speak("That quick beige fox jumped in the air over each thin dog. Look out, I shout, for he's foiled you again, creating chaos.")
+			if err != nil {
+				log.Err(err)
+			}
+		case res := <-w.bufferChannel:
+			err := w.speak(res.Request)
+			if err != nil {
+				log.Err(err)
+			}
+		case <-w.statusChannel:
+			continue
+		case status := <-w.recognizerStatusChannel:
+			w.status.Recognizer = status
+			err := w.pull()
+			if err != nil {
+				return
+			}
+		case rec := <-w.listenChannel:
+			err := w.processRequest(rec)
+			if err != nil {
+				log.Err(err)
+			}
+		}
+	}
+}
+
+func (w *Atlas) processRequest(req atlas.Response) error {
+	log.Event("HEARD: %s", req.Alternatives[0].Text)
+	msg := req.Alternatives[0]
+	if strings.Contains(msg.Text, "atlas") {
+		marshal, err := json.Marshal(req.Alternatives)
+		if err != nil {
+			return err
+		}
+		msg.Text = strings.Replace(msg.Text, "atlas ", "", 1)
+		err = w.Attributes.Set(w.eId, "buffer", string(marshal))
+		if err != nil {
+			return err
+		}
+		err = w.retort(msg.Text)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (w *Atlas) register() error {
+
+	// Register the atlas entity
 	entity := domain.Entity{
 		Module: "atlas",
 		Name:   "atlas",
@@ -120,28 +208,68 @@ func (w *Atlas) register() error {
 		return err
 	}
 
-	listenBuffer := domain.Attribute{
+	w.eId = entity.Id
+
+	// Register the buffer attribute
+	w.bufferChannel = make(chan domain.Attribute)
+
+	bufferAttribute := domain.Attribute{
 		Type:    "buffer",
 		Key:     "buffer",
 		Value:   "",
 		Request: "",
 		Order:   0,
-		Entity:  entity.Id,
-		Channel: make(chan domain.Attribute),
+		Entity:  w.eId,
+		Channel: w.bufferChannel,
 	}
 
-	w.eId = entity.Id
+	// Register the voice attribute
+	w.voiceChannel = make(chan domain.Attribute)
 
-	go func() {
-		for attribute := range listenBuffer.Channel {
-			fmt.Println("Atlas hears: " + attribute.Value)
-		}
-	}()
+	voiceAttribute := domain.Attribute{
+		Type:    "voice",
+		Key:     "voice",
+		Value:   "default",
+		Request: "default",
+		Order:   0,
+		Entity:  w.eId,
+		Channel: w.voiceChannel,
+	}
 
-	err = w.Attributes.Register(&listenBuffer)
+	// Register the voice attribute
+	w.statusChannel = make(chan domain.Attribute)
+
+	statusAttribute := domain.Attribute{
+		Type:    "status",
+		Key:     "status",
+		Value:   "{}",
+		Request: "{}",
+		Order:   0,
+		Entity:  w.eId,
+		Channel: w.statusChannel,
+	}
+
+	w.listenChannel = make(chan atlas.Response, 8)
+	w.recognizerStatusChannel = make(chan string, 8)
+
+	// Begin listening on the new channels
+	go w.listen()
+
+	err = w.Attributes.Register(&bufferAttribute)
 	if err != nil {
 		return err
 	}
+
+	err = w.Attributes.Register(&voiceAttribute)
+	if err != nil {
+		return err
+	}
+
+	err = w.Attributes.Register(&statusAttribute)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -152,38 +280,61 @@ func (w *Atlas) Run() error {
 		return err
 	}
 
-	u := url.URL{Scheme: "ws", Host: "localhost" + ":" + "2700", Path: ""}
+	w.status.Recognizer = "offline"
+	w.status.Synthesizer = "idle"
 
-	// Opening websocket connection
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		return err
-	}
-	defer c.Close()
+	// recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
+	// done, err := recognizer.Connect("localhost")
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// go func() {
+	// 	err = recognizer.Listen()
+	// 	if err != nil {
+	// 		log.Err(err)
+	// 	}
+	// 	done <- true
+	// }()
 
-	for {
-		msg := Message{}
-		err = c.ReadJSON(&msg)
-		if err != nil {
-			return err
-		}
-		err = w.Attributes.Set(w.eId, "buffer", msg.Text)
-		if err != nil {
-			return err
-		}
+	// go func() {
+	// 	for {
+	// 		err = atlas.BeginListening(w.listenChannel, w.recognizerStatusChannel)
+	// 		if err != nil {
+	// 			log.Err(err)
+	// 			continue
+	// 		}
+	// 	}
+	// }()
 
-		if strings.Contains(msg.Text, "atlas") {
-			if strings.HasPrefix(msg.Text, "the") {
-				msg.Text = strings.Replace(msg.Text, "the ", "", 1)
-			}
-			msg.Text = strings.Replace(msg.Text, "atlas ", "", 1)
-			err = w.retort(msg.Text)
-			if err != nil {
-				return err
-			}
-		}
+	// u := url.URL{Scheme: "ws", Host: "localhost" + ":" + "2700", Path: ""}
+	//
+	// // Opening websocket connection
+	// c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	// if err != nil {
+	// 	return nil
+	// }
+	//
+	// defer func() {
+	// 	w.status.Recognizer = "offline"
+	// 	c.Close()
+	// }()
+	//
+	// for {
+	// 	msg := Message{}
+	// 	w.status.Recognizer = "idle"
+	// 	err = c.ReadJSON(&msg)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	w.status.Recognizer = "recognizing"
+	// 	err = w.Attributes.Set(w.eId, "buffer", msg.Text)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
 
-		log.Event("ATLAS: %s", msg.Text)
-	}
+	// }
+	return nil
 
 }

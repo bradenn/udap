@@ -98,8 +98,6 @@ let ui: any = inject("ui")
                :entity="light"></Light>
         <Macros></Macros>
       </Widget>
-
-      {{ state.atlas }}
       <!--      <Widget :cols="3" :rows="1" size="sm">-->
       <!--        <Shortcut v-for="i in state.shortcuts" :icon="i.icon || 'fa-square'" :name="i.name"></Shortcut>-->
       <!--      </Widget>-->
