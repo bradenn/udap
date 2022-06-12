@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import Clock from "@/components/Clock.vue"
 import router from '@/router'
-import {inject, onMounted, onUpdated, provide, reactive, ref, watch} from "vue";
+import {inject, onMounted, onUnmounted, onUpdated, provide, reactive, ref, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
 import type {Identifiable, Metadata, Remote, Session, Timing, User} from "@/types";
@@ -132,6 +132,9 @@ onUpdated(() => {
   fps++;
 })
 
+onUnmounted(() => {
+  remote.nexus.ws.close(1001, "Disconnecting")
+})
 
 let session = reactive<Session>({
   user: {} as User
