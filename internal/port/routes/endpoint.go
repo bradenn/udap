@@ -3,6 +3,7 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
@@ -27,10 +28,35 @@ func NewEndpointRouter(service domain.EndpointService) EndpointRouter {
 }
 
 func (r *endpointRouter) RouteEndpoints(router chi.Router) {
+
 	router.Get("/socket/{token}", r.enroll)
 	router.Route("/endpoints", func(local chi.Router) {
+		local.Get("/create", r.create)
 		local.Get("/register/{key}", r.authenticate)
 	})
+}
+
+func (r *endpointRouter) create(w http.ResponseWriter, req *http.Request) {
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(w, "could not parse endpoint", 400)
+		return
+	}
+	ref := domain.Endpoint{}
+	err = json.Unmarshal(buf.Bytes(), &ref)
+	if err != nil {
+		http.Error(w, "could not parse endpoint", 400)
+		return
+	}
+
+	product := domain.NewEndpoint(ref.Name, ref.Type)
+
+	err = r.service.Create(product)
+	if err != nil {
+		http.Error(w, "endpoint creation failed", 400)
+	}
 }
 
 type authenticationResponse struct {
