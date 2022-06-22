@@ -173,19 +173,23 @@ func (w *Atlas) listen() {
 }
 
 func (w *Atlas) processRequest(req atlas.Response) error {
-	log.Event("HEARD: %s", req.Alternatives[0].Text)
-	msg := req.Alternatives[0]
-	if strings.Contains(msg.Text, "atlas") {
-		marshal, err := json.Marshal(req.Alternatives)
+
+	if len(req.Text) < 1 {
+		return nil
+	}
+	log.Event("HEARD: %s", req.Text)
+	msg := req.Text
+	if strings.Contains(msg, "atlas") {
+		marshal, err := json.Marshal(req)
 		if err != nil {
 			return err
 		}
-		msg.Text = strings.Replace(msg.Text, "atlas ", "", 1)
+		msg = strings.Replace(msg, "atlas ", "", 1)
 		err = w.Attributes.Set(w.eId, "buffer", string(marshal))
 		if err != nil {
 			return err
 		}
-		err = w.retort(msg.Text)
+		err = w.retort(msg)
 		if err != nil {
 			return err
 		}
@@ -283,19 +287,23 @@ func (w *Atlas) Run() error {
 	w.status.Recognizer = "offline"
 	w.status.Synthesizer = "idle"
 
-	// recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
-	// done, err := recognizer.Connect("localhost")
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// go func() {
-	// 	err = recognizer.Listen()
-	// 	if err != nil {
-	// 		log.Err(err)
-	// 	}
-	// 	done <- true
-	// }()
+	recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
+	done, err := recognizer.Connect("10.0.1.201")
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			err = recognizer.Listen()
+			if err != nil {
+				done <- true
+				log.Err(err)
+				break
+			}
+		}
+
+	}()
 
 	// go func() {
 	// 	for {

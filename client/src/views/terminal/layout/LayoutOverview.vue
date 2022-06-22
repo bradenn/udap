@@ -2,12 +2,21 @@
 <script lang="ts" setup>
 
 import * as THREE from "three";
-import {onMounted} from "vue";
+import {onMounted, reactive} from "vue";
 
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 
+
+let state = reactive({
+  position: {
+    x: 0, y: 0, z: 0
+  },
+  manipulation: {
+    p: 0, t: 0
+  }
+})
 
 let renderer = {} as THREE.WebGLRenderer
 let camera = {} as THREE.PerspectiveCamera
@@ -16,7 +25,7 @@ let controls = {} as OrbitControls
 let beamLine = {} as THREE.Line
 
 const points = [
-  new THREE.Vector2(0, 0),
+  new THREE.Vector2(0.001, 0),
   new THREE.Vector2(2.02, 0),
   new THREE.Vector2(4.03, -2.07),
   new THREE.Vector2(4.37, -2.07),
@@ -109,13 +118,19 @@ function setCamera(x: number, y: number, z: number) {
   // controls.update();
 }
 
+function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
 function render() {
   renderer.setClearColor(0x000000, 0);
   renderer.render(scene, camera);
 }
 
 let i = 0;
-let steps = 200;
+let point = 0;
+let steps = 100;
+let pointCount = points.length;
 let last = performance.now();
 
 function animate() {
@@ -124,6 +139,9 @@ function animate() {
   if (performance.now() - last > 16.66) {
     last = performance.now()
     i = (i + 1) % steps
+    if (i == 0) {
+      point = (point + 1) % pointCount
+    }
   }
   // required if controls.enableDamping or controls.autoRotate are set to true
   controls.update();
@@ -133,8 +151,11 @@ function animate() {
   let height = 1
 
   let slice = (Math.PI * 2) / steps
-  moveBeam(180 * (Math.PI / 180), 180 * (Math.PI / 180))
-  // moveBeamToXYZ(i, 0, -0.12)
+  let x = map_range(i, 0, steps, points[point].x, points[(point + 1) % pointCount].x)
+  let y = map_range(i, 0, steps, points[point].y, points[(point + 1) % pointCount].y)
+
+  // moveBeam(180 * (Math.PI / 180), 180 * (Math.PI / 180), 1)
+  moveBeamToXYZ(-4.27 + x, 2.62 + y, 0.01)
   // moveBeam(148.5 * (Math.PI / 180), 168.5 * (Math.PI / 180))
   // beamLine.rotateOnAxis(new THREE.Vector3(4.37, -2.62, 1), Math.random())
   // drawScene()
@@ -143,37 +164,30 @@ function animate() {
 }
 
 function moveBeamToXYZ(x: number, y: number, z: number) {
-  // let pan = Math.sin(x) * 10
+  state.position.x = x
+  state.position.y = y
+  state.position.z = z
+  let distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2))
+  let theta = Math.atan(y / x) + (x >= 0 ? 0 : Math.PI)
+  let phi = Math.atan(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / z)
+
+  state.manipulation.t = phi
+  state.manipulation.p = theta
+  moveBeam(theta, phi, distance)
 
 }
 
-function moveBeam(pan: number, tilt: number) {
-  //
-  // if (pan * (Math.PI / 180) > 90) {
-  //   return
-  // }
-  //
-  // if (tilt * (Math.PI / 180) > 90) {
-  //   return
-  // }
-  let x1 = 20 * Math.sin(tilt) * Math.cos(pan)
-  let y1 = 20 * Math.sin(tilt) * Math.sin(pan)
-  let z1 = 20 * Math.cos(tilt)
+function moveBeam(pan: number, tilt: number, distance: number) {
 
-  let radius = Math.sqrt(Math.pow(x1, 2) + Math.pow(y1, 2) + Math.pow(z1, 2))
+  let theta = pan
+  let phi = tilt
 
-  let phi = Math.atan2(y1, x1)
-  let theta = Math.acos((z1 / radius))
+  let x = distance * Math.cos(theta) * Math.sin(phi)
+  let y = distance * Math.sin(theta) * Math.sin(phi)
+  let z = distance * Math.cos(phi)
 
-  let pr = tilt
-  let tr = pan
+  let newGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(4.27, -2.62, 1), new THREE.Vector3(4.27 + x, -2.62 + y, z)])
 
-  let x = 20 * Math.sin(pr) * Math.cos(tr)
-  let y = 20 * Math.sin(pr) * Math.sin(tr)
-  let z = 20 * Math.cos(pr)
-
-
-  let newGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(4.37 - 0.17, -2.62, 1), new THREE.Vector3(4.37 - 0.17 + x, -2.62 + y, z)])
   newGeom.scale(s, s, s)
   newGeom.translate(-4.37 * s / 2, 3.17 * s / 2, 0.05 * s)
   beamLine.geometry.dispose()
@@ -196,18 +210,14 @@ function drawBeam(x1: number, y1: number, z1: number, x2: number, y2: number, z2
   beamLine = new THREE.Line(beam, beamMaterial);
   scene.add(beamLine)
 
-  const radius = 120;
-  const radials = 64;
-  const circles = 24;
-  const divisions = 64;
-
-  const helper = new THREE.PolarGridHelper(radius, radials, circles, divisions);
-  //4.37 - 0.17, -2.62, 1
-  helper.translateX(-4.37 * s / 2 + (4.37 - 0.17) * s)
-  helper.translateY(3.17 * s / 2 + (-2.62) * s)
-  helper.translateZ(0.12 * s / 2)
-  helper.rotateX(Math.PI / 2)
-  scene.add(helper);
+  // const radius = 120;
+  // const radials = 64;
+  // const circles = 24;
+  // const divisions = 64;
+  //
+  // const grid = new THREE.GridHelper(100, 20)
+  // grid.rotateX(Math.PI / 2)
+  // scene.add(grid)
 
 }
 
@@ -260,10 +270,32 @@ function loadThree() {
 
 <template>
   <div class="w-100 h-100 mb-5 d-flex pb-3 pt-1 gap">
-    <div>
+    <div class="d-flex flex-column gap">
       <Plot :cols="1" :rows="4" style="width:13rem;" title="Room">
         <Subplot :active="true" :fn="() => {}" name="Bedroom"></Subplot>
         <Subplot :active="false" :fn="() => {}" name="Living Room"></Subplot>
+      </Plot>
+      <Plot :cols="1" :rows="4" style="width:13rem;" title="Location">
+        <div class="d-flex justify-content-evenly">
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
+            X: {{ Math.round(state.position.x * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
+            Y: {{ Math.round(state.position.y * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
+            Z: {{ Math.round(state.position.z * 10) / 10 }}
+          </div>
+        </div>
+        <div class="d-flex justify-content-evenly">
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 4rem">
+            Pan: {{ Math.round(state.manipulation.p * (180 / Math.PI) * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 4rem">
+            Tilt: {{ Math.round(state.manipulation.t * (180 / Math.PI) * 10) / 10 }}
+          </div>
+
+        </div>
       </Plot>
     </div>
     <div id="three-container" class="flex-grow-1 h-100 mb-5 element"></div>
