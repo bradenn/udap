@@ -23,59 +23,44 @@ func (c *Connection) Active() bool {
 }
 
 func (c *Connection) Send(body any) {
-	if c.Active() && c.edit != nil {
-		c.edit <- body
-	}
+	c.edit <- body
 }
 
 func NewConnection(ws *websocket.Conn) *Connection {
-	ch := make(chan any, 8)
+	ch := make(chan any, 24)
 	d := make(chan bool)
-	a := true
-
+	active := true
 	c := &Connection{
 		WS:     ws,
 		edit:   ch,
 		done:   d,
-		active: &a,
+		active: &active,
 	}
+
+	ws.SetCloseHandler(func(code int, text string) error {
+		c.Close()
+		return nil
+	})
+
 	return c
 }
 
 func (c *Connection) Close() {
-	if c.edit == nil {
-		return
-	}
-	err := c.WS.Close()
-	if err != nil {
-		return
-	}
-
 	c.done <- true
-
-	c.WS = nil
-	c.edit = nil
-	c.done = nil
-	a := false
-	c.active = &a
+	active := false
+	c.active = &active
 }
 
 func (c *Connection) Watch() {
 	for {
 		select {
+		case <-c.done:
+			return
 		case req := <-c.edit:
 			err := c.WS.WriteJSON(req)
 			if err != nil {
 				log.Err(err)
-				break
 			}
-		case <-c.done:
-			close(c.done)
-			close(c.edit)
-			return
-		}
-		if c.WS == nil {
-			break
 		}
 	}
 }
@@ -95,7 +80,6 @@ func (m *endpointOperator) getConnection(id string) (*Connection, error) {
 
 func (m *endpointOperator) setConnection(id string, connection *Connection) error {
 	m.connections[id] = connection
-
 	return nil
 }
 
@@ -105,7 +89,6 @@ func (m *endpointOperator) removeConnection(id string) error {
 		return nil
 	}
 	delete(m.connections, id)
-
 	return nil
 }
 
@@ -128,11 +111,14 @@ func (m *endpointOperator) Send(id string, operation string, payload any) error 
 	if err != nil {
 		return err
 	}
-	connection.Send(Response{
-		Status:    "success",
-		Operation: operation,
-		Body:      payload,
-	})
+	if connection.Active() {
+		connection.Send(Response{
+			Status:    "success",
+			Operation: operation,
+			Body:      payload,
+		})
+	}
+
 	return nil
 }
 
@@ -147,56 +133,70 @@ type Response struct {
 	Body      any    `json:"body"`
 }
 
-func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Conn) error {
-
-	connection := NewConnection(conn)
-	err := m.setConnection(endpoint.Id, connection)
-	if err != nil {
-		return err
-	}
-
+func sendMetadata(connection *Connection) error {
 	info, err := systemInfo()
 	if err != nil {
 		return err
 	}
+	if connection.Active() {
+		connection.Send(Response{
+			Id:        "",
+			Status:    "success",
+			Operation: "metadata",
+			Body:      Metadata{System: info},
+		})
+	}
+	return nil
+}
 
-	connection.Send(Response{
-		Id:        "",
-		Status:    "success",
-		Operation: "metadata",
-		Body:      Metadata{System: info},
-	})
+func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Conn) error {
+	// Initialize a new endpoint connection
+	connection := NewConnection(conn)
+	// Insert the connection into the local map
+	err := m.setConnection(endpoint.Id, connection)
 	if err != nil {
 		return err
 	}
-
-	log.Event("Endpoint '%s' connected.", endpoint.Name)
-
+	// Send the system metadata to the client
+	err = sendMetadata(connection)
+	if err != nil {
+		return err
+	}
+	// Create a thread to handle sending data to the endpoint
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		connection.Watch()
 	}()
-
+	// Send all the current system context to the endpoint
 	err = m.controller.EmitAll()
+	if err != nil {
+		log.Err(err)
+	}
+	// Log the current state
+	log.Event("Endpoint '%s' connected.", endpoint.Name)
+	// Listen for incoming close messages
+	for {
+		_, _, err = connection.WS.ReadMessage()
+		if err != nil {
+			break
+		}
+	}
+	// Wait until the watch function exits
+	wg.Wait()
+	// Remove the connection from the local map
+	err = m.removeConnection(endpoint.Id)
 	if err != nil {
 		return err
 	}
-	wg.Wait()
+	// Print disconnect message
+	log.Event("Endpoint '%s' disconnected.", endpoint.Name)
 	return nil
 }
 
 func (m *endpointOperator) Unenroll(id string) error {
-	connection, err := m.getConnection(id)
-	if err != nil {
-		return err
-	}
-	connection.Close()
-	log.Event("Endpoint '%s' disconnected.", id)
-	err = m.removeConnection(id)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 

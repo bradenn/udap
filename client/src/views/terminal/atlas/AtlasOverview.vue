@@ -7,10 +7,10 @@ import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 
 interface Response {
-  confidence: number;
   result: {
     end: number;
     start: number;
+    conf: number;
     word: string;
   }[];
   text: string;
@@ -22,7 +22,7 @@ let state = reactive({
   entity: {} as Entity,
   buffer: {} as Attribute,
   status: {} as Attribute,
-  response: {} as Response[],
+  response: {} as Response,
   decoded: {} as Status,
   loaded: false,
 })
@@ -49,7 +49,7 @@ function load(r: Remote) {
     buffer = {} as Attribute
   }
   state.buffer = buffer
-  state.response = JSON.parse(buffer.value) as Response[]
+  state.response = JSON.parse(buffer.value) as Response
 
 
   let status = r.attributes.find((attribute: Attribute) => attribute.entity === state.entity.id && attribute.key === 'status')
@@ -66,7 +66,7 @@ function load(r: Remote) {
 </script>
 
 <template>
-  <div class="d-flex justify-content-center align-items-start h-100">
+  <div class="d-flex justify-content-center align-items-start h-100 w-100">
 
     <div v-if="state.loaded" class="mt-4">
       <Plot :cols="1" :rows="2" style="width: 13rem;" title="Status">
@@ -79,11 +79,13 @@ function load(r: Remote) {
         <div>
         </div>
       </Plot>
-      <div>
-        <div v-for="response in state.response">
-          {{ state.response.indexOf(response) + 1 }}:
-          {{ response.text }}
+      <div v-if="state.loaded" class="d-flex">
+        <div v-for="word in state.response.result">
+          <div :style="`color:rgba(${255-Math.round(word.conf * 255)}, ${Math.round(word.conf * 255)}, 0, 1);`">
+            {{ word.word }}&nbsp;
+          </div>
         </div>
+
       </div>
     </div>
     <div v-else>
