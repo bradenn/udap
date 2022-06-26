@@ -24,16 +24,74 @@ let scene = {} as THREE.Scene
 let controls = {} as OrbitControls
 let beamLine = {} as THREE.Line
 
-const points = [
-  new THREE.Vector2(0.001, 0),
-  new THREE.Vector2(2.02, 0),
-  new THREE.Vector2(4.03, -2.07),
-  new THREE.Vector2(4.37, -2.07),
-  new THREE.Vector2(4.37, -3.17),
-  new THREE.Vector2(2.33, -3.17),
-  new THREE.Vector2(1.17, -3.17),
-  new THREE.Vector2(0, -3.17),
-]
+interface RoomDefinition {
+  offsets: {
+    x: number,
+    y: number,
+    z: number
+  },
+  rotations: {
+    x: number,
+    y: number,
+    z: number,
+  },
+  points: THREE.Vector2[]
+}
+
+const livingRoomSet = {
+  offsets: {
+    x: 0,
+    y: 0,
+    z: -1.2,
+  },
+  rotations: {
+    x: 0,
+    y: 0,
+    z: 0,
+  },
+  points: [
+    new THREE.Vector2(0.0001, 0), // Top Left
+    new THREE.Vector2(3.66, 0), // Top Right
+    new THREE.Vector2(3.66, 2.56),// Right Corner
+    new THREE.Vector2(3.2, 3.02), // Right Short wall
+    new THREE.Vector2(5.363, 5.183), // Right Long wall
+    new THREE.Vector2(4.224, 6.32127), // Front Door
+    new THREE.Vector2(3.707, 5.805), // Pantry Door Side
+    new THREE.Vector2(3.021, 6.491), // Pantry Face Side
+    new THREE.Vector2(3.537, 7.007), // Pantry Fridge Side
+    new THREE.Vector2(1.826, 8.7181), // Kitchen Far wall
+    new THREE.Vector2(-0.3374, 6.554), // Kitchen Left wall
+    new THREE.Vector2(0.285, 5.9317), // Kitchen Laundry Wall
+    new THREE.Vector2(-1.115, 4.5316), // Laundry Wall
+    new THREE.Vector2(0.3133, 3.103), // Room Wall
+    new THREE.Vector2(0.0001, 2.794), // Left Short Wall
+
+  ]
+}
+
+const bedroomSet = {
+  offsets: {
+    x: -2.02 - 0.0565,
+    y: 0,
+    z: 0,
+  },
+  rotations: {
+    x: Math.PI,
+    y: 0,
+    z: Math.PI / 4,
+  },
+  points: [
+    new THREE.Vector2(0.0001, 0),
+    new THREE.Vector2(2.02, 0),
+    new THREE.Vector2(4.03, -2.07),
+    new THREE.Vector2(4.37, -2.07),
+    new THREE.Vector2(4.37, -3.17),
+    new THREE.Vector2(2.33, -3.17),
+    new THREE.Vector2(1.17, -3.17),
+    new THREE.Vector2(0, -3.17),
+  ],
+
+}
 
 
 let s = 22;
@@ -43,12 +101,8 @@ onMounted(() => {
 })
 
 
-function drawWall(points: THREE.Vector2[]) {
+function drawWall(points: THREE.Vector2[], def: RoomDefinition) {
   const wall1 = new THREE.Shape();
-
-  points.forEach(point => {
-
-  })
 
   wall1.setFromPoints(points)
 
@@ -57,8 +111,13 @@ function drawWall(points: THREE.Vector2[]) {
     depth: 1.2, bevelEnabled: false
   });
 
+
   wallGeometry.scale(s, s, s)
-  wallGeometry.translate(-4.37 * s / 2, 3.17 * s / 2, 0.05 * s)
+
+  wallGeometry.translate(def.offsets.x * s, def.offsets.y * s, def.offsets.z * s)
+  wallGeometry.rotateX(def.rotations.x)
+  wallGeometry.rotateY(def.rotations.y)
+  wallGeometry.rotateZ(def.rotations.z)
   const wallMesh = new THREE.Mesh(wallGeometry, new THREE.MeshStandardMaterial({
     color: 0x424850,
     opacity: 0.8,
@@ -67,16 +126,16 @@ function drawWall(points: THREE.Vector2[]) {
   scene.add(wallMesh);
 }
 
-function drawWalls() {
-  for (let i = 0; i < points.length; i++) {
-    drawWall([points[i], points[(i + 1) % points.length]])
+function drawWalls(def: RoomDefinition) {
+  for (let i = 0; i < def.points.length; i++) {
+    drawWall([def.points[i], def.points[(i + 1) % def.points.length]], def)
   }
 }
 
-function drawFloor() {
+function drawFloor(def: RoomDefinition) {
   const floor = new THREE.Shape();
 
-  floor.setFromPoints(points)
+  floor.setFromPoints(def.points)
 
   const floorGeometry = new THREE.ExtrudeBufferGeometry([floor], {
     depth: 0.05, bevelEnabled: false, bevelSize: 0.05, bevelThickness: 0.05
@@ -84,7 +143,10 @@ function drawFloor() {
   });
 
   floorGeometry.scale(s, s, s)
-  floorGeometry.translate(-4.37 * s / 2, 3.17 * s / 2, 0)
+  floorGeometry.translate(def.offsets.x * s, def.offsets.y * s, 0)
+  floorGeometry.rotateX(def.rotations.x)
+  floorGeometry.rotateY(def.rotations.y)
+  floorGeometry.rotateZ(def.rotations.z)
   const floorMesh = new THREE.Mesh(floorGeometry, new THREE.MeshStandardMaterial({
     color: 0x171D24,
     opacity: 0.9,
@@ -106,6 +168,7 @@ function drawFloor() {
 function setCamera(x: number, y: number, z: number) {
   camera.position.set(x, y, z);
   camera.lookAt(0, 0, 0);
+
   // controls = new OrbitControls(camera, renderer.domElement);
   //
   // controls.enableRotate = true
@@ -130,32 +193,32 @@ function render() {
 let i = 0;
 let point = 0;
 let steps = 100;
-let pointCount = points.length;
+
 let last = performance.now();
 
 function animate() {
 
   requestAnimationFrame(animate);
-  if (performance.now() - last > 16.66) {
-    last = performance.now()
-    i = (i + 1) % steps
-    if (i == 0) {
-      point = (point + 1) % pointCount
-    }
-  }
+  // if (performance.now() - last > 16.66) {
+  //   last = performance.now()
+  //   i = (i + 1) % steps
+  //   if (i == 0) {
+  //     point = (point + 1) % pointCount
+  //   }
+  // }
   // required if controls.enableDamping or controls.autoRotate are set to true
   controls.update();
   // let x =
   // let y =,
-  let tx = i, ty = 0
-  let height = 1
-
-  let slice = (Math.PI * 2) / steps
-  let x = map_range(i, 0, steps, points[point].x, points[(point + 1) % pointCount].x)
-  let y = map_range(i, 0, steps, points[point].y, points[(point + 1) % pointCount].y)
-
-  // moveBeam(180 * (Math.PI / 180), 180 * (Math.PI / 180), 1)
-  moveBeamToXYZ(-4.27 + x, 2.62 + y, 0.01)
+  // let tx = i, ty = 0
+  // let height = 1
+  //
+  // let slice = (Math.PI * 2) / steps
+  // let x = map_range(i, 0, steps, points[point].x, points[(point + 1) % pointCount].x)
+  // let y = map_range(i, 0, steps, points[point].y, points[(point + 1) % pointCount].y)
+  //
+  // // moveBeam(180 * (Math.PI / 180), 180 * (Math.PI / 180), 1)
+  // moveBeamToXYZ(-4.27 + x, 2.62 + y, 0.01)
   // moveBeam(148.5 * (Math.PI / 180), 168.5 * (Math.PI / 180))
   // beamLine.rotateOnAxis(new THREE.Vector3(4.37, -2.62, 1), Math.random())
   // drawScene()
@@ -221,11 +284,11 @@ function drawBeam(x1: number, y1: number, z1: number, x2: number, y2: number, z2
 
 }
 
-function drawScene() {
-  drawFloor()
-  drawWalls()
+function drawScene(def: RoomDefinition) {
+  drawFloor(def)
+  drawWalls(def)
   // 23 29 36
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 0.8))
+
 }
 
 function loadThree() {
@@ -242,7 +305,7 @@ function loadThree() {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true
 
-  setCamera(0, -60, 100)
+  setCamera(0, 0, -400)
 
   scene = new THREE.Scene();
 
@@ -258,9 +321,14 @@ function loadThree() {
   // const light3 = new THREE.PointLight(0xFFFFFF, 0.6, 100);
   // light3.position.set(-42, -7, 14);
   // scene.add(light3);
+  const axesHelper = new THREE.AxesHelper(5);
+  scene.add(axesHelper);
 
-  drawScene()
-  drawBeam(4.37, -2.62, 1, 4.37, -2.62, -0.12)
+  drawScene(livingRoomSet)
+  drawScene(bedroomSet)
+  // drawScene(pointsd)
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 3))
+  // drawBeam(4.37, -2.62, 1, 4.37, -2.62, -0.12)
   animate()
   render()
 
