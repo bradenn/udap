@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 
 import * as THREE from "three";
-import {onMounted, reactive} from "vue";
+import {onMounted, onUnmounted, reactive} from "vue";
 
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
@@ -19,7 +19,7 @@ let state = reactive({
 })
 
 let renderer = {} as THREE.WebGLRenderer
-let camera = {} as THREE.PerspectiveCamera
+let camera = {} as THREE.OrthographicCamera
 let scene = {} as THREE.Scene
 let controls = {} as OrbitControls
 let beamLine = {} as THREE.Line
@@ -35,6 +35,12 @@ interface RoomDefinition {
     y: number,
     z: number,
   },
+  floor: {
+    diffuse: string,
+    roughness: string,
+    rotation: number,
+    scale: number,
+  }
   points: THREE.Vector2[]
 }
 
@@ -42,11 +48,17 @@ const livingRoomSet = {
   offsets: {
     x: 0,
     y: 0,
-    z: -1.2,
+    z: -0.05,
+  },
+  floor: {
+    diffuse: "/custom/textures/woodfloor-color.jpg",
+    roughness: "/custom/textures/woodfloor-roughness.jpg",
+    rotation: Math.PI * 3 / 4,
+    scale: 0.5,
   },
   rotations: {
     x: 0,
-    y: 0,
+    y: Math.PI,
     z: 0,
   },
   points: [
@@ -71,14 +83,20 @@ const livingRoomSet = {
 
 const bedroomSet = {
   offsets: {
-    x: -2.02 - 0.0565,
+    x: -2.02,
     y: 0,
     z: 0,
   },
+  floor: {
+    diffuse: "/custom/textures/carpet-color.jpg",
+    roughness: "/custom/textures/carpet-roughness.jpg",
+    rotation: Math.PI * 3 / 4,
+    scale: 1,
+  },
   rotations: {
-    x: Math.PI,
+    x: 0,
     y: 0,
-    z: Math.PI / 4,
+    z: Math.PI / 2 + Math.PI / 4,
   },
   points: [
     new THREE.Vector2(0.0001, 0),
@@ -94,7 +112,11 @@ const bedroomSet = {
 }
 
 
-let s = 22;
+let s = 100;
+
+onUnmounted(() => {
+  renderer.dispose()
+})
 
 onMounted(() => {
   loadThree()
@@ -132,8 +154,10 @@ function drawWalls(def: RoomDefinition) {
   }
 }
 
-function drawFloor(def: RoomDefinition) {
+function drawFloor(def: RoomDefinition): THREE.Object3D {
   const floor = new THREE.Shape();
+
+  const object = new THREE.Object3D();
 
   floor.setFromPoints(def.points)
 
@@ -143,17 +167,38 @@ function drawFloor(def: RoomDefinition) {
   });
 
   floorGeometry.scale(s, s, s)
-  floorGeometry.translate(def.offsets.x * s, def.offsets.y * s, 0)
+  floorGeometry.translate(def.offsets.x * s, def.offsets.y * s, def.offsets.z * s)
   floorGeometry.rotateX(def.rotations.x)
   floorGeometry.rotateY(def.rotations.y)
   floorGeometry.rotateZ(def.rotations.z)
-  const floorMesh = new THREE.Mesh(floorGeometry, new THREE.MeshStandardMaterial({
-    color: 0x171D24,
-    opacity: 0.9,
-    transparent: true
-  }));
 
-  scene.add(floorMesh);
+  let roughness = new THREE.TextureLoader().load(def.floor.roughness)
+  roughness.repeat.set(def.floor.scale, def.floor.scale)
+  roughness.rotation = def.floor.rotation
+
+  let map = new THREE.TextureLoader().load(def.floor.diffuse)
+  map.wrapT = THREE.RepeatWrapping
+  map.wrapS = THREE.RepeatWrapping
+  map.repeat.set(def.floor.scale, def.floor.scale)
+  map.rotation = def.floor.rotation
+
+  let cubeTex = new THREE.CubeTextureLoader().load([def.floor.diffuse])
+  cubeTex.mapping = THREE.CubeReflectionMapping
+  let floorMaterial = new THREE.MeshStandardMaterial({
+    color: 0x424850,
+    opacity: 1,
+    roughness: 1,
+    transparent: false,
+    envMap: cubeTex,
+    roughnessMap: roughness,
+    map: map
+  });
+
+  const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+
+  object.add(floorMesh)
+
+  return object
 
 
   // const gridHelper = new THREE.GridHelper(100, 60, 0x8C929B, 0x8C929B);
@@ -167,14 +212,16 @@ function drawFloor(def: RoomDefinition) {
 
 function setCamera(x: number, y: number, z: number) {
   camera.position.set(x, y, z);
+
   camera.lookAt(0, 0, 0);
 
-  // controls = new OrbitControls(camera, renderer.domElement);
+  controls = new OrbitControls(camera, renderer.domElement);
   //
-  // controls.enableRotate = true
-  // controls.enableDamping = true
-  // controls.enableZoom = true
+  controls.enableRotate = true
+  controls.enableDamping = true
+  controls.enableZoom = true
 
+  controls.update();
 
   //controls.update() must be called after any manual changes to the camera's transform
 
@@ -187,6 +234,7 @@ function map_range(value: number, low1: number, high1: number, low2: number, hig
 
 function render() {
   renderer.setClearColor(0x000000, 0);
+
   renderer.render(scene, camera);
 }
 
@@ -207,7 +255,7 @@ function animate() {
   //   }
   // }
   // required if controls.enableDamping or controls.autoRotate are set to true
-  controls.update();
+  // controls.update();
   // let x =
   // let y =,
   // let tx = i, ty = 0
@@ -222,6 +270,7 @@ function animate() {
   // moveBeam(148.5 * (Math.PI / 180), 168.5 * (Math.PI / 180))
   // beamLine.rotateOnAxis(new THREE.Vector3(4.37, -2.62, 1), Math.random())
   // drawScene()
+  controls.update()
   render()
 
 }
@@ -257,7 +306,6 @@ function moveBeam(pan: number, tilt: number, distance: number) {
   beamLine.geometry = newGeom
 }
 
-
 function drawBeam(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number) {
   const beamMaterial = new THREE.LineBasicMaterial({
     color: 0xff0000,
@@ -273,6 +321,8 @@ function drawBeam(x1: number, y1: number, z1: number, x2: number, y2: number, z2
   beamLine = new THREE.Line(beam, beamMaterial);
   scene.add(beamLine)
 
+  scene.rotateX(Math.PI / 2)
+
   // const radius = 120;
   // const radials = 64;
   // const circles = 24;
@@ -284,15 +334,15 @@ function drawBeam(x1: number, y1: number, z1: number, x2: number, y2: number, z2
 
 }
 
-function drawScene(def: RoomDefinition) {
-  drawFloor(def)
-  drawWalls(def)
+function drawScene(def: RoomDefinition): THREE.Object3D {
+  return drawFloor(def)
+  // drawWalls(def)
   // 23 29 36
-
 }
 
 function loadThree() {
   renderer = new THREE.WebGLRenderer();
+  renderer.shadowMap.enabled = true;
   let element = document.getElementById("three-container")
   if (!element) return
 
@@ -300,34 +350,42 @@ function loadThree() {
   renderer.setPixelRatio(window.devicePixelRatio);
 
   element.appendChild(renderer.domElement)
+  let width = window.innerWidth
+  let height = window.innerHeight
+  camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -1000, 1000);
+  // camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+  // controls = new OrbitControls(camera, renderer.domElement);
+  // controls.enableDamping = true
 
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true
-
-  setCamera(0, 0, -400)
+  setCamera(0, -1, 0)
 
   scene = new THREE.Scene();
 
-
-  // const light = new THREE.PointLight(0xFFFFFF, 0.6, 100);
-  // light.position.set(6, 14, 14);
-  // scene.add(light);
-  //
-  // const light2 = new THREE.PointLight(0xFFFFFF, 0.6, 100);
-  // light2.position.set(22, 3, 14);
-  // scene.add(light2);
-  //
-  // const light3 = new THREE.PointLight(0xFFFFFF, 0.6, 100);
-  // light3.position.set(-42, -7, 14);
-  // scene.add(light3);
-  const axesHelper = new THREE.AxesHelper(5);
+  const axesHelper = new THREE.AxesHelper(s);
+  axesHelper.setColors(new THREE.Color(255, 0, 0), new THREE.Color(0, 255, 0), new THREE.Color(0, 0, 255))
   scene.add(axesHelper);
 
-  drawScene(livingRoomSet)
-  drawScene(bedroomSet)
+  const gridHelper = new THREE.GridHelper(s * 10, s / 2)
+  gridHelper.rotateX(Math.PI / 2)
+  scene.add(gridHelper)
+
+  const livingRoomMesh = drawScene(livingRoomSet)
+  const bedroomMesh = drawScene(bedroomSet)
+
+  let combo = new THREE.Object3D().add(livingRoomMesh, bedroomMesh)
+  combo.rotateZ(Math.PI / 2)
+  combo.translateX(s)
+  combo.translateY(-s * 4)
+
   // drawScene(pointsd)
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 3))
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 2.25))
+  scene.add(combo)
+
+
+  const light = new THREE.PointLight(0xffffff, 1, 100);
+  light.position.set(50, 50, 25);
+  scene.add(light);
+
   // drawBeam(4.37, -2.62, 1, 4.37, -2.62, -0.12)
   animate()
   render()
