@@ -83,7 +83,7 @@ const livingRoomSet = {
 
 const bedroomSet = {
   offsets: {
-    x: -2.02,
+    x: 0.11,
     y: 0,
     z: 0,
   },
@@ -96,17 +96,16 @@ const bedroomSet = {
   rotations: {
     x: 0,
     y: 0,
-    z: Math.PI / 2 + Math.PI / 4,
+    z: 0,
   },
   points: [
-    new THREE.Vector2(0.0001, 0),
-    new THREE.Vector2(2.02, 0),
-    new THREE.Vector2(4.03, -2.07),
-    new THREE.Vector2(4.37, -2.07),
-    new THREE.Vector2(4.37, -3.17),
-    new THREE.Vector2(2.33, -3.17),
-    new THREE.Vector2(1.17, -3.17),
-    new THREE.Vector2(0, -3.17),
+    new THREE.Vector2(1.4283, -1.4283),
+    new THREE.Vector2(0.0001, 0), // Zero Point (Between room and living room/patio)
+    new THREE.Vector2(0, 2.88),
+    new THREE.Vector2(-0.2404, 3.1204),
+    new THREE.Vector2(0.5374, 3.8982),
+    new THREE.Vector2(3.6275, 0.8081),
+
   ],
 
 }
@@ -173,6 +172,8 @@ function drawFloor(def: RoomDefinition): THREE.Object3D {
   floorGeometry.rotateZ(def.rotations.z)
 
   let roughness = new THREE.TextureLoader().load(def.floor.roughness)
+  roughness.wrapT = THREE.RepeatWrapping
+  roughness.wrapS = THREE.RepeatWrapping
   roughness.repeat.set(def.floor.scale, def.floor.scale)
   roughness.rotation = def.floor.rotation
 
@@ -182,14 +183,11 @@ function drawFloor(def: RoomDefinition): THREE.Object3D {
   map.repeat.set(def.floor.scale, def.floor.scale)
   map.rotation = def.floor.rotation
 
-  let cubeTex = new THREE.CubeTextureLoader().load([def.floor.diffuse])
-  cubeTex.mapping = THREE.CubeReflectionMapping
-  let floorMaterial = new THREE.MeshStandardMaterial({
+  let floorMaterial = new THREE.MeshPhysicalMaterial({
     color: 0x424850,
     opacity: 1,
     roughness: 1,
     transparent: false,
-    envMap: cubeTex,
     roughnessMap: roughness,
     map: map
   });
@@ -357,7 +355,7 @@ function loadThree() {
   // controls = new OrbitControls(camera, renderer.domElement);
   // controls.enableDamping = true
 
-  setCamera(0, -1, 0)
+  setCamera(0, -1, 1)
 
   scene = new THREE.Scene();
 
