@@ -286,24 +286,24 @@ func (w *Atlas) Run() error {
 
 	w.status.Recognizer = "offline"
 	w.status.Synthesizer = "idle"
-
-	recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
-	done, err := recognizer.Connect("10.0.1.201")
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			err = recognizer.Listen()
-			if err != nil {
-				done <- true
-				log.Err(err)
-				break
-			}
-		}
-
-	}()
+	//
+	// recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
+	// done, err := recognizer.Connect("10.0.1.201")
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// go func() {
+	// 	for {
+	// 		err = recognizer.Listen()
+	// 		if err != nil {
+	// 			done <- true
+	// 			log.Err(err)
+	// 			break
+	// 		}
+	// 	}
+	//
+	// }()
 
 	// go func() {
 	// 	for {

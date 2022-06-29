@@ -25,12 +25,12 @@ type WeatherAPI struct {
 	GenerationtimeMs float64 `json:"generationtime_ms"`
 	Latitude         float64 `json:"latitude"`
 	Longitude        float64 `json:"longitude"`
-	Elevation        int     `json:"elevation"`
+	Elevation        float64 `json:"elevation"`
 	CurrentWeather   struct {
 		Temperature   float64 `json:"temperature"`
-		Winddirection int     `json:"winddirection"`
-		Weathercode   int     `json:"weathercode"`
-		Time          int     `json:"time"`
+		Winddirection float64 `json:"winddirection"`
+		Weathercode   float64 `json:"weathercode"`
+		Time          float64 `json:"time"`
 		Windspeed     float64 `json:"windspeed"`
 	} `json:"current_weather"`
 	Hourly      Hourly      `json:"hourly"`
@@ -40,24 +40,24 @@ type WeatherAPI struct {
 }
 
 type Daily struct {
-	Sunrise          []int     `json:"sunrise"`
+	Sunrise          []float64 `json:"sunrise"`
 	PrecipitationSum []float64 `json:"precipitation_sum"`
-	Weathercode      []int     `json:"weathercode"`
+	Weathercode      []float64 `json:"weathercode"`
 	Temperature2MMin []float64 `json:"temperature_2m_min"`
-	Time             []int     `json:"time"`
+	Time             []float64 `json:"time"`
 	Temperature2MMax []float64 `json:"temperature_2m_max"`
-	Sunset           []int     `json:"sunset"`
+	Sunset           []float64 `json:"sunset"`
 }
 
 type Hourly struct {
 	ShortwaveRadiation  []float64 `json:"shortwave_radiation"`
 	Precipitation       []float64 `json:"precipitation"`
-	Relativehumidity2M  []int     `json:"relativehumidity_2m"`
-	Winddirection10M    []int     `json:"winddirection_10m"`
-	Weathercode         []int     `json:"weathercode"`
+	Relativehumidity2M  []float64 `json:"relativehumidity_2m"`
+	Winddirection10M    []float64 `json:"winddirection_10m"`
+	Weathercode         []float64 `json:"weathercode"`
 	Windgusts10M        []float64 `json:"windgusts_10m"`
 	ApparentTemperature []float64 `json:"apparent_temperature"`
-	Time                []int     `json:"time"`
+	Time                []float64 `json:"time"`
 	Windspeed10M        []float64 `json:"windspeed_10m"`
 	Temperature2M       []float64 `json:"temperature_2m"`
 }

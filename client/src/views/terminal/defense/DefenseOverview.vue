@@ -1,14 +1,11 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-
-
 import Plot from "@/components/plot/Plot.vue";
 import {inject, onMounted, onUnmounted, reactive, watch} from "vue";
 import axios from "axios";
 import Subplot from "@/components/plot/Subplot.vue";
 import Confirm from "@/components/plot/Confirm.vue";
-import DefenseAuth from "@/views/terminal/defense/DefenseAuth.vue";
-import type {Session} from "@/types";
+import type {Attribute, Entity, Remote, Session} from "@/types";
 
 let state = reactive({
   laser: false,
@@ -17,17 +14,35 @@ let state = reactive({
   runner: 0,
   speed: 1,
   auth: false,
+  entity: {} as Entity,
+  position: {} as Attribute
 })
 
 let session = inject("session") as Session
+let remote = inject("remote") as Remote
 
 onMounted(() => {
   query()
   verifyAuth(session)
+  findEntity(remote)
 })
 
 onUnmounted(() => {
   laserStop()
+})
+
+function findEntity(rem: Remote) {
+  let entity = rem.entities.find(e => e.name === "sentryA")
+  if (!entity) return
+  state.entity = entity
+  let posAttribute = rem.attributes.find(e => e.entity === entity.id && e.key === "position")
+  if (!posAttribute) return
+  state.position = posAttribute
+  query()
+}
+
+watch(remote, (current: Remote, past: Remote) => {
+  findEntity(current)
 })
 
 watch(session, (current: Session, previous: Session) => {
@@ -39,18 +54,16 @@ function verifyAuth(current: Session) {
 }
 
 function query() {
-  axios.get(`http://10.0.1.60/query`).then(res => {
-    state.laser = (res.data.laser === 1)
-    state.pan = map_range(res.data.pan, 0, 1800, 0, 180)
-    state.tilt = map_range(res.data.tilt, 0, 1800, 0, 180)
-  }).catch(res => {
-    console.log(res)
-  })
+  if (!state.position) return
+  let status = JSON.parse(state.position.value)
+  state.pan = status.pan
+  state.tilt = status.tilt
 }
 
 function laserPower(on: boolean) {
-  axios.get(`http://10.0.1.60/laser/${on ? 1 : 0}`).then(res => {
-    state.laser = res.data.value === 1
+  axios.defaults.headers.post['Content-Type'] = "application/text"
+  axios.post(`http://10.0.1.60/beam`, {target: "primary", active: on ? 1 : 0, power: 10}).then(res => {
+    state.laser = (res.data.beams.primary === 1)
   }).catch(res => {
     console.log(res)
   })
@@ -61,21 +74,23 @@ function laserToggle() {
 }
 
 function laserTilt(value: number) {
-  let tiltA = map_range(value, 0, 180, 0, 1800)
-  axios.get(`http://10.0.1.60/tilt/${tiltA}`).then(res => {
-    state.tilt = map_range(res.data.value, 0, 1800, 0, 180)
-  }).catch(res => {
-    console.log(res)
+  if (!state.entity) return
+  let payload = JSON.stringify({
+    pan: Math.round(state.pan),
+    tilt: Math.round(value)
   })
+  console.log(payload)
+  remote.nexus.requestAttribute(state.entity.id, "position", payload)
 }
 
 function laserPan(value: number) {
-  let panA = map_range(value, 0, 180, 0, 1800)
-  axios.get(`http://10.0.1.60/pan/${panA}`).then(res => {
-    state.pan = map_range(res.data.value, 0, 1800, 0, 180)
-  }).catch(res => {
-    console.log(res)
+  if (!state.entity) return
+  let payload = JSON.stringify({
+    pan: Math.round(value),
+    tilt: Math.round(state.tilt)
   })
+  console.log(payload)
+  remote.nexus.requestAttribute(state.entity.id, "position", payload)
 }
 
 function laserHome() {
@@ -87,14 +102,19 @@ function laserWall() {
 }
 
 function laserPanTilt(pan: number, tilt: number) {
-  let panA = map_range(pan, 0, 180, 0, 1800)
-  let tiltA = map_range(tilt, 0, 180, 0, 1800)
-  axios.get(`http://10.0.1.60/pan/${panA}/tilt/${tiltA}`).then(res => {
-    state.pan = map_range(res.data.pan, 0, 1800, 0, 180)
-    state.tilt = map_range(res.data.tilt, 0, 1800, 0, 180)
-  }).catch(res => {
-    console.log(res)
-  })
+  if (!state.entity) return
+  remote.nexus.requestAttribute(state.entity.id, "position", JSON.stringify({
+    pan: Math.round(pan),
+    tilt: Math.round(tilt)
+  }))
+  // let panA = map_range(pan, 0, 180, 0, 1800)
+  // let tiltA = map_range(tilt, 0, 180, 0, 1800)
+  // axios.get(`http://10.0.1.60/pan/${panA}/tilt/${tiltA}`).then(res => {
+  //   state.pan = map_range(res.data.pan, 0, 1800, 0, 180)
+  //   state.tilt = map_range(res.data.tilt, 0, 1800, 0, 180)
+  // }).catch(res => {
+  //   console.log(res)
+  // })
 }
 
 function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
@@ -180,8 +200,7 @@ function laserStop() {
 </script>
 
 <template>
-  <div v-if="state.auth" class="d-flex gap flex-wrap mt-4">
-
+  <div class="d-flex gap flex-wrap mt-4">
     <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
       <Confirm :active="state.laser" :disabled="state.laser"
                :fn="laserToggle" :title="`${state.laser?'DISABLE':'ENABLE'} LASER`"></Confirm>
@@ -190,7 +209,7 @@ function laserStop() {
     </Plot>
 
     <Plot :cols="2" :rows="4" style="width: 13rem" title="Control">
-      <Subplot :active="true" :fn="laserHome" name="HOME"></Subplot>
+      <Subplot :active="true" :fn="() => laserHome()" name="HOME"></Subplot>
       <div></div>
       <Subplot :active="true" :fn="() => laserPan(state.pan-1)" name="LEFT"></Subplot>
       <Subplot :active="true" :fn="() => laserPan(state.pan+1)" name="RIGHT"></Subplot>
@@ -240,9 +259,9 @@ function laserStop() {
     </Plot>
 
   </div>
-  <div v-else>
-    <DefenseAuth></DefenseAuth>
-  </div>
+  <!--  <div v-else>-->
+  <!--    <DefenseAuth></DefenseAuth>-->
+  <!--  </div>-->
 </template>
 
 <style lang="scss" scoped>

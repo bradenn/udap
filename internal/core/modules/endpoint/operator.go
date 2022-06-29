@@ -60,6 +60,7 @@ func (c *Connection) Watch() {
 			err := c.WS.WriteJSON(req)
 			if err != nil {
 				log.Err(err)
+				return
 			}
 		}
 	}
