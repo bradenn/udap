@@ -2,34 +2,275 @@
 <script lang="ts" setup>
 import Plot from "@/components/plot/Plot.vue";
 import {inject, onMounted, onUnmounted, reactive, watch} from "vue";
-import axios from "axios";
 import Subplot from "@/components/plot/Subplot.vue";
 import Confirm from "@/components/plot/Confirm.vue";
 import type {Attribute, Entity, Remote, Session} from "@/types";
+import * as THREE from "three";
+import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
+import type {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+
+
+let room = [
+  new THREE.Vector2(0.001, 0),
+  new THREE.Vector2(2.02, 0),
+  new THREE.Vector2(4.03, -2.07),
+  new THREE.Vector2(4.37, -2.07),
+  new THREE.Vector2(4.37, -3.17),
+  new THREE.Vector2(2.33, -3.17),
+  new THREE.Vector2(1.17, -3.17),
+  new THREE.Vector2(0, -3.17),
+]
 
 let state = reactive({
-  laser: false,
+  x: 0,
+  y: 0,
+  z: 0,
+  pointer: {
+    x: 0,
+    y: 0
+  },
   pan: 90,
   tilt: 180,
   runner: 0,
   speed: 1,
+  laser: false,
+  laserBeam: {} as Beam,
   auth: false,
   entity: {} as Entity,
-  position: {} as Attribute
+  position: {} as Attribute,
+  beam: {} as Attribute
 })
 
-let session = inject("session") as Session
-let remote = inject("remote") as Remote
+const emitter = {
+  x: 0,
+  y: 0,
+  z: 0,
+}
+
+let renderer = {} as THREE.WebGLRenderer
+let camera = {} as THREE.PerspectiveCamera
+let scene = {} as THREE.Scene
+let beamLine = {} as THREE.Line
+let controls = {} as OrbitControls
+let composer = {} as EffectComposer
+let floorObj = new THREE.Object3D()
+
+const s = 200;
 
 onMounted(() => {
-  query()
+  load3d()
   verifyAuth(session)
   findEntity(remote)
 })
 
+
+function moveBeamToXYZ(x: number, y: number, z: number) {
+  state.x = x
+  state.y = y
+  state.z = z
+  let distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2))
+  let theta = Math.atan(y / x)
+  let phi = Math.atan(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / z)
+  laserPanTilt(theta * 180 / Math.PI, phi * 180 / Math.PI)
+  moveBeam(theta, phi, distance)
+
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update()
+  render()
+}
+
+function moveBeam(pan: number, tilt: number, distance: number) {
+
+  let theta = -(pan * Math.PI / 180 + Math.PI / 2)
+  let phi = (tilt * Math.PI / 180)
+
+  let x = distance * Math.cos(theta) * Math.sin(phi)
+  let y = distance * Math.sin(theta) * Math.sin(phi)
+  let z = distance * Math.cos(phi)
+  let origin = new THREE.Vector3(4.27, -2.62, 2.28)
+  let target = new THREE.Vector3(4.27 + x, -2.62 + y, 2.28 - z)
+
+  let newGeom = new THREE.BufferGeometry().setFromPoints([origin, target])
+  newGeom.scale(s, s, s)
+  beamLine.geometry.dispose()
+  beamLine.geometry = newGeom
+}
+
+function drawBeam(): THREE.Object3D {
+  const beamMaterial = new THREE.LineBasicMaterial({
+    color: 0xff0000,
+    linewidth: 3,
+    linecap: 'round', //ignored by WebGLRenderer
+    linejoin: 'round' //ignored by WebGLRenderer
+  })
+
+
+  const beam = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(4.27, -2.62, 2.37), new THREE.Vector3(0, 0, 0)])
+  beam.scale(s, s, s)
+
+  beamLine = new THREE.Line(beam, beamMaterial);
+
+  let obj = new THREE.Object3D()
+  obj.add(beamLine)
+
+  return obj
+
+  // const radius = 120;
+  // const radials = 64;
+  // const circles = 24;
+  // const divisions = 64;
+  //
+  // const grid = new THREE.GridHelper(100, 20)
+  // grid.rotateX(Math.PI / 2)
+  // scene.add(grid)
+
+}
+
+
+function drawFloor(): THREE.Object3D {
+  const floor = new THREE.Shape();
+
+  let object = new THREE.Object3D();
+
+  floor.setFromPoints(room)
+
+  const floorGeometry = new THREE.ExtrudeBufferGeometry([floor], {
+    depth: 0.05, bevelEnabled: false, bevelSize: 0.05, bevelThickness: 0.05
+  });
+
+  floorGeometry.scale(s, s, s)
+
+  let floorMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x323232,
+    opacity: 1,
+    roughness: 0.85,
+    transparent: false,
+  });
+
+  const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+
+  object.add(floorMesh)
+
+  return object
+
+
+  // const gridHelper = new THREE.GridHelper(100, 60, 0x8C929B, 0x8C929B);
+  //
+  // gridHelper.rotateX(Math.PI / 2)
+  // gridHelper.translateY(0.06 * s)
+  // scene.add(gridHelper);
+
+}
+
+function drawWall(points: THREE.Vector2[]): THREE.Object3D {
+  const wall1 = new THREE.Shape();
+
+  wall1.setFromPoints(points)
+
+
+  const wallGeometry = new THREE.ExtrudeBufferGeometry([wall1], {
+    depth: 2.37, bevelEnabled: false
+  });
+
+
+  wallGeometry.scale(s, s, s)
+
+
+  let wallMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x424850,
+    opacity: 1,
+    roughness: 1,
+    transparent: false,
+  });
+
+  return new THREE.Mesh(wallGeometry, wallMaterial)
+}
+
+function drawWalls(points: THREE.Vector2[]): THREE.Object3D {
+  let obj = new THREE.Object3D()
+  for (let i = 0; i < points.length; i++) {
+    obj.add(drawWall([points[i], points[(i + 1) % points.length]]))
+  }
+  return obj
+}
+
+function setCamera(x: number, y: number, z: number) {
+  camera.position.set(x, y, z);
+  camera.lookAt(0, 0, 0);
+}
+
+function render() {
+  renderer.setClearColor(0x000000, 0);
+
+  renderer.render(scene, camera);
+}
+
+function load3d() {
+  renderer = new THREE.WebGLRenderer();
+  renderer.shadowMap.enabled = true;
+  let element = document.getElementById("room-container")
+  if (!element) return
+
+
+  renderer.setSize(element.clientWidth, element.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+
+  element.appendChild(renderer.domElement)
+  let width = window.innerWidth
+  let height = window.innerHeight
+  document.addEventListener('pointermove', onPointerMove);
+
+  // camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -1000, 1000);
+  camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 1, 10000);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true
+
+
+  setCamera(0, -1 * s, 13 * s)
+
+
+  scene = new THREE.Scene();
+
+
+  const axesHelper = new THREE.AxesHelper(10);
+  axesHelper.setColors(new THREE.Color(255, 0, 0), new THREE.Color(0, 255, 0), new THREE.Color(0, 0, 255))
+  scene.add(axesHelper);
+  let roomObject = new THREE.Object3D()
+
+  roomObject.add(drawFloor())
+  roomObject.add(drawWalls(room))
+  roomObject.add(drawBeam())
+  floorObj.add(roomObject)
+  // drawScene(pointsd)
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 1))
+
+  roomObject.rotateZ(Math.PI)
+  roomObject.translateX(-(4.37 / 2) * s)
+  roomObject.translateY((3.17 / 2) * s)
+  scene.add(roomObject)
+
+
+  animate()
+  render()
+  // const gridHelper = new THREE.GridHelper(s * 10, s / 2)
+}
+
+let session = inject("session") as Session
+let remote = inject("remote") as Remote
+
+
 onUnmounted(() => {
   laserStop()
 })
+
+interface Beam {
+  active: number,
+  target: string,
+  power: number,
+}
 
 function findEntity(rem: Remote) {
   let entity = rem.entities.find(e => e.name === "sentryA")
@@ -38,6 +279,9 @@ function findEntity(rem: Remote) {
   let posAttribute = rem.attributes.find(e => e.entity === entity.id && e.key === "position")
   if (!posAttribute) return
   state.position = posAttribute
+  let laserAttribute = rem.attributes.find(e => e.entity === entity.id && e.key === "beam")
+  if (!laserAttribute) return
+  state.beam = laserAttribute
   query()
 }
 
@@ -58,15 +302,26 @@ function query() {
   let status = JSON.parse(state.position.value)
   state.pan = status.pan
   state.tilt = status.tilt
+  let theta = Math.PI / 180 * state.pan
+  let phi = Math.PI / 180 * state.tilt
+  let distance = 10;
+  state.x = distance * Math.cos(theta) * Math.sin(phi)
+  state.y = distance * Math.sin(theta) * Math.sin(phi)
+  state.z = distance * Math.cos(phi)
+  if (!state.beam) return
+  state.laserBeam = JSON.parse(state.beam.value) as Beam;
+  state.laser = (state.laserBeam.active === 1)
+  moveBeam(state.pan, state.tilt, 5)
+
 }
 
 function laserPower(on: boolean) {
-  axios.defaults.headers.post['Content-Type'] = "application/text"
-  axios.post(`http://10.0.1.60/beam`, {target: "primary", active: on ? 1 : 0, power: 10}).then(res => {
-    state.laser = (res.data.beams.primary === 1)
-  }).catch(res => {
-    console.log(res)
-  })
+  if (!state.entity) return
+  if (!state.laserBeam) return
+  let beam = state.laserBeam
+  beam.active = on ? 1 : 0;
+  let payload = JSON.stringify(beam)
+  remote.nexus.requestAttribute(state.entity.id, "beam", payload)
 }
 
 function laserToggle() {
@@ -79,7 +334,6 @@ function laserTilt(value: number) {
     pan: Math.round(state.pan),
     tilt: Math.round(value)
   })
-  console.log(payload)
   remote.nexus.requestAttribute(state.entity.id, "position", payload)
 }
 
@@ -89,8 +343,11 @@ function laserPan(value: number) {
     pan: Math.round(value),
     tilt: Math.round(state.tilt)
   })
-  console.log(payload)
   remote.nexus.requestAttribute(state.entity.id, "position", payload)
+}
+
+function laserSafe() {
+  laserPanTilt(180, 180)
 }
 
 function laserHome() {
@@ -125,16 +382,34 @@ function laserSpeed(speed: number) {
   state.speed = speed
 }
 
+function onPointerMove(event) {
+
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+}
+
 function laserStopAll() {
   clearInterval(state.runner)
   state.runner = 0
   state.speed = 1
-  laserHome()
+  laserSafe()
   laserPower(false)
 }
 
 function getSpeed(): number {
   return state.speed
+}
+
+function goToXYZ(x: number, y: number, z: number) {
+  let distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2))
+  let theta = Math.atan(y / x) + (x >= 0 ? 0 : Math.PI)
+  let phi = Math.atan(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / z)
+  let pan = theta * 180 / Math.PI
+  let tilt = phi * 180 / Math.PI
+  if (pan >= 0 && pan <= 180 && tilt >= 0 && tilt <= 180) {
+    laserPanTilt(pan, tilt)
+  }
 }
 
 function laserRun() {
@@ -145,12 +420,9 @@ function laserRun() {
   let dir = false;
 
   state.runner = setInterval(() => {
-    let b1 = map_range(tick, 0, 1000, 90, 145)
     tick += dir ? -state.speed : state.speed;
-    if (Math.floor(tick) % 250 == 0) {
-      state.speed = Math.random() * 20
-    }
-    if (Math.floor(tick) >= 1000) {
+
+    if (Math.floor(tick) >= 256) {
       dir = true;
     } else if (Math.floor(tick) <= 0) {
       dir = false;
@@ -158,10 +430,10 @@ function laserRun() {
     //
     // laserPan(Math.cos(Math.floor(tick)) * map_range(Math.floor((2 * Math.PI / 100) * tick), 0, 100, 15, 1) + a1)
     // laserTilt(Math.sin(Math.floor(tick)) + b1)
-    laserPanTilt(80 + Math.sin((2 * Math.PI / 250) * tick) * map_range(tick, 0, 1000, 20, 5), b1)
+    moveBeamToXYZ(0, map_range(tick, 0, 256, 0, 10), 10)
 
 
-  }, 65)
+  }, 300)
 
 }
 
@@ -200,64 +472,85 @@ function laserStop() {
 </script>
 
 <template>
-  <div class="d-flex gap flex-wrap mt-4">
-    <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
-      <Confirm :active="state.laser" :disabled="state.laser"
-               :fn="laserToggle" :title="`${state.laser?'DISABLE':'ENABLE'} LASER`"></Confirm>
+  <div class="d-flex w-100 h-100 gap-2 mt-1 pb-4">
+    <div class="d-flex flex-column gap flex-wrap">
 
-      <Subplot :active="true" :fn="laserStopAll" name="STOP ALL" theme="danger"></Subplot>
-    </Plot>
-
-    <Plot :cols="2" :rows="4" style="width: 13rem" title="Control">
-      <Subplot :active="true" :fn="() => laserHome()" name="HOME"></Subplot>
-      <div></div>
-      <Subplot :active="true" :fn="() => laserPan(state.pan-1)" name="LEFT"></Subplot>
-      <Subplot :active="true" :fn="() => laserPan(state.pan+1)" name="RIGHT"></Subplot>
-      <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)" name="DOWN"></Subplot>
-      <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)" name="UP"></Subplot>
-    </Plot>
-
-    <Plot :cols="2" :rows="3" style="width: 13rem;" title="Programmed">
-      <Subplot :active="true" :fn="() => laserWall()" name="Bed"></Subplot>
-      <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
-      <Subplot :active="true" :fn="() => laserCircle()" name="Circle"></Subplot>
-      <Subplot :active="true" :fn="() => laserStop()" name="STOP"></Subplot>
-    </Plot>
-    <Plot :cols="1" :rows="2" style="width: 13rem;" title="Programmed">
-      <div>
-        <div class="d-flex justify-content-between label-xs label-r px-1">
-          <div class="label-w500">Pan (X)</div>
-          <div class="label-w600 label-o3">{{ state.pan }}°</div>
+      <Plot :cols="1" :rows="2" style="width:13rem;" title="Location">
+        <div class="d-flex justify-content-evenly">
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
+            X: {{ Math.round(state.x * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
+            Y: {{ Math.round(state.y * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
+            Z: {{ Math.round(state.z * 10) / 10 }}
+          </div>
         </div>
-        <input
-            id="pan"
-            v-model="state.pan"
-            :max="180"
-            :min="0"
-            :step="1"
-            class="slider element "
-            type="range"
-            v-on:mouseup="() => laserPan(state.pan)">
-      </div>
+        <div class="d-flex justify-content-evenly">
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 4rem">
+            Pan: {{ Math.round(state.pan * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c1" style="width: 4rem">
+            Tilt: {{ Math.round(state.tilt * 10) / 10 }}
+          </div>
 
-      <div>
-        <div class="d-flex justify-content-between label-xs label-r px-1">
-          <div class="label-w500">Tilt (Y)</div>
-          <div class="label-w600 label-o3">{{ state.tilt }}°</div>
         </div>
-        <input
-            id="tilt"
-            v-model="state.tilt"
-            :max="180"
-            :min="0"
-            :step="1"
-            class="slider element"
-            type="range"
-            v-on:mouseup="() => laserTilt(state.tilt)">
-      </div>
+      </Plot>
+      <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
+        <Confirm :active="state.laser" :disabled="state.laser"
+                 :fn="laserToggle" :title="`${state.laser?'DISABLE':'ENABLE'} LASER`"></Confirm>
 
-    </Plot>
+        <Subplot :active="true" :fn="laserStopAll" name="STOP ALL" theme="danger"></Subplot>
+        <Subplot :active="true" :fn="() => laserHome()" name="HOME"></Subplot>
+        <Subplot :active="true" :fn="() => moveBeamToXYZ(0, 0, 0)" name="(0, 0, 0)"></Subplot>
+        <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
+      </Plot>
+      <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
+        <Subplot :active="true" :fn="() => laserPan(state.pan-1)" name="􀄪"></Subplot>
+        <Subplot :active="true" :fn="() => laserPan(state.pan+1)" name="􀄫"></Subplot>
+        <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)" name="􀄨"></Subplot>
+        <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)" name="􀄩"></Subplot>
+      </Plot>
+      <Plot :cols="1" :rows="2" style="width: 13rem;" title="Programmed">
+        <div>
+          <div class="d-flex justify-content-between label-xs label-r px-1">
+            <div class="label-w500">Pan (X)</div>
+            <div class="label-w600 label-o3">{{ state.pan }}°</div>
+          </div>
+          <input
+              id="pan"
+              v-model="state.pan"
+              :max="180"
+              :min="0"
+              :step="1"
+              class="slider element "
+              type="range"
+              v-on:mouseup="() => laserPan(state.pan)">
+        </div>
 
+        <div>
+          <div class="d-flex justify-content-between label-xs label-r px-1">
+            <div class="label-w500">Tilt (Y)</div>
+            <div class="label-w600 label-o3">{{ state.tilt }}°</div>
+          </div>
+          <input
+              id="tilt"
+              v-model="state.tilt"
+              :max="180"
+              :min="0"
+              :step="1"
+              class="slider element"
+              type="range"
+              v-on:mouseup="() => laserTilt(state.tilt)">
+        </div>
+
+      </Plot>
+
+    </div>
+    <div id="room-container" class=" element h-100 w-100">
+
+    </div>
   </div>
   <!--  <div v-else>-->
   <!--    <DefenseAuth></DefenseAuth>-->

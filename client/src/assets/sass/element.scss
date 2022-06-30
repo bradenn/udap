@@ -6,7 +6,7 @@ $element-fg: lighten($element-bg, 8%);
 $element-bg-active: lighten($element-bg, 10%);
 $element-shadow: rgba(0, 0, 0, 0.2);
 
-$element-border: rgba(0, 0, 0, 0);
+$element-border: lighten($element-fg, 12%);
 
 $element-border-radius: 0.25rem;
 

@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 	"udap/internal/core/domain"
+	"udap/internal/log"
 	"udap/internal/plugin"
 )
 
@@ -64,7 +66,7 @@ func init() {
 }
 
 func (v *Sentry) Setup() (plugin.Config, error) {
-	err := v.UpdateInterval(10000)
+	err := v.UpdateInterval(2000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
@@ -102,7 +104,15 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 	reader := bytes.NewReader(marshal)
 
 	client := http.Client{}
-	_, err = client.Post(fmt.Sprintf("http://%s/position", sentryUrl), "application/json", reader)
+	client.Timeout = time.Millisecond * 250
+	defer client.CloseIdleConnections()
+	resp, err := client.Post(fmt.Sprintf("http://%s/position", sentryUrl), "application/json", reader)
+	if err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -110,10 +120,51 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 	return nil
 }
 
+func (v *Sentry) requestBeam(beam Beam) error {
+	beam.Target = "primary"
+	beam.Power = 15
+	marshal, err := json.Marshal(beam)
+	if err != nil {
+		return err
+	}
+	reader := bytes.NewReader(marshal)
+
+	v.beam = beam
+
+	client := http.Client{}
+	client.Timeout = time.Millisecond * 250
+	defer client.CloseIdleConnections()
+	resp, err := client.Post(fmt.Sprintf("http://%s/beam", sentryUrl), "application/json", reader)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	err = v.UpdateData(buf)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Sentry) setBeam(beam Beam) error {
+	err := v.requestBeam(beam)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (v *Sentry) setPositions(position Position) error {
 	pos := SetPosition{}
 	pos.Target = "tilt"
-	value := mapRange(float64(position.Pan), 0, 180, -256, 256)
+	value := mapRange(float64(position.Tilt), 0, 180, -90, 90)
 	pos.Position = int(value)
 
 	err := v.requestPosition(pos)
@@ -122,7 +173,7 @@ func (v *Sentry) setPositions(position Position) error {
 	}
 
 	pos.Target = "pan"
-	value = mapRange(float64(position.Tilt), 0, 180, -256, 256)
+	value = mapRange(float64(position.Pan), 0, 180, -90, 90)
 	pos.Position = int(value)
 
 	err = v.requestPosition(pos)
@@ -137,17 +188,25 @@ func (v *Sentry) setPositions(position Position) error {
 func (v *Sentry) listen() error {
 	for {
 		select {
-		case _ = <-v.beamChannel:
-
+		case beam := <-v.beamChannel:
+			b := Beam{}
+			err := json.Unmarshal([]byte(beam.Request), &b)
+			if err != nil {
+				log.Err(err)
+			}
+			err = v.setBeam(b)
+			if err != nil {
+				log.Err(err)
+			}
 		case position := <-v.positionChannel:
 			p := Position{}
 			err := json.Unmarshal([]byte(position.Request), &p)
 			if err != nil {
-				return err
+				log.Err(err)
 			}
 			err = v.setPositions(p)
 			if err != nil {
-				return err
+				log.Err(err)
 			}
 		}
 	}
@@ -156,6 +215,7 @@ func (v *Sentry) listen() error {
 func (v *Sentry) pull() error {
 
 	client := http.Client{}
+	client.Timeout = time.Millisecond * 250
 	get, err := client.Get(fmt.Sprintf("http://%s/status", sentryUrl))
 	if err != nil {
 		return err
@@ -166,14 +226,24 @@ func (v *Sentry) pull() error {
 	if err != nil {
 		return err
 	}
+
+	err = v.UpdateData(buf)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Sentry) UpdateData(buf bytes.Buffer) error {
 	s := Status{}
-	err = json.Unmarshal(buf.Bytes(), &s)
+	err := json.Unmarshal(buf.Bytes(), &s)
 	if err != nil {
 		return err
 	}
 	p := Position{}
-	p.Pan = int(mapRange(float64(s.Servos.Tilt), -256, 256, 0, 180))
-	p.Tilt = int(mapRange(float64(s.Servos.Pan), -256, 256, 0, 180))
+	p.Pan = int(mapRange(float64(s.Servos.Pan), -90, 90, 0, 180))
+	p.Tilt = int(mapRange(float64(s.Servos.Tilt), -90, 90, 0, 180))
 	marshal, err := json.Marshal(p)
 	if err != nil {
 		return err
@@ -183,6 +253,23 @@ func (v *Sentry) pull() error {
 		return err
 	}
 
+	b := Beam{}
+	b.Target = "primary"
+	if s.Beams.Primary {
+		b.Active = 1
+	} else {
+		b.Active = 0
+	}
+	b.Power = 15
+
+	marshal, err = json.Marshal(b)
+	if err != nil {
+		return err
+	}
+	err = v.Attributes.Set(v.eId, "beam", string(marshal))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -215,10 +302,16 @@ func (v *Sentry) Run() error {
 		Type:    "media",
 		Order:   0,
 		Entity:  e.Id,
-		Channel: make(chan domain.Attribute),
+		Channel: make(chan domain.Attribute, 10),
 	}
 
 	v.positionChannel = position.Channel
+
+	v.beam = Beam{
+		Target: "primary",
+		Active: 0,
+		Power:  15,
+	}
 
 	beam := &domain.Attribute{
 		Key:     "beam",

@@ -68,7 +68,8 @@ func (a *attributeOperator) Set(attribute *domain.Attribute, s string) error {
 
 func (a *attributeOperator) Update(attribute *domain.Attribute, val string, stamp time.Time) error {
 	// If a request has been made in the last five seconds, and has been unresolved, ignore this update
-	if attribute.Requested.Before(stamp) && attribute.Request != val && time.Since(attribute.Requested) < 5*time.Second {
+	if attribute.Requested.Before(stamp) && attribute.Request != val && time.Since(attribute.Requested) < 200*time.
+		Millisecond {
 		return fmt.Errorf("OVERWRITES REQUEST")
 	}
 	// Set the value
