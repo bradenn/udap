@@ -276,10 +276,10 @@ function findEntity(rem: Remote) {
   let entity = rem.entities.find(e => e.name === "sentryA")
   if (!entity) return
   state.entity = entity
-  let posAttribute = rem.attributes.find(e => e.entity === entity.id && e.key === "position")
+  let posAttribute = rem.attributes.find(e => e.entity === state.entity.id && e.key === "position")
   if (!posAttribute) return
   state.position = posAttribute
-  let laserAttribute = rem.attributes.find(e => e.entity === entity.id && e.key === "beam")
+  let laserAttribute = rem.attributes.find(e => e.entity === state.entity.id && e.key === "beam")
   if (!laserAttribute) return
   state.beam = laserAttribute
   query()
@@ -382,10 +382,8 @@ function laserSpeed(speed: number) {
   state.speed = speed
 }
 
-function onPointerMove(event) {
+function onPointerMove(event: MouseEvent) {
 
-  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
 }
 
