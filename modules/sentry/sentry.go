@@ -218,7 +218,7 @@ func (v *Sentry) pull() error {
 	client.Timeout = time.Millisecond * 250
 	get, err := client.Get(fmt.Sprintf("http://%s/status", sentryUrl))
 	if err != nil {
-		return err
+		return nil
 	}
 
 	var buf bytes.Buffer
