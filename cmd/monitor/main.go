@@ -3,14 +3,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	"net"
+	"net/http"
 	"os"
 	"runtime"
-	"time"
 )
 
 func GetOutboundIP() (net.IP, error) {
@@ -110,7 +111,7 @@ func MonitorStats() (System, error) {
 
 	system.Cpu.Cores = numCPU
 
-	usages, err := cpu.Percent(time.Second, true)
+	usages, err := cpu.Percent(0, true)
 	if err != nil {
 		return System{}, err
 	}
@@ -131,11 +132,32 @@ func MonitorStats() (System, error) {
 
 }
 
-func main() {
+func Status(writer http.ResponseWriter, request *http.Request) {
 	stats, err := MonitorStats()
 	if err != nil {
-		fmt.Println(err.Error())
+		return
 	}
 
-	fmt.Println(stats)
+	marshal, err := json.Marshal(stats)
+	if err != nil {
+		return
+	}
+
+	_, err = writer.Write(marshal)
+	if err != nil {
+		return
+	}
+}
+
+func main() {
+	server := http.Server{}
+
+	http.HandleFunc("/status", Status)
+
+	server.Addr = ":5050"
+
+	err := server.ListenAndServeTLS("./certs/monitor.crt", "./certs/monitor.key")
+	if err != nil {
+		fmt.Println(err)
+	}
 }

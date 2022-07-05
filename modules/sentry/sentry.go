@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
@@ -88,8 +89,9 @@ type Status struct {
 }
 
 type SetPosition struct {
-	Target   string `json:"target"`
-	Position int    `json:"position"`
+	Pan   int    `json:"pan"`
+	Tilt  int    `json:"tilt"`
+	Token string `json:"token"`
 }
 
 func mapRange(value float64, low1 float64, high1 float64, low2 float64, high2 float64) float64 {
@@ -158,29 +160,19 @@ func (v *Sentry) setBeam(beam Beam) error {
 	}
 
 	return nil
-
 }
 
 func (v *Sentry) setPositions(position Position) error {
 	pos := SetPosition{}
-	pos.Target = "tilt"
-	value := mapRange(float64(position.Tilt), 0, 180, -90, 90)
-	pos.Position = int(value)
+
+	pos.Tilt = position.Tilt - 90
+	pos.Pan = position.Pan - 90
+	pos.Token = os.Getenv("sentryToken")
 
 	err := v.requestPosition(pos)
 	if err != nil {
 		return err
 	}
-
-	pos.Target = "pan"
-	value = mapRange(float64(position.Pan), 0, 180, -90, 90)
-	pos.Position = int(value)
-
-	err = v.requestPosition(pos)
-	if err != nil {
-		return err
-	}
-
 	return nil
 
 }

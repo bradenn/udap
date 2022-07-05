@@ -410,6 +410,12 @@ function goToXYZ(x: number, y: number, z: number) {
   }
 }
 
+// 2.5, 3.1, 9.5
+// 2.5, 2.1, 9.5
+// 0.9, 2.1, 9.5
+// 0.9, 3.1, 9.5
+
+
 function laserRun() {
   if (state.runner != 0) {
     return
@@ -418,20 +424,21 @@ function laserRun() {
   let dir = false;
 
   state.runner = setInterval(() => {
-    tick += dir ? -state.speed : state.speed;
+    tick = (tick + 1) % 256;
 
-    if (Math.floor(tick) >= 256) {
-      dir = true;
-    } else if (Math.floor(tick) <= 0) {
-      dir = false;
+    if (tick >= 256) {
+      tick = 0
     }
+
+
     //
     // laserPan(Math.cos(Math.floor(tick)) * map_range(Math.floor((2 * Math.PI / 100) * tick), 0, 100, 15, 1) + a1)
     // laserTilt(Math.sin(Math.floor(tick)) + b1)
-    moveBeamToXYZ(0, map_range(tick, 0, 256, 0, 10), 10)
+
+    moveBeamToXYZ(0.9, map_range(tick, 0, 256, 0, 9), 9.5)
 
 
-  }, 300)
+  }, 200)
 
 }
 
@@ -503,6 +510,7 @@ function laserStop() {
         <Subplot :active="true" :fn="() => laserHome()" name="HOME"></Subplot>
         <Subplot :active="true" :fn="() => moveBeamToXYZ(0, 0, 0)" name="(0, 0, 0)"></Subplot>
         <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
+        <Subplot :active="true" :fn="() => laserStop()" name="Stop"></Subplot>
       </Plot>
       <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
         <Subplot :active="true" :fn="() => laserPan(state.pan-1)" name="􀄪"></Subplot>
