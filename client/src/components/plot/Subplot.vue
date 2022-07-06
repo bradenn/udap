@@ -32,10 +32,11 @@ const props = defineProps<Props>()
        :class="`${props.active||false?'':'subplot-inline'} ${props.theme?`theme-${props.theme}`:''}`"
        class="subplot p-1"
        @mousedown="props.fn">
-    <div :class="`${props.alt !== ''?'justify-content-between w-100':'justify-content-start'}`" class="d-flex ">
+    <div :class="`${props.alt?'justify-content-between w-100':'justify-content-center w-100'}`"
+         class="d-flex ">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
       </div>
-      <div class="label-w500 label-c1 px-2">{{ props.name }}</div>
+      <div class="label-w500 label-c1 px-2 text-center">{{ props.name }}</div>
       <div v-if="props.alt" class="label-w400 label-o4 label-c1 px-2">{{ props.alt }}</div>
 
 
@@ -59,6 +60,12 @@ const props = defineProps<Props>()
 
 
 <style scoped>
+
+.theme-disabled {
+  /*background-color: rgba(24, 24, 24, 0.25) !important;*/
+  /*box-shadow: inset 0 0 3px 2px rgba(48, 48, 48, 0.25) !important;*/
+  opacity: 0.4;
+}
 
 .theme-danger {
   background-color: rgba(255, 0, 0, 0.25) !important;

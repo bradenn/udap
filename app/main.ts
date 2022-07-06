@@ -1,8 +1,10 @@
-const {app, BrowserWindow} = require("electron");
+const {app, BrowserWindow, Menu} = require("electron");
 const path = require("path");
 
+let win;
+
 function createWindow() {
-    const win = new BrowserWindow({
+    win = new BrowserWindow({
         width: 800,
         height: 600,
         webPreferences: {
@@ -10,21 +12,30 @@ function createWindow() {
         },
         showCursor: false,
         title: "Udap-Nexus Terminal Endpoint",
-        acceptFirstMouse: true,
         backgroundColor: '#000000',
         autoHideMenuBar: true,
+        show: true,
+        kiosk: true,
         fullscreen: true,
+        removeMenu: true,
+        frame: false,
     });
+
 
     win.webContents.setZoomFactor(1)
     win.loadURL('http://localhost:5002')
+
 }
+
 
 app.whenReady().then(() => {
     createWindow();
     app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
+        } else {
+            Menu.setApplicationMenu(null);
+            win.setMenu(null)
         }
     });
 });

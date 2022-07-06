@@ -155,7 +155,7 @@ func main() {
 	http.HandleFunc("/status", Status)
 
 	server.Addr = ":5050"
-
+	fmt.Println("Running on port :5050")
 	err := server.ListenAndServeTLS("./certs/monitor.crt", "./certs/monitor.key")
 	if err != nil {
 		fmt.Println(err)

@@ -161,13 +161,17 @@ function generateStars() {
   particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(translateArray, 3));
   particleGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colorArray, 3));
   particleGeometry.setAttribute('size', new THREE.Float32BufferAttribute(scaleArray, 1).setUsage(THREE.DynamicDrawUsage));
+  let vertexShader = document.getElementById('vshader')
+  if (!vertexShader) return
+  let fragmentShader = document.getElementById('fshader')
+  if (!fragmentShader) return
 
   instanceMaterial = new THREE.ShaderMaterial({
     uniforms: {
       pointTexture: {value: new THREE.TextureLoader().load('/custom/textures/circle.png')}
     },
-    vertexShader: document.getElementById('vshader').textContent,
-    fragmentShader: document.getElementById('fshader').textContent,
+    vertexShader: vertexShader.textContent || "",
+    fragmentShader: fragmentShader.textContent || "",
 
     depthTest: false,
     transparent: true,
