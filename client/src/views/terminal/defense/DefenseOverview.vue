@@ -8,6 +8,7 @@ import type {Attribute, Entity, Remote, Session} from "@/types";
 import * as THREE from "three";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import type {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+import Sentry from "@/components/rendered/Sentry.vue";
 
 
 let room = [
@@ -249,7 +250,7 @@ function load3d() {
   roomObject.add(drawBeam())
   floorObj.add(roomObject)
   // drawScene(pointsd)
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 1))
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 1.4))
 
   roomObject.rotateZ(Math.PI)
   roomObject.translateX(-(4.37 / 2) * s)
@@ -502,13 +503,20 @@ function laserStop() {
         </div>
       </Plot>
 
+      <sentry :beam="state.laser" :pan="state.pan" :tilt="state.tilt" color="rgba(255,0, 0, 1)">
+      </sentry>
+
       <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
-        <Subplot :active="true" :fn="() => laserPan(state.pan-1)" name="􀄪"></Subplot>
-        <Subplot :active="true" :fn="() => laserPan(state.pan+1)" name="􀄫"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)" name="􀄨"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)" name="􀄩"></Subplot>
+        <Subplot :active="true" :fn="() => laserPan(state.pan+1)" :theme="state.pan >= 180?'disabled':''"
+                 name="􀄪"></Subplot>
+        <Subplot :active="true" :fn="() => laserPan(state.pan-1)" :theme="state.pan <= 0?'disabled':''"
+                 name="􀄫"></Subplot>
+        <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)" :theme="state.tilt >= 180?'disabled':''"
+                 name="􀄨"></Subplot>
+        <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)" :theme="state.tilt <= 0?'disabled':''"
+                 name="􀄩"></Subplot>
       </Plot>
-      <Plot :cols="1" :rows="2" style="width: 13rem;" title="Programmed">
+      <Plot v-if="false" :cols="1" :rows="2" style="width: 13rem;" title="Programmed">
         <div>
           <div class="d-flex justify-content-between label-xs label-r px-1">
             <div class="label-w500">Pan (X)</div>
