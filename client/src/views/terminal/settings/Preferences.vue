@@ -7,25 +7,13 @@ import {PreferenceTypes} from "@/types";
 import Plot from "@/components/plot/Plot.vue";
 import axios from "axios";
 import Subplot from "@/components/plot/Subplot.vue";
-
-interface Preferences {
-  ui: {
-    background: string
-    theme: string
-    mode: string
-    blur: number
-    grid: boolean
-    watermark: boolean
-    night: boolean
-    outlines: boolean
-  }
-}
+import type {Preferences} from "@/App.vue";
 
 let state = reactive({
   loading: true,
 })
 
-const preferences = inject("preferences") as Preferences
+let preferences = inject("preferences") as Preferences
 
 const defaults = {
   backgrounds: [
@@ -106,7 +94,7 @@ function changeBackground(name: string): any {
   new Preference(PreferenceTypes.Background).set(name)
   state.loading = true
   loadImage(name);
-  preferences.ui.background = name
+  preferences.ui.background.image = name
 }
 
 function changeTheme(name: string): any {
@@ -129,7 +117,7 @@ function changeTouchmode(mode: string): any {
         <Plot :cols="5" :rows="2" title="Background">
           <div v-for="background in defaults.backgrounds" @click="changeBackground(background.identifier)">
             <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
-              <div :class="`${preferences.ui.background === background.identifier?'active':''}`"
+              <div :class="`${preferences.ui.background.image === background.identifier?'active':''}`"
                    :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
                    class="background-preview ">
                 <div class="label-xxs label-w500 label-o5 pb-1">

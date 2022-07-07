@@ -6,6 +6,7 @@ import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
 import type {Remote} from "@/types";
+import type {Preferences} from "@/App.vue";
 
 let state = reactive({
   menu: false,
@@ -13,7 +14,7 @@ let state = reactive({
   connected: false,
 })
 
-let ui: any = inject("ui")
+let ui = inject("ui") as Preferences
 let remote: Remote = inject('remote') as Remote
 let system: any = inject('system')
 
@@ -140,7 +141,8 @@ function reload() {
     </Plot>
     <Plot :cols="2" :rows="2" title="Quick Settings">
       <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
-      <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Screensaver"></Toggle>
+      <Toggle :active="ui.screensaver.enabled" :fn="() => ui.screensaver.enabled = !ui.screensaver.enabled"
+              title="Screensaver"></Toggle>
       <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
       <Toggle :active="ui.blurBg" :fn="() => ui.blurBg = !ui.blurBg" title="Bg Blur"></Toggle>
     </Plot>

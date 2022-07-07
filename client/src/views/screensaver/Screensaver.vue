@@ -20,15 +20,18 @@ let stats = {} as Stats
 let scene = {} as THREE.Scene
 let instanceMaterial = {} as THREE.RawShaderMaterial
 let objs = {} as THREE.Object3D
+let animationFrame = 0;
 
 onMounted(() => {
   reset()
   initGraphics()
 })
 
+
 onUnmounted(() => {
   instanceMaterial.dispose()
   renderer.dispose()
+  cancelAnimationFrame(animationFrame)
   reset()
 })
 
@@ -57,6 +60,7 @@ function initCamera() {
 // Handler resizing the viewport if and when the viewport is altered
 function resizeFrame() {
   camera.aspect = width / height;
+  if (!camera) return
   camera.updateProjectionMatrix();
 
   renderer.setSize(width, height);
@@ -83,7 +87,7 @@ function initGraphics() {
   // Add the renderer to the dom
   element.appendChild(renderer.domElement)
   // Assign resize function
-  window.onresize = resizeFrame
+  element.onresize = resizeFrame
   // Initialize Stats manager
   stats = new Stats();
   element.appendChild(stats.dom)
@@ -149,7 +153,7 @@ function initScene() {
 
 // Define animation routine
 function animate() {
-  requestAnimationFrame(animate);
+  animationFrame = requestAnimationFrame(animate);
   render()
   stats.update()
   composer.render();
@@ -183,15 +187,8 @@ function generateStars(): THREE.Object3D {
   let scaleArray = new Float32Array(particleCount);
   let particleGeometry = new THREE.BufferGeometry();
 
-
-  let aspectW = (width / height) * 3
-  let aspectH = (height / width) * 4.5
-
-  const radius = 200;
   let mean = 2747.5 + 100
   let sd = 1509.878
-
-  let wave = 0.2;
 
   for (let i = 0, i3 = 0, l = particleCount; i < l; i++, i3 += 3) {
 
