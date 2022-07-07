@@ -14,8 +14,8 @@ let props = defineProps<Plot>()
 <template>
   <div class="element element-group">
     <div v-if="props.title" class="d-flex align-items-center justify-content-between">
-      <div class="label-xs label-r label-o4 label-w400 px-1 pb-1">{{ props.title }}</div>
-      <div class="label-c1 label-o2">{{ props.alt }}</div>
+      <div class="label-c1  label-o4 label-w500 px-1 pb-1">{{ props.title }}</div>
+      <div class="label-c2 label-w500 label-r label-o2 px-1">{{ props.alt }}</div>
     </div>
     <div :class="`${props.small?'plot-sm':'plot'}`" class="">
       <slot></slot>

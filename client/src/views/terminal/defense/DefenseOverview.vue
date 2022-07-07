@@ -8,6 +8,7 @@ import type {Attribute, Entity, Remote, Session} from "@/types";
 import * as THREE from "three";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import type {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+import Sentry from "@/components/rendered/Sentry.vue";
 
 
 let room = [
@@ -31,6 +32,7 @@ let state = reactive({
   },
   pan: 90,
   tilt: 180,
+  zoom: 0,
   runner: 0,
   speed: 1,
   laser: false,
@@ -144,7 +146,7 @@ function drawFloor(): THREE.Object3D {
   floorGeometry.scale(s, s, s)
 
   let floorMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0x323232,
+    color: 0x1c2124,
     opacity: 1,
     roughness: 0.85,
     transparent: false,
@@ -167,20 +169,23 @@ function drawFloor(): THREE.Object3D {
 
 function drawWall(points: THREE.Vector2[]): THREE.Object3D {
   const wall1 = new THREE.Shape();
-
   wall1.setFromPoints(points)
+
+  const wall2 = new THREE.ShapeGeometry();
+  let pts2 = points.map(p => p.clone().multiply(new THREE.Vector2(1.2, 1.2)))
+  wall2.setFromPoints(pts2)
 
 
   const wallGeometry = new THREE.ExtrudeBufferGeometry([wall1], {
-    depth: 2.37, bevelEnabled: false
+    depth: 2.37,
+    bevelEnabled: false,
   });
 
 
   wallGeometry.scale(s, s, s)
 
-
   let wallMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0x424850,
+    color: 0x323739,
     opacity: 1,
     roughness: 1,
     transparent: false,
@@ -245,7 +250,7 @@ function load3d() {
   roomObject.add(drawBeam())
   floorObj.add(roomObject)
   // drawScene(pointsd)
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 1))
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 1.4))
 
   roomObject.rotateZ(Math.PI)
   roomObject.translateX(-(4.37 / 2) * s)
@@ -311,7 +316,7 @@ function query() {
   if (!state.beam) return
   state.laserBeam = JSON.parse(state.beam.value) as Beam;
   state.laser = (state.laserBeam.active === 1)
-  moveBeam(state.pan, state.tilt, 5)
+  moveBeam(state.pan, state.tilt, state.laser ? 5 : 0)
 
 }
 
@@ -410,6 +415,12 @@ function goToXYZ(x: number, y: number, z: number) {
   }
 }
 
+// 2.5, 3.1, 9.5
+// 2.5, 2.1, 9.5
+// 0.9, 2.1, 9.5
+// 0.9, 3.1, 9.5
+
+
 function laserRun() {
   if (state.runner != 0) {
     return
@@ -417,21 +428,20 @@ function laserRun() {
   let tick = 0;
   let dir = false;
 
-  state.runner = setInterval(() => {
-    tick += dir ? -state.speed : state.speed;
+  let steps = 50;
 
-    if (Math.floor(tick) >= 256) {
-      dir = true;
-    } else if (Math.floor(tick) <= 0) {
-      dir = false;
-    }
+  state.runner = setInterval(() => {
+    tick = (tick + 1) % steps;
+
+
     //
     // laserPan(Math.cos(Math.floor(tick)) * map_range(Math.floor((2 * Math.PI / 100) * tick), 0, 100, 15, 1) + a1)
     // laserTilt(Math.sin(Math.floor(tick)) + b1)
-    moveBeamToXYZ(0, map_range(tick, 0, 256, 0, 10), 10)
+
+    moveBeamToXYZ(0, map_range(tick, 0, steps, 0, 9), 9.5)
 
 
-  }, 300)
+  }, 60)
 
 }
 
@@ -472,45 +482,41 @@ function laserStop() {
 <template>
   <div class="d-flex w-100 h-100 gap-2 mt-1 pb-4">
     <div class="d-flex flex-column gap flex-wrap">
-
-      <Plot :cols="1" :rows="2" style="width:13rem;" title="Location">
-        <div class="d-flex justify-content-evenly">
-          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
-            X: {{ Math.round(state.x * 10) / 10 }}
-          </div>
-          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
-            Y: {{ Math.round(state.y * 10) / 10 }}
-          </div>
-          <div class="label-w600 label-r label-o4 label-c1" style="width: 3rem">
-            Z: {{ Math.round(state.z * 10) / 10 }}
-          </div>
+      <Plot :cols="3" :rows="2" style="width:13rem;" title="Location">
+        <div class="label-w600 label-r label-o4 label-c2 text-center">
+          X: {{ Math.round(state.x * 10) / 10 }}
         </div>
-        <div class="d-flex justify-content-evenly">
-          <div class="label-w600 label-r label-o4 label-c1" style="width: 4rem">
-            Pan: {{ Math.round(state.pan * 10) / 10 }}
-          </div>
-          <div class="label-w600 label-r label-o4 label-c1" style="width: 4rem">
-            Tilt: {{ Math.round(state.tilt * 10) / 10 }}
-          </div>
-
+        <div class="label-w600 label-r label-o4 label-c2 text-center">
+          Y: {{ Math.round(state.y * 10) / 10 }}
+        </div>
+        <div class="label-w600 label-r label-o4 label-c2 text-center">
+          Z: {{ Math.round(state.z * 10) / 10 }}
+        </div>
+        <div class="label-w600 label-r label-o4 label-c2 text-center">
+          P: {{ Math.round(state.pan * 10) / 10 }}
+        </div>
+        <div class="label-w600 label-r label-o4 label-c2 text-center">
+          T: {{ Math.round(state.tilt * 10) / 10 }}
+        </div>
+        <div class="label-w600 label-r label-o4 label-c2 text-center">
+          Z: {{ Math.round(state.zoom * 10) / 10 }}
         </div>
       </Plot>
-      <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
-        <Confirm :active="state.laser" :disabled="state.laser"
-                 :fn="laserToggle" :title="`${state.laser?'DISABLE':'ENABLE'} LASER`"></Confirm>
 
-        <Subplot :active="true" :fn="laserStopAll" name="STOP ALL" theme="danger"></Subplot>
-        <Subplot :active="true" :fn="() => laserHome()" name="HOME"></Subplot>
-        <Subplot :active="true" :fn="() => moveBeamToXYZ(0, 0, 0)" name="(0, 0, 0)"></Subplot>
-        <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
-      </Plot>
+      <sentry :beam="state.laser" :pan="state.pan" :tilt="state.tilt" color="rgba(255,0, 0, 1)">
+      </sentry>
+
       <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
-        <Subplot :active="true" :fn="() => laserPan(state.pan-1)" name="􀄪"></Subplot>
-        <Subplot :active="true" :fn="() => laserPan(state.pan+1)" name="􀄫"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)" name="􀄨"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)" name="􀄩"></Subplot>
+        <Subplot :active="true" :fn="() => laserPan(state.pan+1)" :theme="state.pan >= 180?'disabled':''"
+                 name="􀄪"></Subplot>
+        <Subplot :active="true" :fn="() => laserPan(state.pan-1)" :theme="state.pan <= 0?'disabled':''"
+                 name="􀄫"></Subplot>
+        <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)" :theme="state.tilt >= 180?'disabled':''"
+                 name="􀄨"></Subplot>
+        <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)" :theme="state.tilt <= 0?'disabled':''"
+                 name="􀄩"></Subplot>
       </Plot>
-      <Plot :cols="1" :rows="2" style="width: 13rem;" title="Programmed">
+      <Plot v-if="false" :cols="1" :rows="2" style="width: 13rem;" title="Programmed">
         <div>
           <div class="d-flex justify-content-between label-xs label-r px-1">
             <div class="label-w500">Pan (X)</div>
@@ -544,11 +550,34 @@ function laserStop() {
         </div>
 
       </Plot>
-
     </div>
     <div id="room-container" class=" element h-100 w-100">
 
     </div>
+    <div class="d-flex flex-column gap flex-wrap">
+      <Plot :cols="2" :rows="1" style="width: 13rem" title="Sentry Selection">
+        <Subplot :active="true" :fn="() => {}" name="Bedroom"></Subplot>
+        <Subplot :active="true" :fn="() => {}" name="Living Room" theme="disabled"></Subplot>
+      </Plot>
+      <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
+        <Confirm :active="state.laser" :disabled="state.laser"
+                 :fn="laserToggle" :title="`${state.laser?'DISABLE':'ENABLE'} LASER`"></Confirm>
+        <Subplot :active="true" :fn="laserStopAll" name="STOP ALL" theme="danger"></Subplot>
+        <Subplot :active="true" :fn="() => laserHome()" name="Home"></Subplot>
+        <Subplot :active="true" :fn="() => laserStop()" :theme="state.runner !== 0?'':'disabled'" name="Halt"></Subplot>
+      </Plot>
+      <Plot :cols="1" :rows="2" style="width:13rem;" title="Beams">
+        <Subplot :fn="() => {}" active alt="650nm @ 5 mW" name="Pointer"></Subplot>
+        <Subplot :fn="() => {}" alt="850nm @ 3 mW" name="Targeting" theme="disabled"></Subplot>
+      </Plot>
+      <Plot :cols="3" :rows="1" style="width:13rem;" title="Attenuation">
+        <Subplot :fn="() => {}" active name="􀅽"></Subplot>
+        <Subplot :fn="() => {}" name="5 mW"></Subplot>
+        <Subplot :fn="() => {}" active name="􀅼"></Subplot>
+      </Plot>
+
+    </div>
+
   </div>
   <!--  <div v-else>-->
   <!--    <DefenseAuth></DefenseAuth>-->

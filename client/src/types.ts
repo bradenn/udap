@@ -182,7 +182,8 @@ export interface Network {
 }
 
 export interface Session {
-    user: User
+    user: User,
+    screensaver: boolean
 }
 
 

@@ -11,7 +11,8 @@ private-key.pem
 /pkg
 spotify.json
 /db-data
-
+**/*.crt
+**/*.key
 /**.log
 
 # Terminal Ignore
