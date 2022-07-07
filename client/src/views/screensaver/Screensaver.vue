@@ -8,6 +8,10 @@ import Stats from 'stats.js';
 import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass";
 import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+import {SavePass} from "three/examples/jsm/postprocessing/SavePass";
+import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass";
+import {CopyShader} from "three/examples/jsm/shaders/CopyShader";
+import {BlendShader} from "three/examples/jsm/shaders/BlendShader";
 
 let renderer = {} as THREE.WebGLRenderer
 let camera = {} as THREE.PerspectiveCamera
@@ -15,27 +19,39 @@ let composer = {} as EffectComposer
 let stats = {} as Stats
 let scene = {} as THREE.Scene
 let instanceMaterial = {} as THREE.RawShaderMaterial
-let particleGeometry = {} as THREE.BufferGeometry
-let particleSystem = {} as THREE.Points
+let objs = {} as THREE.Object3D
 
 onMounted(() => {
+  reset()
   initGraphics()
 })
 
 onUnmounted(() => {
-  renderer.dispose()
   instanceMaterial.dispose()
-  particleGeometry.dispose()
+  renderer.dispose()
+  reset()
 })
+
+function reset() {
+  renderer = {} as THREE.WebGLRenderer
+  camera = {} as THREE.PerspectiveCamera
+  composer = {} as EffectComposer
+  scene = {} as THREE.Scene
+  stats = {} as Stats
+  instanceMaterial = {} as THREE.RawShaderMaterial
+  objs = {} as THREE.Object3D
+}
 
 let width = 0
 let height = 0
+let depth = 1500
 
 
 function initCamera() {
   // Initialize Camera
-  camera = new THREE.PerspectiveCamera(40, width / height, 1, 3000)
+  camera = new THREE.PerspectiveCamera(75, width / height, 1, depth * 1.5)
   camera.position.set(0, 0, 1);
+  camera.lookAt(0, 0, 0)
 }
 
 // Handler resizing the viewport if and when the viewport is altered
@@ -50,6 +66,7 @@ function resizeFrame() {
 function initGraphics() {
   // Initialize Renderer
   renderer = new THREE.WebGLRenderer({antialias: false});
+  // renderer.toneMapping = THREE.T;
   // Select screensaver dom element
   let element = document.getElementById("screensaver")
   // Exit init if dom element is not found
@@ -75,9 +92,35 @@ function initGraphics() {
   // Set up the scene
   initScene()
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1.2, 0.8, 0.3);
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1, 0.8, 0.3);
+  const renderTargetParameters = {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    stencilBuffer: false
+  };
+
+// save pass
+  const savePass = new SavePass(
+      new THREE.WebGLRenderTarget(
+          width,
+          height,
+          renderTargetParameters
+      )
+  );
+
+// blend pass
+  const blendPass = new ShaderPass(BlendShader, "tDiffuse1");
+  blendPass.uniforms["tDiffuse2"].value = savePass.renderTarget.texture;
+  blendPass.uniforms["mixRatio"].value = 0.2;
+
+// output pass
+  const outputPass = new ShaderPass(CopyShader);
+  outputPass.renderToScreen = true;
   composer = new EffectComposer(renderer);
   composer.addPass(renderScene);
+  composer.addPass(blendPass);
+  composer.addPass(savePass);
+  composer.addPass(outputPass);
   composer.addPass(bloomPass);
   // Begin animation and rendering
   animate()
@@ -85,21 +128,30 @@ function initGraphics() {
 
 }
 
+let numSections = 4;
+
 function initScene() {
   scene = new THREE.Scene()
-  let grid = new THREE.AxesHelper(10)
-  scene.add(grid)
-  generateStars()
-  scene.add(new THREE.AmbientLight(0x444444, 4));
+
+  objs = new THREE.Object3D()
+
+  for (let i = 0; i <= numSections; i++) {
+    let section = generateStars()
+    section.position.setZ(-depth * i)
+    objs.add(section)
+  }
+
+  scene.add(objs)
+  // scene.add(new THREE.AmbientLight(0x444444, 4));
   scene.background = new THREE.Color(0x000000);
-  scene.fog = new THREE.Fog(0x050505, 1, 2000);
+
 }
 
 // Define animation routine
 function animate() {
   requestAnimationFrame(animate);
-  stats.update()
   render()
+  stats.update()
   composer.render();
 }
 
@@ -110,7 +162,7 @@ function map_range(value: number, low1: number, high1: number, low2: number, hig
 function cctToRgb(cct: number) {
   return [map_range(cct, 1900, 3400, 255, 255),
     map_range(cct, 1900, 3400, 131, 193),
-    map_range(cct, 1900, 3400, 0, 132)]
+    map_range(cct, 1900, 3400, 0, 190)]
 }
 
 function randomG(v: number) {
@@ -121,31 +173,32 @@ function randomG(v: number) {
   return r / v;
 }
 
-const particleCount = 2000;
-let translateArray = new Float32Array(particleCount * 3);
-let colorArray = new Float32Array(particleCount * 3);
-let scaleArray = new Float32Array(particleCount);
+let clr = 0;
 
-function generateStars() {
+function generateStars(): THREE.Object3D {
 
-  particleGeometry = new THREE.BufferGeometry();
+  const particleCount = 8000;
+  let translateArray = new Float32Array(particleCount * 3);
+  let colorArray = new Float32Array(particleCount * 3);
+  let scaleArray = new Float32Array(particleCount);
+  let particleGeometry = new THREE.BufferGeometry();
 
 
-  let aspectW = (width / height) * 1
-  let aspectH = (height / width) * 1
+  let aspectW = (width / height) * 3
+  let aspectH = (height / width) * 4.5
 
-  const radius = 50;
-  let mean = 2747.5
+  const radius = 200;
+  let mean = 2747.5 + 100
   let sd = 1509.878
 
-  let wave = 1;
+  let wave = 0.2;
 
   for (let i = 0, i3 = 0, l = particleCount; i < l; i++, i3 += 3) {
 
 
-    translateArray[i3] = (Math.random() * (2) - 1) * radius * aspectW;
-    translateArray[i3 + 1] = (Math.random() * (2) - 1) * radius * aspectH;
-    translateArray[i3 + 2] = -i * wave;
+    translateArray[i3] = (Math.random() * (2) - 1) * width * 1.5;
+    translateArray[i3 + 1] = (Math.random() * (2) - 1) * height * 1.5;
+    translateArray[i3 + 2] = -(Math.random()) * depth;
 
     let rand = (randomG(8) * 2 - 1) * sd
     let arr = cctToRgb(mean + rand)
@@ -153,7 +206,7 @@ function generateStars() {
     colorArray[i3 + 1] = arr[1] / 255
     colorArray[i3 + 2] = arr[2] / 255
 
-    scaleArray[i3] = 2 + randomG(8) * 5;
+    scaleArray[i] = 2 + Math.random() * 8;
 
 
   }
@@ -161,10 +214,11 @@ function generateStars() {
   particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(translateArray, 3));
   particleGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colorArray, 3));
   particleGeometry.setAttribute('size', new THREE.Float32BufferAttribute(scaleArray, 1).setUsage(THREE.DynamicDrawUsage));
+
   let vertexShader = document.getElementById('vshader')
-  if (!vertexShader) return
+  if (!vertexShader) return new THREE.Object3D()
   let fragmentShader = document.getElementById('fshader')
-  if (!fragmentShader) return
+  if (!fragmentShader) return new THREE.Object3D()
 
   instanceMaterial = new THREE.ShaderMaterial({
     uniforms: {
@@ -172,22 +226,26 @@ function generateStars() {
     },
     vertexShader: vertexShader.textContent || "",
     fragmentShader: fragmentShader.textContent || "",
-
-    depthTest: false,
+    depthTest: true,
     transparent: true,
     vertexColors: true
   });
+  let points = new THREE.Points(particleGeometry, instanceMaterial)
 
-  particleSystem = new THREE.Points(particleGeometry, instanceMaterial);
-  //
   // instanceMesh = new THREE.Mesh(geometry, instanceMaterial);
   // instanceMesh.scale.set(200, 200, 200);
-  scene.add(particleSystem);
+  clr++;
+  return points
 }
 
 function render() {
   // particleSystem.translateZ(1)
-
+  objs.children.forEach(c => c.translateZ(5))
+  for (let i = 0; i < objs.children.length; i++) {
+    if (objs.children[i].position.z >= depth) {
+      objs.children[i].position.setZ(-depth * numSections)
+    }
+  }
   // console.log(particleSystem.position.z)
 
 
@@ -196,7 +254,6 @@ function render() {
 </script>
 
 <template>
-
   <div id="screensaver" class="screensaver-context"></div>
 </template>
 
@@ -204,5 +261,20 @@ function render() {
 .screensaver-context {
   width: 100%;
   height: 100%;
+  animation: screensaverBegin 750ms ease-in-out forwards;
 }
+
+@keyframes screensaverBegin {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.8);
+    filter: blur(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
 </style>

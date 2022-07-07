@@ -63,6 +63,7 @@ let state = reactive({
   countdown: 3,
   context: false,
   remote: {},
+
   system: {
     nexus: {
       system: {
@@ -77,8 +78,44 @@ let state = reactive({
   }
 })
 
+let screensaver = reactive({
+  show: false,
+  countdown: 0,
+  interval: 0,
+  hideTerminal: false,
+  startScreensaver: forceScreensaver,
+})
+
+provide("screensaver", screensaver)
+
+function forceScreensaver() {
+  screensaver.countdown = 3
+}
+
+function resetCountdown() {
+  screensaver.countdown = 60 * 5
+  screensaver.hideTerminal = false
+  screensaver.show = false
+  if (screensaver.interval !== 0) {
+    clearInterval(screensaver.interval)
+    screensaver.interval = 0
+  }
+  if (!preferences.ui.outlines) return
+  screensaver.interval = setInterval(() => {
+    screensaver.countdown -= 1;
+    if (screensaver.countdown <= 0) {
+      screensaver.show = true
+      clearInterval(screensaver.interval)
+      screensaver.interval = 0
+      setTimeout(() => {
+        screensaver.hideTerminal = true
+      }, 500)
+    }
+  }, 1000)
+}
 
 onMounted(() => {
+  resetCountdown()
   state.context = false
   state.fps = 0
 })
@@ -119,19 +156,28 @@ provide('ui', preferences.ui)
 provide('context', toggleContext)
 provide('hideHome', hideHome)
 
+
 </script>
 
 <template>
   <div
       :class="`${preferences.ui.night?'night-vision':''} theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness}`"
-      class="root">
+      class="root" v-on:mousedown="(e) => resetCountdown()">
     <img :class="`${preferences.ui.blurBg?'backdrop-blurred':''}`" :src="`/custom/${preferences.ui.background}@4x.png`"
          alt="Background" class="backdrop "/>
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
         <!--        <div>NEXUS v{{ state.system.nexus.system.version }}</div>-->
         <div v-if="state.system.udap" class="label-r label-w600">{{ state.system.udap.system.version }}</div>
+        <div v-if="screensaver.countdown <= 5" class="mx-1 label-r label-w500 screensaver-text">
+          <div v-if="screensaver.countdown === 0">Starting screensaver...</div>
+          <div v-else>Screen saver in {{ screensaver.countdown }} second{{
+              screensaver.countdown === 1 ? '' : 's'
+            }}
+          </div>
+        </div>
       </div>
+
       <div class="float-end">{{ $route.path }}</div>
     </div>
     <div v-if="preferences.ui.grid" class="grid"></div>
@@ -141,9 +187,32 @@ provide('hideHome', hideHome)
 
 
   </div>
+
 </template>
 
 <style lang="scss">
+
+.screensaver-text {
+  animation: screensaverTextLoadIn 500ms ease-in forwards;
+}
+
+@keyframes screensaverTextLoadIn {
+  0% {
+    opacity: 0;
+    scale: 0.8;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+
+}
+
+.screensaver-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 
 .root {
   position: absolute;

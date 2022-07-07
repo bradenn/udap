@@ -140,7 +140,7 @@ function reload() {
     </Plot>
     <Plot :cols="2" :rows="2" title="Quick Settings">
       <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
-      <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Outlines"></Toggle>
+      <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Screensaver"></Toggle>
       <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
       <Toggle :active="ui.blurBg" :fn="() => ui.blurBg = !ui.blurBg" title="Bg Blur"></Toggle>
     </Plot>

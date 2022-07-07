@@ -12,6 +12,7 @@ import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 import Sideapp from "@/views/terminal/Sideapp.vue";
+import Screensaver from "@/views/screensaver/Screensaver.vue";
 
 // -- Websockets --
 
@@ -41,6 +42,7 @@ let remote = reactive<Remote>({
 
 
 let ui: any = inject("ui")
+let screensaver: any = inject("screensaver")
 let system: any = inject("system")
 
 // Handle and route incoming messages to the local cache
@@ -130,14 +132,17 @@ let lastTick = ref(0);
 
 onUpdated(() => {
   fps++;
+
 })
+
 
 onUnmounted(() => {
   remote.nexus.ws.close(1001, "Disconnecting")
 })
 
 let session = reactive<Session>({
-  user: {} as User
+  user: {} as User,
+  screensaver: false
 })
 
 provide("session", session)
@@ -152,10 +157,12 @@ let state = reactive({
   lastUpdate: 0,
   sideAppLock: false,
   showClock: true,
+  hideTerminal: false,
   scrollX: 0.0,
   scrollY: 0,
   scrollXBack: 0,
   scrollYBack: 0,
+
   dragA: {
     x: 0,
     y: 0
@@ -212,9 +219,11 @@ function dragContinue(e: MouseEvent) {
     let thresholdOffset = 60;
 
     let isBottom = e.screenY > height - thresholdOffset;
+    let isTop = e.screenY > thresholdOffset;
 
     let isRight = state.dragA.x > width - thresholdOffset;
 
+    let topPull = dragB.y - state.dragA.y;
     let bottomPull = state.dragA.y - dragB.y;
     let rightPull = state.dragA.x - dragB.x;
     let gestureThreshold = 24;
@@ -226,6 +235,10 @@ function dragContinue(e: MouseEvent) {
       }
       if (state.dragA.y > dragB.y) {
         state.scrollY -= e.movementY
+      }
+    } else if (isTop) {
+      if (topPull > gestureThreshold) {
+        screensaver.startScreensaver()
       }
     }
     let sideAppLockTarget = 445;
@@ -318,7 +331,7 @@ provide('remote', remote)
       class="terminal"
       v-on:mousedown="dragStart"
       v-on:mousemove="dragContinue"
-      v-on:mouseup="dragStop">
+      v-if="!screensaver.hideTerminal" v-on:mouseup="dragStop">
     <div class="generic-container gap-2">
       <div :class="`generic-slot-sm ` ">
         <Clock :small="!state.showClock"></Clock>
@@ -361,9 +374,13 @@ provide('remote', remote)
         :style="`transform: translateY(${-state.scrollY}px);`"
         class="home-bar top"></div>
   </div>
+  <Screensaver v-if="screensaver.show"
+               class="screensaver-overlay"></Screensaver>
 </template>
 
 <style lang="scss" scoped>
+
+
 .focus-enter-active {
   animation: animateIn 200ms;
 }
