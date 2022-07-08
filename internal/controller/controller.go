@@ -9,19 +9,21 @@ import (
 	"udap/internal/core/modules/device"
 	"udap/internal/core/modules/entity"
 	"udap/internal/core/modules/network"
+	"udap/internal/core/modules/notification"
 	"udap/internal/core/modules/user"
 	"udap/internal/core/modules/zone"
 )
 
 type Controller struct {
-	Attributes domain.AttributeService
-	Devices    domain.DeviceService
-	Entities   domain.EntityService
-	Networks   domain.NetworkService
-	Users      domain.UserService
-	Zones      domain.ZoneService
-	Endpoints  domain.EndpointService
-	Modules    domain.ModuleService
+	Attributes    domain.AttributeService
+	Devices       domain.DeviceService
+	Entities      domain.EntityService
+	Networks      domain.NetworkService
+	Notifications domain.NotificationService
+	Users         domain.UserService
+	Zones         domain.ZoneService
+	Endpoints     domain.EndpointService
+	Modules       domain.ModuleService
 }
 
 func NewController(db *gorm.DB) (*Controller, error) {
@@ -31,6 +33,7 @@ func NewController(db *gorm.DB) (*Controller, error) {
 	c.Devices = device.New(db)
 	c.Networks = network.New(db)
 	c.Users = user.New(db)
+	c.Notifications = notification.New(db)
 	c.Zones = zone.New(db)
 
 	return c, nil
@@ -69,6 +72,11 @@ func (c *Controller) WatchAll(resp chan domain.Mutation) {
 	}
 
 	err = c.Zones.Watch(resp)
+	if err != nil {
+		return
+	}
+
+	err = c.Notifications.Watch(resp)
 	if err != nil {
 		return
 	}
@@ -118,6 +126,11 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Devices.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Notifications.EmitAll()
 	if err != nil {
 		return err
 	}

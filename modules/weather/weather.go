@@ -181,10 +181,6 @@ func (v *Weather) Run() error {
 		return err
 	}
 
-	err = v.fetchWeather()
-	if err != nil {
-
-	}
 	buffer, err := v.forecastBuffer()
 	if err != nil {
 		return err
@@ -201,11 +197,6 @@ func (v *Weather) Run() error {
 	v.eId = e.Id
 
 	err = v.Attributes.Register(forecast)
-	if err != nil {
-		return err
-	}
-
-	err = v.pull()
 	if err != nil {
 		return err
 	}

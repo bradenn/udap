@@ -164,6 +164,7 @@ provide('ui', preferences.ui)
     <div v-if="preferences.ui.grid" class="grid"></div>
 
     <div v-if="state.context" class="context context-light"></div>
+
     <router-view/>
 
 
@@ -172,6 +173,15 @@ provide('ui', preferences.ui)
 </template>
 
 <style lang="scss">
+.overlay-notification {
+  position: fixed;
+  z-index: 1;
+  height: 4.5rem;
+  width: 15rem;
+  padding: 1rem;
+  right: 0;
+  top: 0;
+}
 
 .screensaver-text {
   animation: screensaverTextLoadIn 500ms ease-in forwards;

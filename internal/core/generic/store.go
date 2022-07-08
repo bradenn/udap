@@ -9,7 +9,7 @@ import (
 
 type persistent interface {
 	domain.User | domain.Module | domain.Entity | domain.Device | domain.Attribute | domain.Endpoint | domain.
-		Network | domain.Zone | Mock
+		Network | domain.Zone | domain.Notification | Mock
 }
 
 type Store[T persistent] struct {
