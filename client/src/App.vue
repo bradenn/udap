@@ -134,7 +134,7 @@ function resetCountdown() {
 
 
 provide('system', state.system)
-provide('ui', preferences.ui)
+provide('preferences', preferences)
 
 
 </script>

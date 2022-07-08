@@ -4,7 +4,6 @@
 
 import * as THREE from "three";
 import {onMounted, onUnmounted} from "vue";
-import Stats from 'stats.js';
 import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass";
 import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
@@ -16,7 +15,6 @@ import {BlendShader} from "three/examples/jsm/shaders/BlendShader";
 let renderer = {} as THREE.WebGLRenderer
 let camera = {} as THREE.PerspectiveCamera
 let composer = {} as EffectComposer
-let stats = {} as Stats
 let scene = {} as THREE.Scene
 let instanceMaterial = {} as THREE.RawShaderMaterial
 let objs = {} as THREE.Object3D
@@ -40,7 +38,6 @@ function reset() {
   camera = {} as THREE.PerspectiveCamera
   composer = {} as EffectComposer
   scene = {} as THREE.Scene
-  stats = {} as Stats
   instanceMaterial = {} as THREE.RawShaderMaterial
   objs = {} as THREE.Object3D
 }

@@ -213,7 +213,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
   align-items: center;
   gap: 1px;
   border-radius: 6px;
-  background-color: hsla(214, 9, 28, 0.2);
+  background-color: hsla(214, 9%, 28%, 0.2);
   padding: 6px
 }
 
