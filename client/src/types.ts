@@ -117,11 +117,14 @@ export interface Attribute {
 export interface Device {
     created: string;
     updated: string;
+    state: string;
     id: string;
     networkId: string;
     entityId: string;
     name: string;
     hostname: string;
+    lastSeen: string;
+    latency: number;
     mac: string;
     ipv4: string;
     ipv6: string;

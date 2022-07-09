@@ -181,6 +181,7 @@ func (o *orchestrator) Run() error {
 	routes.NewUserRouter(o.controller.Users).RouteUsers(o.router)
 	routes.NewAttributeRouter(o.controller.Attributes).RouteAttributes(o.router)
 	routes.NewZoneRouter(o.controller.Zones).RouteZones(o.router)
+	routes.NewDeviceRouter(o.controller.Devices).RouteDevices(o.router)
 	routes.NewEndpointRouter(o.endpoints).RouteEndpoints(o.router)
 	routes.NewModuleRouter(o.modules).RouteModules(o.router)
 

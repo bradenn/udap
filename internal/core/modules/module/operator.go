@@ -74,6 +74,22 @@ func (m *moduleOperator) Run(module *domain.Module) error {
 	return nil
 }
 
+func (m *moduleOperator) Dispose(module *domain.Module) error {
+	if module.Enabled {
+		local, err := m.getModule(module)
+		if err != nil {
+			return err
+		}
+		err = local.Dispose()
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("module is not enabled")
+	}
+	return nil
+}
+
 func (m *moduleOperator) Build(module *domain.Module) error {
 	start := time.Now()
 	if _, err := os.Stat(module.Path); err != nil {

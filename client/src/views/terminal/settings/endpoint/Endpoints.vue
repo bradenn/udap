@@ -1,7 +1,7 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import type {Endpoint, Remote} from "@/types";
+import type {Device, Endpoint, Remote} from "@/types";
 import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 
@@ -13,6 +13,7 @@ let preferences = inject('preferences')
 
 let state = reactive({
   endpoints: {} as Endpoint[],
+  devices: {} as Device[],
   loading: true,
   mode: "list"
 })
@@ -27,8 +28,9 @@ watchEffect(() => handleUpdates(remote))
 
 function handleUpdates(remote: Remote) {
   state.endpoints = remote.endpoints
+  state.devices = remote.devices
   state.loading = false
-  return remote.endpoints
+  return remote
 }
 
 function setMode(mode: string) {
@@ -39,6 +41,12 @@ function setMode(mode: string) {
 
 <template>
   <div v-if="!state.loading">
+    <div class="d-flex justify-content-between gap-1 w-100 flex-wrap">
+      <div v-for="device in state.devices" class="element">
+        <div class="label-o4 label-c1">{{ device.ipv4 }}</div>
+        <div class="label-o2 label-c1">{{ device.mac }}</div>
+      </div>
+    </div>
 
 
     <div class="d-flex justify-content-start py-2 px-1">

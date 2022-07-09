@@ -98,9 +98,16 @@ func (g *Govee) fetchDevices() ([]Device, error) {
 	if err != nil {
 		return nil, err
 	}
+	//
+	// fmt.Println(d)
 
 	return d.Devices, nil
 }
+
+// a5:20:d4:ad:fc:08:b0:b3 H6003 Entrance
+// 98:34:d4:ad:fc:0a:3f:2d H6003 Workstation
+// 3d:b2:d4:ad:fc:09:38:0f H6003 Kitchen
+// 6d:2f:d4:ad:fc:09:3f:25 H6003 Nightstand
 
 func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage) (json.RawMessage, error) {
 

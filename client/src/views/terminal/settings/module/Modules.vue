@@ -102,11 +102,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
               <div class="w-100">
                 <div>
                   <div class="label-c1 label-o5 label-r lh-1">
-                    <div class="d-flex justify-content-between">
-                      <div>{{ module.name }}</div>
-
-                    </div>
-
+                    <div>{{ module.name }}</div>
                   </div>
                   <div class="label-c4  label-o3 label-r py-0 overflow-ellipse" style="line-height: 0.55rem">{{
                       module.description

@@ -18,6 +18,8 @@ type ModuleInterface interface {
 	Run() error
 	// Update is used to assign channels
 	Update() error
+	// Dispose provides module-relevant data
+	Dispose() error
 }
 
 // Load attempts to load the plugin from a given path

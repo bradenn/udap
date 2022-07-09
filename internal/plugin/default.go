@@ -44,3 +44,9 @@ func (m *Module) Connect(ctrl *controller.Controller) error {
 	m.Controller = ctrl
 	return nil
 }
+
+// Dispose is called once at the launch of the module
+func (m *Module) Dispose() error {
+
+	return nil
+}

@@ -2,17 +2,23 @@
 
 package domain
 
-import "udap/internal/core/domain/common"
+import (
+	"time"
+	"udap/internal/core/domain/common"
+)
 
 type Device struct {
 	common.Persistent
-	NetworkId string `json:"networkId" gorm:"-"`
-	EntityId  string `json:"entityId" gorm:"-"`
-	Name      string `json:"name"`
-	Hostname  string `json:"hostname"`
-	Mac       string `json:"mac"`
-	Ipv4      string `json:"ipv4"`
-	Ipv6      string `json:"ipv6"`
+	LastSeen  time.Time     `json:"lastSeen"`
+	Latency   time.Duration `json:"latency"`
+	State     string        `json:"state"`
+	NetworkId string        `json:"networkId" gorm:"-"`
+	EntityId  string        `json:"entityId" gorm:"-"`
+	Name      string        `json:"name"`
+	Hostname  string        `json:"hostname"`
+	Mac       string        `json:"mac"`
+	Ipv4      string        `json:"ipv4"`
+	Ipv6      string        `json:"ipv6"`
 }
 
 type DeviceRepository interface {

@@ -28,6 +28,7 @@ type ModuleOperator interface {
 	Load(module *Module) error
 	Update(module *Module) error
 	Run(module *Module) error
+	Dispose(module *Module) error
 }
 
 type ModuleService interface {
@@ -37,6 +38,7 @@ type ModuleService interface {
 	Load(module *Module) error
 	Update(module *Module) error
 	Run(module *Module) error
+	Dispose(module *Module) error
 	UpdateAll() error
 	RunAll() error
 	LoadAll() error

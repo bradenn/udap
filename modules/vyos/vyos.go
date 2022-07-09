@@ -11,6 +11,7 @@ import (
 	"github.com/Ullaakut/nmap/v2"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -37,10 +38,54 @@ func init() {
 }
 
 func (v *Vyos) Setup() (plugin.Config, error) {
+	err := v.UpdateInterval(30000)
+	if err != nil {
+		return plugin.Config{}, err
+	}
 	return v.Config, nil
 }
 
 func (v *Vyos) Update() error {
+	if v.Ready() {
+		devices, err := v.Devices.FindAll()
+		if err != nil {
+			return err
+		}
+		if len(*devices) < 0 {
+			return nil
+		}
+		for _, device := range *devices {
+			go func(device domain.Device) {
+				ctx := context.Background()
+				timeout, cancelFunc := context.WithTimeout(ctx, time.Second*1)
+				defer cancelFunc()
+				cmd := exec.CommandContext(timeout, "/bin/zsh", "-c",
+					fmt.Sprintf("ping -c 1 %s > /dev/null && echo true || echo false", device.Ipv4))
+				start := time.Now()
+				output, _ := cmd.Output()
+				if string(output) == "true\n" {
+					device.Latency = time.Since(start)
+					device.LastSeen = time.Now()
+					device.State = "ONLINE"
+					err = v.Devices.Update(&device)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+				} else {
+					device.Latency = 0
+					device.State = "OFFLINE"
+					err = v.Devices.Update(&device)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+				}
+
+			}(device)
+
+		}
+	}
 	return nil
 }
 
@@ -48,9 +93,37 @@ func (v *Vyos) Run() error {
 	go func() {
 		err := v.fetchNetworks()
 		if err != nil {
-
+			log.Err(err)
 		}
 	}()
+	return nil
+}
+
+func (v *Vyos) arpScan(network domain.Network) error {
+	cmd := exec.Command("/bin/zsh", "-c", "arp -an | awk -F'[ ()]' '{OFS=\";\"; print $1,$3,$6}'")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	out := string(output)
+	devices := strings.Split(out, "\n")
+	for _, str := range devices {
+		args := strings.Split(str, ";")
+		if len(args) < 3 {
+			continue
+		}
+		if args[2] != "" {
+			device := domain.Device{}
+			device.Ipv4 = args[1]
+			device.Mac = strings.ToLower(args[2])
+			device.NetworkId = network.Id
+			device.LastSeen = time.Now()
+			err = v.Devices.Register(&device)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -60,9 +133,9 @@ func (v *Vyos) scanSubnet(network domain.Network) error {
 	defer cancel()
 
 	scanner, err := nmap.NewScanner(
-		nmap.WithPrivileged(),
 		nmap.WithConnectScan(),
 		nmap.WithTargets("10.0.1.0/24"),
+		nmap.WithInterface("en1"),
 		nmap.WithContext(ctx),
 	)
 
@@ -95,10 +168,7 @@ func (v *Vyos) scanSubnet(network domain.Network) error {
 		}
 
 		device.NetworkId = network.Id
-		err = v.Devices.Register(&device)
-		if err != nil {
-			return err
-		}
+
 	}
 	return nil
 }
@@ -178,14 +248,15 @@ func (v *Vyos) fetchNetworks() error {
 		if err != nil {
 			log.Err(err)
 		}
+
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			// err = v.scanSubnet(network)
-			// if err != nil {
-			// 	return
-			// }
+			err = v.arpScan(network)
+			if err != nil {
+				log.Err(err)
+			}
 		}()
 
 	}
