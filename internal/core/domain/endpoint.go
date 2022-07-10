@@ -49,6 +49,7 @@ type EndpointOperator interface {
 	Unenroll(id string) error
 	Send(id string, operation string, payload any) error
 	SendAll(id string, operation string, payload any) error
+	CloseAll() error
 }
 
 type EndpointService interface {
@@ -56,7 +57,7 @@ type EndpointService interface {
 	FindById(id string) (*Endpoint, error)
 	FindByKey(key string) (*Endpoint, error)
 	Create(*Endpoint) error
-
+	CloseAll() error
 	Observable
 
 	Enroll(id string, conn *websocket.Conn) error

@@ -87,7 +87,7 @@ func (u *moduleService) Run(module *domain.Module) error {
 		return err
 	}
 	// Set the module as running so it can begin updating
-	module.Running = false
+	module.Running = true
 	// Mark the module as running
 	err = u.setState(module, RUNNING)
 	if err != nil {
@@ -97,6 +97,7 @@ func (u *moduleService) Run(module *domain.Module) error {
 }
 
 func (u *moduleService) Load(module *domain.Module) error {
+	module.Running = false
 	// Attempt to load the module
 	err := u.operator.Load(module)
 	if err != nil {
@@ -145,8 +146,12 @@ func (u *moduleService) UpdateAll() error {
 	ref := *modules
 	wg.Add(len(ref))
 	for _, module := range ref {
+
 		go func(mod domain.Module) {
 			defer wg.Done()
+			if !mod.Running || !mod.Enabled {
+				return
+			}
 			err = u.Update(&mod)
 			if err != nil {
 				log.Err(err)
@@ -186,6 +191,30 @@ func (u *moduleService) RunAll() error {
 		}(module)
 	}
 
+	return nil
+}
+
+func (u *moduleService) DisposeAll() error {
+	modules, err := u.repository.FindAll()
+	if err != nil {
+		return err
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(len(*modules))
+	for _, module := range *modules {
+		go func(mod domain.Module) {
+			defer wg.Done()
+			if !mod.Enabled || !mod.Running {
+				return
+			}
+			err = u.Dispose(&mod)
+			if err != nil {
+				log.Err(err)
+				return
+			}
+		}(module)
+	}
+	wg.Wait()
 	return nil
 }
 

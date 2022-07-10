@@ -42,6 +42,7 @@ type ModuleService interface {
 	Dispose(module *Module) error
 	UpdateAll() error
 	RunAll() error
+	DisposeAll() error
 	LoadAll() error
 	BuildAll() error
 	FindAll() (*[]Module, error)

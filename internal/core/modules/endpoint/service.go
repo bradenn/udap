@@ -57,6 +57,10 @@ func (u *endpointService) Watch(ref chan<- domain.Mutation) error {
 	return nil
 }
 
+func (u endpointService) CloseAll() error {
+	return u.operator.CloseAll()
+}
+
 func (u endpointService) Send(id string, operation string, payload any) error {
 	err := u.operator.Send(id, operation, payload)
 	if err != nil {

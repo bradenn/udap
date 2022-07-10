@@ -38,15 +38,15 @@ func NewConnection(ws *websocket.Conn) *Connection {
 	}
 
 	ws.SetCloseHandler(func(code int, text string) error {
-		c.Close()
+		c.Close(false)
 		return nil
 	})
 
 	return c
 }
 
-func (c *Connection) Close() {
-	c.done <- true
+func (c *Connection) Close(self bool) {
+	c.done <- self
 	active := false
 	c.active = &active
 }
@@ -54,7 +54,10 @@ func (c *Connection) Close() {
 func (c *Connection) Watch() {
 	for {
 		select {
-		case <-c.done:
+		case t := <-c.done:
+			if t {
+				c.WS.WriteMessage(websocket.CloseGoingAway, nil)
+			}
 			return
 		case req := <-c.edit:
 			err := c.WS.WriteJSON(req)
@@ -81,6 +84,13 @@ func (m *endpointOperator) getConnection(id string) (*Connection, error) {
 
 func (m *endpointOperator) setConnection(id string, connection *Connection) error {
 	m.connections[id] = connection
+	return nil
+}
+
+func (m *endpointOperator) CloseAll() error {
+	for _, connection := range m.connections {
+		connection.Close(true)
+	}
 	return nil
 }
 

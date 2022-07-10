@@ -112,11 +112,6 @@ func (h *Homekit) Host() {
 		log.Err(err)
 	}
 
-	hc.OnTermination(func() {
-		log.Event("Module 'homekit' is terminating.")
-		<-h.transport.Stop()
-	})
-
 	h.transport.Start()
 
 }

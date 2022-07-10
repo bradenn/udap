@@ -112,11 +112,11 @@ func (m *moduleOperator) Load(module *domain.Module) error {
 func (m *moduleOperator) Run(module *domain.Module) error {
 	// Check to make sure the module is enabled
 	if !module.Enabled {
-		return fmt.Errorf("module is not enabled")
+		return fmt.Errorf("module '%s' is not enabled; cannot run", module.Name)
 	}
 	// Make sure the module is not already running
 	if module.Running {
-		return fmt.Errorf("module is already running")
+		return fmt.Errorf("module '%s' is already running; cannot run again", module.Name)
 	}
 	// Get the local module
 	local, err := m.getModule(module)
@@ -136,11 +136,11 @@ func (m *moduleOperator) Run(module *domain.Module) error {
 func (m *moduleOperator) Update(module *domain.Module) error {
 	// Check to make sure the module is enabled
 	if !module.Enabled {
-		return fmt.Errorf("module is not enabled")
+		return fmt.Errorf("module '%s' is not enabled; cannot update", module.Name)
 	}
 	// Make sure the module is running
-	if module.Running {
-		return fmt.Errorf("module is not running")
+	if !module.Running {
+		return fmt.Errorf("module '%s' is not running; cannot update", module.Name)
 	}
 	// Get the local module
 	local, err := m.getModule(module)
@@ -164,11 +164,11 @@ func (m *moduleOperator) Update(module *domain.Module) error {
 func (m *moduleOperator) Dispose(module *domain.Module) error {
 	// Check to make sure the module is enabled
 	if !module.Enabled {
-		return fmt.Errorf("module is not enabled")
+		return fmt.Errorf("module '%s' is not enabled; cannot dispose", module.Name)
 	}
 	// Make sure the module is running
 	if !module.Running {
-		return fmt.Errorf("module is not running")
+		return fmt.Errorf("module '%s' is not running; cannot dispose", module.Name)
 	}
 	// Get the local module
 	local, err := m.getModule(module)
@@ -180,6 +180,6 @@ func (m *moduleOperator) Dispose(module *domain.Module) error {
 	if err != nil {
 		return err
 	}
-
+	log.Event("Module '%s' unloaded.", module.Name)
 	return nil
 }
