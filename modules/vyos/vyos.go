@@ -9,8 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Ullaakut/nmap/v2"
+	"github.com/tatsushid/go-fastping"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -24,6 +27,8 @@ var Module Vyos
 
 type Vyos struct {
 	plugin.Module
+	pingQueue chan domain.Device
+	done      chan bool
 }
 
 func init() {
@@ -37,12 +42,91 @@ func init() {
 	Module.Config = config
 }
 
+func (v *Vyos) FastPing(device domain.Device) error {
+	p := fastping.NewPinger()
+	ra, err := net.ResolveIPAddr("ip4:icmp", device.Ipv4)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	p.OnRecv = func(addr *net.IPAddr, rtt time.Duration) {
+		device.Latency = rtt
+		device.LastSeen = time.Now()
+		device.State = "ONLINE"
+		err = v.Devices.Update(&device)
+		if err != nil {
+			return
+		}
+	}
+
+	p.OnIdle = func() {
+		fmt.Println("finish")
+	}
+
+	p.AddIPAddr(ra)
+	err = p.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+	return nil
+}
+
+func (v *Vyos) PingDevice(device domain.Device) error {
+	ctx := context.Background()
+	timeout, cancelFunc := context.WithTimeout(ctx, time.Millisecond*500)
+	defer cancelFunc()
+	cmd := exec.CommandContext(timeout, "/bin/zsh", "-c",
+		fmt.Sprintf("ping -c 1 %s > /dev/null && echo true || echo false", device.Ipv4))
+	start := time.Now()
+	output, _ := cmd.Output()
+	if string(output) == "true\n" {
+		device.Latency = time.Since(start)
+		device.LastSeen = time.Now()
+		device.State = "ONLINE"
+		err := v.Devices.Update(&device)
+		if err != nil {
+			return err
+		}
+	} else {
+		device.Latency = 0
+		device.State = "OFFLINE"
+		err := v.Devices.Update(&device)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (v *Vyos) Setup() (plugin.Config, error) {
-	err := v.UpdateInterval(30000)
+	v.pingQueue = make(chan domain.Device, 64)
+	err := v.UpdateInterval(15000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
 	return v.Config, nil
+}
+
+func (v *Vyos) BeginListening(threads int) error {
+
+	for i := 0; i < threads; i++ {
+		go func() {
+			for {
+				select {
+				case device := <-v.pingQueue:
+					err := v.PingDevice(device)
+					if err != nil {
+						continue
+					}
+				case <-v.done:
+					return
+				}
+			}
+		}()
+	}
+
+	return nil
 }
 
 func (v *Vyos) Update() error {
@@ -55,41 +139,18 @@ func (v *Vyos) Update() error {
 			return nil
 		}
 		for _, device := range *devices {
-			go func(device domain.Device) {
-				ctx := context.Background()
-				timeout, cancelFunc := context.WithTimeout(ctx, time.Second*1)
-				defer cancelFunc()
-				cmd := exec.CommandContext(timeout, "/bin/zsh", "-c",
-					fmt.Sprintf("ping -c 1 %s > /dev/null && echo true || echo false", device.Ipv4))
-				start := time.Now()
-				output, _ := cmd.Output()
-				if string(output) == "true\n" {
-					device.Latency = time.Since(start)
-					device.LastSeen = time.Now()
-					device.State = "ONLINE"
-					err = v.Devices.Update(&device)
-					if err != nil {
-						fmt.Println(err)
-						return
-					}
-				} else {
-					device.Latency = 0
-					device.State = "OFFLINE"
-					err = v.Devices.Update(&device)
-					if err != nil {
-						fmt.Println(err)
-						return
-					}
-				}
-
-			}(device)
-
+			v.pingQueue <- device
 		}
+
 	}
 	return nil
 }
 
 func (v *Vyos) Run() error {
+	err := v.BeginListening(4)
+	if err != nil {
+		return nil
+	}
 	go func() {
 		err := v.fetchNetworks()
 		if err != nil {
