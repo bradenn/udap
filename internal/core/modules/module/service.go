@@ -86,6 +86,8 @@ func (u *moduleService) Run(module *domain.Module) error {
 		}
 		return err
 	}
+	// Set the module as running so it can begin updating
+	module.Running = false
 	// Mark the module as running
 	err = u.setState(module, RUNNING)
 	if err != nil {
@@ -95,15 +97,13 @@ func (u *moduleService) Run(module *domain.Module) error {
 }
 
 func (u *moduleService) Load(module *domain.Module) error {
+	// Attempt to load the module
 	err := u.operator.Load(module)
 	if err != nil {
 		return err
 	}
+	// Set the state if the operation was a success, setState will also update the module data
 	err = u.setState(module, IDLE)
-	if err != nil {
-		return err
-	}
-	err = u.repository.Update(module)
 	if err != nil {
 		return err
 	}
@@ -126,6 +126,8 @@ func (u *moduleService) Dispose(module *domain.Module) error {
 	if err != nil {
 		return err
 	}
+	// Set the module as not running, so it is not updated
+	module.Running = false
 	// Mark the module as stopped if the disposal was successful
 	err = u.setState(module, STOPPED)
 	if err != nil {

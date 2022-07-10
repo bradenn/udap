@@ -14,6 +14,7 @@ type Module struct {
 	Author      string      `json:"author"`
 	Channel     chan Module `json:"-" gorm:"-"`
 	State       string      `json:"state"`
+	Running     bool        `json:"running" gorm:"default:false"`
 	Enabled     bool        `json:"enabled" gorm:"default:true"`
 	Recover     int         `json:"recover"`
 }
