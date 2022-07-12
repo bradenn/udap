@@ -137,7 +137,7 @@ func Status(writer http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		return
 	}
-
+	fmt.Println("DETECTION")
 	marshal, err := json.Marshal(stats)
 	if err != nil {
 		return
@@ -156,8 +156,12 @@ func main() {
 
 	server.Addr = ":5050"
 	fmt.Println("Running on port :5050")
-	err := server.ListenAndServeTLS("./certs/monitor.crt", "./certs/monitor.key")
+	err := server.ListenAndServe()
 	if err != nil {
-		fmt.Println(err)
+		return
 	}
+	// err := server.ListenAndServeTLS("./certs/monitor.crt", "./certs/monitor.key")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 }

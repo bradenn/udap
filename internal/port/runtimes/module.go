@@ -18,7 +18,6 @@ func NewModuleRuntime(service domain.ModuleService) {
 		log.Err(err)
 		return
 	}
-
 	err = service.LoadAll()
 	if err != nil {
 		return

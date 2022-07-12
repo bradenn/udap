@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"runtime/pprof"
 	"sync"
 	"time"
 	"udap/internal/controller"
@@ -32,9 +31,9 @@ type orchestrator struct {
 	server     *http.Server
 	maxTick    time.Duration
 	controller *controller.Controller
-
-	modules   domain.ModuleService
-	endpoints domain.EndpointService
+	done       chan bool
+	modules    domain.ModuleService
+	endpoints  domain.EndpointService
 
 	mutations chan domain.Mutation
 }
@@ -45,7 +44,10 @@ type Orchestrator interface {
 }
 
 func (o *orchestrator) Terminate(reason string) {
-
+	_ = o.modules.DisposeAll()
+	_ = o.endpoints.CloseAll()
+	fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
+	os.Exit(0)
 }
 
 func NewOrchestrator() (Orchestrator, error) {
@@ -60,6 +62,7 @@ func NewOrchestrator() (Orchestrator, error) {
 	return &orchestrator{
 		db:         db,
 		router:     r,
+		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second,
 		mutations:  make(chan domain.Mutation, 16),
@@ -73,8 +76,8 @@ func (o *orchestrator) Start() error {
 	go func() {
 		for range c {
 			_ = o.server.Close()
-			fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
-			os.Exit(0)
+			o.done <- true
+			return
 		}
 	}()
 
@@ -153,7 +156,7 @@ func (o *orchestrator) tick() <-chan error {
 		}
 		delta := time.Since(start)
 		if delta < o.maxTick && o.maxTick-delta > 250*time.Millisecond {
-			log.Event("Elapsed: %s", delta.String())
+			log.Tick("Elapsed: %s", delta.String())
 			time.Sleep(o.maxTick - delta - time.Millisecond*250)
 		}
 		out <- nil
@@ -181,18 +184,17 @@ func (o *orchestrator) Run() error {
 	routes.NewUserRouter(o.controller.Users).RouteUsers(o.router)
 	routes.NewAttributeRouter(o.controller.Attributes).RouteAttributes(o.router)
 	routes.NewZoneRouter(o.controller.Zones).RouteZones(o.router)
+	routes.NewDeviceRouter(o.controller.Devices).RouteDevices(o.router)
 	routes.NewEndpointRouter(o.endpoints).RouteEndpoints(o.router)
 	routes.NewModuleRouter(o.modules).RouteModules(o.router)
 
 	runtimes.NewModuleRuntime(o.modules)
+
 	go func() {
 		defer wg.Done()
 		err := o.runServer()
 		if err != nil {
 			log.Err(err)
-			pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
-			fmt.Printf("\nThreads @ exit: %d\n", runtime.NumGoroutine())
-			os.Exit(1)
 			return
 		}
 	}()
@@ -202,6 +204,11 @@ func (o *orchestrator) Run() error {
 		for {
 			pulse.Begin("update")
 			select {
+			case <-o.done:
+				log.Event("Event loop exiting...")
+				o.Terminate("Terminated")
+				close(o.mutations)
+				return
 			case <-time.After(o.maxTick + time.Millisecond*100):
 				log.Event("Orchestrator event loop timed out")
 				continue

@@ -19,3 +19,7 @@ func NewRepository(db *gorm.DB) domain.DeviceRepository {
 		Store: generic.NewStore[domain.Device](db),
 	}
 }
+
+func (m *deviceRepo) FindOrCreate(device *domain.Device) error {
+	return m.db.FirstOrCreate(device, "mac = ?", device.Mac).Error
+}

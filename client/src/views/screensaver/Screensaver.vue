@@ -4,7 +4,6 @@
 
 import * as THREE from "three";
 import {onMounted, onUnmounted} from "vue";
-import Stats from 'stats.js';
 import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass";
 import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
@@ -16,19 +15,21 @@ import {BlendShader} from "three/examples/jsm/shaders/BlendShader";
 let renderer = {} as THREE.WebGLRenderer
 let camera = {} as THREE.PerspectiveCamera
 let composer = {} as EffectComposer
-let stats = {} as Stats
 let scene = {} as THREE.Scene
 let instanceMaterial = {} as THREE.RawShaderMaterial
 let objs = {} as THREE.Object3D
+let animationFrame = 0;
 
 onMounted(() => {
   reset()
   initGraphics()
 })
 
+
 onUnmounted(() => {
   instanceMaterial.dispose()
   renderer.dispose()
+  cancelAnimationFrame(animationFrame)
   reset()
 })
 
@@ -37,7 +38,6 @@ function reset() {
   camera = {} as THREE.PerspectiveCamera
   composer = {} as EffectComposer
   scene = {} as THREE.Scene
-  stats = {} as Stats
   instanceMaterial = {} as THREE.RawShaderMaterial
   objs = {} as THREE.Object3D
 }
@@ -50,6 +50,7 @@ let depth = 1500
 function initCamera() {
   // Initialize Camera
   camera = new THREE.PerspectiveCamera(75, width / height, 1, depth * 1.5)
+
   camera.position.set(0, 0, 1);
   camera.lookAt(0, 0, 0)
 }
@@ -57,6 +58,7 @@ function initCamera() {
 // Handler resizing the viewport if and when the viewport is altered
 function resizeFrame() {
   camera.aspect = width / height;
+  if (!camera) return
   camera.updateProjectionMatrix();
 
   renderer.setSize(width, height);
@@ -83,16 +85,16 @@ function initGraphics() {
   // Add the renderer to the dom
   element.appendChild(renderer.domElement)
   // Assign resize function
-  window.onresize = resizeFrame
+  element.onresize = resizeFrame
   // Initialize Stats manager
-  stats = new Stats();
-  element.appendChild(stats.dom)
+  // stats = new Stats();
+  // element.appendChild(stats.dom)
   // Set up the camera
   initCamera()
   // Set up the scene
   initScene()
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1, 0.8, 0.3);
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 2, 0.8, 0.3);
   const renderTargetParameters = {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
@@ -142,6 +144,7 @@ function initScene() {
   }
 
   scene.add(objs)
+
   // scene.add(new THREE.AmbientLight(0x444444, 4));
   scene.background = new THREE.Color(0x000000);
 
@@ -149,9 +152,9 @@ function initScene() {
 
 // Define animation routine
 function animate() {
-  requestAnimationFrame(animate);
+  animationFrame = requestAnimationFrame(animate);
   render()
-  stats.update()
+  // stats.update()
   composer.render();
 }
 
@@ -183,15 +186,8 @@ function generateStars(): THREE.Object3D {
   let scaleArray = new Float32Array(particleCount);
   let particleGeometry = new THREE.BufferGeometry();
 
-
-  let aspectW = (width / height) * 3
-  let aspectH = (height / width) * 4.5
-
-  const radius = 200;
   let mean = 2747.5 + 100
   let sd = 1509.878
-
-  let wave = 0.2;
 
   for (let i = 0, i3 = 0, l = particleCount; i < l; i++, i3 += 3) {
 
@@ -206,7 +202,7 @@ function generateStars(): THREE.Object3D {
     colorArray[i3 + 1] = arr[1] / 255
     colorArray[i3 + 2] = arr[2] / 255
 
-    scaleArray[i] = 2 + Math.random() * 8;
+    scaleArray[i] = 2 + Math.random() * 10;
 
 
   }
@@ -240,7 +236,7 @@ function generateStars(): THREE.Object3D {
 
 function render() {
   // particleSystem.translateZ(1)
-  objs.children.forEach(c => c.translateZ(5))
+  objs.children.forEach(c => c.translateZ(2))
   for (let i = 0; i < objs.children.length; i++) {
     if (objs.children[i].position.z >= depth) {
       objs.children[i].position.setZ(-depth * numSections)

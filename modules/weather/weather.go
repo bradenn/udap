@@ -30,7 +30,7 @@ type WeatherAPI struct {
 		Temperature   float64 `json:"temperature"`
 		Winddirection float64 `json:"winddirection"`
 		Weathercode   float64 `json:"weathercode"`
-		Time          float64 `json:"time"`
+		Time          string  `json:"time"`
 		Windspeed     float64 `json:"windspeed"`
 	} `json:"current_weather"`
 	Hourly      Hourly      `json:"hourly"`
@@ -181,10 +181,6 @@ func (v *Weather) Run() error {
 		return err
 	}
 
-	err = v.fetchWeather()
-	if err != nil {
-
-	}
 	buffer, err := v.forecastBuffer()
 	if err != nil {
 		return err
@@ -201,11 +197,6 @@ func (v *Weather) Run() error {
 	v.eId = e.Id
 
 	err = v.Attributes.Register(forecast)
-	if err != nil {
-		return err
-	}
-
-	err = v.pull()
 	if err != nil {
 		return err
 	}

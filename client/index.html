@@ -3,14 +3,8 @@
 <head>
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <link href="https://fonts.googleapis.com" rel="preconnect">
-    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
     <script src="./vendor/fa-6/js/all.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <title>Udap</title>
+    <title>UDAP</title>
 </head>
 <body>
 
@@ -25,14 +19,13 @@
 
 				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-				gl_PointSize = size * ( 300.0 / -mvPosition.z );
+				gl_PointSize = size * ( 325.0 / -mvPosition.z );
+
+				vColor *= ( 125.0 / -mvPosition.z );
 
 				gl_Position = projectionMatrix * mvPosition;
 
 			}
-
-
-
 
 </script>
 <script id="fshader" type="x-shader/x-fragment">
@@ -45,8 +38,8 @@ void main() {
     gl_FragColor = vec4( vColor, 1.0 );
 
     gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
-
 }
+
 
 
 
@@ -54,8 +47,6 @@ void main() {
 <div id="app">
     <div class="simple-keyboard"></div>
 </div>
-
 <script src="./src/main.ts" type="module"></script>
 </body>
-
 </html>

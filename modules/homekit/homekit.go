@@ -19,9 +19,10 @@ var Module Homekit
 
 type Homekit struct {
 	plugin.Module
-	bridge  *accessory.Bridge
-	config  hc.Config
-	devices map[string]*service.Service
+	bridge    *accessory.Bridge
+	transport hc.Transport
+	config    hc.Config
+	devices   map[string]*service.Service
 }
 
 func init() {
@@ -61,10 +62,7 @@ func (h *Homekit) Update() error {
 	return nil
 }
 
-func (h *Homekit) Run() error {
-
-	time.Sleep(time.Second * 5)
-
+func (h *Homekit) Host() {
 	var accessories []*accessory.Accessory
 
 	entities, err := h.Entities.FindAll()
@@ -86,7 +84,7 @@ func (h *Homekit) Run() error {
 
 			err = device.syncAttributes(h.Attributes, entity.Id)
 			if err != nil {
-				return err
+				return
 			}
 
 			accessories = append(accessories, device.Accessory)
@@ -109,18 +107,27 @@ func (h *Homekit) Run() error {
 
 	}
 
-	t, err := hc.NewIPTransport(h.config, h.bridge.Accessory, accessories...)
+	h.transport, err = hc.NewIPTransport(h.config, h.bridge.Accessory, accessories...)
 	if err != nil {
 		log.Err(err)
 	}
 
-	hc.OnTermination(func() {
-		log.Event("Module 'homekit' is terminating.")
-		<-t.Stop()
-	})
+	h.transport.Start()
 
-	t.Start()
+}
 
+func (h *Homekit) Run() error {
+
+	// Wait for modules to load
+	time.Sleep(time.Second * 5)
+	// Begin hosting in a new thead
+	go h.Host()
+
+	return nil
+}
+
+func (h *Homekit) Dispose() error {
+	<-h.transport.Stop()
 	return nil
 }
 

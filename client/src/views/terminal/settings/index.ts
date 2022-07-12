@@ -9,6 +9,10 @@ import Timings from "@/views/terminal/settings/Timings.vue";
 import Zone from "@/views/terminal/settings/zone/Zone.vue";
 import Zones from "@/views/terminal/settings/zone/Zones.vue";
 import Entities from "@/views/terminal/settings/entity/Entities.vue";
+import Devices from "@/views/terminal/settings/device/Device.vue";
+import DeviceOverview from "@/views/terminal/settings/device/DeviceOverview.vue";
+import DeviceMonitor from "@/views/terminal/settings/device/DeviceMonitor.vue";
+import RenameDevice from "@/views/terminal/settings/device/RenameDevice.vue";
 
 export default {
     routes: {
@@ -58,18 +62,47 @@ export default {
             {
                 path: '/terminal/settings/entities',
                 name: 'Entities',
-                icon: 'expand',
+                icon: 'clone',
                 meta: {
                     order: 4,
                 },
                 component: Entities
             },
             {
+                path: '/terminal/settings/devices',
+                name: 'Devices',
+                icon: 'share-nodes',
+                meta: {
+                    order: 5,
+                },
+                component: Devices,
+                children: [
+                    {
+                        path: '/terminal/settings/devices',
+                        name: 'Device Overview',
+                        icon: 'share-nodes',
+                        component: DeviceOverview,
+                    },
+                    {
+                        path: '/terminal/settings/devices/:device/configure',
+                        name: 'Edit Device',
+                        icon: 'share-nodes',
+                        component: RenameDevice,
+                    },
+                    {
+                        path: '/terminal/settings/devices/:device/monitor',
+                        name: 'Edit Device',
+                        icon: 'share-nodes',
+                        component: DeviceMonitor,
+                    },
+                ]
+            },
+            {
                 path: '/terminal/settings/timings',
                 name: 'Timings',
                 icon: 'clock',
                 meta: {
-                    order: 5,
+                    order: 6,
                 },
                 component: Timings
             },
@@ -80,7 +113,7 @@ export default {
                 name: 'Zone',
                 icon: 'map',
                 meta: {
-                    order: 6,
+                    order: 7,
                 },
                 component: Zone,
                 children: [

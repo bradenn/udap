@@ -6,6 +6,7 @@ import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
 import type {Remote} from "@/types";
+import type {Preferences} from "@/App.vue";
 
 let state = reactive({
   menu: false,
@@ -13,7 +14,7 @@ let state = reactive({
   connected: false,
 })
 
-let ui: any = inject("ui")
+let preferences: Preferences = inject("preferences") as Preferences
 let remote: Remote = inject('remote') as Remote
 let system: any = inject('system')
 
@@ -130,7 +131,7 @@ function reload() {
       </div>
     </Plot>
     <Plot :cols="1" :rows="1" title="Brightness">
-      <input v-model="ui.brightness"
+      <input v-model="preferences.ui.brightness"
              :max=20
              :min=4
              :step=1
@@ -139,10 +140,15 @@ function reload() {
              @mousemove.stop>
     </Plot>
     <Plot :cols="2" :rows="2" title="Quick Settings">
-      <Toggle :active="ui.grid" :fn="() => ui.grid = !ui.grid" title="Grid"></Toggle>
-      <Toggle :active="ui.outlines" :fn="() => ui.outlines = !ui.outlines" title="Screensaver"></Toggle>
-      <Toggle :active="ui.watermark" :fn="() => ui.watermark = !ui.watermark" title="Watermark"></Toggle>
-      <Toggle :active="ui.blurBg" :fn="() => ui.blurBg = !ui.blurBg" title="Bg Blur"></Toggle>
+      <Toggle :active="preferences.ui.grid" :fn="() => preferences.ui.grid = !preferences.ui.grid"
+              title="Grid"></Toggle>
+      <Toggle :active="preferences.ui.screensaver.enabled"
+              :fn="() => preferences.ui.screensaver.enabled = !preferences.ui.screensaver.enabled"
+              title="Screensaver"></Toggle>
+      <Toggle :active="preferences.ui.watermark" :fn="() => preferences.ui.watermark = !preferences.ui.watermark"
+              title="Watermark"></Toggle>
+      <Toggle :active="preferences.ui.background.blur"
+              :fn="() => preferences.ui.background.blur = !preferences.ui.background.blur" title="Bg Blur"></Toggle>
     </Plot>
 
   </div>

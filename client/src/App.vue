@@ -4,10 +4,16 @@ import {onMounted, provide, reactive, watch} from "vue";
 import {version} from "../package.json";
 
 
-interface Preferences {
+export interface Preferences {
   ui: {
-    blurBg: boolean
-    background: string
+    screensaver: {
+      enabled: boolean
+      countdown: number
+    }
+    background: {
+      image: string,
+      blur: boolean
+    }
     theme: string
     mode: string
     blur: number
@@ -21,9 +27,15 @@ interface Preferences {
 
 const preferenceDefaults: Preferences = {
   ui: {
-    blurBg: false,
+    screensaver: {
+      enabled: true,
+      countdown: 60 * 5
+    },
+    background: {
+      image: "milk",
+      blur: true
+    },
     blur: 6,
-    background: "milk",
     mode: "cursor",
     theme: "dark",
     brightness: 100,
@@ -40,7 +52,10 @@ function restore() {
   let stored = localStorage.getItem("preferences")
   if (stored) {
     let parsed: Preferences = JSON.parse(stored)
+    save(parsed)
     return parsed
+  } else {
+    save(preferenceDefaults)
   }
   return preferenceDefaults
 }
@@ -63,7 +78,6 @@ let state = reactive({
   countdown: 3,
   context: false,
   remote: {},
-
   system: {
     nexus: {
       system: {
@@ -76,6 +90,10 @@ let state = reactive({
       }
     }
   }
+})
+
+onMounted(() => {
+  resetCountdown()
 })
 
 let screensaver = reactive({
@@ -93,14 +111,14 @@ function forceScreensaver() {
 }
 
 function resetCountdown() {
-  screensaver.countdown = 60 * 5
+  screensaver.countdown = preferences.ui.screensaver.countdown
   screensaver.hideTerminal = false
   screensaver.show = false
   if (screensaver.interval !== 0) {
     clearInterval(screensaver.interval)
     screensaver.interval = 0
   }
-  if (!preferences.ui.outlines) return
+  if (!preferences.ui.screensaver.enabled) return
   screensaver.interval = setInterval(() => {
     screensaver.countdown -= 1;
     if (screensaver.countdown <= 0) {
@@ -114,47 +132,9 @@ function resetCountdown() {
   }, 1000)
 }
 
-onMounted(() => {
-  resetCountdown()
-  state.context = false
-  state.fps = 0
-})
 
 provide('system', state.system)
-
-function handleUpdate() {
-  if (state.countdown <= 0) {
-    clearInterval(state.timeout)
-    state.timeout = 0
-    state.hideHome = false
-  }
-}
-
-let lastReset = performance.now()
-let totalFrames = 0
-
-function tick() {
-  totalFrames++
-  let now = performance.now()
-  let dFps = totalFrames / ((now - lastReset) / 1000.0)
-  state.fps = Math.round(dFps * 10) / 10
-  if (totalFrames > 2000) {
-    totalFrames = 0
-    lastReset = performance.now()
-  }
-}
-
-function hideHome(hide: boolean) {
-  state.hideHome = hide
-}
-
-function toggleContext(hide: boolean) {
-  state.context = hide
-}
-
-provide('ui', preferences.ui)
-provide('context', toggleContext)
-provide('hideHome', hideHome)
+provide('preferences', preferences)
 
 
 </script>
@@ -163,7 +143,8 @@ provide('hideHome', hideHome)
   <div
       :class="`${preferences.ui.night?'night-vision':''} theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness}`"
       class="root" v-on:mousedown="(e) => resetCountdown()">
-    <img :class="`${preferences.ui.blurBg?'backdrop-blurred':''}`" :src="`/custom/${preferences.ui.background}@4x.png`"
+    <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
+         :src="`/custom/${preferences.ui.background.image}@4x.png`"
          alt="Background" class="backdrop "/>
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
@@ -183,6 +164,7 @@ provide('hideHome', hideHome)
     <div v-if="preferences.ui.grid" class="grid"></div>
 
     <div v-if="state.context" class="context context-light"></div>
+
     <router-view/>
 
 
@@ -191,6 +173,15 @@ provide('hideHome', hideHome)
 </template>
 
 <style lang="scss">
+.overlay-notification {
+  position: fixed;
+  z-index: 1;
+  height: 4.5rem;
+  width: 15rem;
+  padding: 1rem;
+  right: 0;
+  top: 0;
+}
 
 .screensaver-text {
   animation: screensaverTextLoadIn 500ms ease-in forwards;

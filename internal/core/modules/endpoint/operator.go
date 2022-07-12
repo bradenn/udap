@@ -27,7 +27,7 @@ func (c *Connection) Send(body any) {
 }
 
 func NewConnection(ws *websocket.Conn) *Connection {
-	ch := make(chan any, 24)
+	ch := make(chan any, 64)
 	d := make(chan bool)
 	active := true
 	c := &Connection{
@@ -38,15 +38,20 @@ func NewConnection(ws *websocket.Conn) *Connection {
 	}
 
 	ws.SetCloseHandler(func(code int, text string) error {
-		c.Close()
+		c.Close(false)
 		return nil
 	})
 
 	return c
 }
 
-func (c *Connection) Close() {
-	c.done <- true
+func (c *Connection) Close(self bool) {
+	select {
+	case c.done <- self:
+	default:
+		return
+	}
+
 	active := false
 	c.active = &active
 }
@@ -54,7 +59,10 @@ func (c *Connection) Close() {
 func (c *Connection) Watch() {
 	for {
 		select {
-		case <-c.done:
+		case t := <-c.done:
+			if t {
+				c.WS.WriteMessage(websocket.CloseGoingAway, nil)
+			}
 			return
 		case req := <-c.edit:
 			err := c.WS.WriteJSON(req)
@@ -68,7 +76,8 @@ func (c *Connection) Watch() {
 
 type endpointOperator struct {
 	connections map[string]*Connection
-	controller  *controller.Controller
+
+	controller *controller.Controller
 }
 
 func (m *endpointOperator) getConnection(id string) (*Connection, error) {
@@ -80,13 +89,22 @@ func (m *endpointOperator) getConnection(id string) (*Connection, error) {
 }
 
 func (m *endpointOperator) setConnection(id string, connection *Connection) error {
+
 	m.connections[id] = connection
+
+	return nil
+}
+
+func (m *endpointOperator) CloseAll() error {
+	for _, connection := range m.connections {
+		connection.Close(true)
+	}
 	return nil
 }
 
 func (m *endpointOperator) removeConnection(id string) error {
 	ref := m.connections[id]
-	if ref != nil {
+	if ref == nil {
 		return nil
 	}
 	delete(m.connections, id)
@@ -94,6 +112,7 @@ func (m *endpointOperator) removeConnection(id string) error {
 }
 
 func (m *endpointOperator) SendAll(id string, operation string, payload any) error {
+
 	for _, conn := range m.connections {
 		if conn.Active() {
 			conn.Send(Response{
@@ -104,10 +123,12 @@ func (m *endpointOperator) SendAll(id string, operation string, payload any) err
 			})
 		}
 	}
+
 	return nil
 }
 
 func (m *endpointOperator) Send(id string, operation string, payload any) error {
+
 	connection, err := m.getConnection(id)
 	if err != nil {
 		return err
@@ -158,6 +179,15 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 	if err != nil {
 		return err
 	}
+	defer func() {
+		// Remove the connection from the local map
+		err = m.removeConnection(endpoint.Id)
+		if err != nil {
+			log.Err(err)
+		}
+		// Print disconnect message
+		log.Event("Endpoint '%s' disconnected.", endpoint.Name)
+	}()
 	// Send the system metadata to the client
 	err = sendMetadata(connection)
 	if err != nil {
@@ -174,6 +204,7 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 	err = m.controller.EmitAll()
 	if err != nil {
 		log.Err(err)
+		return nil
 	}
 	// Log the current state
 	log.Event("Endpoint '%s' connected.", endpoint.Name)
@@ -181,18 +212,13 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 	for {
 		_, _, err = connection.WS.ReadMessage()
 		if err != nil {
+			connection.Close(false)
 			break
 		}
 	}
 	// Wait until the watch function exits
 	wg.Wait()
-	// Remove the connection from the local map
-	err = m.removeConnection(endpoint.Id)
-	if err != nil {
-		return err
-	}
-	// Print disconnect message
-	log.Event("Endpoint '%s' disconnected.", endpoint.Name)
+
 	return nil
 }
 
@@ -203,7 +229,8 @@ func (m *endpointOperator) Unenroll(id string) error {
 
 func NewOperator(controller *controller.Controller) domain.EndpointOperator {
 	return &endpointOperator{
-		controller:  controller,
+		controller: controller,
+
 		connections: map[string]*Connection{},
 	}
 }

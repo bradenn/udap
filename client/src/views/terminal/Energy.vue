@@ -170,7 +170,7 @@ $blue: #3498db;
 $grey: #f2f2f2;
 
 @function rem($val) {
-  @return #{$val / $baseFontSize}rem;
+  @return #{calc($val / $baseFontSize)}rem;
 }
 
 // Gauge

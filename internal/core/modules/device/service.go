@@ -49,6 +49,14 @@ func (u *deviceService) Watch(mut chan<- domain.Mutation) error {
 }
 
 func (u deviceService) Register(device *domain.Device) error {
+	err := u.repository.FindOrCreate(device)
+	if err != nil {
+		return err
+	}
+	err = u.emit(device)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -75,7 +83,18 @@ func (u deviceService) FindOrCreate(device *domain.Device) error {
 }
 
 func (u deviceService) Update(device *domain.Device) error {
-	return u.repository.Update(device)
+
+	err := u.repository.Update(device)
+	if err != nil {
+		return err
+	}
+
+	err = u.emit(device)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u deviceService) Delete(device *domain.Device) error {

@@ -14,6 +14,7 @@ type Module struct {
 	Author      string      `json:"author"`
 	Channel     chan Module `json:"-" gorm:"-"`
 	State       string      `json:"state"`
+	Running     bool        `json:"running" gorm:"default:false"`
 	Enabled     bool        `json:"enabled" gorm:"default:true"`
 	Recover     int         `json:"recover"`
 }
@@ -28,6 +29,7 @@ type ModuleOperator interface {
 	Load(module *Module) error
 	Update(module *Module) error
 	Run(module *Module) error
+	Dispose(module *Module) error
 }
 
 type ModuleService interface {
@@ -37,8 +39,10 @@ type ModuleService interface {
 	Load(module *Module) error
 	Update(module *Module) error
 	Run(module *Module) error
+	Dispose(module *Module) error
 	UpdateAll() error
 	RunAll() error
+	DisposeAll() error
 	LoadAll() error
 	BuildAll() error
 	FindAll() (*[]Module, error)

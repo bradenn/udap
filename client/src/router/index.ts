@@ -9,6 +9,7 @@ import Settings from "@/views/terminal/settings/Settings.vue";
 import Preferences from "@/views/terminal/settings/Preferences.vue";
 import Connection from "@/views/terminal/settings/Connection.vue";
 import Modules from "@/views/terminal/settings/module/Modules.vue";
+
 import Endpoints from "@/views/terminal/settings/endpoint/Endpoints.vue";
 import Timings from "@/views/terminal/settings/Timings.vue";
 import Zones from "@/views/terminal/settings/zone/Zones.vue";
