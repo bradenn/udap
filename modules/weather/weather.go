@@ -30,7 +30,7 @@ type WeatherAPI struct {
 		Temperature   float64 `json:"temperature"`
 		Winddirection float64 `json:"winddirection"`
 		Weathercode   float64 `json:"weathercode"`
-		Time          float64 `json:"time"`
+		Time          string  `json:"time"`
 		Windspeed     float64 `json:"windspeed"`
 	} `json:"current_weather"`
 	Hourly      Hourly      `json:"hourly"`

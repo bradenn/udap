@@ -55,6 +55,8 @@ const (
 	process
 	event
 	critical
+	tick
+	rec
 )
 
 func log(logType LogType, format string, args ...interface{}) {
@@ -69,7 +71,15 @@ func log(logType LogType, format string, args ...interface{}) {
 		ln = false
 		break
 	case event:
-		prefix = fmt.Sprintf("%s[EVENT]%s", Reset+BoldGreen, Reset+Faint)
+		prefix = fmt.Sprintf("%s[EVENT]%s", Reset+BoldGreen, Reset)
+		ln = true
+		break
+	case tick:
+		prefix = fmt.Sprintf("%s[TICK]%s", Reset+BoldBlue, Reset)
+		ln = true
+		break
+	case rec:
+		prefix = fmt.Sprintf("%s[SAFE]%s", Reset+BoldMagenta, Reset)
 		ln = true
 		break
 	case critical:
@@ -115,6 +125,14 @@ func Critical(format string, args ...interface{}) {
 
 func Log(format string, args ...interface{}) {
 	log(module, format, args...)
+}
+
+func Tick(format string, args ...interface{}) {
+	log(tick, format, args...)
+}
+
+func Recovered(format string, args ...interface{}) {
+	log(rec, format, args...)
 }
 
 func Event(format string, args ...interface{}) {

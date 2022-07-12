@@ -46,7 +46,7 @@ function up() {
 
 <template>
   <div :class="`${props.active?'active':''}`" class="radio subplot d-flex justify-content-center"
-       @mousedown="handle" @mouseleave="(e) => up()" @mouseout="(e) => up()" @mouseup="(e) => up()">
+       @click="(e) => props.fn()">
     <div><span v-if="props.icon"><i :class="`fa-${props.icon}`" class="fa-solid "></i>&nbsp;</span>{{ props.title }}
       <div v-if="props.sf" class="label-o3 label-c2" v-html="props.sf"></div>
     </div>

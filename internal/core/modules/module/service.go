@@ -66,7 +66,23 @@ func (u *moduleService) emit(module *domain.Module) error {
 }
 
 func (u *moduleService) Update(module *domain.Module) error {
-	return u.operator.Update(module)
+	defer func() {
+		if r := recover(); r != nil {
+			log.Recovered("Module '%s' panicked; module entering safe-mode", module.Name)
+			err := u.Dispose(module)
+			if err != nil {
+				log.Err(fmt.Errorf("module disposal failed, runtime must be flushed to resume operation: %s",
+					err.Error()))
+				return
+			}
+		}
+	}()
+	err := u.operator.Update(module)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Run runs the startup code for each module, not to be confused with the setup function with connects and the module
@@ -180,9 +196,11 @@ func (u *moduleService) RunAll() error {
 	if err != nil {
 		return err
 	}
-
+	wg := sync.WaitGroup{}
+	wg.Add(len(*modules))
 	for _, module := range *modules {
 		go func(mod domain.Module) {
+			defer wg.Done()
 			err = u.Run(&mod)
 			if err != nil {
 				log.Err(err)
@@ -190,7 +208,7 @@ func (u *moduleService) RunAll() error {
 			}
 		}(module)
 	}
-
+	wg.Wait()
 	return nil
 }
 

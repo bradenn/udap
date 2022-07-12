@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/plugin"
@@ -29,17 +28,17 @@ func init() {
 }
 
 func (w *Worldspace) Setup() (plugin.Config, error) {
-	err := w.UpdateInterval(1000)
+	err := w.UpdateInterval(2000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
 
-	fmt.Println("Setting up Worldspace")
 	return w.Config, nil
 }
 
 func (w *Worldspace) Update() error {
 	if w.Ready() {
+
 		// fmt.Println("Updating worldspace")
 	}
 	return nil
@@ -57,8 +56,6 @@ func (w *Worldspace) Run() error {
 	router := chi.NewRouter()
 	router.Post("/motion/{zone}", w.handleMotion)
 
-	fmt.Println("Running worldspace")
-
 	go func() {
 		err := w.server.ListenAndServe()
 		if err != nil {
@@ -74,6 +71,5 @@ func (w *Worldspace) Dispose() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Disposing worldspace")
 	return nil
 }

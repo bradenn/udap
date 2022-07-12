@@ -11,6 +11,7 @@ import Zones from "@/views/terminal/settings/zone/Zones.vue";
 import Entities from "@/views/terminal/settings/entity/Entities.vue";
 import Devices from "@/views/terminal/settings/device/Device.vue";
 import DeviceOverview from "@/views/terminal/settings/device/DeviceOverview.vue";
+import DeviceMonitor from "@/views/terminal/settings/device/DeviceMonitor.vue";
 import RenameDevice from "@/views/terminal/settings/device/RenameDevice.vue";
 
 export default {
@@ -83,10 +84,16 @@ export default {
                         component: DeviceOverview,
                     },
                     {
-                        path: '/terminal/settings/devices/:device',
+                        path: '/terminal/settings/devices/:device/configure',
                         name: 'Edit Device',
                         icon: 'share-nodes',
                         component: RenameDevice,
+                    },
+                    {
+                        path: '/terminal/settings/devices/:device/monitor',
+                        name: 'Edit Device',
+                        icon: 'share-nodes',
+                        component: DeviceMonitor,
                     },
                 ]
             },

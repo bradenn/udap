@@ -77,6 +77,7 @@ func (o *orchestrator) Start() error {
 		for range c {
 			_ = o.server.Close()
 			o.done <- true
+			return
 		}
 	}()
 
@@ -155,7 +156,7 @@ func (o *orchestrator) tick() <-chan error {
 		}
 		delta := time.Since(start)
 		if delta < o.maxTick && o.maxTick-delta > 250*time.Millisecond {
-			log.Event("Elapsed: %s", delta.String())
+			log.Tick("Elapsed: %s", delta.String())
 			time.Sleep(o.maxTick - delta - time.Millisecond*250)
 		}
 		out <- nil

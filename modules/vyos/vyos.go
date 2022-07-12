@@ -9,11 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Ullaakut/nmap/v2"
-	"github.com/tatsushid/go-fastping"
+	"golang.org/x/net/icmp"
+	"golang.org/x/net/ipv4"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -27,8 +27,11 @@ var Module Vyos
 
 type Vyos struct {
 	plugin.Module
-	pingQueue chan domain.Device
-	done      chan bool
+	devicesIds   map[string]string
+	pingQueue    chan domain.Device
+	pingResolver chan domain.Device
+	pingConn     *icmp.PacketConn
+	done         chan bool
 }
 
 func init() {
@@ -36,97 +39,208 @@ func init() {
 		Name:        "vyos",
 		Type:        "module",
 		Description: "Network interfaces controller",
-		Version:     "0.0.1",
+		Version:     "1.0.2",
 		Author:      "Braden Nicholson",
 	}
 	Module.Config = config
 }
 
-func (v *Vyos) FastPing(device domain.Device) error {
-	p := fastping.NewPinger()
-	ra, err := net.ResolveIPAddr("ip4:icmp", device.Ipv4)
+func (v *Vyos) sendPing(ip string) error {
+	// Resolve any DNS (if used) and get the real IP of the target
+	dst, err := net.ResolveIPAddr("ip4", ip)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
-	p.OnRecv = func(addr *net.IPAddr, rtt time.Duration) {
-		device.Latency = rtt
-		device.LastSeen = time.Now()
-		device.State = "ONLINE"
-		err = v.Devices.Update(&device)
+	// Make a new ICMP message
+	m := icmp.Message{
+		Type: ipv4.ICMPTypeEcho, Code: 0,
+		Body: &icmp.Echo{
+			ID: 0xffff, Seq: 0xffff,
+			Data: []byte(fmt.Sprintf("%024d", time.Now().UnixNano())),
+		},
+	}
+
+	b, err := m.Marshal(nil)
+	if err != nil {
+		return err
+	}
+
+	n, err := v.pingConn.WriteTo(b, dst)
+	if err != nil {
+		err = v.rejectPing(ip)
 		if err != nil {
-			return
+			return err
 		}
+	} else if n != len(b) {
+		return fmt.Errorf("got %v; want %v", n, len(b))
 	}
 
-	p.OnIdle = func() {
-		fmt.Println("finish")
-	}
-
-	p.AddIPAddr(ra)
-	err = p.Run()
-	if err != nil {
-		fmt.Println(err)
-	}
 	return nil
 }
 
-func (v *Vyos) PingDevice(device domain.Device) error {
-	ctx := context.Background()
-	timeout, cancelFunc := context.WithTimeout(ctx, time.Millisecond*500)
-	defer cancelFunc()
-	cmd := exec.CommandContext(timeout, "/bin/zsh", "-c",
-		fmt.Sprintf("ping -c 1 %s > /dev/null && echo true || echo false", device.Ipv4))
-	start := time.Now()
-	output, _ := cmd.Output()
-	if string(output) == "true\n" {
-		device.Latency = time.Since(start)
-		device.LastSeen = time.Now()
-		device.State = "ONLINE"
-		err := v.Devices.Update(&device)
+func (v *Vyos) rejectPing(ipv4 string) error {
+	id := v.devicesIds[ipv4]
+	if id == "" {
+		return nil
+	}
+
+	device, err := v.Devices.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	device.Latency = 0
+	device.State = "OFFLINE"
+
+	err = v.Devices.Update(device)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Vyos) resolvePing(ipv4 string, duration time.Duration) error {
+	id := v.devicesIds[ipv4]
+	if id == "" {
+		return nil
+	}
+
+	device, err := v.Devices.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	device.Latency = duration
+	device.State = "ONLINE"
+	device.LastSeen = time.Now()
+
+	if device.IsQueryable {
+		device.Utilization, err = v.queryDevice(device.Ipv4)
 		if err != nil {
-			return err
-		}
-	} else {
-		device.Latency = 0
-		device.State = "OFFLINE"
-		err := v.Devices.Update(&device)
-		if err != nil {
-			return err
+			err = nil
 		}
 	}
+
+	err = v.Devices.Update(device)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (v *Vyos) queryDevice(ipv4 string) (domain.Utilization, error) {
+	client := http.Client{}
+	client.Timeout = time.Millisecond * 250
+
+	config := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	client.Transport = &http.Transport{
+		TLSClientConfig: config,
+	}
+
+	get, err := client.Get(fmt.Sprintf("https://%s:5050/status", ipv4))
+	if err != nil {
+		return domain.Utilization{}, err
+	}
+
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(get.Body)
+	if err != nil {
+		return domain.Utilization{}, err
+	}
+
+	util := domain.Utilization{}
+	err = json.Unmarshal(buf.Bytes(), &util)
+	if err != nil {
+		return domain.Utilization{}, err
+	}
+
+	return util, nil
 }
 
 func (v *Vyos) Setup() (plugin.Config, error) {
-	v.pingQueue = make(chan domain.Device, 64)
-	err := v.UpdateInterval(15000)
+	v.pingQueue = make(chan domain.Device, 8)
+	v.pingResolver = make(chan domain.Device, 8)
+	v.done = make(chan bool)
+	v.devicesIds = map[string]string{}
+	err := v.UpdateInterval(5000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
 	return v.Config, nil
 }
 
-func (v *Vyos) BeginListening(threads int) error {
-
-	for i := 0; i < threads; i++ {
-		go func() {
-			for {
-				select {
-				case device := <-v.pingQueue:
-					err := v.PingDevice(device)
-					if err != nil {
-						continue
-					}
-				case <-v.done:
-					return
-				}
+func (v *Vyos) listen() error {
+	for {
+		select {
+		case target := <-v.pingQueue:
+			err := v.sendPing(target.Ipv4)
+			if err != nil {
+				return err
 			}
-		}()
+		case result := <-v.pingResolver:
+			err := v.resolvePing(result.Ipv4, result.Latency)
+			if err != nil {
+				return err
+			}
+		case <-v.done:
+			return nil
+		}
 	}
+}
 
-	return nil
+func (v *Vyos) beginListening() (err error) {
+	v.pingConn, err = icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		return err
+	}
+	defer v.pingConn.Close()
+
+	for {
+		select {
+		case <-v.done:
+			return nil
+		default:
+		}
+		reply := make([]byte, 512)
+		n, peer, err := v.pingConn.ReadFrom(reply)
+		if err != nil {
+			return err
+		}
+		received := time.Now()
+
+		// Pack it up boys, we're done here
+		rm, err := icmp.ParseMessage(1, reply[:n])
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		switch rm.Type {
+		case ipv4.ICMPTypeEchoReply:
+			marshal, err := rm.Body.Marshal(1)
+			if err != nil {
+				return err
+			}
+			b := marshal[4:]
+			nsec := uint64(0)
+			_, err = fmt.Sscanf(string(b), "%024d", &nsec)
+			if err != nil {
+
+			}
+			t := time.Unix(int64(nsec/1000000000), int64(nsec%1000000000))
+			duration := received.Sub(t)
+			address := peer.String()
+			v.pingResolver <- domain.Device{Ipv4: address, Latency: duration}
+		default:
+			fmt.Println(":( Error")
+		}
+
+	}
 }
 
 func (v *Vyos) Update() error {
@@ -139,6 +253,7 @@ func (v *Vyos) Update() error {
 			return nil
 		}
 		for _, device := range *devices {
+
 			v.pingQueue <- device
 		}
 
@@ -147,10 +262,18 @@ func (v *Vyos) Update() error {
 }
 
 func (v *Vyos) Run() error {
-	err := v.BeginListening(4)
-	if err != nil {
-		return nil
-	}
+	go func() {
+		err := v.beginListening()
+		if err != nil {
+			log.Err(err)
+		}
+	}()
+	go func() {
+		err := v.listen()
+		if err != nil {
+			log.Err(err)
+		}
+	}()
 	go func() {
 		err := v.fetchNetworks()
 		if err != nil {
@@ -158,6 +281,16 @@ func (v *Vyos) Run() error {
 		}
 	}()
 	return nil
+}
+
+func (v *Vyos) Dispose() error {
+	for {
+		select {
+		case v.done <- true:
+		default:
+			return nil
+		}
+	}
 }
 
 func (v *Vyos) arpScan(network domain.Network) error {
@@ -183,6 +316,7 @@ func (v *Vyos) arpScan(network domain.Network) error {
 			if err != nil {
 				return err
 			}
+			v.devicesIds[device.Ipv4] = device.Id
 		}
 	}
 	return nil

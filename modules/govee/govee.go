@@ -114,7 +114,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	var buf bytes.Buffer
 	buf.Write(body)
 	c := http.Client{}
-
+	c.Timeout = time.Millisecond * 400
 	p := fmt.Sprintf("https://developer-api.govee.com/v1/devices%s", path)
 	request, err := http.NewRequest(method, p, &buf)
 	if err != nil {

@@ -114,6 +114,26 @@ export interface Attribute {
     order: number;
 }
 
+export interface Utilization {
+    memory: {
+        total: number;
+        used: number;
+    };
+    network: {
+        hostname: string;
+        ipv4: string;
+        mac: string;
+    };
+    cpu: {
+        cores: number;
+        usage: number[];
+    };
+    disk: {
+        total: number;
+        used: number;
+    };
+}
+
 export interface Device {
     created: string;
     updated: string;
@@ -123,6 +143,8 @@ export interface Device {
     entityId: string;
     name: string;
     hostname: string;
+    utilization: Utilization;
+    isQueryable: boolean
     lastSeen: string;
     latency: number;
     mac: string;

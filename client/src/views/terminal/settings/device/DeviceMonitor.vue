@@ -1,10 +1,7 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import type {Device, Remote} from "@/types";
-import SimpleKeyboard from "@/components/Keyboard.vue";
-import axios from "axios";
-import router from "@/router";
+import type {Device, Remote, Utilization} from "@/types";
 import {useRoute} from 'vue-router'
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
@@ -21,6 +18,7 @@ let preferences = inject('preferences')
 
 let state = reactive({
   loading: true,
+  util: {} as Utilization,
   model: "",
   mode: "toggles",
   device: {} as Device,
@@ -37,8 +35,9 @@ watchEffect(() => handleUpdates(remote))
 function handleUpdates(remote: Remote) {
   state.device = remote.devices.find(device => device.id === route.params.device) as Device
   if (!state.device) return
+  state.util = state.device.utilization
   state.loading = false
-  return remote.entities
+  return remote.devices
 }
 
 interface CreateZoneProps {
@@ -67,24 +66,27 @@ function nextStep() {
   state.mode = 'select'
 }
 
-function updateName(name: string, device: Device) {
-  device.name = name
-  let payload = JSON.stringify(device)
-  axios.post("http://10.0.1.18:3020/devices/update", payload).then(res => {
-    router.push("/terminal/settings/devices")
-  }).catch(err => {
-    console.log(err)
-  })
-}
+// https://stackoverflow.com/questions/10420352/converting-file-size-in-bytes-to-human-readable-string
+function bytesToString(bytes: number, si: boolean = false, dp: number = 2): string {
+  const thresh = si ? 1000 : 1024;
 
-function toggleQueryable(queryable: boolean, device: Device) {
-  device.isQueryable = queryable
-  let payload = JSON.stringify(device)
-  axios.post("http://10.0.1.18:3020/devices/update", payload).then(res => {
+  if (Math.abs(bytes) < thresh) {
+    return bytes + ' B';
+  }
 
-  }).catch(err => {
-    console.log(err)
-  })
+  const units = si
+      ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+      : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+  let u = -1;
+  const r = 10 ** dp;
+
+  do {
+    bytes /= thresh;
+    ++u;
+  } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+
+
+  return bytes.toFixed(dp) + ' ' + units[u];
 }
 
 
@@ -121,43 +123,68 @@ function toggleQueryable(queryable: boolean, device: Device) {
                  name="Rename"></Subplot>
       </Plot>
     </div>
+    <div class="device-container">
 
-    <div v-if="state.mode === 'name'">
+      <Plot :alt="`${state.util.cpu.cores} Cores`" :cols="2" :rows="4" title="CPU">
+        <div v-for="(value, core) in state.util.cpu.usage" class="subplot">
+          <div class="label-c2 label-o3 label-w600" style="width: 0.5rem">{{ core + 1 }}</div>&nbsp;
+          <div class="tick-bar flex-grow-1">
 
-      <div class="d-flex justify-content-center">
-        <div class="element p-2" style="width: 20rem;">
-          <div class="text-input w-100"
-               style="font-size: 0.9rem;">
-            <div v-html="state.name"></div>
-            <div class="cursor-blink"></div>
-            <div class="flex-fill"></div>
-            <div class="label-o3 label-c1" @mousedown="state.name = ''">
-              Clear
+
+            <div class="tick-overlay">
+              <div class="d-flex justify-content-end">{{ Math.round(value * 10) / 10 }}%</div>
             </div>
+            <div :style="`width:${value}%;`" class="tick"></div>
           </div>
         </div>
-        <div
-            class="element label-o3 label-c1 label-r d-flex justify-content-center align-items-center px-3 mx-1"
-            @click="() => updateName(state.name, state.device)">Rename</div>
-      </div>
-      <SimpleKeyboard :input="enterChar" class="position-absolute" keySet="d"
-                      keyboardClass="simple-keyboard"
-      ></SimpleKeyboard>
-    </div>
-    <div v-else-if="state.mode === 'toggles'">
-      <Plot :cols="2" :rows="1" alt="Hosts UDAP Monitoring Daemon on :5050?" title="Queryable">
-        <Subplot :active="state.device.isQueryable" :fn="() => toggleQueryable(!state.device.isQueryable, state.device)"
-                 name="Queryable"></Subplot>
-        <Subplot :active="!state.device.isQueryable"
-                 :fn="() => toggleQueryable(!state.device.isQueryable, state.device)"
-                 name="Not Queryable"></Subplot>
       </Plot>
+      <Plot :cols="1" :rows="1" alt="" title="Memory">
+        {{ bytesToString((state.util.memory.used / 100.0) * state.util.memory.total) }} /
+        {{ bytesToString(state.util.memory.total) }}
+      </Plot>
+
     </div>
   </div>
 
 </template>
 
 <style lang="scss" scoped>
+.tick-overlay {
+  position: relative !important;
+  height: 0;
+  z-index: 10 !important;
+
+  mix-blend-mode: color-dodge;
+  padding-right: 0.25rem;
+}
+
+.tick-bar {
+  justify-content: start !important;
+  width: 100%;
+}
+
+.tick {
+
+  background-color: rgba(22, 94, 176, 1);
+  border-radius: 3px;
+  transition: width 200ms ease-out;
+  height: 1rem;
+}
+
+.usage-meter {
+  background-color: #6f42c1;
+  height: 100%;
+}
+
+.device-container {
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .cursor-blink {
   height: 1rem;
   width: 2px;

@@ -6,7 +6,6 @@ import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import Loader from "@/components/Loader.vue";
 import axios from "axios";
-import Subplot from "@/components/plot/Subplot.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -122,9 +121,12 @@ function rename(name: string, device: Device) {
             </div>
 
           </div>
-          <div class="d-flex gap-1 text-success justify-content-center">
-            <Subplot :active="true" :fn="() => $router.push(`/terminal/settings/devices/${device.id}`)"
-                     name="Configure" sf="cog" style="width: 100%;"></Subplot>
+          <div class="d-flex justify-content-start gap-1">
+            <Radio :active="false" :fn="() => $router.push(`/terminal/settings/devices/${device.id}/configure`)" sf="􀍟"
+                   style="width: 2.5rem;" title=""></Radio>
+            <Radio v-if="device.isQueryable" :active="false"
+                   :fn="() => $router.push(`/terminal/settings/devices/${device.id}/monitor`)" sf="􀜟"
+                   style="width: 2.5rem;" title=""></Radio>
 
           </div>
         </Plot>

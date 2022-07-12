@@ -38,6 +38,7 @@ const props = defineProps<Props>()
          class="d-flex ">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
       </div>
+      <div v-if="sf" v-html="sf"></div>
       <div class="label-w500 label-c1 px-2 label-o4 text-center">{{ props.name }}</div>
       <div v-if="props.alt" class="label-w400 label-o4 label-c1 px-2">{{ props.alt }}</div>
 
