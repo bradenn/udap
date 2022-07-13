@@ -12,7 +12,7 @@ import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 import Sideapp from "@/views/terminal/Sideapp.vue";
-import Screensaver from "@/views/screensaver/Screensaver.vue";
+import Bounce from "@/views/screensaver/Bounce.vue";
 
 // -- Websockets --
 
@@ -365,8 +365,8 @@ provide('remote', remote)
         :style="`transform: translateY(${-state.scrollY}px);`"
         class="home-bar top"></div>
   </div>
-  <Screensaver v-if="screensaver.show"
-               class="screensaver-overlay"></Screensaver>
+  <Bounce v-if="screensaver.show"
+          class="screensaver-overlay"></Bounce>
 </template>
 
 <style lang="scss" scoped>
