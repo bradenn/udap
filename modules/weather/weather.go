@@ -132,6 +132,11 @@ func (v *Weather) fetchWeather() error {
 
 	v.forecast = w
 
+	err = do.Body.Close()
+	if err != nil {
+		return err
+	}
+
 	return nil
 
 }

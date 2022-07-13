@@ -160,6 +160,11 @@ func (v *Vyos) queryDevice(ipv4 string) (domain.Utilization, error) {
 		return domain.Utilization{}, err
 	}
 
+	err = get.Body.Close()
+	if err != nil {
+		return domain.Utilization{}, err
+	}
+
 	return util, nil
 }
 

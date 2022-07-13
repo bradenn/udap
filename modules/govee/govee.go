@@ -140,6 +140,11 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 		return nil, err
 	}
 
+	err = do.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
 	if r.Code != 200 {
 		return nil, fmt.Errorf("update failed '%s'", r.Message)
 	}
