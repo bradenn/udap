@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import Clock from "@/components/Clock.vue"
 import router from '@/router'
-import {inject, onMounted, onUnmounted, onUpdated, provide, reactive, ref, watch} from "vue";
+import {inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
 import type {Identifiable, Metadata, Remote, Session, Timing, User} from "@/types";
@@ -40,8 +40,6 @@ let remote = reactive<Remote>({
   nexus: {} as Nexus
 });
 
-
-let ui: any = inject("ui")
 let screensaver: any = inject("screensaver")
 let system: any = inject("system")
 
@@ -127,14 +125,7 @@ function handleMessage(target: Target, data: any) {
 
 // -- Gesture Navigation --
 
-let fps = 0;
 let lastTick = ref(0);
-
-onUpdated(() => {
-  fps++;
-
-})
-
 
 onUnmounted(() => {
   remote.nexus.ws.close(1001, "Disconnecting")

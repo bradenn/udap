@@ -4,7 +4,6 @@ import {inject, reactive} from "vue";
 import Loader from "@/components/Loader.vue";
 
 let remote: any = inject("remote")
-let ui: any = inject("ui")
 
 let state = reactive({
   reloading: false

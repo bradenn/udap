@@ -118,10 +118,8 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 	if err != nil {
 		return err
 	}
-	err = resp.Body.Close()
-	if err != nil {
-		return err
-	}
+	_ = resp.Body.Close()
+
 	return nil
 }
 

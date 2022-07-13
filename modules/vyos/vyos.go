@@ -133,6 +133,7 @@ func (v *Vyos) resolvePing(ipv4 string, duration time.Duration) error {
 
 func (v *Vyos) queryDevice(ipv4 string) (domain.Utilization, error) {
 	client := http.Client{}
+	defer client.CloseIdleConnections()
 	client.Timeout = time.Millisecond * 250
 
 	config := &tls.Config{
@@ -160,10 +161,7 @@ func (v *Vyos) queryDevice(ipv4 string) (domain.Utilization, error) {
 		return domain.Utilization{}, err
 	}
 
-	err = get.Body.Close()
-	if err != nil {
-		return domain.Utilization{}, err
-	}
+	_ = get.Body.Close()
 
 	return util, nil
 }

@@ -449,6 +449,7 @@ func (s *SpotifyApi) authenticatedRequest(method string, path string) (string, e
 	request, _ := http.NewRequest(method, urlString, nil)
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", access))
 	client := http.Client{}
+	defer client.CloseIdleConnections()
 	response, err := client.Do(request)
 	if err != nil {
 		return "", err
@@ -459,6 +460,8 @@ func (s *SpotifyApi) authenticatedRequest(method string, path string) (string, e
 	if err != nil {
 		return "", err
 	}
+
+	_ = response.Body.Close()
 	return buf.String(), nil
 }
 
@@ -620,6 +623,7 @@ func (s *SpotifyApi) basicRequest(path string, values url.Values) (string, error
 
 	request.PostForm = values
 	client := http.Client{}
+	defer client.CloseIdleConnections()
 	response, err := client.Do(request)
 	if err != nil {
 		return "", err
@@ -631,6 +635,8 @@ func (s *SpotifyApi) basicRequest(path string, values url.Values) (string, error
 	if err != nil {
 		return res.String(), err
 	}
+
+	_ = response.Body.Close()
 
 	return res.String(), nil
 }

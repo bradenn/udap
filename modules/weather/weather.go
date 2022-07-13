@@ -30,7 +30,7 @@ type WeatherAPI struct {
 		Temperature   float64 `json:"temperature"`
 		Winddirection float64 `json:"winddirection"`
 		Weathercode   float64 `json:"weathercode"`
-		Time          string  `json:"time"`
+		Time          float64 `json:"time"`
 		Windspeed     float64 `json:"windspeed"`
 	} `json:"current_weather"`
 	Hourly      Hourly      `json:"hourly"`
@@ -113,6 +113,7 @@ func (v *Weather) fetchWeather() error {
 		return err
 	}
 	cli := http.Client{}
+	defer cli.CloseIdleConnections()
 	do, err := cli.Do(request)
 	if err != nil {
 		return err
@@ -132,10 +133,7 @@ func (v *Weather) fetchWeather() error {
 
 	v.forecast = w
 
-	err = do.Body.Close()
-	if err != nil {
-		return err
-	}
+	_ = do.Body.Close()
 
 	return nil
 

@@ -11,10 +11,11 @@ import (
 
 type Endpoint struct {
 	common.Persistent
-	Name      string `json:"name" gorm:"unique"`
-	Type      string `json:"type" gorm:"default:'terminal'"`
-	Connected bool   `json:"connected"`
-	Key       string `json:"key"`
+	Connection *websocket.Conn `json:"-" gorm:"-"`
+	Name       string          `json:"name" gorm:"unique"`
+	Type       string          `json:"type" gorm:"default:'terminal'"`
+	Connected  bool            `json:"connected"`
+	Key        string          `json:"key"`
 }
 
 func randomSequence() string {
@@ -46,7 +47,7 @@ type EndpointRepository interface {
 
 type EndpointOperator interface {
 	Enroll(*Endpoint, *websocket.Conn) error
-	Unenroll(id string) error
+	Unenroll(*Endpoint) error
 	Send(id string, operation string, payload any) error
 	SendAll(id string, operation string, payload any) error
 	CloseAll() error
@@ -64,7 +65,7 @@ type EndpointService interface {
 
 	SendAll(target string, operation string, payload any) error
 	Send(id string, operation string, payload any) error
-	Disconnect(key string) error
+	Unenroll(key string) error
 
 	FindOrCreate(*Endpoint) error
 	Update(*Endpoint) error
