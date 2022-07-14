@@ -7,6 +7,8 @@ import {onMounted, onUnmounted} from "vue";
 import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass";
 import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader";
+
 
 let renderer = {} as THREE.WebGLRenderer
 let camera = {} as THREE.PerspectiveCamera
@@ -82,7 +84,7 @@ const visibleWidthAtZDepth = (depth: number, camera: THREE.PerspectiveCamera) =>
 // Initialize the THREE graphics and set up the environment
 function initGraphics() {
   // Initialize Renderer
-  renderer = new THREE.WebGLRenderer({antialias: true});
+  renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
   // renderer.toneMapping = THREE.T;
   // Select screensaver dom element
   // renderer.shadowMap.enabled = true;
@@ -98,7 +100,7 @@ function initGraphics() {
   // Set the pixel ratio
   renderer.setPixelRatio(window.devicePixelRatio);
   // Set output encoding
-  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.outputEncoding = THREE.LinearEncoding;
   // Add the renderer to the dom
   element.appendChild(renderer.domElement)
   // Assign resize function
@@ -111,7 +113,7 @@ function initGraphics() {
   // Set up the scene
   initScene()
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1.5, 2, 0.1);
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1, 1, 0.1);
 //   const renderTargetParameters = {
 //     minFilter: THREE.LinearFilter,
 //     magFilter: THREE.LinearFilter,
@@ -135,12 +137,13 @@ function initGraphics() {
 // // output pass
 //   const outputPass = new ShaderPass(CopyShader);
 //   outputPass.renderToScreen = true;
+
   composer = new EffectComposer(renderer);
   composer.addPass(renderScene);
   // composer.addPass(blendPass);
   // composer.addPass(savePass);
   // composer.addPass(outputPass);
-  composer.addPass(bloomPass);
+  // composer.addPass(bloomPass);
   // Begin animation and rendering
   animate()
 
@@ -153,30 +156,43 @@ function initScene() {
   scene = new THREE.Scene()
 
   objs = new THREE.Object3D()
-
-  for (let i = 0; i < 12; i++) {
+  const hdrEquirect = new RGBELoader().load(
+      "./custom/textures/map.hdr",
+      () => {
+        hdrEquirect.mapping = THREE.EquirectangularReflectionMapping;
+      }
+  );
+  for (let i = 0; i < 20; i++) {
     let ent = {
       uuid: `${i}`,
-      depth: 100 + Math.random() * 100,
+      depth: 100 + Math.random() * 800,
       direction: new THREE.Vector3(1 - Math.random() * 2, 1 - Math.random() * 2, 0),
       velocity: new THREE.Vector3(Math.random() * 2, Math.random() * 2, 0)
     } as Entity
-    ent.radius = 20 + Math.random() * 40
+    ent.radius = 20 + Math.random() * 40 * (depth / 900)
     let w = visibleWidthAtZDepth(ent.depth, camera) / 2
     let h = visibleHeightAtZDepth(ent.depth, camera) / 2
 
-    const circle = new THREE.CircleGeometry(ent.radius, 48, 0, Math.PI * 2)
+    const circle = new THREE.CylinderGeometry(ent.radius, ent.radius, 4, 48, 1, false, 0, Math.PI * 2)
+    circle.rotateX(Math.PI / 2)
 
-    let material = new THREE.MeshStandardMaterial({
+
+    let material = new THREE.MeshPhysicalMaterial({
       color: colors[Math.round(i % colors.length)],
       transparent: true,
-      opacity: 0.95,
-
+      opacity: 0.8,
+      transmission: 0.5,
+      roughness: 0.5,
+      clearcoat: 1,
+      clearcoatRoughness: 1,
+      envMap: hdrEquirect,
     });
+
+    material.thickness = 4
 
     const mesh = new THREE.Mesh(circle, material)
 
-    mesh.translateZ(-ent.depth)
+    mesh.translateZ(-ent.depth - 2)
     mesh.translateX(w / 2 - Math.random() * w)
     mesh.translateY(h / 2 - Math.random() * h)
     ent.uuid = mesh.uuid
@@ -188,8 +204,12 @@ function initScene() {
   scene.add(objs)
 
 
-  let ambient = new THREE.AmbientLight(0xffffff, 0.2)
+  let ambient = new THREE.AmbientLight(0xffffff, 1)
   scene.add(ambient)
+
+  let direc = new THREE.DirectionalLight(0xffffff, 1)
+  direc.position.set(0, 0, 1)
+  scene.add(direc)
   // scene.add(new THREE.CameraHelper(dirLight.shadow.camera));
   scene.background = new THREE.Color(0x000000);
 
@@ -262,7 +282,7 @@ function render() {
   width: 100%;
   height: 100%;
   top: 0;
-  backdrop-filter: blur(60px);
+  backdrop-filter: blur(50px);
 
 }
 
