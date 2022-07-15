@@ -2,12 +2,17 @@
 
 package domain
 
-import "udap/internal/core/domain/common"
+import (
+	"fmt"
+	"strings"
+	"udap/internal/core/domain/common"
+)
 
 type Module struct {
 	common.Persistent
 	Name        string      `json:"name"`
 	Path        string      `json:"path"`
+	UUID        string      `json:"uuid"`
 	Type        string      `json:"type"`
 	Description string      `json:"description"`
 	Version     string      `json:"version"`
@@ -17,6 +22,20 @@ type Module struct {
 	Running     bool        `json:"running" gorm:"default:false"`
 	Enabled     bool        `json:"enabled" gorm:"default:true"`
 	Recover     int         `json:"recover"`
+}
+
+func (m *Module) SessionId() string {
+	if m.UUID == "" {
+		return "invalid"
+	}
+	return strings.Split(m.UUID, "-")[0]
+}
+
+func (m *Module) CompiledPath() string {
+	if m.UUID == "" {
+		return "invalid"
+	}
+	return strings.Replace(m.Path, ".go", fmt.Sprintf("-%s.so", m.UUID), 1)
 }
 
 type ModuleRepository interface {

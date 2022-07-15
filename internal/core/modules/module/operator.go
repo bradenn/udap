@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"os"
 	"os/exec"
 	"strings"
@@ -29,15 +30,35 @@ func NewOperator(ctrl *controller.Controller) domain.ModuleOperator {
 	}
 }
 
-func (m *moduleOperator) getModule(module *domain.Module) (plugin.ModuleInterface, error) {
-	if m.runtime[module.Name] == nil {
+func (m *moduleOperator) getModule(id string) (plugin.ModuleInterface, error) {
+	if m.runtime[id] == nil {
 		return nil, fmt.Errorf("module not found")
 	}
-	return m.runtime[module.Name], nil
+	return m.runtime[id], nil
 }
 
-func (m *moduleOperator) setModule(module *domain.Module, moduleInterface plugin.ModuleInterface) error {
-	m.runtime[module.Name] = moduleInterface
+func (m *moduleOperator) setModule(id string, moduleInterface plugin.ModuleInterface) error {
+	m.runtime[id] = moduleInterface
+	return nil
+}
+
+func (m *moduleOperator) removeModule(id string) error {
+	delete(m.runtime, id)
+	return nil
+}
+
+func (m *moduleOperator) alreadyExists(oldPath string, newPath string) error {
+	oldStats, err := os.Stat(oldPath)
+	if err != nil {
+		return err
+	}
+	newStats, err := os.Stat(newPath)
+	if err != nil {
+		return err
+	}
+	if oldStats.Size() == newStats.Size() {
+		return fmt.Errorf("SAME FILE")
+	}
 	return nil
 }
 
@@ -51,8 +72,10 @@ func (m *moduleOperator) Build(module *domain.Module) error {
 	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*15)
 	// Cancel the timeout of it exits before the timeout is up
 	defer cancelFunc()
+
+	module.UUID = uuid.New().String()
 	// Create the binary file path
-	binary := strings.Replace(module.Path, ".go", ".so", 1)
+	binary := strings.Replace(module.Path, ".go", fmt.Sprintf("-%s.so", module.UUID), 1)
 	// Prepare the command arguments
 	args := []string{"build", "-v", "-buildmode=plugin", "-o", binary, module.Path}
 	// Initialize the command structure
@@ -63,7 +86,10 @@ func (m *moduleOperator) Build(module *domain.Module) error {
 		log.ErrF(errors.New(string(output)), "Module '%s' build failed:", module.Name)
 		return nil
 	}
-	log.Event("Module '%s' compiled. (%s)", module.Name, time.Since(start).Truncate(time.Millisecond).String())
+
+	log.Event("Module '%s' @ %s compiled. (%s)", module.Name, module.SessionId(),
+		time.Since(start).Truncate(time.Millisecond).
+			String())
 	return nil
 }
 
@@ -71,7 +97,7 @@ func (m *moduleOperator) Build(module *domain.Module) error {
 // The module reference should be saved to the repository after loading.
 func (m *moduleOperator) Load(module *domain.Module) error {
 	// Create the binary file path
-	binary := strings.Replace(module.Path, ".go", ".so", 1)
+	binary := module.CompiledPath()
 	// Attempt to load the plugin binary
 	p, err := plugin.Load(binary)
 	if err != nil {
@@ -99,12 +125,12 @@ func (m *moduleOperator) Load(module *domain.Module) error {
 	module.Author = setup.Author
 	module.Description = setup.Description
 	// Emplace the module into the local buffer
-	err = m.setModule(module, mod)
+	err = m.setModule(module.Id, mod)
 	if err != nil {
 		return err
 	}
 	// Log the status
-	log.Event("Module '%s' loaded.", module.Name)
+	log.Event("Module '%s' @ %s loaded.", module.Name, module.SessionId())
 	return nil
 }
 
@@ -119,7 +145,7 @@ func (m *moduleOperator) Run(module *domain.Module) error {
 		return fmt.Errorf("module '%s' is already running; cannot run again", module.Name)
 	}
 	// Get the local module
-	local, err := m.getModule(module)
+	local, err := m.getModule(module.Id)
 	if err != nil {
 		return err
 	}
@@ -143,7 +169,7 @@ func (m *moduleOperator) Update(module *domain.Module) error {
 		return fmt.Errorf("module '%s' is not running; cannot update", module.Name)
 	}
 	// Get the local module
-	local, err := m.getModule(module)
+	local, err := m.getModule(module.Id)
 	if err != nil {
 		return err
 	}
@@ -171,7 +197,7 @@ func (m *moduleOperator) Dispose(module *domain.Module) error {
 		return fmt.Errorf("module '%s' is not running; cannot dispose", module.Name)
 	}
 	// Get the local module
-	local, err := m.getModule(module)
+	local, err := m.getModule(module.Id)
 	if err != nil {
 		return err
 	}
@@ -180,6 +206,17 @@ func (m *moduleOperator) Dispose(module *domain.Module) error {
 	if err != nil {
 		return err
 	}
-	log.Event("Module '%s' unloaded.", module.Name)
+	defer func() {
+		err = os.Remove(module.CompiledPath())
+		if err != nil {
+			return
+		}
+	}()
+	err = m.removeModule(module.Id)
+	if err != nil {
+		return err
+	}
+	log.Event("Module '%s' @ %s unloaded.", module.Name, module.SessionId())
+	module.UUID = ""
 	return nil
 }

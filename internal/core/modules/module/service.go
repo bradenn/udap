@@ -128,7 +128,11 @@ func (u *moduleService) Load(module *domain.Module) error {
 }
 
 func (u *moduleService) Build(module *domain.Module) error {
-	return u.operator.Build(module)
+	err := u.operator.Build(module)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Dispose halts a modules activity and destroys its runtime
@@ -377,6 +381,26 @@ func (u moduleService) Enable(id string) error {
 }
 
 func (u moduleService) Reload(name string) error {
+	target, err := u.FindByName(name)
+	if err != nil {
+		return err
+	}
+	err = u.Dispose(target)
+	if err != nil {
+		return err
+	}
+	err = u.Build(target)
+	if err != nil {
+		return err
+	}
+	err = u.Load(target)
+	if err != nil {
+		return err
+	}
+	err = u.Run(target)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -284,9 +284,51 @@ func (w *Atlas) Run() error {
 		return err
 	}
 
+	// cfg := sphinx.NewConfig(
+	// 	sphinx.HMMDirOption("/usr/local/share/pocketsphinx/model/en-us/en-us"),
+	// 	sphinx.DictFileOption("/usr/local/share/pocketsphinx/model/en-us/cmudict-en-us.dict"),
+	// 	sphinx.LMFileOption("/usr/local/share/pocketsphinx/model/en-us/en-us.lm.bin"),
+	// 	sphinx.SampleRateOption(16000),
+	// )
+	//
+	// dec, err := sphinx.NewDecoder(cfg)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// in := make([]int16, 8196)
+	//
+	// stream, err := portaudio.OpenDefaultStream(1, 0, 16000, len(in), in)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// err = stream.Start()
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// for {
+	// 	err = stream.Read()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
+	// 	_, ok := dec.ProcessRaw(in, false, false)
+	// 	if !ok {
+	// 		continue
+	// 	}
+	//
+	// 	fmt.Printf("Listening: %s", dec.IsInSpeech())
+	//
+	// 	hyp, _ := dec.Hypothesis()
+	//
+	// 	fmt.Println(hyp)
+	// }
+
 	w.status.Recognizer = "offline"
 	w.status.Synthesizer = "idle"
-	//
+
 	// recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
 	// done, err := recognizer.Connect("10.0.1.201")
 	// if err != nil {

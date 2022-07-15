@@ -44,6 +44,10 @@ function handleUpdates(remote: Remote) {
   return remote
 }
 
+function reloadModule(id: string) {
+  axios.post(`http://localhost:3020/modules/${id}/reload`)
+}
+
 function toggleEnabled(id: string, enabled: boolean) {
   if (enabled) {
     axios.post(`http://localhost:3020/modules/${id}/enable`)
@@ -135,7 +139,8 @@ function groupBy<T>(xs: T[], key: string): T[] {
                        title="Enable"></Confirm>
               <Confirm v-if="module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀆧"
                        title="Disable"></Confirm>
-              <Radio :active="false" :fn="() => {}" sf="􀍟" style="width: 2.5rem;" title=""></Radio>
+              <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀍟" style="width: 2.5rem;"
+                     title=""></Radio>
             </div>
           </Plot>
         </div>
