@@ -4,11 +4,14 @@ package module
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
+	"udap/internal/pulse"
 )
 
 const DIR = "modules"
@@ -66,6 +69,9 @@ func (u *moduleService) emit(module *domain.Module) error {
 }
 
 func (u *moduleService) Update(module *domain.Module) error {
+	if !module.Enabled || !module.Running {
+		return fmt.Errorf("module must be enabled and running to update")
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			log.Recovered("Module '%s' panicked; module entering safe-mode", module.Name)
@@ -77,7 +83,12 @@ func (u *moduleService) Update(module *domain.Module) error {
 			}
 		}
 	}()
-	err := u.operator.Update(module)
+	pulse.Begin(module.Id)
+	// End the pulse when the update concludes or errors out
+	defer func() {
+		pulse.End(module.Id)
+	}()
+	err := u.operator.Update(module.UUID)
 	if err != nil {
 		return err
 	}
@@ -87,13 +98,16 @@ func (u *moduleService) Update(module *domain.Module) error {
 
 // Run runs the startup code for each module, not to be confused with the setup function with connects and the module
 func (u *moduleService) Run(module *domain.Module) error {
+	if module.Running {
+		return fmt.Errorf("module must not be running to run")
+	}
 	// Mark the module start as starting
 	err := u.setState(module, STARTING)
 	if err != nil {
 		return err
 	}
 	// Attempt to run the module
-	err = u.operator.Run(module)
+	err = u.operator.Run(module.UUID)
 	if err != nil {
 		// Set the module state to error if the run fails
 		err = u.setState(module, ERROR)
@@ -115,7 +129,15 @@ func (u *moduleService) Run(module *domain.Module) error {
 func (u *moduleService) Load(module *domain.Module) error {
 	module.Running = false
 	// Attempt to load the module
-	err := u.operator.Load(module)
+	config, err := u.operator.Load(module.Name, module.UUID)
+	if err != nil {
+		return err
+	}
+	module.Version = config.Version
+	module.Description = config.Description
+	module.Type = config.Type
+	module.Author = config.Author
+	err = u.repository.Update(module)
 	if err != nil {
 		return err
 	}
@@ -128,32 +150,49 @@ func (u *moduleService) Load(module *domain.Module) error {
 }
 
 func (u *moduleService) Build(module *domain.Module) error {
-	err := u.operator.Build(module)
+	id := uuid.New().String()
+	module.UUID = id
+	err := u.repository.Update(module)
 	if err != nil {
 		return err
 	}
+	start := time.Now()
+	err = u.operator.Build(module.Name, module.UUID)
+	if err != nil {
+		return err
+	}
+	log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
+		time.Since(start).Truncate(time.Millisecond).String())
 	return nil
 }
 
 // Dispose halts a modules activity and destroys its runtime
 func (u *moduleService) Dispose(module *domain.Module) error {
+	if !module.Enabled || !module.Running {
+		return fmt.Errorf("module must be enabled and running to dispose")
+	}
 	// Mark the state as halting, since it may take a while
 	err := u.setState(module, HALTING)
 	if err != nil {
 		return err
 	}
+	start := time.Now()
 	// Attempt to dispose of the module (only works if the module developer plays nicely)
-	err = u.operator.Dispose(module)
+	err = u.operator.Dispose(module.Name, module.UUID)
 	if err != nil {
 		return err
 	}
 	// Set the module as not running, so it is not updated
 	module.Running = false
+	log.Event("Module '%s' @ 0x%s unloaded. (%s)", module.Name, module.SessionId(),
+		time.Since(start).Truncate(time.Millisecond).String())
+	module.UUID = ""
 	// Mark the module as stopped if the disposal was successful
 	err = u.setState(module, STOPPED)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -205,6 +244,9 @@ func (u *moduleService) RunAll() error {
 	for _, module := range *modules {
 		go func(mod domain.Module) {
 			defer wg.Done()
+			if !mod.Enabled {
+				return
+			}
 			err = u.Run(&mod)
 			if err != nil {
 				log.Err(err)
@@ -252,7 +294,6 @@ func (u *moduleService) LoadAll() error {
 			defer wg.Done()
 			err = u.Load(&mod)
 			if err != nil {
-				log.Err(err)
 				return
 			}
 		}(module)
@@ -305,6 +346,7 @@ func (u *moduleService) BuildAll() error {
 	for _, module := range *modules {
 		go func(mod domain.Module) {
 			defer wg.Done()
+			mod.Running = false
 			err = u.Build(&mod)
 			if err != nil {
 				log.Err(err)
@@ -381,9 +423,13 @@ func (u moduleService) Enable(id string) error {
 }
 
 func (u moduleService) Reload(name string) error {
+
 	target, err := u.FindByName(name)
 	if err != nil {
 		return err
+	}
+	if !target.Enabled || !target.Running {
+		return fmt.Errorf("module must be enabled and running to reload")
 	}
 	err = u.Dispose(target)
 	if err != nil {

@@ -8,6 +8,14 @@ import (
 	"udap/internal/core/domain/common"
 )
 
+type ModuleConfig struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"` // Module, Daemon, etc.
+	Description string `json:"description"`
+	Version     string `json:"version"`
+	Author      string `json:"author"`
+}
+
 type Module struct {
 	common.Persistent
 	Name        string      `json:"name"`
@@ -44,11 +52,11 @@ type ModuleRepository interface {
 }
 
 type ModuleOperator interface {
-	Build(module *Module) error
-	Load(module *Module) error
-	Update(module *Module) error
-	Run(module *Module) error
-	Dispose(module *Module) error
+	Build(module string, uuid string) error
+	Load(module string, uuid string) (ModuleConfig, error)
+	Dispose(module string, uuid string) error
+	Run(uuid string) error
+	Update(uuid string) error
 }
 
 type ModuleService interface {

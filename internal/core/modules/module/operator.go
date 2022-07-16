@@ -4,9 +4,9 @@ package module
 
 import (
 	"context"
-	"errors"
+	"crypto/sha256"
 	"fmt"
-	"github.com/google/uuid"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -15,13 +15,14 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/log"
 	"udap/internal/plugin"
-	"udap/internal/pulse"
 )
 
 type moduleOperator struct {
 	ctrl    *controller.Controller
 	runtime map[string]plugin.ModuleInterface
 }
+
+const PATH = "./modules"
 
 func NewOperator(ctrl *controller.Controller) domain.ModuleOperator {
 	return &moduleOperator{
@@ -47,105 +48,138 @@ func (m *moduleOperator) removeModule(id string) error {
 	return nil
 }
 
-func (m *moduleOperator) alreadyExists(oldPath string, newPath string) error {
-	oldStats, err := os.Stat(oldPath)
+// hashFile returns a sha256 hash of a source file
+func hashFile(source string) (string, error) {
+	f, err := os.Open(source)
 	if err != nil {
-		return err
+		return "", err
 	}
-	newStats, err := os.Stat(newPath)
-	if err != nil {
-		return err
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err = io.Copy(h, f); err != nil {
+		return "", err
 	}
-	if oldStats.Size() == newStats.Size() {
-		return fmt.Errorf("SAME FILE")
-	}
-	return nil
+	return string(h.Sum(nil)), nil
+}
+
+// generateSessionId provides the first bytes of the module uuid
+func generateSessionId(uuid string) string {
+	return strings.Split(uuid, "-")[0]
+}
+
+// generateSourcePath generates the path to a module's source code
+func generateSourcePath(module string) string {
+	return fmt.Sprintf("%s/%s/%s.go", PATH, module, module)
+}
+
+// generateBuildPath generates the path to a module's binary file
+func generateBuildPath(module string, uuid string) string {
+	return fmt.Sprintf("%s/%s/%s-%s.so", PATH, module, module, uuid)
 }
 
 // Build will compile a valid plugin file into a readable binary
-func (m *moduleOperator) Build(module *domain.Module) error {
-	start := time.Now()
-	if _, err := os.Stat(module.Path); err != nil {
+func (m *moduleOperator) Build(module string, uuid string) error {
+	// Generate the source file path from the module name
+	sourcePath := generateSourcePath(module)
+	// Generate the output build file path
+	buildPath := generateBuildPath(module, uuid)
+	// Confirm that the source file exists
+	if _, err := os.Stat(sourcePath); err != nil {
 		return err
 	}
 	// Create a timeout to prevent modules from taking too long to build
-	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*15)
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
 	// Cancel the timeout of it exits before the timeout is up
 	defer cancelFunc()
-
-	module.UUID = uuid.New().String()
-	// Create the binary file path
-	binary := strings.Replace(module.Path, ".go", fmt.Sprintf("-%s.so", module.UUID), 1)
 	// Prepare the command arguments
-	args := []string{"build", "-v", "-buildmode=plugin", "-o", binary, module.Path}
+	args := []string{"build", "-v", "-buildmode=plugin", "-o", buildPath, sourcePath}
 	// Initialize the command structure
 	cmd := exec.CommandContext(timeout, "go", args...)
 	// Run and get the stdout and stderr from the output
-	output, err := cmd.CombinedOutput()
+	_, err := cmd.CombinedOutput()
 	if err != nil {
-		log.ErrF(errors.New(string(output)), "Module '%s' build failed:", module.Name)
-		return nil
+		return err
 	}
-
-	log.Event("Module '%s' @ %s compiled. (%s)", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).
-			String())
 	return nil
 }
 
 // Load is used to find a pre-built plugin file, and load it into the local system.
 // The module reference should be saved to the repository after loading.
-func (m *moduleOperator) Load(module *domain.Module) error {
+func (m *moduleOperator) Load(module string, uuid string) (domain.ModuleConfig, error) {
 	// Create the binary file path
-	binary := module.CompiledPath()
+	binary := generateBuildPath(module, uuid)
 	// Attempt to load the plugin binary
 	p, err := plugin.Load(binary)
 	if err != nil {
-		return err
+		return domain.ModuleConfig{}, err
 	}
 	// Extract the plugin interface
 	mod := p.(plugin.ModuleInterface)
 	if mod == nil {
-		return fmt.Errorf("cannot read module")
+		return domain.ModuleConfig{}, fmt.Errorf("cannot read module")
 	}
 	// Connect the module to the UDAP runtime
 	err = mod.Connect(m.ctrl)
 	if err != nil {
-		return err
+		return domain.ModuleConfig{}, err
 	}
 	// Run the setup method
 	setup, err := mod.Setup()
 	if err != nil {
-		return err
+		return domain.ModuleConfig{}, err
 	}
-	// Update the module parameters
-	module.Name = setup.Name
-	module.Type = setup.Type
-	module.Version = setup.Version
-	module.Author = setup.Author
-	module.Description = setup.Description
 	// Emplace the module into the local buffer
-	err = m.setModule(module.Id, mod)
+	err = m.setModule(uuid, mod)
+	if err != nil {
+		return domain.ModuleConfig{}, err
+	}
+	conf := domain.ModuleConfig{
+		Name:        setup.Name,
+		Type:        setup.Type,
+		Description: setup.Description,
+		Version:     setup.Version,
+		Author:      setup.Author,
+	}
+	return conf, nil
+}
+
+// Dispose is called at the end of the lifecycle, it attempts to halt activity.
+func (m *moduleOperator) Dispose(module string, uuid string) error {
+	// Get the local module
+	local, err := m.getModule(uuid)
 	if err != nil {
 		return err
 	}
-	// Log the status
-	log.Event("Module '%s' @ %s loaded.", module.Name, module.SessionId())
+	binaryPath := generateBuildPath(module, uuid)
+	// Confirm that the binary file exists
+	if _, err = os.Stat(binaryPath); err != nil {
+		return err
+	}
+	// Dispose of the local module
+	err = local.Dispose()
+	if err != nil {
+		return err
+	}
+	// Remove the file when the function exits
+	defer func() {
+		err = os.Remove(binaryPath)
+		if err != nil {
+			log.Err(err)
+			return
+		}
+	}()
+	err = m.removeModule(uuid)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // Run attempts to initialize the plugin's runtime
-func (m *moduleOperator) Run(module *domain.Module) error {
-	// Check to make sure the module is enabled
-	if !module.Enabled {
-		return fmt.Errorf("module '%s' is not enabled; cannot run", module.Name)
-	}
-	// Make sure the module is not already running
-	if module.Running {
-		return fmt.Errorf("module '%s' is already running; cannot run again", module.Name)
-	}
+func (m *moduleOperator) Run(uuid string) error {
 	// Get the local module
-	local, err := m.getModule(module.Id)
+	local, err := m.getModule(uuid)
 	if err != nil {
 		return err
 	}
@@ -154,69 +188,20 @@ func (m *moduleOperator) Run(module *domain.Module) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 // Update is called on every tick, it is the plugin's decision whether to use the time or defer.
-func (m *moduleOperator) Update(module *domain.Module) error {
-	// Check to make sure the module is enabled
-	if !module.Enabled {
-		return fmt.Errorf("module '%s' is not enabled; cannot update", module.Name)
-	}
-	// Make sure the module is running
-	if !module.Running {
-		return fmt.Errorf("module '%s' is not running; cannot update", module.Name)
-	}
+func (m *moduleOperator) Update(uuid string) error {
 	// Get the local module
-	local, err := m.getModule(module.Id)
+	local, err := m.getModule(uuid)
 	if err != nil {
 		return err
 	}
-	// Begin the lifecycle metrics
-	pulse.Begin(module.Id)
 	// Run the update
 	err = local.Update()
 	if err != nil {
 		return err
 	}
-	// End the pulse metric
-	pulse.End(module.Id)
-
-	return nil
-}
-
-// Dispose is called at the end of the lifecycle, it attempts to halt activity.
-func (m *moduleOperator) Dispose(module *domain.Module) error {
-	// Check to make sure the module is enabled
-	if !module.Enabled {
-		return fmt.Errorf("module '%s' is not enabled; cannot dispose", module.Name)
-	}
-	// Make sure the module is running
-	if !module.Running {
-		return fmt.Errorf("module '%s' is not running; cannot dispose", module.Name)
-	}
-	// Get the local module
-	local, err := m.getModule(module.Id)
-	if err != nil {
-		return err
-	}
-	// Dispose of the local module
-	err = local.Dispose()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = os.Remove(module.CompiledPath())
-		if err != nil {
-			return
-		}
-	}()
-	err = m.removeModule(module.Id)
-	if err != nil {
-		return err
-	}
-	log.Event("Module '%s' @ %s unloaded.", module.Name, module.SessionId())
-	module.UUID = ""
 	return nil
 }
