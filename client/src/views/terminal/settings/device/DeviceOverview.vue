@@ -6,6 +6,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import Loader from "@/components/Loader.vue";
 import axios from "axios";
+import router from "@/router";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -68,6 +69,12 @@ function rename(name: string, device: Device) {
   axios.post("http://10.0.1.18:3020/devices/update", JSON.stringify(device))
 }
 
+// let router = useRouter()
+
+function goTo(target: string) {
+  router.push(target)
+}
+
 </script>
 
 <template>
@@ -84,7 +91,7 @@ function rename(name: string, device: Device) {
     </div>
     <div v-if="state.mode === 'list'">
 
-      <div class="device-container-a">
+      <div class="device-container">
         <Plot v-for="device in state.devices" :cols="2" :rows="1">
           <div class="subplot subplot-inline justify-content-between px-0">
             <div class="d-flex align-items-center">
@@ -187,11 +194,11 @@ function rename(name: string, device: Device) {
   max-width: 20rem !important;
 }
 
-.device-container-a {
+.device-container {
   display: grid;
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
-  grid-auto-flow: column;
+  grid-auto-flow: row;
   grid-template-rows: repeat(8, 1fr);
   grid-template-columns: repeat(3, 1fr);
 }

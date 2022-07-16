@@ -91,7 +91,7 @@ export default {
                     },
                     {
                         path: '/terminal/settings/devices/:device/monitor',
-                        name: 'Edit Device',
+                        name: 'Monitor Device',
                         icon: 'share-nodes',
                         component: DeviceMonitor,
                     },
