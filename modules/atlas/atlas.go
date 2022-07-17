@@ -35,6 +35,8 @@ type Atlas struct {
 	status Status
 
 	voice string
+
+	done chan bool
 }
 
 type Message struct {
@@ -118,7 +120,81 @@ func (w *Atlas) speak(text string) error {
 }
 
 func (w *Atlas) retort(text string) error {
-
+	bedroomLights := []string{"8c1494c3-6515-490b-8f23-1c03b87bde27", "9a3347a7-7e19-4be5-976c-22384c59142a",
+		"c74d427b-5046-4aeb-8195-2efd05d794f8"}
+	terminalId := "237bee94-5218-457e-99b5-4d484f567d52"
+	switch text {
+	case "lights on":
+		for _, light := range bedroomLights {
+			err := w.Attributes.Request(light, "on", "true")
+			if err != nil {
+				continue
+			}
+		}
+		err := w.speak("done")
+		if err != nil {
+			return err
+		}
+	case "lights off":
+		for _, light := range bedroomLights {
+			err := w.Attributes.Request(light, "on", "false")
+			if err != nil {
+				continue
+			}
+		}
+		err := w.speak("done")
+		if err != nil {
+			return err
+		}
+	case "dim the lights":
+		for _, light := range bedroomLights {
+			err := w.Attributes.Request(light, "dim", "25")
+			if err != nil {
+				continue
+			}
+		}
+		err := w.speak("done")
+		if err != nil {
+			return err
+		}
+	case "turn on the terminal":
+		err := w.Attributes.Request(terminalId, "on", "true")
+		if err != nil {
+			err = w.speak("nope, that didnt seem to work")
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		err = w.speak("done")
+		if err != nil {
+			return err
+		}
+	case "turn off the terminal":
+		err := w.Attributes.Request(terminalId, "on", "false")
+		if err != nil {
+			err = w.speak("nope, that didnt seem to work")
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		err = w.speak("done")
+		if err != nil {
+			return err
+		}
+	case "what time is it":
+		t := time.Now().Local().Format("03:04 PM")
+		err := w.speak(fmt.Sprintf("The time is now %s", t))
+		if err != nil {
+			return err
+		}
+	default:
+		err := w.speak("does not compute")
+		if err != nil {
+			return err
+		}
+	}
 	// responses := map[string]string{}
 	//
 	// if text == "" {
@@ -325,27 +401,34 @@ func (w *Atlas) Run() error {
 	//
 	// 	fmt.Println(hyp)
 	// }
-
+	w.done = make(chan bool)
 	w.status.Recognizer = "offline"
 	w.status.Synthesizer = "idle"
 
-	// recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
-	// done, err := recognizer.Connect("10.0.1.201")
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// go func() {
-	// 	for {
-	// 		err = recognizer.Listen()
-	// 		if err != nil {
-	// 			done <- true
-	// 			log.Err(err)
-	// 			break
-	// 		}
-	// 	}
-	//
-	// }()
+	recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel)
+	done, err := recognizer.Connect("10.0.1.201")
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			select {
+			case <-w.done:
+				done <- true
+				return
+			default:
+				err = recognizer.Listen()
+				if err != nil {
+					done <- true
+					log.Err(err)
+					break
+				}
+			}
+
+		}
+
+	}()
 
 	// go func() {
 	// 	for {
@@ -387,4 +470,9 @@ func (w *Atlas) Run() error {
 	// }
 	return nil
 
+}
+
+func (w *Atlas) Dispose() error {
+	w.done <- true
+	return nil
 }

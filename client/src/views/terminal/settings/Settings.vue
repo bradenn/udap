@@ -149,8 +149,8 @@ function dragStop(e: MouseEvent) {
   animation: animateSlideLeftOut 75ms ease;
 }
 
-$displacement: 8rem;
-$displacementStart: 1rem;
+$displacement: 3rem;
+$displacementStart: 0rem;
 
 @keyframes animateSlideRightIn {
   0% {

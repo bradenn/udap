@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	github.com/baabaaox/go-webrtcvad v1.0.1 // indirect
 	github.com/brutella/dnssd v1.2.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect

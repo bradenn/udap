@@ -29,7 +29,7 @@ watchEffect(() => handleUpdates(remote))
 
 function handleUpdates(remote: Remote) {
   state.modules = remote.modules.sort((a, b) => a.created > b.created ? 1 : -1) as Module[]
-  state.threads = remote.metadata.system.threads as []
+
   remote.timings.filter(t => state.modules.find(m => m.id === t.pointer)).forEach(t => {
     let local = state.histories.get(t.pointer) || []
     let cand = t.delta / 1000
@@ -72,78 +72,60 @@ function groupBy<T>(xs: T[], key: string): T[] {
         <div class="label-w500 label-o3 label-xxl"><i :class="`fa-solid fa-layer-group fa-fw`"></i></div>
         <div class="label-w500 opacity-100 label-xxl px-2">Modules</div>
       </div>
-      <div v-if="!state.loading" class="w-50">
-        <div class="activity-container">
-          <div v-for="(thread, k) in remote.metadata.system.threads" class="element tick-track"
-               style="border-radius: 10px; padding-inline: 7px;">
 
-            <div class="label-c3 label-o2 label-r label-w600 justify-content-center d-flex"
-                 style="width: 0.8rem; height: 16px;">
-              {{
-                k + 1
-              }}&nbsp;
-            </div>
-            <div :style="`width:${thread}%;`" class="tick">
-            </div>
-            <div :style="`width:${100-thread}%;`" class="tick-grey">
-            </div>
-          </div>
 
-        </div>
-      </div>
     </div>
     <div v-if="!state.loading" class="d-flex flex-column gap-1">
 
 
       <div class="module-container">
 
-        <div v-for="module in state.modules" class="">
-
-          <Plot :key="module.id" :cols="2" :rows="1">
-            <div class="subplot subplot-inline px-0">
-              <div :style="`background-color: rgba(${module.enabled?'25, 135, 84':'135, 100, 2'}, 0.53);`"
-                   class="status-marker"></div>
-              <div class="w-100">
-                <div>
-                  <div class="label-c1 label-o5 label-r lh-1">
-                    <div>{{ module.name }}</div>
-                  </div>
-                  <div class="label-c4  label-o3 label-r py-0 overflow-ellipse" style="line-height: 0.55rem">{{
-                      module.description
-                    }}
-                  </div>
+        <Plot v-for="(module, index) in state.modules" :key="module.id" :cols="2" :rows="1"
+              :style="`animation-delay:${index*2.5}ms;`">
+          <div class="subplot subplot-inline px-0">
+            <div :style="`background-color: rgba(${module.enabled?'25, 135, 84':'135, 100, 2'}, 0.53);`"
+                 class="status-marker"></div>
+            <div class="w-100">
+              <div>
+                <div class="label-c1 label-o5 label-r lh-1">
+                  <div>{{ module.name }}</div>
                 </div>
-
-              </div>
-              <!--              {{-->
-              <!--                new Date().valueOf() - -->
-              <!--                new Date(remote.timings.filter(t => t.pointer === module.id).valueOf()-->
-              <!--              }}-->
-
-
-              <div class="label-c3 label-o4 d-flex flex-column justify-content-end align-items-end">
-                <div :class="`${module.enabled?'text-success':''}`" class="label-o3 text-uppercase">
-                  &nbsp;{{ module.enabled ? module.state : 'Disabled' }}
-                </div>
-                <div v-if="state.histories" class="label-c3 label-o3 d-flex flex-row align-items-end time-marker-line">
-                  <div v-for="marker in state.histories.get(module.id)?.map(d => d / 1000)"
-                       :style="`height:${Math.log(marker)}px;`"
-                       class="time-marker"></div>
+                <div class="label-c4  label-o3 label-r py-0 overflow-ellipse" style="line-height: 0.55rem">{{
+                    module.description
+                  }}
                 </div>
               </div>
+
             </div>
-            <div class="d-flex gap-1 text-success justify-content-center">
+            <!--              {{-->
+            <!--                new Date().valueOf() - -->
+            <!--                new Date(remote.timings.filter(t => t.pointer === module.id).valueOf()-->
+            <!--              }}-->
 
 
-              <Confirm v-if="!module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀊃"
-                       title="Enable"></Confirm>
-              <Confirm v-if="module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀆧"
-                       title="Disable"></Confirm>
-              <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀍟" style="width: 2.5rem;"
-                     title=""></Radio>
+            <div class="label-c3 label-o4 d-flex flex-column justify-content-end align-items-end">
+              <div :class="`${module.enabled?'text-success':''}`" class="label-o3 text-uppercase">
+                &nbsp;{{ module.enabled ? module.state : 'Disabled' }}
+              </div>
+              <div v-if="state.histories" class="label-c3 label-o3 d-flex flex-row align-items-end time-marker-line">
+                <div v-for="marker in state.histories.get(module.id)?.map(d => d / 1000)"
+                     :style="`height:${Math.log(marker)}px;`"
+                     class="time-marker"></div>
+              </div>
             </div>
-          </Plot>
-        </div>
+          </div>
+          <div class="d-flex gap-1 text-success justify-content-center">
+
+
+            <Confirm v-if="!module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀊃"
+                     title="Enable"></Confirm>
+            <Confirm v-if="module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀆧"
+                     title="Disable"></Confirm>
+            <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀍟" style="width: 2.5rem;"
+                   title=""></Radio>
+          </div>
+        </Plot>
+
       </div>
 
 
@@ -160,12 +142,36 @@ function groupBy<T>(xs: T[], key: string): T[] {
 </template>
 
 <style lang="scss" scoped>
+
+.module-container > * {
+  visibility: hidden;
+  animation: plot-load 75ms ease-in-out forwards;
+}
+
 .tick {
   height: 18px;
   width: 100%;
   background-color: rgba(25, 135, 84, 0.3);
   border-radius: 2px;
   transition: width 250ms ease-in-out;
+}
+
+@keyframes plot-load {
+  0% {
+    visibility: hidden;
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    visibility: hidden;
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    visibility: visible;
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .tick-track {

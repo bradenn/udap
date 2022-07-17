@@ -92,7 +92,8 @@ function goTo(target: string) {
     <div v-if="state.mode === 'list'">
 
       <div class="device-container">
-        <Plot v-for="device in state.devices" :cols="2" :rows="1">
+        <Plot v-for="(device, index) in state.devices" :cols="2" :rows="1" :style="`animation-delay:${index*2.5}ms;`"
+              class="plot-load">
           <div class="subplot subplot-inline justify-content-between px-0">
             <div class="d-flex align-items-center">
               <div :style="`background-color: rgba(${device.state==='ONLINE'?'25, 135, 84':'135, 100, 2'}, 0.53);`"
@@ -164,6 +165,29 @@ function goTo(target: string) {
 </template>
 
 <style scoped>
+
+.device-container > * {
+  visibility: hidden;
+  animation: plot-load 75ms ease-in-out forwards;
+}
+
+@keyframes plot-load {
+  0% {
+    visibility: hidden;
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    visibility: hidden;
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    visibility: visible;
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 
 .time-marker {
   width: 2px;

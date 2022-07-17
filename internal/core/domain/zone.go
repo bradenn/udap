@@ -22,5 +22,6 @@ type ZoneService interface {
 	Create(*Zone) error
 	FindOrCreate(*Zone) error
 	Update(*Zone) error
-	Delete(*Zone) error
+	Delete(id string) error
+	Restore(id string) error
 }

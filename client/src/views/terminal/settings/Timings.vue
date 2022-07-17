@@ -6,9 +6,9 @@ import Loader from "@/components/Loader.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
-
 let state = reactive({
   timings: [] as Timing[],
+  grouped: [] as Timing[],
   loading: true,
 })
 
@@ -23,6 +23,7 @@ watchEffect(() => handleUpdates(remote))
 function handleUpdates(remote: Remote) {
   state.timings = remote.timings
   state.loading = false
+  state.grouped = groupBy(state.timings, 'name')
   return remote.timings
 }
 
@@ -42,11 +43,12 @@ function groupBy<T>(xs: T[], key: string): T[] {
       <div class="label-w500 opacity-100 label-xxl px-2">Timings</div>
     </div>
     <div v-if="!state.loading" class="element">
-      <div
-          v-for="(timings, name) in groupBy(state.timings, 'name')">
-        <div class="label-o6 label-c1">{{ name }}</div>
-        <div v-if="timings">
+      <div class="timeline">
+        <div v-for="module in Object.keys(state.grouped)">
+          {{ state.grouped[module][0].start }} -
+          {{ state.grouped[module][0].stop }}
         </div>
+
       </div>
 
 
@@ -63,6 +65,10 @@ function groupBy<T>(xs: T[], key: string): T[] {
 </template>
 
 <style scoped>
+
+.timeline {
+
+}
 
 
 </style>
