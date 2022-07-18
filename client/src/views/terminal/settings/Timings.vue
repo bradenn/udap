@@ -45,8 +45,6 @@ function groupBy<T>(xs: T[], key: string): T[] {
     <div v-if="!state.loading" class="element">
       <div class="timeline">
         <div v-for="module in Object.keys(state.grouped)">
-          {{ state.grouped[module][0].start }} -
-          {{ state.grouped[module][0].stop }}
         </div>
 
       </div>

@@ -55,7 +55,7 @@ function setMode(mode: string) {
       <div class="endpoint-container w-100">
         <div v-for="endpoint in state.endpoints"
              :key="endpoint.id" class="">
-          <Plot :alt="endpoint.key" :title="endpoint.name" cols="3" rows="1">
+          <Plot :alt="endpoint.key" :cols="3" :rows="1" :title="endpoint.name">
             <div></div>
           </Plot>
 

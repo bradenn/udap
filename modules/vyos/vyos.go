@@ -117,9 +117,13 @@ func (v *Vyos) resolvePing(ipv4 string, duration time.Duration) error {
 	device.LastSeen = time.Now()
 
 	if device.IsQueryable {
-		device.Utilization, err = v.queryDevice(device.Ipv4)
+		res := domain.Utilization{}
+		res, err = v.queryDevice(device.Ipv4)
 		if err != nil {
+			log.Err(err)
 			err = nil
+		} else {
+			device.Utilization = res
 		}
 	}
 
@@ -134,7 +138,7 @@ func (v *Vyos) resolvePing(ipv4 string, duration time.Duration) error {
 func (v *Vyos) queryDevice(ipv4 string) (domain.Utilization, error) {
 	client := http.Client{}
 	defer client.CloseIdleConnections()
-	client.Timeout = time.Millisecond * 250
+	client.Timeout = time.Millisecond * 400
 
 	config := &tls.Config{
 		InsecureSkipVerify: true,
@@ -144,7 +148,7 @@ func (v *Vyos) queryDevice(ipv4 string) (domain.Utilization, error) {
 		TLSClientConfig: config,
 	}
 
-	get, err := client.Get(fmt.Sprintf("https://%s:5050/status", ipv4))
+	get, err := client.Get(fmt.Sprintf("http://%s:5050/status", ipv4))
 	if err != nil {
 		return domain.Utilization{}, err
 	}

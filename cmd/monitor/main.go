@@ -14,117 +14,117 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"udap/internal/core/domain"
+	"udap/internal/log"
 )
 
 type NvidiaXML struct {
-	Data struct {
-		XMLName      xml.Name `xml:"nvidia_smi_log"`
-		Timestamp    string   `xml:"timestamp"`
-		AttachedGpus string   `xml:"attached_gpus"`
-		Gpu          struct {
-			Serial           string `xml:"serial"`
-			Uuid             string `xml:"uuid"`
-			MinorNumber      string `xml:"minor_number"`
-			VbiosVersion     string `xml:"vbios_version"`
-			MultigpuBoard    string `xml:"multigpu_board"`
-			BoardID          string `xml:"board_id"`
-			GpuPartNumber    string `xml:"gpu_part_number"`
-			GpuModuleID      string `xml:"gpu_module_id"`
-			FanSpeed         string `xml:"fan_speed"`
-			PerformanceState string `xml:"performance_state"`
-			FbMemoryUsage    struct {
-				Text     string `xml:",chardata"`
-				Total    string `xml:"total"`
-				Reserved string `xml:"reserved"`
-				Used     string `xml:"used"`
-				Free     string `xml:"free"`
-			} `xml:"fb_memory_usage"`
-			Bar1MemoryUsage struct {
-				Text  string `xml:",chardata"`
-				Total string `xml:"total"`
-				Used  string `xml:"used"`
-				Free  string `xml:"free"`
-			} `xml:"bar1_memory_usage"`
-			ComputeMode string `xml:"compute_mode"`
-			Utilization struct {
-				Text        string `xml:",chardata"`
-				GpuUtil     string `xml:"gpu_util"`
-				MemoryUtil  string `xml:"memory_util"`
-				EncoderUtil string `xml:"encoder_util"`
-				DecoderUtil string `xml:"decoder_util"`
-			} `xml:"utilization"`
-			EncoderStats struct {
-				Text           string `xml:",chardata"`
-				SessionCount   string `xml:"session_count"`
-				AverageFps     string `xml:"average_fps"`
-				AverageLatency string `xml:"average_latency"`
-			} `xml:"encoder_stats"`
-			FbcStats struct {
-				Text           string `xml:",chardata"`
-				SessionCount   string `xml:"session_count"`
-				AverageFps     string `xml:"average_fps"`
-				AverageLatency string `xml:"average_latency"`
-			} `xml:"fbc_stats"`
+	XMLName      xml.Name `xml:"nvidia_smi_log"`
+	Timestamp    string   `xml:"timestamp"`
+	AttachedGpus string   `xml:"attached_gpus"`
+	Gpu          struct {
+		Serial           string `xml:"serial"`
+		Uuid             string `xml:"uuid"`
+		MinorNumber      string `xml:"minor_number"`
+		VbiosVersion     string `xml:"vbios_version"`
+		MultigpuBoard    string `xml:"multigpu_board"`
+		BoardID          string `xml:"board_id"`
+		GpuPartNumber    string `xml:"gpu_part_number"`
+		GpuModuleID      string `xml:"gpu_module_id"`
+		FanSpeed         string `xml:"fan_speed"`
+		PerformanceState string `xml:"performance_state"`
+		FbMemoryUsage    struct {
+			Text     string `xml:",chardata"`
+			Total    string `xml:"total"`
+			Reserved string `xml:"reserved"`
+			Used     string `xml:"used"`
+			Free     string `xml:"free"`
+		} `xml:"fb_memory_usage"`
+		Bar1MemoryUsage struct {
+			Text  string `xml:",chardata"`
+			Total string `xml:"total"`
+			Used  string `xml:"used"`
+			Free  string `xml:"free"`
+		} `xml:"bar1_memory_usage"`
+		ComputeMode string `xml:"compute_mode"`
+		Utilization struct {
+			Text        string `xml:",chardata"`
+			GpuUtil     string `xml:"gpu_util"`
+			MemoryUtil  string `xml:"memory_util"`
+			EncoderUtil string `xml:"encoder_util"`
+			DecoderUtil string `xml:"decoder_util"`
+		} `xml:"utilization"`
+		EncoderStats struct {
+			Text           string `xml:",chardata"`
+			SessionCount   string `xml:"session_count"`
+			AverageFps     string `xml:"average_fps"`
+			AverageLatency string `xml:"average_latency"`
+		} `xml:"encoder_stats"`
+		FbcStats struct {
+			Text           string `xml:",chardata"`
+			SessionCount   string `xml:"session_count"`
+			AverageFps     string `xml:"average_fps"`
+			AverageLatency string `xml:"average_latency"`
+		} `xml:"fbc_stats"`
 
-			Temperature struct {
-				GpuTemp                string `xml:"gpu_temp"`
-				GpuTempMaxThreshold    string `xml:"gpu_temp_max_threshold"`
-				GpuTempSlowThreshold   string `xml:"gpu_temp_slow_threshold"`
-				GpuTempMaxGpuThreshold string `xml:"gpu_temp_max_gpu_threshold"`
-				GpuTargetTemperature   string `xml:"gpu_target_temperature"`
-				MemoryTemp             string `xml:"memory_temp"`
-				GpuTempMaxMemThreshold string `xml:"gpu_temp_max_mem_threshold"`
-			} `xml:"temperature"`
+		Temperature struct {
+			GpuTemp                string `xml:"gpu_temp"`
+			GpuTempMaxThreshold    string `xml:"gpu_temp_max_threshold"`
+			GpuTempSlowThreshold   string `xml:"gpu_temp_slow_threshold"`
+			GpuTempMaxGpuThreshold string `xml:"gpu_temp_max_gpu_threshold"`
+			GpuTargetTemperature   string `xml:"gpu_target_temperature"`
+			MemoryTemp             string `xml:"memory_temp"`
+			GpuTempMaxMemThreshold string `xml:"gpu_temp_max_mem_threshold"`
+		} `xml:"temperature"`
 
-			PowerReadings struct {
-				PowerState         string `xml:"power_state"`
-				PowerManagement    string `xml:"power_management"`
-				PowerDraw          string `xml:"power_draw"`
-				PowerLimit         string `xml:"power_limit"`
-				DefaultPowerLimit  string `xml:"default_power_limit"`
-				EnforcedPowerLimit string `xml:"enforced_power_limit"`
-				MinPowerLimit      string `xml:"min_power_limit"`
-				MaxPowerLimit      string `xml:"max_power_limit"`
-			} `xml:"power_readings"`
-			Clocks struct {
-				Text          string `xml:",chardata"`
-				GraphicsClock string `xml:"graphics_clock"`
-				SmClock       string `xml:"sm_clock"`
-				MemClock      string `xml:"mem_clock"`
-				VideoClock    string `xml:"video_clock"`
-			} `xml:"clocks"`
-			ApplicationsClocks struct {
-				Text          string `xml:",chardata"`
-				GraphicsClock string `xml:"graphics_clock"`
-				MemClock      string `xml:"mem_clock"`
-			} `xml:"applications_clocks"`
-			DefaultApplicationsClocks struct {
-				Text          string `xml:",chardata"`
-				GraphicsClock string `xml:"graphics_clock"`
-				MemClock      string `xml:"mem_clock"`
-			} `xml:"default_applications_clocks"`
-			MaxClocks struct {
-				Text          string `xml:",chardata"`
-				GraphicsClock string `xml:"graphics_clock"`
-				SmClock       string `xml:"sm_clock"`
-				MemClock      string `xml:"mem_clock"`
-				VideoClock    string `xml:"video_clock"`
-			} `xml:"max_clocks"`
-			Processes []struct {
-				Text        string `xml:",chardata"`
-				ProcessInfo struct {
-					Text              string `xml:",chardata"`
-					GpuInstanceID     string `xml:"gpu_instance_id"`
-					ComputeInstanceID string `xml:"compute_instance_id"`
-					Pid               string `xml:"pid"`
-					Type              string `xml:"type"`
-					ProcessName       string `xml:"process_name"`
-					UsedMemory        string `xml:"used_memory"`
-				} `xml:"process_info"`
-			} `xml:"processes"`
-			AccountedProcesses string `xml:"accounted_processes"`
-		} `xml:"gpu"`
-	} `xml:"nvidia_smi_log"`
+		PowerReadings struct {
+			PowerState         string `xml:"power_state"`
+			PowerManagement    string `xml:"power_management"`
+			PowerDraw          string `xml:"power_draw"`
+			PowerLimit         string `xml:"power_limit"`
+			DefaultPowerLimit  string `xml:"default_power_limit"`
+			EnforcedPowerLimit string `xml:"enforced_power_limit"`
+			MinPowerLimit      string `xml:"min_power_limit"`
+			MaxPowerLimit      string `xml:"max_power_limit"`
+		} `xml:"power_readings"`
+		Clocks struct {
+			Text          string `xml:",chardata"`
+			GraphicsClock string `xml:"graphics_clock"`
+			SmClock       string `xml:"sm_clock"`
+			MemClock      string `xml:"mem_clock"`
+			VideoClock    string `xml:"video_clock"`
+		} `xml:"clocks"`
+		ApplicationsClocks struct {
+			Text          string `xml:",chardata"`
+			GraphicsClock string `xml:"graphics_clock"`
+			MemClock      string `xml:"mem_clock"`
+		} `xml:"applications_clocks"`
+		DefaultApplicationsClocks struct {
+			Text          string `xml:",chardata"`
+			GraphicsClock string `xml:"graphics_clock"`
+			MemClock      string `xml:"mem_clock"`
+		} `xml:"default_applications_clocks"`
+		MaxClocks struct {
+			Text          string `xml:",chardata"`
+			GraphicsClock string `xml:"graphics_clock"`
+			SmClock       string `xml:"sm_clock"`
+			MemClock      string `xml:"mem_clock"`
+			VideoClock    string `xml:"video_clock"`
+		} `xml:"max_clocks"`
+		Processes []struct {
+			Text        string `xml:",chardata"`
+			ProcessInfo struct {
+				Text              string `xml:",chardata"`
+				GpuInstanceID     string `xml:"gpu_instance_id"`
+				ComputeInstanceID string `xml:"compute_instance_id"`
+				Pid               string `xml:"pid"`
+				Type              string `xml:"type"`
+				ProcessName       string `xml:"process_name"`
+				UsedMemory        string `xml:"used_memory"`
+			} `xml:"process_info"`
+		} `xml:"processes"`
+		AccountedProcesses string `xml:"accounted_processes"`
+	} `xml:"gpu"`
 }
 
 func GetOutboundIP() (net.IP, error) {
@@ -164,54 +164,6 @@ func MacFromIpv4(ipv4 string) (string, error) {
 	return "", nil
 }
 
-type Compute struct {
-	FanSpeed    string `json:"fanSpeed"`
-	Temperature struct {
-		Current  int `json:"current"`
-		Throttle int `json:"throttle"`
-		Target   int `json:"target"`
-		Max      int `json:"max"`
-	} `json:"temperature"`
-	Utilization struct {
-		GPU    int `json:"gpu"`
-		Memory int `json:"memory"`
-	} `json:"utilization"`
-	Power struct {
-		Draw float64 `json:"draw"`
-		Max  float64 `json:"max"`
-	}
-	Memory struct {
-		Used     int `json:"used"`
-		Reserved int `json:"reserved"`
-		Total    int `json:"total"`
-	} `json:"memory"`
-	Clocks struct {
-		Graphics struct {
-			Current int `json:"current"`
-			Max     int `json:"max"`
-		} `json:"graphics"`
-		Streaming struct {
-			Current int `json:"current"`
-			Max     int `json:"max"`
-		} `json:"streaming"`
-		Memory struct {
-			Current int `json:"current"`
-			Max     int `json:"max"`
-		} `json:"memory"`
-		Video struct {
-			Current int `json:"current"`
-			Max     int `json:"max"`
-		} `json:"video"`
-	} `json:"clocks"`
-	Processes []ComputeProcess `json:"processes"`
-}
-
-type ComputeProcess struct {
-	Name   string `json:"name"`
-	PID    string `json:"pid"`
-	Memory int    `json:"memory"`
-}
-
 type System struct {
 	Memory struct {
 		Total uint64  `json:"total"`
@@ -230,7 +182,7 @@ type System struct {
 		Total uint64  `json:"total"`
 		Used  float64 `json:"used"`
 	} `json:"disk"`
-	Compute []Compute `json:"compute"`
+	Compute []domain.Compute `json:"compute"`
 }
 
 func queryGPU() (NvidiaXML, error) {
@@ -239,6 +191,7 @@ func queryGPU() (NvidiaXML, error) {
 	if err != nil {
 		return NvidiaXML{}, err
 	}
+
 	nvm := NvidiaXML{}
 	err = xml.Unmarshal(output, &nvm)
 	if err != nil {
@@ -248,116 +201,172 @@ func queryGPU() (NvidiaXML, error) {
 	return nvm, nil
 }
 
-func parseCompute(xml NvidiaXML) ([]Compute, error) {
-	x := xml.Data.Gpu
+func parseCompute(xml NvidiaXML) ([]domain.Compute, error) {
 
-	c := Compute{}
-	c.FanSpeed = x.FanSpeed
+	x := xml.Gpu
 
-	// GPU Power
-	_, err := fmt.Sscanf(x.PowerReadings.PowerLimit, "%.2f W", c.Power.Max)
+	c := domain.Compute{
+		FanSpeed: 0,
+		Temperature: struct {
+			Current  int `json:"current"`
+			Throttle int `json:"throttle"`
+			Target   int `json:"target"`
+			Max      int `json:"max"`
+		}{
+			Current:  0,
+			Throttle: 0,
+			Target:   0,
+			Max:      0,
+		},
+		Utilization: struct {
+			GPU    int `json:"gpu"`
+			Memory int `json:"memory"`
+		}{
+			GPU:    0,
+			Memory: 0,
+		},
+		Power: struct {
+			Draw float64 `json:"draw"`
+			Max  float64 `json:"max"`
+		}{
+			Draw: 0,
+			Max:  0,
+		},
+		Memory: struct {
+			Used     int `json:"used"`
+			Reserved int `json:"reserved"`
+			Total    int `json:"total"`
+		}{},
+		Clocks: struct {
+			Graphics struct {
+				Current int `json:"current"`
+				Max     int `json:"max"`
+			} `json:"graphics"`
+			Streaming struct {
+				Current int `json:"current"`
+				Max     int `json:"max"`
+			} `json:"streaming"`
+			Memory struct {
+				Current int `json:"current"`
+				Max     int `json:"max"`
+			} `json:"memory"`
+			Video struct {
+				Current int `json:"current"`
+				Max     int `json:"max"`
+			} `json:"video"`
+		}{},
+		Processes: []domain.ComputeProcess{},
+	}
+
+	_, err := fmt.Sscanf(x.FanSpeed, "%d %%", &c.FanSpeed)
 	if err != nil {
 		return nil, err
 	}
-	_, err = fmt.Sscanf(x.PowerReadings.PowerDraw, "%.2f W", c.Power.Draw)
+
+	// GPU Power
+	_, err = fmt.Sscanf(x.PowerReadings.PowerLimit, "%f W", &c.Power.Max)
+	if err != nil {
+		return nil, err
+	}
+	_, err = fmt.Sscanf(x.PowerReadings.PowerDraw, "%f W", &c.Power.Draw)
 	if err != nil {
 		return nil, err
 	}
 
 	// GPU Temperature
-	_, err = fmt.Sscanf(x.Temperature.GpuTemp, "%.2f C", c.Temperature.Current)
+	_, err = fmt.Sscanf(x.Temperature.GpuTemp, "%d C", &c.Temperature.Current)
 	if err != nil {
 		return nil, err
 	}
-	_, err = fmt.Sscanf(x.Temperature.GpuTargetTemperature, "%.2f C", c.Temperature.Target)
+	_, err = fmt.Sscanf(x.Temperature.GpuTargetTemperature, "%d C", &c.Temperature.Target)
 	if err != nil {
 		return nil, err
 	}
-	_, err = fmt.Sscanf(x.Temperature.GpuTempSlowThreshold, "%.2f C", c.Temperature.Throttle)
+	_, err = fmt.Sscanf(x.Temperature.GpuTempSlowThreshold, "%d C", &c.Temperature.Throttle)
 	if err != nil {
 		return nil, err
 	}
-	_, err = fmt.Sscanf(x.Temperature.GpuTempMaxThreshold, "%.2f C", c.Temperature.Max)
+	_, err = fmt.Sscanf(x.Temperature.GpuTempMaxThreshold, "%d C", &c.Temperature.Max)
 	if err != nil {
 		return nil, err
 	}
 
 	// Utilization
 
-	_, err = fmt.Sscanf(x.Utilization.GpuUtil, "%.2f %", c.Utilization.GPU)
+	_, err = fmt.Sscanf(x.Utilization.GpuUtil, "%d %%", &c.Utilization.GPU)
 	if err != nil {
 		return nil, err
 	}
-	_, err = fmt.Sscanf(x.Utilization.MemoryUtil, "%.2f %", c.Utilization.Memory)
+	_, err = fmt.Sscanf(x.Utilization.MemoryUtil, "%d %%", &c.Utilization.Memory)
 	if err != nil {
 		return nil, err
 	}
 
 	// Memory Usage
 
-	_, err = fmt.Sscanf(x.FbMemoryUsage.Free, "%.2f MiB", c.Memory.Used)
+	_, err = fmt.Sscanf(x.FbMemoryUsage.Free, "%d MiB", &c.Memory.Used)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.FbMemoryUsage.Total, "%.2f MiB", c.Memory.Total)
+	_, err = fmt.Sscanf(x.FbMemoryUsage.Total, "%d MiB", &c.Memory.Total)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.FbMemoryUsage.Reserved, "%.2f MiB", c.Memory.Reserved)
+	_, err = fmt.Sscanf(x.FbMemoryUsage.Reserved, "%d MiB", &c.Memory.Reserved)
 	if err != nil {
 		return nil, err
 	}
 
 	// Clocks
 
-	_, err = fmt.Sscanf(x.Clocks.GraphicsClock, "%.2f MHz", c.Clocks.Graphics.Current)
+	_, err = fmt.Sscanf(x.Clocks.GraphicsClock, "%d MHz", &c.Clocks.Graphics.Current)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.MaxClocks.GraphicsClock, "%.2f MHz", c.Clocks.Graphics.Max)
+	_, err = fmt.Sscanf(x.MaxClocks.GraphicsClock, "%d MHz", &c.Clocks.Graphics.Max)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.Clocks.SmClock, "%.2f MHz", c.Clocks.Streaming.Current)
+	_, err = fmt.Sscanf(x.Clocks.SmClock, "%d MHz", &c.Clocks.Streaming.Current)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.MaxClocks.SmClock, "%.2f MHz", c.Clocks.Streaming.Max)
+	_, err = fmt.Sscanf(x.MaxClocks.SmClock, "%d MHz", &c.Clocks.Streaming.Max)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.Clocks.MemClock, "%.2f MHz", c.Clocks.Memory.Current)
+	_, err = fmt.Sscanf(x.Clocks.MemClock, "%d MHz", &c.Clocks.Memory.Current)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.MaxClocks.MemClock, "%.2f MHz", c.Clocks.Memory.Max)
+	_, err = fmt.Sscanf(x.MaxClocks.MemClock, "%d MHz", &c.Clocks.Memory.Max)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.Clocks.VideoClock, "%.2f MHz", c.Clocks.Video.Current)
+	_, err = fmt.Sscanf(x.Clocks.VideoClock, "%d MHz", &c.Clocks.Video.Current)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = fmt.Sscanf(x.MaxClocks.VideoClock, "%.2f MHz", c.Clocks.Video.Max)
+	_, err = fmt.Sscanf(x.MaxClocks.VideoClock, "%d MHz", &c.Clocks.Video.Max)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Processes = []ComputeProcess{}
 	if len(x.Processes) > 0 {
 		for _, process := range x.Processes {
-			proc := ComputeProcess{}
+			proc := domain.ComputeProcess{}
 			proc.Name = process.ProcessInfo.ProcessName
-			_, err = fmt.Sscanf(process.ProcessInfo.UsedMemory, "%.2f MiB", proc.Memory)
+			proc.PID = process.ProcessInfo.Pid
+			_, err = fmt.Sscanf(process.ProcessInfo.UsedMemory, "%d MiB", &proc.Memory)
 			if err != nil {
 				return nil, err
 			}
@@ -365,7 +374,7 @@ func parseCompute(xml NvidiaXML) ([]Compute, error) {
 		}
 	}
 
-	return []Compute{c}, nil
+	return []domain.Compute{c}, nil
 
 }
 
@@ -431,12 +440,15 @@ func MonitorStats() (System, error) {
 	if isGPU {
 		gpu, err := queryGPU()
 		if err != nil {
-			return System{}, err
+			log.Err(err)
+			return system, err
 		}
 		compute, err := parseCompute(gpu)
 		if err != nil {
-			return System{}, err
+			log.Err(err)
+			return system, err
 		}
+
 		system.Compute = compute
 	}
 
@@ -465,8 +477,10 @@ var isGPU bool
 
 func main() {
 	isGPU = false
-	if len(os.Args) > 2 {
+
+	if len(os.Args) > 1 {
 		if os.Args[1] == "gpu" {
+			fmt.Println("Using GPU mode")
 			isGPU = true
 		}
 	}

@@ -25,6 +25,55 @@ type Utilization struct {
 		Total uint64  `json:"total"`
 		Used  float64 `json:"used"`
 	} `json:"disk"`
+	Compute []Compute `json:"compute"`
+}
+
+type Compute struct {
+	FanSpeed    int `json:"fanSpeed"`
+	Temperature struct {
+		Current  int `json:"current"`
+		Throttle int `json:"throttle"`
+		Target   int `json:"target"`
+		Max      int `json:"max"`
+	} `json:"temperature"`
+	Utilization struct {
+		GPU    int `json:"gpu"`
+		Memory int `json:"memory"`
+	} `json:"utilization"`
+	Power struct {
+		Draw float64 `json:"draw"`
+		Max  float64 `json:"max"`
+	} `json:"power"`
+	Memory struct {
+		Used     int `json:"used"`
+		Reserved int `json:"reserved"`
+		Total    int `json:"total"`
+	} `json:"memory"`
+	Clocks struct {
+		Graphics struct {
+			Current int `json:"current"`
+			Max     int `json:"max"`
+		} `json:"graphics"`
+		Streaming struct {
+			Current int `json:"current"`
+			Max     int `json:"max"`
+		} `json:"streaming"`
+		Memory struct {
+			Current int `json:"current"`
+			Max     int `json:"max"`
+		} `json:"memory"`
+		Video struct {
+			Current int `json:"current"`
+			Max     int `json:"max"`
+		} `json:"video"`
+	} `json:"clocks"`
+	Processes []ComputeProcess `json:"processes"`
+}
+
+type ComputeProcess struct {
+	Name   string `json:"name"`
+	PID    string `json:"pid"`
+	Memory int    `json:"memory"`
 }
 
 type Device struct {
