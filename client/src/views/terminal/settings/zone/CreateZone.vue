@@ -5,6 +5,7 @@ import type {Entity, Remote, Zone} from "@/types";
 import SimpleKeyboard from "@/components/Keyboard.vue";
 import Plot from "@/components/plot/Plot.vue";
 import axios from "axios";
+import Radio from "@/components/plot/Radio.vue";
 
 
 interface NewZone {
@@ -91,6 +92,18 @@ function toggleEntity(id: string) {
 }
 
 
+function groupBy<K, V>(array: V[], grouper: (item: V) => K) {
+  return array.reduce((store, item) => {
+    let key = grouper(item)
+    if (!store.has(key)) {
+      store.set(key, [item])
+    } else {
+      store.get(key)?.push(item)
+    }
+    return store
+  }, new Map<K, V[]>())
+}
+
 </script>
 
 <template>
@@ -116,10 +129,10 @@ function toggleEntity(id: string) {
     ></SimpleKeyboard>
 
   </div>
-  <div v-else-if="state.mode === 'select'" class="h-100">
-    <div class="d-flex flex-row gap">
-      <Plot :cols="1" :rows="5" style="width: 12rem; height: 100%">
-        <div class="label-lg label-r label-o5 px-1">{{ state.zone.name }}</div>
+  <div v-else-if="state.mode === 'select'" class="h-100 w-100">
+    <div class="d-flex flex-row gap justify-content-center">
+      <Plot :cols="1" :rows="5" :title="state.zone.name" style="width: 13rem; height: 100%">
+        <div class="label-lg label-r label-o5 px-1"></div>
         <div class="subplot">
           <div>Entities</div>
           <div class="flex-fill"></div>
@@ -133,22 +146,23 @@ function toggleEntity(id: string) {
           <div>Braden Nicholson</div>
         </div>
       </Plot>
-      <Plot :cols="1" :rows="10" style="width: 12rem; height: 100%">
-        <div class="label-lg label-r label-o5 px-1">Entities</div>
-        <div v-for="entity in state.entities" class="subplot" @click="() => toggleEntity(entity.id)">
+
+      <Plot :cols="3" :rows="10" style="height: 100%; width: 33%" title="Entities">
+        <div v-for="entity in state.entities" class="subplot"
+             @click="() => toggleEntity(entity.id)">
 
           <div>{{ entity.name }}</div>
           <div class="flex-fill"></div>
-          <div>{{ state.zone.entities.includes(entity.id) ? '􀃳' : '􀂒' }}</div>
+          <div class="label-o3">{{ state.zone.entities.includes(entity.id) ? '􀃳' : '􀂒' }}</div>
 
         </div>
       </Plot>
-      <Plot :cols="1" :rows="1">
-        <div class="subplot" @click="() => createZone()">
-          <div>Create</div>
-        </div>
-      </Plot>
-
+      <div style="width: 8rem">
+        <Plot :cols="1" :rows="1" style="width: 8rem">
+          <Radio :active="false" :fn="() => createZone()"
+                 title="Create Zone"></Radio>
+        </Plot>
+      </div>
     </div>
     <div>
 

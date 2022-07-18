@@ -128,4 +128,23 @@ func (r *endpointRouter) enroll(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Err(err)
 	}
+
+	done := make(chan bool)
+	go func() {
+		_, _, err = conn.ReadMessage()
+		if err != nil {
+			done <- true
+		}
+	}()
+
+	defer func() {
+		_ = conn.Close()
+		err = r.service.Unenroll(id)
+		if err != nil {
+			log.Err(err)
+		}
+	}()
+
+	<-done
+
 }

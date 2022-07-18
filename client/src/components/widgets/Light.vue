@@ -40,7 +40,6 @@ let props = defineProps<{
 
 // Inject the remote manifest
 let remote = inject('remote') as Remote
-let context: any = inject('context')
 
 // When the view loads, force the local state to update
 onMounted(() => {

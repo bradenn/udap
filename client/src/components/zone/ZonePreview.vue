@@ -5,6 +5,7 @@
 import Plot from "@/components/plot/Plot.vue";
 import {inject} from "vue";
 import type {Remote, Zone} from "@/types";
+import axios from "axios";
 
 interface ZoneProps {
   zone: Zone
@@ -15,10 +16,14 @@ let props = defineProps<ZoneProps>()
 let remote = inject('remote') as Remote
 
 function restoreZone(id: string) {
+  axios.post(`http://localhost:3020/zones/${id}/restore`).then(res => {
+  }).catch(err => console.log(err))
   // remote.nexus.requestId("zone", "restore", "", id)
 }
 
 function deleteZone(id: string) {
+  axios.post(`http://localhost:3020/zones/${id}/delete`).then(res => {
+  }).catch(err => console.log(err))
   // remote.nexus.requestId("zone", "delete", "", id)
 }
 
@@ -32,8 +37,7 @@ function deleteZone(id: string) {
     </div>
     <div class="d-flex label-sm label-o4 subplot justify-content-end px-1 subplot-inline"
          @click="props.zone.deleted?restoreZone(props.zone.id):deleteZone(props.zone.id)">
-      <div
-      >
+      <div>
         {{ props.zone.deleted ? 'Restore' : 'Delete' }}
       </div>
 

@@ -35,12 +35,14 @@ type Body struct {
 }
 
 type RemoteRecognizer struct {
-	response chan Response
-	status   chan string
-
+	response       chan Response
+	status         chan string
+	remote         url.URL
 	writeBuffer    chan bytes.Buffer
 	closeBuffer    chan bool
+	done           chan bool
 	listeningSince time.Time
+	quietTime      time.Time
 	last           float64
 	listening      bool
 	quiet          bool
@@ -56,12 +58,12 @@ func NewRecognizer(response chan Response, status chan string) Recognizer {
 	return &RemoteRecognizer{
 		response:    response,
 		status:      status,
-		writeBuffer: make(chan bytes.Buffer, 20),
+		writeBuffer: make(chan bytes.Buffer),
 		closeBuffer: make(chan bool),
 		last:        0.0,
 		listening:   false,
 		quiet:       true,
-		threshold:   2,
+		threshold:   1.75,
 	}
 }
 
@@ -74,11 +76,23 @@ func (r *RemoteRecognizer) sendChunk(in []int16) (err error) {
 
 	select {
 	case r.writeBuffer <- buf: // Put 2 in the channel unless it is full
-	default:
+	case <-time.After(time.Millisecond * 200):
+		fmt.Println("Timed out sending!")
 		return nil
 	}
 
 	return nil
+
+}
+
+func (r *RemoteRecognizer) close() {
+
+	select {
+	case r.closeBuffer <- true: // Put 2 in the channel unless it is full
+	case <-time.After(time.Millisecond * 200):
+		fmt.Println("Timed out closing!")
+		return
+	}
 
 }
 
@@ -95,6 +109,7 @@ func (r *RemoteRecognizer) listen(remote url.URL) (err error) {
 			SampleRate: 16000,
 		},
 	}
+
 	done := make(chan bool)
 	marshal, err := json.Marshal(e)
 	if err != nil {
@@ -107,15 +122,17 @@ func (r *RemoteRecognizer) listen(remote url.URL) (err error) {
 	}
 
 	defer func() {
-		err = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		err = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure,
+			"done"))
 		if err != nil {
 			return
 		}
+		conn.Close()
 	}()
 
 	conn.SetCloseHandler(func(code int, text string) error {
 		r.status <- "closed"
-
+		done <- true
 		return nil
 	})
 
@@ -123,7 +140,6 @@ func (r *RemoteRecognizer) listen(remote url.URL) (err error) {
 		select {
 		case buffer := <-r.writeBuffer:
 			r.status <- "listening"
-			start := time.Now()
 			err = conn.WriteMessage(websocket.BinaryMessage, buffer.Bytes())
 			if err != nil {
 				return err
@@ -132,7 +148,6 @@ func (r *RemoteRecognizer) listen(remote url.URL) (err error) {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Sent chunk, took: (%s)\n", time.Since(start))
 		case <-r.closeBuffer:
 			r.status <- "processing"
 			err = conn.WriteMessage(websocket.TextMessage, []byte("{\"eof\" : 1}"))
@@ -140,21 +155,15 @@ func (r *RemoteRecognizer) listen(remote url.URL) (err error) {
 				r.status <- "disconnected"
 				return err
 			}
-			var text []byte
-			_, text, err = conn.ReadMessage()
-			if err != nil {
-				r.status <- "disconnected"
-				return err
-			}
 			resp := Response{}
-			err = json.Unmarshal(text, &resp)
+			err = conn.ReadJSON(&resp)
 			if err != nil {
-				return err
+				return
 			}
 			r.response <- resp
 			r.status <- "idle"
 			return nil
-		case <-done:
+		case <-r.done:
 			fmt.Println("Exiting atlas remote recognizer")
 			return nil
 		}
@@ -162,32 +171,28 @@ func (r *RemoteRecognizer) listen(remote url.URL) (err error) {
 }
 
 func (r *RemoteRecognizer) Connect(host string) (doneChan chan bool, err error) {
-	remote := url.URL{Scheme: "ws", Host: host + ":" + "2700", Path: ""}
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-done:
-				fmt.Println("Exiting atlas recognizer")
-				return
-			default:
-				err = r.listen(remote)
-				if err != nil {
-					log.Err(err)
-					return
-				}
-			}
+	r.remote = url.URL{Scheme: "ws", Host: host + ":" + "2700", Path: ""}
 
-		}
-	}()
+	r.done = make(chan bool)
 
-	return done, nil
+	return r.done, nil
 }
+
+const (
+	// VadMode vad mode
+	VadMode = 0
+	// SampleRate sample rate
+	SampleRate = 16000
+	// BitDepth bit depth
+	BitDepth = 16
+	// FrameDuration frame duration
+	FrameDuration = 20
+)
 
 func (r *RemoteRecognizer) Listen() error {
 	err := portaudio.Initialize()
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	defer func() {
@@ -197,59 +202,90 @@ func (r *RemoteRecognizer) Listen() error {
 		}
 	}()
 
-	in := make([]int16, 4000)
-
-	stream, err := portaudio.OpenDefaultStream(1, 0, 16000, len(in), in)
+	buffer := make([]int16, 4096)
+	stream, err := portaudio.OpenDefaultStream(1, 0, SampleRate, len(buffer), buffer)
 	if err != nil {
 		return err
 	}
+
+	var (
+		listening  bool
+		quiet      bool
+		last       float64
+		quietBegin time.Time
+	)
+	listening = false
+	fmt.Println("Beginning to listen:")
 
 	err = stream.Start()
 	if err != nil {
 		return err
 	}
-	d := NewDetector(len(in))
+	d := NewDetector(len(buffer))
 	for {
 		err = stream.Read()
 		if err != nil {
 			return err
 		}
 
-		delta := d.Detect(in)
+		delta := d.Detect(buffer)
 
-		if r.last == 0 {
-			r.last = delta
+		if last == 0 {
+			last = delta
 			continue
 		}
 
-		if r.listening {
-
-			if delta*r.threshold*1.6 <= r.last || time.Since(r.listeningSince) > time.Second*10 {
-				if r.quiet {
-					r.listening = false
-					r.closeBuffer <- true
+		if listening {
+			err = r.sendChunk(buffer)
+			if err != nil {
+				return err
+			}
+			if delta*1.75 <= last {
+				if !quiet {
+					quietBegin = time.Now()
+				} else {
+					diff := time.Since(quietBegin)
+					if diff > time.Millisecond*250 {
+						// r.listening = false
+						fmt.Println("SPEECH DONE")
+						r.close()
+						break
+					}
 				}
-				r.quiet = true
+				quiet = true
 			} else {
-				r.quiet = false
-				err = r.sendChunk(in)
-				if err != nil {
-					return err
-				}
-				r.last = delta
+				quiet = false
+				last = delta
 			}
 		} else {
-			if delta >= r.last*r.threshold*1.5 {
-				r.listening = true
-				r.listeningSince = time.Now()
-				err = r.sendChunk(in)
+
+			if delta >= last*3 {
+				fmt.Println("SPEECH STARTED")
+				go func() {
+					err = r.listen(r.remote)
+					if err != nil {
+						log.Err(err)
+						return
+					}
+				}()
+				quiet = false
+				listening = true
+				err = r.sendChunk(buffer)
 				if err != nil {
 					return err
 				}
+
 			}
-			r.last = delta
+			last = delta
 		}
 
 	}
+
+	err = stream.Stop()
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }

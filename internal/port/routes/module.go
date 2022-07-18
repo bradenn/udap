@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/core/domain"
+	"udap/internal/log"
 )
 
 type ModuleRouter interface {
@@ -24,11 +25,25 @@ func NewModuleRouter(service domain.ModuleService) ModuleRouter {
 
 func (r *moduleRouter) RouteModules(router chi.Router) {
 	router.Route("/modules/{id}", func(local chi.Router) {
+		local.Post("/reload", r.reload)
 		local.Post("/build", r.build)
 		local.Post("/disable", r.disable)
 		local.Post("/enable", r.enable)
 		local.Post("/halt", r.halt)
 	})
+}
+
+func (r moduleRouter) reload(w http.ResponseWriter, req *http.Request) {
+	id := chi.URLParam(req, "id")
+	if id != "" {
+		err := r.service.Reload(id)
+		if err != nil {
+			log.Err(err)
+			http.Error(w, "an error occured: ", 401)
+			return
+		}
+	}
+	w.WriteHeader(200)
 }
 
 func (r moduleRouter) build(w http.ResponseWriter, req *http.Request) {

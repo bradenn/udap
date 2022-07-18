@@ -23,6 +23,28 @@ type Attribute struct {
 	// get       FuncGet
 }
 
+const (
+	MEDIA  = "media"
+	BUFFER = "buffer"
+	TOGGLE = "toggle"
+	RANGE  = "range"
+)
+
+func NewAttribute(key string, variant string, entity string) Attribute {
+	attribute := Attribute{
+		Key:       key,
+		Type:      variant,
+		Entity:    entity,
+		Value:     "",
+		Request:   "",
+		Updated:   time.Time{},
+		Requested: time.Time{},
+		Order:     0,
+		Channel:   make(chan Attribute),
+	}
+	return attribute
+}
+
 func (a *Attribute) AsInt() int {
 	parsed, err := strconv.ParseInt(a.Value, 10, 0)
 	if err != nil {

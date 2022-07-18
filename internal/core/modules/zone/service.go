@@ -39,6 +39,18 @@ func (u *zoneService) emit(zone *domain.Zone) error {
 	return nil
 }
 
+func (u *zoneService) mutate(zone *domain.Zone) error {
+	err := u.repository.Update(zone)
+	if err != nil {
+		return err
+	}
+	err = u.emit(zone)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *zoneService) Watch(mut chan<- domain.Mutation) error {
 	if u.channel != nil {
 		return fmt.Errorf("channel already set")
@@ -50,6 +62,46 @@ func (u *zoneService) Watch(mut chan<- domain.Mutation) error {
 
 func NewService(repository domain.ZoneRepository) domain.ZoneService {
 	return &zoneService{repository: repository}
+}
+
+func (u zoneService) Restore(id string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	if !byId.Deleted {
+		return fmt.Errorf("zone is already restored")
+	}
+
+	byId.Deleted = false
+
+	err = u.mutate(byId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u zoneService) Delete(id string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	if byId.Deleted {
+		return fmt.Errorf("zone is already deleted")
+	}
+
+	byId.Deleted = true
+
+	err = u.mutate(byId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Repository Mapping
@@ -80,8 +132,4 @@ func (u zoneService) FindOrCreate(zone *domain.Zone) error {
 
 func (u zoneService) Update(zone *domain.Zone) error {
 	return u.repository.Update(zone)
-}
-
-func (u zoneService) Delete(zone *domain.Zone) error {
-	return u.repository.Delete(zone)
 }

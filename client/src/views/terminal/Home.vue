@@ -82,8 +82,6 @@ function getRoutes() {
   state.apps = bingo.children
 }
 
-let ui: any = inject("ui")
-
 </script>
 
 <template>

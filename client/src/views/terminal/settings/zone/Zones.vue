@@ -54,7 +54,7 @@ function toggleShowDeleted() {
 
         <Radio :active="false" :fn="() => toggleShowDeleted()"
                :title="state.showDeleted?'Hide Deleted':'Show Deleted'"></Radio>
-        <Radio :active="false" :fn="() => setMode('create')"
+        <Radio :active="false" :fn="() => state.mode === 'create'?setMode('list'):setMode('create')"
                :title="state.mode === 'create'?'Cancel':'New Zone'"></Radio>
       </Plot>
     </div>

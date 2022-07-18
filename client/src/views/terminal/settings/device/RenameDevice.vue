@@ -121,7 +121,6 @@ function toggleQueryable(queryable: boolean, device: Device) {
                  name="Rename"></Subplot>
       </Plot>
     </div>
-
     <div v-if="state.mode === 'name'">
 
       <div class="d-flex justify-content-center">

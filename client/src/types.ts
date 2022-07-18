@@ -68,6 +68,53 @@ export interface System {
     threads: number[];
 }
 
+export interface Compute {
+    fanSpeed: number;
+    temperature: {
+        current: number;
+        throttle: number;
+        target: number;
+        max: number;
+    };
+    utilization: {
+        gpu: number;
+        memory: number;
+    };
+    power: {
+        draw: number;
+        max: number;
+    };
+    memory: {
+        used: number;
+        reserved: number;
+        total: number;
+    };
+    clocks: {
+        graphics: {
+            current: number;
+            max: number;
+        };
+        streaming: {
+            current: number;
+            max: number;
+        };
+        memory: {
+            current: number;
+            max: number;
+        };
+        video: {
+            current: number;
+            max: number;
+        };
+    };
+    processes: {
+        name: string;
+        pid: string;
+        memory: number;
+    }[];
+}
+
+
 export interface Defaults {
     background: string
     theme: string
@@ -132,6 +179,7 @@ export interface Utilization {
         total: number;
         used: number;
     };
+    compute: Compute[]
 }
 
 export interface Device {

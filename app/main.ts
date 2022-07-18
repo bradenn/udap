@@ -15,7 +15,7 @@ function createWindow() {
         backgroundColor: '#000000',
         autoHideMenuBar: true,
         show: true,
-        kiosk: true,
+        kiosk: false,
         fullscreen: true,
         removeMenu: true,
         frame: false,

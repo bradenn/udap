@@ -45,7 +45,7 @@ import Summary from "../views/terminal/weather/Summary.vue";
 import Whiteboard from "@/views/terminal/whiteboard/Whiteboard.vue";
 
 // Calculator Routes
-import Calculator from "@/views/screensaver/Screensaver.vue";
+import Calculator from "@/views/screensaver/Bounce.vue";
 
 // Atlas Routes
 import Atlas from "@/views/terminal/atlas/Atlas.vue";

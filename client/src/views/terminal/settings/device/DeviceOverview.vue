@@ -6,6 +6,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import Loader from "@/components/Loader.vue";
 import axios from "axios";
+import router from "@/router";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -68,6 +69,12 @@ function rename(name: string, device: Device) {
   axios.post("http://10.0.1.18:3020/devices/update", JSON.stringify(device))
 }
 
+// let router = useRouter()
+
+function goTo(target: string) {
+  router.push(target)
+}
+
 </script>
 
 <template>
@@ -85,14 +92,15 @@ function rename(name: string, device: Device) {
     <div v-if="state.mode === 'list'">
 
       <div class="device-container">
-        <Plot v-for="device in state.devices" :cols="2" :rows="1">
-          <div class="subplot subplot-inline justify-content-between px-0 w-100">
+        <Plot v-for="(device, index) in state.devices" :cols="2" :rows="1" :style="`animation-delay:${index*2.5}ms;`"
+              class="plot-load">
+          <div class="subplot subplot-inline justify-content-between px-0">
             <div class="d-flex align-items-center">
               <div :style="`background-color: rgba(${device.state==='ONLINE'?'25, 135, 84':'135, 100, 2'}, 0.53);`"
                    class="status-marker"></div>
               <div>
                 <div class="label-c1 label-o4 label-r lh-1 w-100">
-                  <div>{{ device.name || device.ipv4 }}</div>
+                  <div class="overflow-ellipse-a">{{ device.name || device.ipv4 }}</div>
                 </div>
                 <div class="label-c4  label-o3 label-r py-0 w-100 d-flex justify-content-between"
                      style="line-height: 0.55rem">
@@ -130,8 +138,6 @@ function rename(name: string, device: Device) {
 
           </div>
         </Plot>
-
-
       </div>
     </div>
     <div v-else-if="state.mode === 'create'">
@@ -160,6 +166,29 @@ function rename(name: string, device: Device) {
 
 <style scoped>
 
+.device-container > * {
+  visibility: hidden;
+  animation: plot-load 75ms ease-in-out forwards;
+}
+
+@keyframes plot-load {
+  0% {
+    visibility: hidden;
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    visibility: hidden;
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    visibility: visible;
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .time-marker {
   width: 2px;
   background-color: rgba(255, 255, 255, 0.2);
@@ -180,20 +209,20 @@ function rename(name: string, device: Device) {
   padding: 6px
 }
 
-.overflow-ellipse {
+.overflow-ellipse-a {
   display: block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis !important;
   text-wrap: none !important;
-  max-width: 34rem;
+  max-width: 20rem !important;
 }
 
 .device-container {
   display: grid;
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
-  grid-auto-flow: column;
+  grid-auto-flow: row;
   grid-template-rows: repeat(8, 1fr);
   grid-template-columns: repeat(3, 1fr);
 }

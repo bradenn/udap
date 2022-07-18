@@ -118,6 +118,7 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 	if err != nil {
 		return err
 	}
+	_ = resp.Body.Close()
 
 	return nil
 }
@@ -150,6 +151,12 @@ func (v *Sentry) requestBeam(beam Beam) error {
 	if err != nil {
 		return err
 	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

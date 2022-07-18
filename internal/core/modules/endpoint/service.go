@@ -85,8 +85,12 @@ func (u *endpointService) Enroll(id string, conn *websocket.Conn) error {
 	return nil
 }
 
-func (u *endpointService) Disconnect(key string) error {
-	err := u.operator.Unenroll(key)
+func (u *endpointService) Unenroll(id string) error {
+	endpoint, err := u.FindById(id)
+	if err != nil {
+		return err
+	}
+	err = u.operator.Unenroll(endpoint)
 	if err != nil {
 		return err
 	}

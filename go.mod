@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	github.com/baabaaox/go-webrtcvad v1.0.1 // indirect
 	github.com/brutella/dnssd v1.2.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -56,6 +57,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/xiam/to v0.0.0-20191116183551-8328998fc0ed // indirect
+	github.com/xlab/pocketsphinx-go v0.0.0-20210306024321-5ee78c92145b // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect

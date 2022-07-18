@@ -113,8 +113,10 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 
 	var buf bytes.Buffer
 	buf.Write(body)
+
 	c := http.Client{}
-	c.Timeout = time.Millisecond * 400
+	defer c.CloseIdleConnections()
+	c.Timeout = time.Millisecond * 500
 	p := fmt.Sprintf("https://developer-api.govee.com/v1/devices%s", path)
 	request, err := http.NewRequest(method, p, &buf)
 	if err != nil {
@@ -139,6 +141,8 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	if err != nil {
 		return nil, err
 	}
+
+	_ = do.Body.Close()
 
 	if r.Code != 200 {
 		return nil, fmt.Errorf("update failed '%s'", r.Message)
