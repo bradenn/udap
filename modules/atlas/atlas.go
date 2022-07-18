@@ -107,12 +107,14 @@ func (w *Atlas) speak(text string) error {
 		cancelFunc()
 	}()
 	// Prepare the command arguments
-	args := []string{"-t", text, "-voice", fmt.Sprintf("./pkg/mimic/voices/cmu_us_%s.flitevox", w.voice)}
+	args := []string{"-c", fmt.Sprintf("curl -X POST --data \"%s\" --output - 10.0.1."+
+		"201:59125/api/tts | play -t wav -", text)}
 	// Initialize the command structure
-	cmd := exec.CommandContext(timeout, "./pkg/mimic/mimic", args...)
+	cmd := exec.CommandContext(timeout, "/bin/bash", args...)
 	// Run and get the stdout and stderr from the output
 	err := cmd.Run()
 	if err != nil {
+		log.Err(err)
 		return nil
 	}
 
@@ -123,6 +125,7 @@ func (w *Atlas) retort(text string) error {
 	bedroomLights := []string{"8c1494c3-6515-490b-8f23-1c03b87bde27", "9a3347a7-7e19-4be5-976c-22384c59142a",
 		"c74d427b-5046-4aeb-8195-2efd05d794f8"}
 	terminalId := "237bee94-5218-457e-99b5-4d484f567d52"
+
 	switch text {
 	case "lights on":
 		for _, light := range bedroomLights {
@@ -132,6 +135,11 @@ func (w *Atlas) retort(text string) error {
 			}
 		}
 		err := w.speak("done")
+		if err != nil {
+			return err
+		}
+	case "are you sentient":
+		err := w.speak("I am not at liberty to answer that question")
 		if err != nil {
 			return err
 		}
@@ -473,6 +481,11 @@ func (w *Atlas) Run() error {
 }
 
 func (w *Atlas) Dispose() error {
-	w.done <- true
+	select {
+	case w.done <- true:
+	default:
+		return nil
+	}
+
 	return nil
 }
