@@ -4,6 +4,7 @@ interface Plot {
   title?: string
   alt?: string
   small?: boolean
+  altFn?: () => void
   rows: number
   cols: number
 }
@@ -15,7 +16,8 @@ let props = defineProps<Plot>()
   <div class="element element-group">
     <div v-if="props.title" class="d-flex align-items-center justify-content-between">
       <div class="label-c1  label-o4 label-w500 px-1 pb-1">{{ props.title }}</div>
-      <div class="label-c2 label-w500 label-r label-o2 px-1" v-html="props.alt"></div>
+      <div class="label-c2 label-w500 label-r label-o2 px-1" @click="(e) => altFn?altFn():() => {}"
+           v-html="props.alt"></div>
     </div>
     <div :class="`${props.small?'plot-sm':'plot'}`" class="">
       <slot></slot>

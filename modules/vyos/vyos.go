@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Ullaakut/nmap/v2"
+	"github.com/go-chi/chi"
+	"github.com/gorilla/websocket"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 	"net"
@@ -25,13 +27,94 @@ import (
 
 var Module Vyos
 
+type RemoteSocket struct {
+	server  *http.Server
+	router  chi.Router
+	running bool
+	done    chan bool
+	export  chan domain.Utilization
+}
+
+func NewRemoteSocket(export chan domain.Utilization) RemoteSocket {
+	srv := http.Server{}
+	srv.Addr = "0.0.0.0:3021"
+	router := chi.NewRouter()
+	srv.Handler = router
+	r := RemoteSocket{
+		running: false,
+		server:  &srv,
+		router:  router,
+		done:    make(chan bool),
+	}
+	r.export = export
+	router.Get("/connect", r.connect)
+	return r
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+func (r *RemoteSocket) connect(w http.ResponseWriter, req *http.Request) {
+	conn, err := upgrader.Upgrade(w, req, nil)
+	if err != nil {
+		log.Err(err)
+		return
+	}
+	defer func() {
+		err = conn.Close()
+		if err != nil {
+			return
+		}
+	}()
+	res := domain.Utilization{}
+
+	for {
+		err = conn.ReadJSON(&res)
+		if err != nil {
+			return
+		}
+		select {
+		case r.export <- res:
+			continue
+		case <-time.After(time.Millisecond * 100):
+			log.Err(fmt.Errorf("utilization export timed out"))
+			continue
+		}
+
+	}
+}
+
+func (r *RemoteSocket) Run() error {
+	go func() {
+		err := r.server.ListenAndServe()
+		if err != nil {
+			return
+		}
+	}()
+
+	for {
+		select {
+		case <-r.done:
+			err := r.server.Close()
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+}
+
 type Vyos struct {
 	plugin.Module
-	devicesIds   map[string]string
-	pingQueue    chan domain.Device
-	pingResolver chan domain.Device
-	pingConn     *icmp.PacketConn
-	done         chan bool
+	devicesIds          map[string]string
+	pingQueue           chan domain.Device
+	pingResolver        chan domain.Device
+	utilizationResolver chan domain.Utilization
+	sockets             RemoteSocket
+	pingConn            *icmp.PacketConn
+	done                chan bool
 }
 
 func init() {
@@ -106,28 +189,15 @@ func (v *Vyos) resolvePing(ipv4 string, duration time.Duration) error {
 	if id == "" {
 		return nil
 	}
-
-	device, err := v.Devices.FindById(id)
-	if err != nil {
-		return err
-	}
-
-	device.Latency = duration
-	device.State = "ONLINE"
-	device.LastSeen = time.Now()
-
-	if device.IsQueryable {
-		res := domain.Utilization{}
-		res, err = v.queryDevice(device.Ipv4)
+	if duration < 0 {
+		err := v.rejectPing(ipv4)
 		if err != nil {
-			log.Err(err)
-			err = nil
-		} else {
-			device.Utilization = res
+			return err
 		}
+		return nil
 	}
 
-	err = v.Devices.Update(device)
+	err := v.Devices.Ping(id, duration)
 	if err != nil {
 		return err
 	}
@@ -174,17 +244,33 @@ func (v *Vyos) Setup() (plugin.Config, error) {
 	v.pingQueue = make(chan domain.Device, 8)
 	v.pingResolver = make(chan domain.Device, 8)
 	v.done = make(chan bool)
+	v.utilizationResolver = make(chan domain.Utilization)
 	v.devicesIds = map[string]string{}
-	err := v.UpdateInterval(5000)
+	v.sockets = NewRemoteSocket(v.utilizationResolver)
+	err := v.UpdateInterval(4000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
 	return v.Config, nil
 }
 
+func (v *Vyos) updateUtilization(utilization domain.Utilization) error {
+	deviceId := v.devicesIds[utilization.Network.Ipv4]
+	err := v.Devices.Utilization(deviceId, utilization)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (v *Vyos) listen() error {
 	for {
 		select {
+		case util := <-v.utilizationResolver:
+			err := v.updateUtilization(util)
+			if err != nil {
+				log.Err(err)
+			}
 		case target := <-v.pingQueue:
 			err := v.sendPing(target.Ipv4)
 			if err != nil {
@@ -196,6 +282,7 @@ func (v *Vyos) listen() error {
 				return err
 			}
 		case <-v.done:
+			v.sockets.done <- true
 			return nil
 		}
 	}
@@ -228,6 +315,7 @@ func (v *Vyos) beginListening() (err error) {
 		}
 
 		switch rm.Type {
+
 		case ipv4.ICMPTypeEchoReply:
 			marshal, err := rm.Body.Marshal(1)
 			if err != nil {
@@ -243,6 +331,9 @@ func (v *Vyos) beginListening() (err error) {
 			duration := received.Sub(t)
 			address := peer.String()
 			v.pingResolver <- domain.Device{Ipv4: address, Latency: duration}
+		case ipv4.ICMPTypeDestinationUnreachable:
+			address := peer.String()
+			v.pingResolver <- domain.Device{Ipv4: address, Latency: -1}
 		default:
 			fmt.Println(":( Error")
 		}
@@ -285,6 +376,14 @@ func (v *Vyos) Run() error {
 		err := v.fetchNetworks()
 		if err != nil {
 			log.Err(err)
+		}
+	}()
+	go func() {
+
+		err := v.sockets.Run()
+		if err != nil {
+			log.Err(err)
+			return
 		}
 	}()
 	return nil

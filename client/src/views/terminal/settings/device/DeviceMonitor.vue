@@ -5,6 +5,7 @@ import type {Compute, Device, Remote, Utilization} from "@/types";
 import {useRoute} from 'vue-router'
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
+import Meter from "@/components/Meter.vue";
 
 interface NewZone {
   name: string
@@ -101,7 +102,7 @@ function bytesToString(bytes: number, si: boolean = false, dp: number = 2): stri
                  name="Back"></Subplot>
       </Plot>
 
-      <div class="label-w500 label-o4 label-xxl lh-1"><i :class="`fa-solid fa-share-nodes fa-fw`"></i></div>
+      <div class="label-w500 label-o4 label-xxl lh-1 pt-1"><i :class="`fa-solid fa-share-nodes fa-fw`"></i></div>
 
       <div>
         <div class="label-lg label-o4 label-r lh-1 w-100">
@@ -117,184 +118,115 @@ function bytesToString(bytes: number, si: boolean = false, dp: number = 2): stri
 
       </div>
       <div class="flex-fill"></div>
-      <Plot :cols="3" :rows="1" style="width: 13rem;">
-        <Subplot :active="state.mode === 'toggles'" :fn="() => state.mode = 'toggles'"
-                 name="Toggles"></Subplot>
-        <Subplot :active="state.mode === 'name'" :fn="() => state.mode = 'name'"
-                 name="Rename"></Subplot>
-      </Plot>
     </div>
     <div class="device-container">
       <div class="d-flex flex-column gap-1">
-        <Plot :alt="`${state.util.cpu.cores} Cores`" :cols="2" :rows="state.util.cpu.cores/2" title="CPU">
-          <div v-for="(value, core) in state.util.cpu.usage" class="subplot">
+        <Plot :alt="`${state.util.cpu.cores} Cores`" :cols="10" :rows="1" title="CPU Utilization">
+          <Meter v-for="(value, core) in state.util.cpu.usage" :danger="95" :percent="value" :thresh="80"
+                 :ticks="20" :vertical="true" value="">
+          </Meter>
+          <Meter v-for="b in Array(10-state.util.cpu.cores)" :blank="true" :percent="0" :ticks="20"
+                 :vertical="true"
+                 value="">
+          </Meter>
 
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">CPU {{ core + 1 }}</div>&nbsp;
-                <div>{{ Math.round(value * 10) / 10 }}%</div>
-              </div>
-              <div :style="`width:${value}%;`" class="tick"></div>
-            </div>
+          <div v-for="b in Array(10-state.util.cpu.cores)" class="utility-stack-blank-v subplot">
+          </div>
+        </Plot>
+
+        <Plot
+            :alt="`${bytesToString(state.util.memory.total*state.util.memory.used/100)} / ${bytesToString(state.util.memory.total)}`"
+            :cols="1" :rows="1"
+            title="Memory Usage">
+          <Meter :danger="95" :percent="state.util.memory.used" :thresh="80" :ticks="73" :vertical="false"
+                 value=""></Meter>
+        </Plot>
+        <Plot
+            :alt="`${bytesToString(state.util.disk.total*state.util.disk.used/100)} / ${bytesToString(state.util.disk.total)}`"
+            :cols="1" :rows="1"
+            title="Disk Usage">
+          <Meter :danger="90" :percent="state.util.disk.used" :thresh="75" :ticks="73" :vertical="false"
+                 value=""></Meter>
+        </Plot>
+      </div>
+      <div class="d-flex flex-column gap-1">
+        <Plot v-for="gpu in state.util.compute" v-if="state.util.compute"
+              :alt="`${gpu.processes.length} Process${gpu.processes.length > 1?'es':''}`"
+              :cols="1"
+              :rows="3"
+              title="GPU Utilization">
+
+          <div class="d-flex w-100 gap-1 h-100 w-100">
+            <Meter :alt="`${gpu.utilization.gpu} %`" :percent="gpu.utilization.gpu" :ticks="35"
+                   :vertical="false" title="GPU" value="">
+            </Meter>
+
+            <Meter :alt="`${gpu.utilization.memory} %`" :percent="gpu.utilization.memory" :ticks="35"
+                   :vertical="false" title="Memory" value="">
+            </Meter>
+          </div>
+
+          <div class="d-flex w-100 gap-1 h-100">
+            <Meter :alt="`${gpu.temperature.current} C / ${gpu.temperature.max} C`"
+                   :danger="(gpu.temperature.target/gpu.temperature.max)*100"
+                   :percent="(gpu.temperature.current/gpu.temperature.max)*100"
+                   :thresh="(60/gpu.temperature.max)*100" :ticks="35" :vertical="false"
+                   title="Temperature"
+                   value="">
+
+            </Meter>
+            <Meter :alt="`${gpu.fanSpeed} %`" :danger="90" :percent="gpu.fanSpeed"
+                   :thresh="75" :ticks="35" :vertical="false"
+                   title="Fan Speed"
+                   value="">
+            </Meter>
+          </div>
+
+          <div class="d-flex w-100 gap-1 h-100">
+            <Meter :alt="`${gpu.power.draw} W / ${gpu.power.max} W`" :danger="(200/gpu.power.max)*100"
+                   :percent="(gpu.power.draw/gpu.power.max)*100"
+                   :thresh="(160/gpu.power.max)*100" :ticks="35" :vertical="false"
+                   title="Power"
+                   value="">
+            </Meter>
+            <Meter :alt="`${gpu.memory.used + gpu.memory.reserved} MiB / ${gpu.memory.total} MiB`" :danger="90"
+                   :percent="((gpu.memory.used + gpu.memory.reserved)/gpu.memory.total)*100"
+                   :thresh="75" :ticks="35"
+                   :vertical="false"
+                   title="Memory"
+                   value="">
+            </Meter>
           </div>
 
         </Plot>
 
-        <Plot :cols="1" :rows="2">
-          <div class="subplot">
+        <Plot v-for="gpu in state.util.compute" v-if="state.util.compute" :cols="1" :rows="2" title="GPU Clocks">
+          <div class="d-flex w-100 gap-1 h-100">
+            <Meter :alt="`${gpu.clocks.graphics.current} MHz / ${gpu.clocks.graphics.max} MHz`"
+                   :percent="(gpu.clocks.graphics.current/gpu.clocks.graphics.max)*100" :ticks="35"
+                   :vertical="false" title="Graphics"
+                   value="">
+            </Meter>
 
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">Ram</div>&nbsp;
-                <div> {{ bytesToString((state.util.memory.used / 100.0) * state.util.memory.total) }} /
-                  {{ bytesToString(state.util.memory.total) }}
-                </div>
-              </div>
-              <div
-                  :style="`width:${(((state.util.memory.used / 100.0) * state.util.memory.total)/state.util.memory.total)*100}%;`"
-                  class="tick"
-                  style="background-color: rgba(10, 132, 255, 0.8)"></div>
-            </div>
-
+            <Meter :alt="`${gpu.clocks.video.current} MHz / ${gpu.clocks.video.max} MHz`"
+                   :percent="(gpu.clocks.video.current/gpu.clocks.video.max)*100" :ticks="35"
+                   :vertical="false" title="Video" value="">
+            </Meter>
           </div>
-          <div class="subplot">
+          <div class="d-flex w-100 gap-1 h-100">
+            <Meter :alt="`${gpu.clocks.memory.current} MHz / ${gpu.clocks.memory.max} MHz`"
+                   :percent="(gpu.clocks.memory.current/gpu.clocks.memory.max)*100" :ticks="35"
+                   :vertical="false" title="Memory" value="">
+            </Meter>
 
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">Disk</div>&nbsp;
-                <div> {{ bytesToString((state.util.disk.used / 100.0) * state.util.disk.total) }} /
-                  {{ bytesToString(state.util.disk.total) }}
-                </div>
-              </div>
-              <div
-                  :style="`width:${state.util.disk.used}%;`"
-                  class="tick"
-                  style="background-color: rgba(10, 132, 255, 0.8)"></div>
-            </div>
-
+            <Meter :alt="`${gpu.clocks.streaming.current} MHz / ${gpu.clocks.streaming.max} MHz`"
+                   :percent="(gpu.clocks.streaming.current/gpu.clocks.streaming.max)*100" :ticks="35"
+                   :vertical="false" title="Streaming"
+                   value="">
+            </Meter>
           </div>
         </Plot>
       </div>
-
-      <Plot v-for="gpu in state.util.compute" v-if="state.util.compute"
-            :alt="`${gpu.processes.length} Process${gpu.processes.length > 1?'es':''}`"
-            :cols="1"
-            :rows="5"
-            title="GPU 0">
-        <div class="d-flex w-100 gap-1 h-100">
-          <div class="subplot h-100 w-100 flex-grow-1">
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">Temp</div>&nbsp;
-                <div>{{ gpu.temperature.current }} C / {{ gpu.temperature.max }} C
-                </div>
-              </div>
-              <div :style="`width:${(gpu.temperature.current/gpu.temperature.max)*100}%;`" class="tick"
-                   style="background-color: rgba(10, 132, 255, 0.8)"></div>
-            </div>
-
-          </div>
-          <div class="subplot h-100 w-100 flex-grow-1">
-
-
-            <div class="tick-bar flex-grow-1">
-
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">Fan</div>&nbsp;
-                <div>{{ gpu.fanSpeed }} %
-                </div>
-              </div>
-              <div :style="`width:${gpu.fanSpeed}%;`" class="tick"
-                   style="background-color: rgba(10, 132, 255, 0.8)"></div>
-            </div>
-
-          </div>
-        </div>
-        <div class="subplot">
-
-          <div class="tick-bar flex-grow-1">
-            <div class="tick-overlay">
-              <div class="label-c2 label-o3 label-w600">Power</div>&nbsp;
-              <div>{{ gpu.power.draw }} W / {{ gpu.power.max }} W
-              </div>
-            </div>
-            <div :style="`width:${(gpu.power.draw/gpu.power.max)*100}%;`" class="tick"
-                 style="background-color: rgba(10, 132, 255, 0.8)"></div>
-          </div>
-
-        </div>
-
-        <div class="subplot">
-
-          <div class="tick-bar flex-grow-1">
-            <div class="tick-overlay">
-              <div class="label-c2 label-o3 label-w600">Ram</div>
-              <div>{{ gpu.memory.used + gpu.memory.reserved }} MiB /
-                {{ gpu.memory.total }} MiB
-              </div>
-            </div>
-            <div :style="`width:${((gpu.memory.used + gpu.memory.reserved)/gpu.memory.total)*100}%;`" class="tick"
-                 style="background-color: rgba(10, 132, 255, 0.8)"></div>
-          </div>
-
-        </div>
-        <div class="d-flex w-100 gap-1 h-100">
-          <div class="subplot h-100 w-100 flex-grow-1">
-
-
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">GPU</div>&nbsp;
-                <div>{{ gpu.utilization.gpu }} %
-                </div>
-              </div>
-              <div :style="`width:${gpu.utilization.gpu}%;`" class="tick"
-                   style="background-color: rgba(10, 132, 255, 1)"></div>
-            </div>
-
-          </div>
-          <div class="subplot h-100 w-100 flex-grow-1">
-
-
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">Memory</div>&nbsp;
-                <div>{{ gpu.utilization.memory }} %
-                </div>
-              </div>
-              <div :style="`width:${gpu.utilization.gpu}%;`" class="tick"
-                   style="background-color: rgba(10, 132, 255, 1)"></div>
-            </div>
-
-          </div>
-        </div>
-        <div class="d-flex w-100 gap-1 h-100">
-          <div class="subplot h-100 w-100 flex-grow-1 ">
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">GFX</div>&nbsp;
-                <div>{{ gpu.clocks.graphics.current }} MHz / {{ gpu.clocks.graphics.max }} Mhz</div>
-              </div>
-              <div :style="`width:${((gpu.memory.used + gpu.memory.reserved)/gpu.memory.total)*100}%;`" class="tick"
-                   style="background-color: rgba(10, 132, 255, 0.8)"></div>
-            </div>
-          </div>
-          <div class="subplot h-100 w-100 flex-grow-1">
-
-            <div class="tick-bar flex-grow-1">
-              <div class="tick-overlay">
-                <div class="label-c2 label-o3 label-w600">Mem</div>&nbsp;
-                <div>{{ gpu.clocks.memory.current }} MHz /
-                  {{ gpu.clocks.memory.max }} MHz
-                </div>
-              </div>
-              <div :style="`width:${((gpu.memory.used + gpu.memory.reserved)/gpu.memory.total)*100}%;`" class="tick"
-                   style="background-color: rgba(10, 132, 255, 0.8)"></div>
-            </div>
-          </div>
-        </div>
-      </Plot>
-
 
     </div>
 
@@ -303,6 +235,8 @@ function bytesToString(bytes: number, si: boolean = false, dp: number = 2): stri
 </template>
 
 <style lang="scss" scoped>
+
+
 .tick-overlay > :not(.label-o3) {
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }

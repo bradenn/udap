@@ -85,6 +85,10 @@ func NewService(repository domain.EntityRepository) domain.EntityService {
 
 // Repository Mapping
 
+func (u entityService) FindByName(name string) (*domain.Entity, error) {
+	return u.repository.FindByName(name)
+}
+
 func (u entityService) FindAll() (*[]domain.Entity, error) {
 	return u.repository.FindAll()
 }

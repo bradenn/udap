@@ -159,6 +159,7 @@ function reload() {
 
 .tag-container {
   height: 2.5rem;
+  z-index: 22;
 }
 
 .tag-summary {

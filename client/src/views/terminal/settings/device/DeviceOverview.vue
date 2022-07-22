@@ -28,11 +28,14 @@ onMounted(() => {
 watchEffect(() => handleUpdates(remote))
 
 function sortAlpha(a: Device, b: Device) {
-  if (a.name > b.name) {
+  if (a.name.toLowerCase() < b.name.toLowerCase()) {
     return -1
-  } else {
+  } else if (a.name.toLowerCase() > b.name.toLowerCase()) {
     return 1
   }
+
+  return 0
+
 }
 
 function handleUpdates(remote: Remote) {
@@ -83,61 +86,63 @@ function goTo(target: string) {
       <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-expand fa-fw`"></i></div>
       <div class="label-w500 opacity-100 label-xxl px-2">Devices</div>
       <div class="flex-fill"></div>
-
-      <Plot :cols="1" :rows="1" small style="width: 6rem;">
-        <Radio :active="false" :fn="() => setMode(state.mode === 'create'?'list':'create')"
-               :title="state.mode === 'create'?'Cancel':'New Endpoint'"></Radio>
-      </Plot>
     </div>
+
     <div v-if="state.mode === 'list'">
 
       <div class="device-container">
-        <Plot v-for="(device, index) in state.devices" :cols="2" :rows="1" :style="`animation-delay:${index*2.5}ms;`"
+        <Plot v-for="(device, index) in state.devices" :cols="1" :rows="1" :style="`animation-delay:${index*2}ms;`"
               class="plot-load">
-          <div class="subplot subplot-inline justify-content-between px-0">
-            <div class="d-flex align-items-center">
-              <div :style="`background-color: rgba(${device.state==='ONLINE'?'25, 135, 84':'135, 100, 2'}, 0.53);`"
-                   class="status-marker"></div>
-              <div>
-                <div class="label-c1 label-o4 label-r lh-1 w-100">
-                  <div class="overflow-ellipse-a">{{ device.name || device.ipv4 }}</div>
-                </div>
-                <div class="label-c4  label-o3 label-r py-0 w-100 d-flex justify-content-between"
-                     style="line-height: 0.55rem">
-                  {{ device.mac }}
+          <div class="d-flex h-100 justify-content-between gap">
+            <div class="subplot subplot-inline justify-content-between px-0 flex-grow-1">
+              <div class="d-flex align-items-center">
+                <div :style="`background-color: rgba(${device.state==='ONLINE'?'25, 135, 84':'135, 100, 2'}, 0.53);`"
+                     class="status-marker"></div>
+                <div>
+                  <div class="label-c1 label-o4 label-r lh-1 w-100">
+                    <div class="overflow-ellipse-a">{{ device.name || device.ipv4 }}</div>
+                  </div>
+                  <div class="label-c4  label-o3 label-r py-0 w-100 d-flex justify-content-between"
+                       style="line-height: 0.55rem">
+                    {{ device.mac }}
+
+                  </div>
+
 
                 </div>
+              </div>
 
+              <div class="label-c3 label-o4 d-flex flex-column justify-content-end align-items-end">
+                <div :class="`${ device.state === 'ONLINE'?'text-success':''}`" class="label-o3">
+                  &nbsp;{{ device.state === "ONLINE" ? `${nsToMs(device.latency)} ms` : device.state }}
+                </div>
+                <div class="d-flex gap-1">
+
+                  <div v-if="state.histories"
+                       class="label-c3 label-o3 d-flex flex-row align-items-end time-marker-line">
+
+                    <div v-for="marker in state.histories.get(device.mac)?.map(d => d / 1000)"
+                         :style="`height:${Math.log(marker)}px;`"
+                         class="time-marker"></div>
+                  </div>
+                </div>
 
               </div>
+
             </div>
+            <div class="d-flex justify-content-end gap-1" style="width: 5rem">
+              <Radio v-if="device.isQueryable || device.utilization" :active="false"
+                     :fn="() => $router.push(`/terminal/settings/devices/${device.id}/monitor`)" sf="􀜟"
+                     style="width: 2.5rem;" title=""></Radio>
+              <Radio :active="false" :fn="() => $router.push(`/terminal/settings/devices/${device.id}/configure`)"
+                     sf="􀍟"
+                     style="width: 2.5rem;" title=""></Radio>
 
-            <div class="label-c3 label-o4 d-flex flex-column justify-content-end align-items-end">
-              <div :class="`${ device.state === 'ONLINE'?'text-success':''}`" class="label-o3">
-                &nbsp;{{ device.state === "ONLINE" ? `${nsToMs(device.latency)} ms` : device.state }}
-              </div>
-              <div class="d-flex gap-1">
-
-                <div v-if="state.histories" class="label-c3 label-o3 d-flex flex-row align-items-end time-marker-line">
-
-                  <div v-for="marker in state.histories.get(device.mac)?.map(d => d / 1000)"
-                       :style="`height:${Math.log(marker)}px;`"
-                       class="time-marker"></div>
-                </div>
-              </div>
 
             </div>
-
-          </div>
-          <div class="d-flex justify-content-start gap-1">
-            <Radio :active="false" :fn="() => $router.push(`/terminal/settings/devices/${device.id}/configure`)" sf="􀍟"
-                   style="width: 2.5rem;" title=""></Radio>
-            <Radio v-if="device.isQueryable" :active="false"
-                   :fn="() => $router.push(`/terminal/settings/devices/${device.id}/monitor`)" sf="􀜟"
-                   style="width: 2.5rem;" title=""></Radio>
-
           </div>
         </Plot>
+
       </div>
     </div>
     <div v-else-if="state.mode === 'create'">
@@ -165,6 +170,7 @@ function goTo(target: string) {
 </template>
 
 <style scoped>
+
 
 .device-container > * {
   visibility: hidden;
@@ -222,7 +228,7 @@ function goTo(target: string) {
   display: grid;
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
-  grid-auto-flow: row;
+  grid-auto-flow: column;
   grid-template-rows: repeat(8, 1fr);
   grid-template-columns: repeat(3, 1fr);
 }

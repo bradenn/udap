@@ -22,12 +22,14 @@ type Entity struct {
 type EntityRepository interface {
 	common.Persist[Entity]
 	Register(*Entity) error
+	FindByName(name string) (*Entity, error)
 }
 
 type EntityService interface {
 	Observable
 	FindAll() (*[]Entity, error)
 	FindById(id string) (*Entity, error)
+	FindByName(name string) (*Entity, error)
 	Create(*Entity) error
 	Config(id string, value string) error
 	FindOrCreate(*Entity) error

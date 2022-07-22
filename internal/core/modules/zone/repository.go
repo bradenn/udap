@@ -19,10 +19,18 @@ func NewRepository(db *gorm.DB) domain.ZoneRepository {
 		Store: generic.NewStore[domain.Zone](db),
 	}
 }
+func (z zoneRepo) FindByName(name string) (*domain.Zone, error) {
+	zone := domain.Zone{}
+	err := z.db.Model(&domain.Zone{}).Preload("Entities").Where("name = ?", name).Find(&zone).Error
+	if err != nil {
+		return nil, err
+	}
+	return &zone, nil
+}
 
-func (m zoneRepo) FindAll() (*[]domain.Zone, error) {
+func (z zoneRepo) FindAll() (*[]domain.Zone, error) {
 	var target []domain.Zone
-	if err := m.db.Preload("Entities").Find(&target).Error; err != nil {
+	if err := z.db.Preload("Entities").Find(&target).Error; err != nil {
 		return nil, err
 	}
 	return &target, nil

@@ -105,4 +105,6 @@ type DeviceService interface {
 	Register(*Device) error
 	Update(*Device) error
 	Delete(*Device) error
+	Ping(id string, latency time.Duration) error
+	Utilization(id string, utilization Utilization) error
 }

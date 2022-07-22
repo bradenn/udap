@@ -13,6 +13,15 @@ type entityRepo struct {
 	db *gorm.DB
 }
 
+func (u entityRepo) FindByName(name string) (*domain.Entity, error) {
+	entity := domain.Entity{}
+	err := u.db.Model(&domain.Entity{}).Where("name = ?", name).Find(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
 func (u entityRepo) Register(e *domain.Entity) error {
 	if e.Id == "" {
 		err := u.db.Model(&domain.Entity{}).Where("name = ? AND module = ?", e.Name, e.Module).FirstOrCreate(e).Error

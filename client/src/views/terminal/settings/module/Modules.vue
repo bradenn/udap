@@ -115,13 +115,13 @@ function groupBy<T>(xs: T[], key: string): T[] {
             </div>
           </div>
           <div class="d-flex gap-1 text-success justify-content-center">
-
-
             <Confirm v-if="!module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀊃"
                      title="Enable"></Confirm>
             <Confirm v-if="module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀆧"
                      title="Disable"></Confirm>
-            <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀍟" style="width: 2.5rem;"
+            <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀅉" style="width: 3rem;"
+                   title=""></Radio>
+            <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀍟" style="width: 3rem;"
                    title=""></Radio>
           </div>
         </Plot>

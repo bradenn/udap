@@ -13,12 +13,14 @@ type Zone struct {
 
 type ZoneRepository interface {
 	common.Persist[Zone]
+	FindByName(name string) (*Zone, error)
 }
 
 type ZoneService interface {
 	Observable
 	FindAll() (*[]Zone, error)
 	FindById(id string) (*Zone, error)
+	FindByName(name string) (*Zone, error)
 	Create(*Zone) error
 	FindOrCreate(*Zone) error
 	Update(*Zone) error

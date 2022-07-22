@@ -37,6 +37,7 @@ type Body struct {
 type RemoteRecognizer struct {
 	response       chan Response
 	status         chan string
+	speaking       *bool
 	remote         url.URL
 	writeBuffer    chan bytes.Buffer
 	closeBuffer    chan bool
@@ -54,7 +55,7 @@ type Recognizer interface {
 	Listen() error
 }
 
-func NewRecognizer(response chan Response, status chan string) Recognizer {
+func NewRecognizer(response chan Response, status chan string, speaking *bool) Recognizer {
 	return &RemoteRecognizer{
 		response:    response,
 		status:      status,
@@ -64,6 +65,7 @@ func NewRecognizer(response chan Response, status chan string) Recognizer {
 		listening:   false,
 		quiet:       true,
 		threshold:   1.75,
+		speaking:    speaking,
 	}
 }
 
@@ -76,7 +78,7 @@ func (r *RemoteRecognizer) sendChunk(in []int16) (err error) {
 
 	select {
 	case r.writeBuffer <- buf: // Put 2 in the channel unless it is full
-	case <-time.After(time.Millisecond * 200):
+	case <-time.After(time.Millisecond * 250):
 		fmt.Println("Timed out sending!")
 		return nil
 	}
@@ -89,7 +91,7 @@ func (r *RemoteRecognizer) close() {
 
 	select {
 	case r.closeBuffer <- true: // Put 2 in the channel unless it is full
-	case <-time.After(time.Millisecond * 200):
+	case <-time.After(time.Millisecond * 250):
 		fmt.Println("Timed out closing!")
 		return
 	}
@@ -99,7 +101,6 @@ func (r *RemoteRecognizer) close() {
 func (r *RemoteRecognizer) listen(remote url.URL) (err error) {
 
 	var conn *websocket.Conn
-
 	conn, _, err = websocket.DefaultDialer.Dial(remote.String(), nil)
 	if err != nil {
 		return err
@@ -216,7 +217,7 @@ func (r *RemoteRecognizer) Listen() error {
 	)
 	listening = false
 	fmt.Println("Beginning to listen:")
-
+	listenStart := time.Now()
 	err = stream.Start()
 	if err != nil {
 		return err
@@ -240,14 +241,13 @@ func (r *RemoteRecognizer) Listen() error {
 			if err != nil {
 				return err
 			}
-			if delta*1.75 <= last {
+			if delta*2 <= last || time.Since(listenStart) >= time.Second*10 {
 				if !quiet {
 					quietBegin = time.Now()
 				} else {
 					diff := time.Since(quietBegin)
-					if diff > time.Millisecond*250 {
+					if diff > time.Millisecond*500 {
 						// r.listening = false
-						fmt.Println("SPEECH DONE")
 						r.close()
 						break
 					}
@@ -259,8 +259,7 @@ func (r *RemoteRecognizer) Listen() error {
 			}
 		} else {
 
-			if delta >= last*3 {
-				fmt.Println("SPEECH STARTED")
+			if delta >= last*2.5 {
 				go func() {
 					err = r.listen(r.remote)
 					if err != nil {
@@ -268,6 +267,8 @@ func (r *RemoteRecognizer) Listen() error {
 						return
 					}
 				}()
+				time.Sleep(time.Millisecond * 50)
+				listenStart = time.Now()
 				quiet = false
 				listening = true
 				err = r.sendChunk(buffer)
