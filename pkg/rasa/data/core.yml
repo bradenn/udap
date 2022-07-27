@@ -1,0 +1,72 @@
+version: "3.0"
+
+nlu:
+  - intent: affirm
+    examples: |
+      - yes
+      - sure
+      - absolutely
+      - certainly
+      - indeed
+      - yep
+      - yeah
+      - confirm
+
+  - intent: deny
+    examples: |
+      - no
+      - nope
+      - absolutely not
+      - certainly not
+      - not a chance
+      - no sir
+      - not a chance
+
+  - intent: unsure
+    examples: |
+      - maybe
+      - i don't know
+      - possible
+      - i'll get back to you
+      - hmm
+      - let's circle back to that
+      - maybe later
+
+  - intent: query_begin
+    examples: |
+      - can you do me a favor
+      - are you there
+      - do you have a minute
+      - can you do something for me
+      - you up
+      - are you free
+      - can you help me with something
+      - can you help us
+      - can you help me
+      - can you assist me
+      - I need assistance
+
+  - intent: silence
+    examples: |
+      - be quiet
+      - shut up
+      - silence
+      - shut the fuck up
+      - shut it
+      - quiet please
+      - stop
+      - stop now
+      - halt
+      - abstain
+      - terminate
+      - abort
+
+  - intent: insult
+    examples: |
+      - fuck you
+      - go fuck yourself
+      - screw you
+      - suck my dick
+      - eat my ass
+      - suck it
+      - buzz off
