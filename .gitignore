@@ -25,3 +25,7 @@ spotify.json
 /client/src/assets/js/
 /client/src/assets/**.css
 /client/src/assets/**.css.map
+/client/public/custom/node_modules
+/client/public/custom/*.jpg
+/client/public/custom/*.png
+
