@@ -8,7 +8,9 @@ selfsigned.key
 private-key.pem
 */dist
 */node_modules
-/pkg
+/pkg/vosk/large_model
+/pkg/vosk/model
+/pkg/vosk/model_gr
 spotify.json
 /db-data
 **/*.crt
