@@ -145,6 +145,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 	_ = do.Body.Close()
 
 	if r.Code != 200 {
+		g.WarnF("API Request failed: %s", fmt.Errorf("update failed '%s'", r.Message))
 		return nil, fmt.Errorf("update failed '%s'", r.Message)
 	}
 

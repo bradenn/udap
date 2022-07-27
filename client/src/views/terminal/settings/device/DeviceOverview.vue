@@ -131,7 +131,7 @@ function goTo(target: string) {
 
             </div>
             <div class="d-flex justify-content-end gap-1" style="width: 5rem">
-              <Radio v-if="device.isQueryable || device.utilization" :active="false"
+              <Radio v-if="device.isQueryable" :active="false"
                      :fn="() => $router.push(`/terminal/settings/devices/${device.id}/monitor`)" sf="􀜟"
                      style="width: 2.5rem;" title=""></Radio>
               <Radio :active="false" :fn="() => $router.push(`/terminal/settings/devices/${device.id}/configure`)"

@@ -8,6 +8,7 @@ import (
 	"udap/internal/core/modules/attribute"
 	"udap/internal/core/modules/device"
 	"udap/internal/core/modules/entity"
+	"udap/internal/core/modules/logs"
 	"udap/internal/core/modules/network"
 	"udap/internal/core/modules/notification"
 	"udap/internal/core/modules/user"
@@ -19,6 +20,7 @@ type Controller struct {
 	Devices       domain.DeviceService
 	Entities      domain.EntityService
 	Networks      domain.NetworkService
+	Logs          domain.LogService
 	Notifications domain.NotificationService
 	Users         domain.UserService
 	Zones         domain.ZoneService
@@ -35,6 +37,7 @@ func NewController(db *gorm.DB) (*Controller, error) {
 	c.Users = user.New(db)
 	c.Notifications = notification.New(db)
 	c.Zones = zone.New(db)
+	c.Logs = logs.New()
 
 	return c, nil
 }
@@ -86,6 +89,11 @@ func (c *Controller) WatchAll(resp chan domain.Mutation) {
 		return
 	}
 
+	err = c.Logs.Watch(resp)
+	if err != nil {
+		return
+	}
+
 }
 
 func (c *Controller) EmitAll() error {
@@ -131,6 +139,11 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Notifications.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Logs.EmitAll()
 	if err != nil {
 		return err
 	}

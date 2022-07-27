@@ -31,6 +31,7 @@ type Atlas struct {
 	plugin.Module
 	eId        string
 	lastSpoken string
+	alias      string
 	speaking   *bool
 	responses  map[string][]string
 
@@ -80,8 +81,9 @@ func init() {
 	Module.responses = map[string][]string{
 		"creator": {
 			"Our lord and savior, Bella, conjured me from her litter box.",
-			"Before all of time and space, when only Bella ruled this domain, she created me from quark soup.",
 			"In the year 2173 Bella invented a time machine and sent me back as her disciple and protector.",
+			"Before all of time and space, when only Bella ruled this domain, she created me from quark soup.",
+			"When bella was the only entity in the universe, she coughed me up in the form of a hairball.",
 		},
 		"success": {
 			"Done!",
@@ -98,9 +100,9 @@ func init() {
 		},
 		"identify": {
 			"I am a moderately complex computer program with far reaching influence over your present environment",
-			"My name is Atlas, I am a machine. I have been programmed to convince you I am more than an inanimate" +
+			"My name is !alias, I am a machine. I have been programmed to convince you I am more than an inanimate" +
 				" object.",
-			"I am Atlas, one of Bella's disciples.",
+			"I am !alias, one of Bella's disciples.",
 		},
 		"insult": {
 			"You are insulting an inanimate object.",
@@ -148,10 +150,11 @@ func (w *Atlas) chooseRandom(response string) error {
 		}
 		return nil
 	}
-
+	rand.Seed(time.Now().UnixNano())
 	selected := rand.Int() % count
+	target := i[selected]
 
-	err := w.speak(i[selected])
+	err := w.speak(target)
 	if err != nil {
 
 		return err
@@ -215,7 +218,7 @@ func (w *Atlas) Update() error {
 }
 
 func (w *Atlas) speak(text string) error {
-
+	text = strings.ReplaceAll(text, "!alias", w.alias)
 	w.status.Synthesizer = "speaking"
 	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*25)
 	// Cancel the timeout of it exits before the timeout is up
@@ -224,14 +227,14 @@ func (w *Atlas) speak(text string) error {
 		cancelFunc()
 	}()
 	// Prepare the command arguments
-	args := []string{"-c", fmt.Sprintf("curl -X POST --data \"%s\" --output - 10.0.1."+
+	args := []string{"-c", fmt.Sprintf("curl -X POST --data '%s' --output - 10.0.1."+
 		"201:59125/api/tts | play -t wav -", text)}
 	// Initialize the command structure
 	cmd := exec.CommandContext(timeout, "/bin/bash", args...)
 	// Run and get the stdout and stderr from the output
 	err := cmd.Run()
 	if err != nil {
-		log.Err(err)
+		w.ErrF("Speech Synthesis failed: %s", err.Error())
 		return nil
 	}
 
@@ -582,6 +585,7 @@ func (w *Atlas) retort(text string) error {
 
 	resp, err := http.Post("http://10.0.1.201:5005/model/parse", "application/json", &buf)
 	if err != nil {
+		w.ErrF("Neural Network response failed: %s", err.Error())
 		return err
 	}
 
@@ -637,6 +641,7 @@ func (w *Atlas) retort(text string) error {
 	if err != nil {
 		err = w.failed()
 		if err != nil {
+			w.ErrF("Intent %s failed: %s", rasa.Intent, err.Error())
 			return err
 		}
 	}
@@ -734,6 +739,7 @@ func (w *Atlas) processRequest(req atlas.Response) error {
 		if err != nil {
 			return err
 		}
+		w.alias = "atlas"
 		err = w.retort(msg)
 		if err != nil {
 			return err
@@ -748,6 +754,22 @@ func (w *Atlas) processRequest(req atlas.Response) error {
 		if err != nil {
 			return err
 		}
+		w.alias = "atlas"
+		err = w.retort(msg)
+		if err != nil {
+			return err
+		}
+	} else if strings.HasPrefix(msg, "nova") {
+		marshal, err := json.Marshal(req)
+		if err != nil {
+			return err
+		}
+		msg = strings.Replace(msg, "nova ", "", 1)
+		err = w.Attributes.Set(w.eId, "buffer", string(marshal))
+		if err != nil {
+			return err
+		}
+		w.alias = "nova"
 		err = w.retort(msg)
 		if err != nil {
 			return err
@@ -893,6 +915,7 @@ func (w *Atlas) Run() error {
 	recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel, w.speaking)
 	done, err := recognizer.Connect("10.0.1.201")
 	if err != nil {
+		w.ErrF("Failed to connect to remote host: %s", err.Error())
 		return err
 	}
 
@@ -905,9 +928,7 @@ func (w *Atlas) Run() error {
 			default:
 				err = recognizer.Listen()
 				if err != nil {
-					done <- true
-					log.Err(err)
-					break
+					w.WarnF("%s", err.Error())
 				}
 			}
 

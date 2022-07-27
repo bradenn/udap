@@ -471,15 +471,16 @@ $fontColors: (
 /* Track */
 ::-webkit-scrollbar-track {
   height: calc(100% - 1em) !important;
-  border-radius: 0.5rem;
+  border-radius: 0.3rem;
   @extend .surface;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-radius: 0.5rem;
+  @extend .element-secondary;
+  border-radius: 0.3rem;
 }
+
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {

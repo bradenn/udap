@@ -166,6 +166,7 @@ func (v *Weather) Update() error {
 	if v.Ready() {
 		err := v.pull()
 		if err != nil {
+			v.ErrF("Weather fetch failed: %s", err.Error())
 			return err
 		}
 	}

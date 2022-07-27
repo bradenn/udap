@@ -194,7 +194,7 @@ func (o *orchestrator) Run() error {
 		defer wg.Done()
 		err := o.runServer()
 		if err != nil {
-			log.Err(err)
+			// log.Err(err)
 			return
 		}
 	}()
@@ -211,6 +211,7 @@ func (o *orchestrator) Run() error {
 				return
 			case <-time.After(o.maxTick + time.Millisecond*100):
 				log.Event("Orchestrator event loop timed out")
+				pulse.End("update")
 				continue
 			case err := <-o.tick():
 				if err != nil {

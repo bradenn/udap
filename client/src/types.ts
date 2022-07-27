@@ -23,6 +23,7 @@ export interface Remote {
     endpoints: Endpoint[],
     timings: Timing[],
     zones: Zone[],
+    logs: Log[],
     nexus: Nexus
 }
 
@@ -130,6 +131,15 @@ export interface Config {
 }
 
 // Remote & Websocket Types
+
+export interface Log {
+    group: string
+    level: string
+    event: string
+    time: string
+    message: string
+    id: string
+}
 
 export interface Identifiable {
     id: string
