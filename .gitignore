@@ -11,11 +11,18 @@ private-key.pem
 /pkg/vosk/large_model
 /pkg/vosk/model
 /pkg/vosk/model_gr
+
 spotify.json
 /db-data
 **/*.crt
 **/*.key
 /**.log
+
+# Rasa Ignore
+
+/pkg/rasa/models
+/pkg/rasa/.rasa
+/pkg/rasa/tests
 
 # Terminal Ignore
 
