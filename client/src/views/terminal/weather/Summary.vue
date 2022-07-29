@@ -102,11 +102,11 @@ function parseWeather(we: Weather) {
             {{ moment(new Date().setHours(new Date().getHours() + hour)).format("hA") }}
           </div>
           <div class="label-sm label-o4">
-            {{ getWeatherIcon(state.latest.hourly.weathercode[hour], hour) }}
+            {{ getWeatherIcon(state.latest.hourly.weathercode[new Date().getHours() + hour], hour) }}
           </div>
           <div class="d-flex align-items-center justify-content-center">
             <div class="label-c3 label-w500 label-o4 mt-1">
-              {{ state.latest.hourly.temperature_2m[hour] }}
+              {{ state.latest.hourly.temperature_2m[new Date().getHours() + hour] }}
             </div>
 
             <div class="label-c3 label-w400 label-o3 mt-1">

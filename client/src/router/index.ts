@@ -58,7 +58,12 @@ import DefenseOverview from "@/views/terminal/defense/DefenseOverview.vue";
 
 // Layout Routes
 import Layout from "@/views/terminal/layout/Layout.vue";
+
+// Layout Routes
 import LayoutOverview from "@/views/terminal/layout/LayoutOverview.vue";
+
+import Aliens from "@/views/terminal/aliens/Aliens.vue";
+import Drake from "@/views/terminal/aliens/Drake.vue";
 
 const defaultRoute = {
     path: '/',
@@ -196,6 +201,21 @@ const weatherRoutes = {
     ]
 }
 
+const alienRoutes = {
+    path: '/terminal/aliens',
+    name: 'Drake',
+    redirect: '/terminal/aliens/drake',
+    component: Aliens,
+    icon: 'fa-rocket',
+    children: [
+        {
+            path: '/terminal/aliens/drake',
+            name: 'AliensDrake',
+            component: Drake,
+            icon: 'fa-house',
+        },
+    ]
+};
 
 const layoutRoutes = {
     path: '/terminal/layout',
@@ -293,8 +313,9 @@ const terminalRoutes = {
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,
+        alienRoutes,
         defenseRoutes,
-        layoutRoutes
+        layoutRoutes,
     ],
 }
 

@@ -11,6 +11,8 @@ interface DaytimeProps {
 let props = defineProps<DaytimeProps>()
 
 let state = reactive({
+  maxTemp: 0,
+  minTemp: 0,
   deltas: {
     begin: Array(16) as number[],
     now: Array(16) as number[],
@@ -20,6 +22,10 @@ let state = reactive({
 
   }
 })
+
+function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
 
 onMounted(() => {
   getDifference()
@@ -31,29 +37,25 @@ watchEffect(() => {
 
 function getDifference() {
   let d = new Date();
-  let now = d.valueOf() - d.getHours() * 60 * 60 * 1000 - d.getMinutes() * 60 * 1000 - d.getSeconds() * 1000 - d.getMilliseconds()
-  for (let i = 0; i < props.latest.daily.sunrise.length; i++) {
-    let sunrise = (props.latest.daily.sunrise[i] * 1000)
-    let sunset = (props.latest.daily.sunset[i] * 1000)
-    state.deltas.begin[i] = ((props.latest.daily.sunrise[i] * 1000) - (now + 1000 * 60 * 60 * 24 * i)) / (1000 * 60 * 60 * 24)
-    state.deltas.end[i] = (now + 1000 * 60 * 60 * 24 * (i + 1) - (props.latest.daily.sunset[i] * 1000)) / (1000 * 60 * 60 * 24)
+  for (let i = 0; i < props.latest.hourly.temperature_2m.length; i++) {
+    if (props.latest.hourly.temperature_2m[i] > state.maxTemp) {
+      state.maxTemp = props.latest.hourly.temperature_2m[i]
+    } else if (props.latest.hourly.temperature_2m[i] < state.minTemp) {
+      state.minTemp = props.latest.hourly.temperature_2m[i]
 
-    // = -props.latest.daily.sunrise[i]
+    }
   }
-  return state.deltas
+  return props.latest
 }
+
 
 </script>
 <template>
   <div v-if="props.latest.daily">
 
-    <div class="d-flex gap-1 flex-row">
-
-      <div v-for="a in Array(props.latest.daily.sunrise.length).keys()">
-        state.deltas.begin[a]
-        state.deltas.end[a]
-      </div>
-
+    <div class="day">
+      <div v-for="a in props.latest.hourly.temperature_2m"
+           :style="`height: ${map_range(a, state.minTemp, state.maxTemp, 0, 100)}%;`" class="hour"></div>
     </div>
 
     <br>
@@ -63,12 +65,35 @@ function getDifference() {
 </template>
 
 <style scoped>
+
+
+.day {
+  display: flex;
+  flex-direction: row;
+  align-content: end;
+  align-items: end;
+  height: 3rem;
+  width: 100%;
+  gap: 2px;
+}
+
+.hour {
+  content: ' ';
+  width: 5px;
+  border-radius: 5px;
+  background-color: white;
+}
+
 .timeline-stick {
   height: 4rem;
   width: 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.hourly {
+
 }
 
 .timestick {

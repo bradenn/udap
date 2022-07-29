@@ -5,7 +5,7 @@ import router from '@/router'
 import {inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
-import type {Identifiable, Metadata, Remote, Session, Timing, User} from "@/types";
+import type {Identifiable, Log, Metadata, Remote, Session, Timing, User} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
 import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
@@ -37,6 +37,7 @@ let remote = reactive<Remote>({
   timings: [],
   modules: [],
   zones: [],
+  logs: [],
   nexus: {} as Nexus
 });
 
@@ -117,6 +118,13 @@ function handleMessage(target: Target, data: any) {
         remote.timings = remote.timings.map((a: Timing) => a.pointer === data.pointer ? data : a)
       } else {
         remote.timings.push(data)
+      }
+      break
+    case Target.Log:
+      if (remote.logs.find((e: Log) => e.id === data.id)) {
+        remote.logs = remote.logs.map((a: Log) => a.id === data.id ? data : a)
+      } else {
+        remote.logs.push(data)
       }
       break
   }

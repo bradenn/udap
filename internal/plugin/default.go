@@ -3,8 +3,11 @@
 package plugin
 
 import (
+	"fmt"
 	"time"
 	"udap/internal/controller"
+	"udap/internal/core/domain"
+	"udap/internal/log"
 )
 
 type Config struct {
@@ -20,6 +23,52 @@ type Module struct {
 	LastUpdate time.Time
 	Frequency  time.Duration
 	*controller.Controller
+}
+
+// LogF is called once at the launch of the module
+func (m *Module) LogF(format string, args ...any) {
+	out := domain.Log{
+		Group:   "module",
+		Level:   "info",
+		Event:   m.Name,
+		Time:    time.Now(),
+		Message: fmt.Sprintf(format, args...),
+	}
+	log.Event("%s::%s %s", out.Group, out.Event, out.Message)
+	err := m.Logs.Create(&out)
+	if err != nil {
+		return
+	}
+}
+
+func (m *Module) WarnF(format string, args ...any) {
+	out := domain.Log{
+		Group:   "module",
+		Level:   "warn",
+		Event:   m.Name,
+		Time:    time.Now(),
+		Message: fmt.Sprintf(format, args...),
+	}
+	log.Event("%s::%s %s", out.Group, out.Event, out.Message)
+	err := m.Logs.Create(&out)
+	if err != nil {
+		return
+	}
+}
+
+func (m *Module) ErrF(format string, args ...any) {
+	out := domain.Log{
+		Group:   "module",
+		Level:   "error",
+		Event:   m.Name,
+		Time:    time.Now(),
+		Message: fmt.Sprintf(format, args...),
+	}
+	log.Event("%s::%s %s", out.Group, out.Event, out.Message)
+	err := m.Logs.Create(&out)
+	if err != nil {
+		return
+	}
 }
 
 // UpdateInterval is called once at the launch of the module
@@ -42,6 +91,20 @@ func (m *Module) Ready() bool {
 func (m *Module) Connect(ctrl *controller.Controller) error {
 	m.LastUpdate = time.Now()
 	m.Controller = ctrl
+	return nil
+}
+
+func (m *Module) InitConfig(key string, value string) error {
+	return nil
+}
+
+func (m *Module) GetConfig(key string) error {
+
+	return nil
+}
+
+func (m *Module) SetConfig(key string) error {
+
 	return nil
 }
 

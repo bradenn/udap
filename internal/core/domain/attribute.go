@@ -30,6 +30,36 @@ const (
 	RANGE  = "range"
 )
 
+func NewToggleAttribute(entity string) Attribute {
+	attribute := Attribute{
+		Key:       "on",
+		Type:      TOGGLE,
+		Entity:    entity,
+		Value:     "false",
+		Request:   "false",
+		Updated:   time.Now(),
+		Requested: time.Time{},
+		Order:     0,
+		Channel:   make(chan Attribute),
+	}
+	return attribute
+}
+
+func NewDimAttribute(entity string) Attribute {
+	attribute := Attribute{
+		Key:       "dim",
+		Type:      RANGE,
+		Entity:    entity,
+		Value:     "0",
+		Request:   "0",
+		Updated:   time.Now(),
+		Requested: time.Time{},
+		Order:     0,
+		Channel:   make(chan Attribute),
+	}
+	return attribute
+}
+
 func NewAttribute(key string, variant string, entity string) Attribute {
 	attribute := Attribute{
 		Key:       key,

@@ -39,6 +39,10 @@ func (u *zoneService) emit(zone *domain.Zone) error {
 	return nil
 }
 
+func (u zoneService) FindByName(name string) (*domain.Zone, error) {
+	return u.repository.FindByName(name)
+}
+
 func (u *zoneService) mutate(zone *domain.Zone) error {
 	err := u.repository.Update(zone)
 	if err != nil {

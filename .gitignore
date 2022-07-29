@@ -8,12 +8,21 @@ selfsigned.key
 private-key.pem
 */dist
 */node_modules
-/pkg
+/pkg/vosk/large_model
+/pkg/vosk/model
+/pkg/vosk/model_gr
+
 spotify.json
 /db-data
 **/*.crt
 **/*.key
 /**.log
+
+# Rasa Ignore
+
+/pkg/rasa/models
+/pkg/rasa/.rasa
+/pkg/rasa/tests
 
 # Terminal Ignore
 
@@ -25,3 +34,7 @@ spotify.json
 /client/src/assets/js/
 /client/src/assets/**.css
 /client/src/assets/**.css.map
+/client/public/custom/node_modules
+/client/public/custom/*.jpg
+/client/public/custom/*.png
+

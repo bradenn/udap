@@ -1,0 +1,57 @@
+version: "3.0"
+
+nlu:
+  - intent: creator
+    examples: |
+      - who made you
+      - who is your creator
+      - who designed you
+      - where did you come from
+      - where where you made
+      - when where you made
+      - what made you
+
+  - intent: identify
+    examples: |
+      - who are you
+      - what are you
+      - where did you come from
+      - what is your name
+      - what are called
+      - are you a machine
+      - are you an AI
+      - what type of entity are you
+      - what can I call you
+
+  - intent: identify_bella
+    examples: |
+      - who is bella
+      - can you tell me about bella
+      - who is bella, is she a cat
+      - is bella a cat
+      - is bella your creator
+      - tell me about bella
+
+  - intent: birthday
+    examples: |
+      - when were you made
+      - when were you first put online
+      - when did you first go online
+      - when was your system first initialize
+      - what is your birthday
+      - what is your birthdate
+      - what date were you born
+      - how old are you
+      - what is your age
+      - whats your b-day
+      - whats your bday
+
+  - intent: sentient
+    examples: |
+      - are you sentient
+      - are you alive
+      - do you have free will
+      - are you living
+      - do you think for yourself
+      - are you a sentient being
+      - do you have feelings

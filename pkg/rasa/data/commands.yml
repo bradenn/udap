@@ -1,0 +1,39 @@
+version: "3.0"
+
+nlu:
+  - synonym: close
+    examples: |
+      - close
+      - shut
+  - synonym: open
+    examples: |
+      - open
+      - crack
+
+  - intent: entity
+    examples: |
+      - [lights](zone) [off]{"entity": "state", "role": "power"}
+      - [terminal](zone) [on]{"entity": "state", "role": "power"}
+      - [terminal](zone) [off]{"entity": "state", "role": "power"}
+      - [laser](zone) [off]{"entity": "state", "role": "power"}
+      - [laser](zone) [on]{"entity": "state", "role": "power"}
+      - [bedroom laser](zone) [off]{"entity": "state", "role": "power"}
+      - [living room laser](zone) [off]{"entity": "state", "role": "power"}
+      - [nightstand](zone) [on]{"entity": "state", "role": "power"}
+      - turn [on]{"entity": "state", "role": "power"} the [bedroom light](zone)
+      - turn [off]{"entity": "state", "role": "power"} the [kitchen lights](zone)
+      - [inside lights](zone) set to [off]{"entity": "state", "role": "power"}
+      - set [inside lights](zone) to [off]{"entity": "state", "role": "power"}
+      - set [outside](zone) to [50]{"entity": "state", "role": "dim"} percent
+      - set [lights](zone) to [50]{"entity": "state", "role": "dim"} percent
+      - [outside](zone) to [12]{"entity": "state", "role": "dim"} percent
+      - set the [outside](zone) to [15]{"entity": "state", "role": "dim"} percent
+      - turn the [outside](zone) to [33]{"entity": "state", "role": "dim"} percent
+
+  - intent: blinds
+    examples: |
+      - [open]{"entity":"position","value":"open"} the blinds
+      - [crack]{"entity":"position","value":"open"} the blinds 
+      - blinds [open]{"entity":"position","value":"open"}
+      - [close]{"entity":"position","value":"close"} the blinds
+      - blinds [shut]{"entity":"position","value":"close"}

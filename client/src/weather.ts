@@ -64,8 +64,8 @@ interface WeatherCode {
 }
 
 export let weatherCodes: WeatherCode[] = [
-    {key: 0, night: '􀆮', day: '􀇁', short: 'Clear Sky'},
-    {key: 1, night: '􀇕', day: '􀇁', short: 'Mainly Clear'},
+    {key: 0, night: '􀆮', day: '􀇁', short: 'Clear'},
+    {key: 1, night: '􀇕', day: '􀇁', short: 'Mostly Clear'},
     {key: 2, night: '􀇕', day: '􀇛', short: 'Partly Cloudy'},
     {key: 3, night: '􀇃', day: '􀇃', short: 'Overcast'},
     {key: 45, night: '􀇋', day: '􀇋', short: 'Fog'},

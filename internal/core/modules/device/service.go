@@ -4,12 +4,14 @@ package device
 
 import (
 	"fmt"
+	"time"
 	"udap/internal/core/domain"
 )
 
 type deviceService struct {
-	repository domain.DeviceRepository
-	channel    chan<- domain.Mutation
+	repository  domain.DeviceRepository
+	utilization map[string]domain.Utilization
+	channel     chan<- domain.Mutation
 }
 
 func (u *deviceService) EmitAll() error {
@@ -30,11 +32,46 @@ func (u *deviceService) emit(device *domain.Device) error {
 	if u.channel == nil {
 		return nil
 	}
+	device.Utilization = u.utilization[device.Id]
 	u.channel <- domain.Mutation{
 		Status:    "update",
 		Operation: "device",
 		Body:      *device,
 		Id:        device.Id,
+	}
+	return nil
+}
+
+func (u *deviceService) Ping(id string, latency time.Duration) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	byId.LastSeen = time.Now()
+	byId.Latency = latency
+	byId.State = "ONLINE"
+
+	err = u.repository.Update(byId)
+	if err != nil {
+		return err
+	}
+	err = u.emit(byId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *deviceService) Utilization(id string, utilization domain.Utilization) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	u.utilization[id] = utilization
+	err = u.Update(byId)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -61,7 +98,7 @@ func (u deviceService) Register(device *domain.Device) error {
 }
 
 func NewService(repository domain.DeviceRepository) domain.DeviceService {
-	return &deviceService{repository: repository}
+	return &deviceService{repository: repository, utilization: map[string]domain.Utilization{}}
 }
 
 // Repository Mapping

@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package attribute
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type attributeRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.AttributeRepository {
+func NewAttributeRepository(db *gorm.DB) domain.AttributeRepository {
 	return &attributeRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Attribute](db),

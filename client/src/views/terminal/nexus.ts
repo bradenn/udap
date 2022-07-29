@@ -22,6 +22,7 @@ export enum Target {
     Network = "network",
     Endpoint = "endpoint",
     Timing = "timing",
+    Log = "log",
     Close = "close",
 }
 

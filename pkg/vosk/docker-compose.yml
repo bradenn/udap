@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  vosk:
+    image: bradenn/vosk-m1-udap:1.0.1
+    volumes:
+      - ./model_gr:/opt/vosk-server/model_gr
+    environment:
+      - VOSK_SAMPLE_RATE=16000
+      - PYTHONBUFFERED=1
+      - PYTHONENCODING=utf-8
+    ports:
+      - "2700:2700"

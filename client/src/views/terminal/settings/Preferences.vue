@@ -26,6 +26,10 @@ const defaults = {
       identifier: "waves",
     },
     {
+      name: "Cliffs",
+      identifier: "cliffs",
+    },
+    {
       name: "Lies",
       identifier: "lies",
     },

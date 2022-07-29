@@ -6,14 +6,17 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
 )
@@ -475,6 +478,18 @@ func Status(writer http.ResponseWriter, request *http.Request) {
 
 var isGPU bool
 
+func SendUpdate(conn *websocket.Conn) error {
+	stats, err := MonitorStats()
+	if err != nil {
+		return nil
+	}
+	err = conn.WriteJSON(stats)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
 	isGPU = false
 
@@ -485,16 +500,43 @@ func main() {
 		}
 	}
 
-	server := http.Server{}
+	for {
+		time.Sleep(time.Second * 5)
+		remote := url.URL{Scheme: "ws", Host: "10.0.1.2" + ":" + "3021", Path: "/connect"}
+		conn, _, err := websocket.DefaultDialer.Dial(remote.String(), nil)
+		if err != nil {
+			log.Event("Connection failed: Trying again in 5 seconds")
+			continue
+		}
+		log.Event("Connected")
+		go func() {
+			_, _, err = conn.ReadMessage()
+			if err != nil {
+				return
+			}
+		}()
 
-	http.HandleFunc("/status", Status)
+		for {
+			err = SendUpdate(conn)
+			if err != nil {
+				break
+			}
+			time.Sleep(time.Second * 4)
+		}
 
-	server.Addr = ":5050"
-	fmt.Println("Running on port :5050")
-	err := server.ListenAndServe()
-	if err != nil {
-		return
+		log.Event("Connection Lost: Attempting to reconnect in 5 seconds")
 	}
+
+	// server := http.Server{}
+	//
+	// http.HandleFunc("/status", Status)
+	//
+	// server.Addr = ":5050"
+	// fmt.Println("Running on port :5050")
+	// err = server.ListenAndServe()
+	// if err != nil {
+	// 	return
+	// }
 	// err := server.ListenAndServeTLS("./certs/monitor.crt", "./certs/monitor.key")
 	// if err != nil {
 	// 	fmt.Println(err)

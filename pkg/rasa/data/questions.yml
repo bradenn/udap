@@ -1,0 +1,83 @@
+version: "3.0"
+
+nlu:
+  - intent: personal_identity
+    examples: |
+      - who am I
+      - do you know who I am
+      - name is my name
+      - do you know who I am
+      - identify me
+      - tell me who I am
+      - tell me my name
+
+  - intent: time
+    examples: |
+      - what time is it
+      - what is the time
+      - tell me the time
+      - the time please
+      - what time
+      - what is the current time
+      - what hour is it
+      - what is the hour
+
+  - intent: date
+    examples: |
+      - what is the date
+      - what's the date
+      - what is the current date
+      - what is today's date
+      - the date
+      - date
+      - tell me the date
+      - what day is it
+      - what is the day
+
+  - intent: temperature
+    examples: |
+      - what is the temperature
+      - what's the temperature
+      - tell me the temperature
+      - how hot is it outside
+      - how cold is it outside
+      - how hot is it
+      - how cold is it
+      - how cold
+      - how hot
+      - is it cold
+      - is it hot
+      - should I wear a sweatshirt 
+
+  - intent: weather
+    examples: |
+      - whats the weather like
+      - what is the current weather
+      - tell me the weather
+      - whats the local weather
+      - tell me the forecast
+      - whats the forecast
+      - is it raining
+      - is it sunny
+      - will it rain today
+      - is it cloudy today
+      - is it going to rain
+
+  - intent: pod_bay_doors
+    examples: |
+      - open the pod bay doors
+      - open the pod-bay doors
+      - please open the pod bay doors, hal
+
+  - intent: define
+    examples: |
+      - define the word (fortnight)[word] 
+      - please define the term (stand)[word] 
+      - define (apple)[word]
+      - define (land)[word]
+      - define (lamp)[word]
+      - define (cramp)[word]
+      - define (lorem)[word]
+      - define (bed)[word]
+      - define (quantum)[word]
+      - define (albatross)[word]
