@@ -96,8 +96,8 @@ function parseTime(time: string): string {
         <div v-for="log in state.logs" class="log">
           <div class="log-desc">
             <div class="label-o3 label-c1 label-w400 lh-1">
-            <span :class="levels.get(log.level).class" class="">{{
-                levels.get("warn").icon
+            <span :class="levels.get(log.level)?.class" class="">{{
+                levels.get("warn")?.icon
               }}
             </span>
               {{ log.event }}
