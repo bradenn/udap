@@ -2,6 +2,8 @@
 
 import {createRouter, createWebHashHistory} from "vue-router";
 
+import wiki from "@/views/terminal/wiki"
+
 // Settings views
 import settings from "@/views/terminal/settings/index";
 
@@ -40,6 +42,7 @@ import Timer from "../views/terminal/timing/Timer.vue";
 // Weather Routes
 import WeatherApp from "../views/terminal/weather/Weather.vue";
 import Summary from "../views/terminal/weather/Summary.vue";
+
 
 // Whiteboard Routes
 import Whiteboard from "@/views/terminal/whiteboard/Whiteboard.vue";
@@ -316,6 +319,7 @@ const terminalRoutes = {
         alienRoutes,
         defenseRoutes,
         layoutRoutes,
+        wiki
     ],
 }
 

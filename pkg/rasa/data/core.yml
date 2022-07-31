@@ -60,6 +60,7 @@ nlu:
       - abstain
       - terminate
       - abort
+      - that's enough
 
   - intent: insult
     examples: |

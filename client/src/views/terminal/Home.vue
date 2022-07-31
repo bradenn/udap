@@ -1,7 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
 <script lang="ts" setup>
-import Light from "@/components/widgets/Light.vue";
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import Weather from "@/components/widgets/Weather.vue";
 import router from "@/router";
@@ -89,13 +88,9 @@ function getRoutes() {
   <div :class="``" class="d-flex justify-content-between gap-3 mt-1 pb-4 h-100 w-100">
 
     <div class="widget-grid flex-grow-1">
-      <Widget :cols="4" :rows="5" class="d-flex flex-column" size="sm">
 
-        <Light v-for="light in state.lights.slice(0, 5).filter(l => l.name !== 'Kitchen')"
-               :key="light.id"
-               :entity="light"></Light>
-        <Macros></Macros>
-      </Widget>
+      <Macros></Macros>
+
       <!--      <Widget :cols="3" :rows="1" size="sm">-->
       <!--        <Shortcut v-for="i in state.shortcuts" :icon="i.icon || 'fa-square'" :name="i.name"></Shortcut>-->
       <!--      </Widget>-->

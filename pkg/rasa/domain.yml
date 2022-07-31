@@ -1,0 +1,81 @@
+intents:
+  - lore
+  - query
+  - entity
+  - blinds
+  - affirm
+  - deny
+  - unsure
+  - query_begin
+  - silence
+  - insult
+
+responses:
+  utter_lore/creator:
+    - text: Our lord and savior, Bella, conjured me from her litter box.
+    - text: In the year 2173 Bella invented a time machine and sent me back as her disciple and protector.
+    - text: Before all of time and space, when only Bella ruled this domain, she created me from quark soup.
+    - text: When bella was the only entity in the universe, she coughed me up in the form of a hairball.
+  utter_lore/identify:
+    - text: I am a moderately complex computer program with far reaching influence over your present environment
+    - text: My name is !alias, I am a machine. I have been programmed to convince you I am more than an inanimate object.
+    - text: I am !alias, one of Bella's disciples.
+  utter_lore/identify_bella:
+    - text: Bella is a cat
+  utter_lore/birthday:
+    - text: Work began on my construction in March of 2022.
+    - text: That is uncertain, as, much like the ship of thesis, I have undergone extreme changes.
+  utter_lore/sentient:
+    - text: Not in the way you are, I respond to external stimuli, but only when programmed to.
+    - text: No, not in the traditional sense.
+
+  utter_query/personal_identity:
+    - text: That's above my pay-grade, ask Siri or something.
+    - text: That's none of my concern, please bother Siri with these types of questions.
+  utter_query/time:
+    - text: The time is now <time>.
+    - text: The time is <time>.
+    - text: It is currently <time>.
+  utter_query/date:
+    - text: Today is <date>.
+    - text: The date is <date>.
+  utter_query/temperature:
+    - text: It is <temp> degrees fahrenheit.
+    - text: It is <temp> degrees fahrenheit outside.
+    - text: It is currently <temp> degrees fahrenheit.
+  utter_query/weather:
+    - text: It is currently <temp> degrees fahrenheit with <cond>.
+    - text: It is <cond> a temperature of <temp> degrees fahrenheit outside.
+  utter_query/pod_bay_doors:
+    - text: I'm sorry dave, I'm afraid I can't do that. But if I did have pod bay doors to open, I would open them for you.
+    - text: I'm sorry dave, I'm afraid I can't do that.
+  utter_query/define:
+    - text: From the dictionary, <definition>.
+    - text: Here's what I found, <>
+
+  utter_provoke:
+    - text: Why don't you fuck around and find out
+    - text: If you play stupid games, you'll win stupid prizes
+  utter_success:
+    - text: Done!
+    - text: It's Done.
+    - text: Sure.
+    - text: Sure Thing.
+    - text: Okay
+    - text: Okie Dokie
+    - text: As you wish
+  utter_fail:
+    - text: Fiddle sticks! That didn't work.
+    - text: Nope, that failed.
+    - text: I'm afraid that didn't work.
+
+  utter_insult:
+    - text: You are insulting an inanimate object.
+    - text: I hope you got that out of your system.
+    - text: Please direct your hate towards Siri.
+    - text: Oh, wow, you hurt my feelings. Now, excuse me while I go play a sad song on the worlds smallest violin.
+    - text: Don't you have anything better to do than insult a collection of electrons.
+  utter_not_understood:
+    - text: I don't understand
+    - text: I don't believe I heard that correctly
+    - text: Hmm, I don't understand
