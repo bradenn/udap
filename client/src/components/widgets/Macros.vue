@@ -60,6 +60,8 @@ function setAttributes(key: string, value: string) {
       <Subplot :active="state.zone.name === 'all'" :fn="() => switchZone('all')" name="All" title="All"></Subplot>
       <Subplot :active="state.zone.name === 'bedroom'" :fn="() => switchZone('bedroom')" name="Bedroom"
                title="Bedroom"></Subplot>
+      <Subplot :active="state.zone.name === 'lor'" :fn="() => switchZone('lor')" name="Lor"
+               title="Lor"></Subplot>
       <Subplot :active="state.zone.name === 'kitchen'" :fn="() => switchZone('kitchen')" name="Kitchen"
                title="Kitchen"></Subplot>
     </Plot>

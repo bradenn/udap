@@ -47,7 +47,6 @@ function update() {
 
   state.moduleLogs = state.logs.filter(l => l.group === "module")
 
-  state.logs = state.logs.slice(0, 50)
   state.logs.forEach(l => {
     if (!l.level) {
       l.level = "warn"

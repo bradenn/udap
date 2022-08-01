@@ -97,9 +97,9 @@ func (m *moduleOperator) Build(module string, uuid string) error {
 	// Initialize the command structure
 	cmd := exec.CommandContext(timeout, "go", args...)
 	// Run and get the stdout and stderr from the output
-	_, err := cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("module build failed: \n%s", out)
 	}
 	return nil
 }
