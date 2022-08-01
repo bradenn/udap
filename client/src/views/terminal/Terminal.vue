@@ -5,14 +5,15 @@ import router from '@/router'
 import {inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
-import type {Identifiable, Log, Metadata, Remote, Session, Timing, User} from "@/types";
+import type {Identifiable, Log, Metadata, Preferences, Remote, Session, Timing, User} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
 import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 import Sideapp from "@/views/terminal/Sideapp.vue";
-import Bounce from "@/views/screensaver/Bounce.vue";
+import Bubbles from "@/views/screensaver/Bubbles.vue";
+import Warp from "@/views/screensaver/Warp.vue";
 
 // -- Websockets --
 
@@ -42,6 +43,7 @@ let remote = reactive<Remote>({
 });
 
 let screensaver: any = inject("screensaver")
+let preferences = inject("preferences") as Preferences
 let system: any = inject("system")
 
 // Handle and route incoming messages to the local cache
@@ -373,8 +375,10 @@ provide('remote', remote)
         :style="`transform: translateY(${-state.scrollY}px);`"
         class="home-bar top"></div>
   </div>
-  <Bounce v-if="screensaver.show"
-          class="screensaver-overlay"></Bounce>
+  <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"
+           class="screensaver-overlay"></Bubbles>
+  <Warp v-else-if="screensaver.show && preferences.ui.screensaver.selection === 'warp'"
+        class="screensaver-overlay"></Warp>
 </template>
 
 <style lang="scss" scoped>

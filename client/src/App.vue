@@ -2,34 +2,15 @@
 <script lang="ts" setup>
 import {onMounted, provide, reactive, watch} from "vue";
 import {version} from "../package.json";
+import type {Preferences} from "@/types";
 
-
-export interface Preferences {
-  ui: {
-    screensaver: {
-      enabled: boolean
-      countdown: number
-    }
-    background: {
-      image: string,
-      blur: boolean
-    }
-    theme: string
-    mode: string
-    blur: number
-    brightness: number
-    grid: boolean
-    watermark: boolean
-    night: boolean
-    outlines: boolean
-  }
-}
 
 const preferenceDefaults: Preferences = {
   ui: {
     screensaver: {
       enabled: true,
-      countdown: 60 * 5
+      countdown: 60 * 5,
+      selection: "bubbles"
     },
     background: {
       image: "milk",

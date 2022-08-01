@@ -5,8 +5,7 @@ import IdHash from "@/components/IdHash.vue"
 import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
-import type {Remote} from "@/types";
-import type {Preferences} from "@/App.vue";
+import type {Preferences, Remote} from "@/types";
 
 let state = reactive({
   menu: false,
