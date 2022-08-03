@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package zone
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type zoneRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.ZoneRepository {
+func NewZoneRepository(db *gorm.DB) domain.ZoneRepository {
 	return &zoneRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Zone](db),

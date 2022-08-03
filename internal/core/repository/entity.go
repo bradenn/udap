@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package entity
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -41,7 +41,7 @@ func (u entityRepo) Register(e *domain.Entity) error {
 	return nil
 }
 
-func NewRepository(db *gorm.DB) domain.EntityRepository {
+func NewEntityRepository(db *gorm.DB) domain.EntityRepository {
 	return &entityRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Entity](db),

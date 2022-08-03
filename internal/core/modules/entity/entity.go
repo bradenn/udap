@@ -5,10 +5,11 @@ package entity
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
+	"udap/internal/core/repository"
 )
 
 func New(db *gorm.DB) domain.EntityService {
-	repo := NewRepository(db)
+	repo := repository.NewEntityRepository(db)
 	service := NewService(repo)
 	return service
 }

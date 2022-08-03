@@ -6,12 +6,31 @@ import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Attribute, Entity, Remote, Zone} from "@/types";
-import Subplot from "@/components/plot/Subplot.vue";
 import Light from "@/components/widgets/Light.vue";
 import Widget from "@/components/widgets/Widget.vue";
+import Select from "@/components/plot/Select.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
+
+let zones = [
+  {
+    name: "All",
+    key: "all"
+  },
+  {
+    name: "Bedroom",
+    key: "bedroom"
+  },
+  {
+    name: "Kitchen",
+    key: "kitchen"
+  },
+  {
+    name: "Lor",
+    key: "lor"
+  }
+]
 
 
 let state = reactive({
@@ -24,15 +43,21 @@ let state = reactive({
 
 onMounted(() => {
   state.loading = true
-  switchZone("all")
   handleUpdates(remote)
+  switchZone("all")
 })
+
 
 watchEffect(() => handleUpdates(remote))
 
 function handleUpdates(remote: Remote) {
   state.lights = remote.entities.filter((entity: Entity) => state.targets.includes(entity.id))
   state.loading = false
+
+  if (!state.zone.name) {
+    switchZone("all")
+  }
+
   return remote.entities
 }
 
@@ -55,16 +80,14 @@ function setAttributes(key: string, value: string) {
 
 <template>
   <div v-if="!state.loading" class="d-flex flex-column gap-1" size="sm" style="width: 11rem">
-    <Plot :cols="3" :rows="1">
 
-      <Subplot :active="state.zone.name === 'all'" :fn="() => switchZone('all')" name="All" title="All"></Subplot>
-      <Subplot :active="state.zone.name === 'bedroom'" :fn="() => switchZone('bedroom')" name="Bedroom"
-               title="Bedroom"></Subplot>
-      <Subplot :active="state.zone.name === 'lor'" :fn="() => switchZone('lor')" name="Lor"
-               title="Lor"></Subplot>
-      <Subplot :active="state.zone.name === 'kitchen'" :fn="() => switchZone('kitchen')" name="Kitchen"
-               title="Kitchen"></Subplot>
-    </Plot>
+    <Select :selected="`${state.zone.name?.charAt(0).toUpperCase()}${state.zone.name?.substring(1)}`">
+      <div v-for="zone in zones" :class="state.zone.name !== zone.key?'subplot-inline':''" class="subplot"
+           @click="() => switchZone(zone.key)">
+        {{ zone.name }}
+      </div>
+    </Select>
+
     <Widget v-if="!state.loading" :cols="4" :rows="5" class="d-flex flex-column" size="sm">
       <Light v-for="light in state.lights.slice(0, 5)"
              :key="light.id"

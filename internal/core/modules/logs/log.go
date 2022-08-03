@@ -4,10 +4,11 @@ package logs
 
 import (
 	"udap/internal/core/domain"
+	"udap/internal/core/repository"
 )
 
 func New() domain.LogService {
-	repo := NewRepository()
+	repo := repository.NewLogsRepository()
 	service := NewService(repo)
 	return service
 }

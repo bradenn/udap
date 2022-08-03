@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package network
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type networkRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.NetworkRepository {
+func NewNetworkRepository(db *gorm.DB) domain.NetworkRepository {
 	return &networkRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Network](db),

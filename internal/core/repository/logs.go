@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package logs
+package repository
 
 import (
 	"math/rand"
@@ -12,7 +12,7 @@ type logsRepo struct {
 	logs map[string][]domain.Log
 }
 
-func NewRepository() domain.LogRepository {
+func NewLogsRepository() domain.LogRepository {
 	return &logsRepo{
 		logs: map[string][]domain.Log{},
 	}
