@@ -237,6 +237,7 @@ export interface Zone {
     id: string;
     name: string;
     user: string;
+    pinned: boolean;
     entities: Entity[];
     deleted: boolean
 }

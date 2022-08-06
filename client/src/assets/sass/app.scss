@@ -116,10 +116,15 @@ $fontColors: (
         "7": 7,
         "8": 8,
 );
+.el {
+
+
+}
 
 @each $clr, $i in $fontColors {
   .label-o#{$clr} {
     color: rgba(255, 255, 255, $i * 0.125);
+   
   }
 }
 
@@ -154,7 +159,7 @@ $fontColors: (
 }
 
 .context.context-id {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(20px);
 }
 
 .router-link-active.dock-link, .router-link-active.dock-icon {

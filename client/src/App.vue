@@ -155,6 +155,11 @@ provide('preferences', preferences)
 </template>
 
 <style lang="scss">
+
+* {
+  cursor: none !important;
+}
+
 .overlay-notification {
   position: fixed;
   z-index: 1;
@@ -217,7 +222,7 @@ provide('preferences', preferences)
 }
 
 .backdrop-blurred {
-  filter: blur(4px);
+  filter: blur(26px);
 }
 
 .backdrop:after {

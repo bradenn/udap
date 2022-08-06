@@ -1,8 +1,8 @@
 // Copyright (c) 2022 Braden Nicholson
 
 // Static
-$element-bg: rgba(28, 33, 36, 0.3);
-$element-fg: lighten($element-bg, 8%);
+$element-bg: rgba(30, 33, 36, 0.4);
+$element-fg: rgba(255, 255, 255, 0.035);
 $element-bg-active: lighten($element-bg, 10%);
 $element-shadow: rgba(0, 0, 0, 0.2);
 
@@ -21,7 +21,7 @@ $loadInDistance: 0.95;
 /* Blur Definitions */
 .bg-blur {
   position: relative;
-  box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 1px opacify($element-border, 0.001) !important;
+  box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
   transform: translate3d(0, 0, 0) translateZ(0);
   backface-visibility: visible;
   -webkit-backface-visibility: hidden;
@@ -32,8 +32,10 @@ $loadInDistance: 0.95;
   content: ' ';
   border-radius: inherit;
 
-  //contrast(98%);
-  backdrop-filter: blur(24px) invert(1%);
+  // Blur Features
+  //mix-blend-mode: lighten;
+  background-blend-mode: lighten;
+  backdrop-filter: blur(20px);
 }
 
 .bg-blur:before {
@@ -77,8 +79,11 @@ $themes: (
 
 .element-secondary {
   background-color: $element-fg;
-  box-shadow: 0 0 4px 0.2px opacify($element-shadow, 0.005), inset 0 0 2px 1px $element-border !important;
+  mix-blend-mode: lighten;
+
+  //box-shadow: 0 0 8px 0.2px opacify($element-shadow, 0.005);
 }
+
 
 //.element-secondary:active {
 //  background-color: $element-bg-active;
@@ -134,9 +139,12 @@ $themes: (
     transform: scale(1);
   }
   15% {
+    transform: scale(0.90);
+  }
+  80% {
     transform: scale(0.96);
   }
   100% {
-    transform: scale(0.96);
+    transform: scale(1);
   }
 }

@@ -30,7 +30,85 @@ func (r zoneRouter) RouteZones(router chi.Router) {
 	router.Route("/zones/{id}", func(local chi.Router) {
 		local.Post("/delete", r.delete)
 		local.Post("/restore", r.restore)
+		local.Post("/pin", r.pin)
+		local.Post("/unpin", r.unpin)
+		local.Post("/entities/{entityId}/add", r.addEntity)
+		local.Post("/entities/{entityId}/remove", r.removeEntity)
 	})
+}
+
+func (r zoneRouter) addEntity(w http.ResponseWriter, req *http.Request) {
+
+	id := chi.URLParam(req, "id")
+	if id == "" {
+		http.Error(w, "invalid id", 400)
+	}
+
+	entity := chi.URLParam(req, "entityId")
+	if id == "" {
+		http.Error(w, "invalid id", 400)
+	}
+
+	err := r.service.AddEntity(id, entity)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not pin zone: %s", err.Error()), 400)
+		return
+	}
+
+	w.WriteHeader(200)
+}
+
+func (r zoneRouter) removeEntity(w http.ResponseWriter, req *http.Request) {
+
+	id := chi.URLParam(req, "id")
+	if id == "" {
+		http.Error(w, "invalid id", 400)
+	}
+
+	entity := chi.URLParam(req, "entityId")
+	if id == "" {
+		http.Error(w, "invalid id", 400)
+	}
+
+	err := r.service.RemoveEntity(id, entity)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not pin zone: %s", err.Error()), 400)
+		return
+	}
+
+	w.WriteHeader(200)
+}
+
+func (r zoneRouter) pin(w http.ResponseWriter, req *http.Request) {
+
+	id := chi.URLParam(req, "id")
+	if id == "" {
+		http.Error(w, "invalid id", 400)
+	}
+
+	err := r.service.Pin(id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not pin zone: %s", err.Error()), 400)
+		return
+	}
+
+	w.WriteHeader(200)
+}
+
+func (r zoneRouter) unpin(w http.ResponseWriter, req *http.Request) {
+
+	id := chi.URLParam(req, "id")
+	if id == "" {
+		http.Error(w, "invalid id", 400)
+	}
+
+	err := r.service.Unpin(id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not unpin zone: %s", err.Error()), 400)
+		return
+	}
+
+	w.WriteHeader(200)
 }
 
 func (r zoneRouter) delete(w http.ResponseWriter, req *http.Request) {
@@ -44,6 +122,36 @@ func (r zoneRouter) delete(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(w, fmt.Sprintf("could not delete zone: %s", err.Error()), 400)
 		return
+	}
+
+	w.WriteHeader(200)
+}
+
+func (r zoneRouter) modify(w http.ResponseWriter, req *http.Request) {
+
+	id := chi.URLParam(req, "id")
+	if id == "" {
+		http.Error(w, "invalid id", 400)
+	}
+
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(w, "could not parse zone", 400)
+		return
+	}
+
+	ref := domain.Zone{}
+	err = json.Unmarshal(buf.Bytes(), &ref)
+	if err != nil {
+		http.Error(w, "could not parse zone", 400)
+		return
+	}
+
+	err = r.service.Update(&ref)
+	if err != nil {
+		http.Error(w, "zone creation failed", 400)
 	}
 
 	w.WriteHeader(200)

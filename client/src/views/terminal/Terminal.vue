@@ -217,7 +217,7 @@ function dragContinue(e: MouseEvent) {
 
     let height = e.view.screen.availHeight;
     let width = e.view.screen.availWidth;
-    let thresholdOffset = 60;
+    let thresholdOffset = 80;
 
     let isBottom = e.screenY > height - thresholdOffset;
     let isTop = e.screenY > thresholdOffset;

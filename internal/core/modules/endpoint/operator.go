@@ -125,12 +125,14 @@ func (m *endpointOperator) listen() error {
 		case operation := <-m.localChannel:
 			err := m.handleOperation(operation)
 			if err != nil {
-				return err
+				log.Err(err)
+				continue
 			}
 		case transmission := <-m.localTransmit:
 			err := m.handleTransmit(transmission)
 			if err != nil {
-				return err
+				log.Err(err)
+				continue
 			}
 		case <-m.done:
 			m.handleShutdown()

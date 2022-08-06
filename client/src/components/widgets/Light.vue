@@ -104,8 +104,9 @@ function toggleMenu(): void {
   <div v-else class="w-100 h-100">
     <div v-if="!state.showMenu" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">
       <div class="entity-header mb-2 ">
-        <div class="label-o5">
-          {{ props.entity.icon || '􀛮' }}
+        <div :class="state.powerAttribute.value === 'true'?'light-on':'light-off'" class="label-o5">
+          {{ (!(props.entity.icon) ? '􀛮' : state.powerAttribute.value === 'true' ? props.entity.icon : '􀛭') }}
+
         </div>
         <div class="label-c1 label-w400 label-o4 px-2">
           {{ props.entity.name }}
@@ -122,7 +123,7 @@ function toggleMenu(): void {
         </div>
       </div>
     </div>
-    <div v-else class="entity-small element quickedit" style="z-index: 999999 !important;">
+    <div v-else class="entity-small element quickedit" style="z-index: 99999!important;">
       <div class="entity-header mb-1 d-flex justify-content-between align-items-center w-100">
         <div class="d-flex">
           <div class="label-o5">
@@ -173,6 +174,16 @@ function toggleMenu(): void {
 </template>
 
 <style lang="scss" scoped>
+
+
+.light-on {
+  color: #b2b2b2;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+.light-off {
+  color: rgba(255, 255, 255, 0.3);
+}
 
 .entity-small:not(.quickedit):active {
   animation: click 100ms ease forwards;

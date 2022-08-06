@@ -21,10 +21,37 @@ function createWindow() {
         frame: false,
     });
 
+    // attachTouchMode()
+    // win.webContents.debugger.on('detach', (event, reason) => {
+    //     console.log('Debugger detached due to: ', reason)
+    // })
 
     win.webContents.setZoomFactor(1)
     win.loadURL('http://localhost:5002')
 
+}
+
+function attachTouchMode() {
+
+    try {
+        // works with 1.1 too
+        win.webContents.debugger.attach('1.2')
+    } catch (err) {
+        console.log('Debugger attach failed: ', err)
+    }
+
+    const isDebuggerAttached = win.webContents.debugger.isAttached()
+    console.log('debugger attached? ', isDebuggerAttached)
+
+    win.webContents.debugger.on('detach', (event, reason) => {
+        console.log('Debugger detached due to: ', reason)
+    });
+
+    win.webContents.debugger.sendCommand('Emulation.setEmitTouchEventsForMouse', {enabled: true});
+    win.webContents.debugger.sendCommand('Emulation.setTouchEmulationEnabled', {
+        enabled: true,
+        configuration: 'desktop',
+    });
 }
 
 

@@ -24,8 +24,8 @@ const defaults = {
       identifier: "waves",
     },
     {
-      name: "Cliffs",
-      identifier: "cliffs",
+      name: "Swirl",
+      identifier: "swirl",
     },
     {
       name: "Lies",
