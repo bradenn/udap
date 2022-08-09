@@ -2,34 +2,15 @@
 <script lang="ts" setup>
 import {onMounted, provide, reactive, watch} from "vue";
 import {version} from "../package.json";
+import type {Preferences} from "@/types";
 
-
-export interface Preferences {
-  ui: {
-    screensaver: {
-      enabled: boolean
-      countdown: number
-    }
-    background: {
-      image: string,
-      blur: boolean
-    }
-    theme: string
-    mode: string
-    blur: number
-    brightness: number
-    grid: boolean
-    watermark: boolean
-    night: boolean
-    outlines: boolean
-  }
-}
 
 const preferenceDefaults: Preferences = {
   ui: {
     screensaver: {
       enabled: true,
-      countdown: 60 * 5
+      countdown: 60 * 5,
+      selection: "bubbles"
     },
     background: {
       image: "milk",
@@ -146,14 +127,14 @@ provide('preferences', preferences)
     <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
          :src="`/custom/${preferences.ui.background.image}@4x.png`"
          alt="Background" class="backdrop "/>
+
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
-        <!--        <div>NEXUS v{{ state.system.nexus.system.version }}</div>-->
         <div v-if="state.system.udap" class="label-r label-w600">{{ state.system.udap.system.version }}</div>
         <div v-if="screensaver.countdown <= 5" class="mx-1 label-r label-w500 screensaver-text">
           <div v-if="screensaver.countdown === 0">Starting screensaver...</div>
-          <div v-else>Screen saver in {{ screensaver.countdown }} second{{
-              screensaver.countdown === 1 ? '' : 's'
+          <div v-else>Screen saver in {{ screensaver?.countdown }} second{{
+              screensaver?.countdown === 1 ? '' : 's'
             }}
           </div>
         </div>
@@ -161,6 +142,7 @@ provide('preferences', preferences)
 
       <div class="float-end">{{ $route.path }}</div>
     </div>
+
     <div v-if="preferences.ui.grid" class="grid"></div>
 
     <div v-if="state.context" class="context context-light"></div>
@@ -173,6 +155,11 @@ provide('preferences', preferences)
 </template>
 
 <style lang="scss">
+
+* {
+  cursor: none !important;
+}
+
 .overlay-notification {
   position: fixed;
   z-index: 1;
@@ -235,7 +222,7 @@ provide('preferences', preferences)
 }
 
 .backdrop-blurred {
-  filter: blur(4px);
+  filter: blur(26px);
 }
 
 .backdrop:after {

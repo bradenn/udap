@@ -8,6 +8,7 @@ type Zone struct {
 	common.Persistent
 	Name     string   `json:"name"`
 	Entities []Entity `json:"entities" gorm:"many2many:zone_entities;"`
+	Pinned   bool     `json:"pinned"`
 	User     string   `json:"user"`
 }
 
@@ -18,6 +19,10 @@ type ZoneRepository interface {
 
 type ZoneService interface {
 	Observable
+	AddEntity(id string, entity string) error
+	RemoveEntity(id string, entity string) error
+	Pin(id string) error
+	Unpin(id string) error
 	FindAll() (*[]Zone, error)
 	FindById(id string) (*Zone, error)
 	FindByName(name string) (*Zone, error)

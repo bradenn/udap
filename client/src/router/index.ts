@@ -2,6 +2,8 @@
 
 import {createRouter, createWebHashHistory} from "vue-router";
 
+import wiki from "@/views/terminal/wiki"
+
 // Settings views
 import settings from "@/views/terminal/settings/index";
 
@@ -37,15 +39,14 @@ import Timing from "../views/terminal/timing/Timing.vue";
 import Stopwatch from "../views/terminal/timing/Stopwatch.vue";
 import Timer from "../views/terminal/timing/Timer.vue";
 
-// Weather Routes
-import WeatherApp from "../views/terminal/weather/Weather.vue";
-import Summary from "../views/terminal/weather/Summary.vue";
+// Weather
+import weather from "@/views/terminal/weather"
 
 // Whiteboard Routes
 import Whiteboard from "@/views/terminal/whiteboard/Whiteboard.vue";
 
 // Calculator Routes
-import Calculator from "@/views/screensaver/Bounce.vue";
+import Calculator from "@/views/terminal/calculator/Calculator.vue";
 
 // Atlas Routes
 import Atlas from "@/views/terminal/atlas/Atlas.vue";
@@ -186,20 +187,6 @@ const timingRoutes = {
     ]
 }
 
-const weatherRoutes = {
-    path: '/terminal/weather',
-    name: 'Weather',
-    redirect: '/terminal/weather/summary',
-    component: WeatherApp,
-    icon: 'fa-cloud-sun',
-    children: [
-        {
-            path: '/terminal/weather/summary',
-            name: 'Summary',
-            component: Summary,
-        },
-    ]
-}
 
 const alienRoutes = {
     path: '/terminal/aliens',
@@ -309,13 +296,14 @@ const terminalRoutes = {
         settings.routes,
         timingRoutes,
         exogeologyRoutes,
-        weatherRoutes,
+        weather,
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,
         alienRoutes,
         defenseRoutes,
         layoutRoutes,
+        wiki
     ],
 }
 

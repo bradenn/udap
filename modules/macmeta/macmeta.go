@@ -4,6 +4,8 @@ package main
 
 import (
 	"os/exec"
+	"strings"
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/plugin"
 )
@@ -13,6 +15,9 @@ var Module MacMeta
 type MacMeta struct {
 	plugin.Module
 	localDisplay bool
+	terminalId   string
+	request      chan bool
+	done         chan bool
 }
 
 func init() {
@@ -23,7 +28,41 @@ func init() {
 		Version:     "0.0.1",
 		Author:      "Braden Nicholson",
 	}
+	Module.request = make(chan bool)
+	Module.done = make(chan bool)
 	Module.Config = config
+}
+
+func (v *MacMeta) requestState(state bool) {
+	select {
+	case v.request <- state:
+		return
+	case <-time.After(time.Millisecond * 200):
+		v.ErrF("failed to update terminal state (200ms timeout)")
+		return
+	}
+}
+
+func (v *MacMeta) listen() {
+	for {
+		select {
+		case req := <-v.request:
+			v.localDisplay = req
+			if v.terminalId != "" {
+				state := "false"
+				if req {
+					state = "true"
+				}
+				err := v.Attributes.Set(v.terminalId, "on", state)
+				if err != nil {
+					v.ErrF("failed to set terminal attribute: %s", err.Error())
+					return
+				}
+			}
+		case <-v.done:
+			return
+		}
+	}
 }
 
 func (v *MacMeta) createDisplaySwitch() error {
@@ -37,6 +76,8 @@ func (v *MacMeta) createDisplaySwitch() error {
 	if err != nil {
 		return err
 	}
+
+	v.terminalId = newSwitch.Id
 	on := &domain.Attribute{
 		Key:     "on",
 		Value:   "true",
@@ -76,7 +117,17 @@ func (v *MacMeta) displayOn() error {
 	if err != nil {
 		return err
 	}
-	v.localDisplay = true
+	v.requestState(true)
+	return nil
+}
+
+func (v *MacMeta) pollDisplay() error {
+	cmd := exec.Command("pmset", "-g")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	v.requestState(strings.Contains(string(output), "powerd"))
 	return nil
 }
 
@@ -86,21 +137,33 @@ func (v *MacMeta) displayOff() error {
 	if err != nil {
 		return err
 	}
-	v.localDisplay = false
+	v.requestState(false)
 	return nil
 }
 
 func (v *MacMeta) Setup() (plugin.Config, error) {
-	err := v.UpdateInterval(2000)
+	err := v.UpdateInterval(5000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
+	go v.listen()
 	return v.Config, nil
 }
 
 func (v *MacMeta) Update() error {
 	if v.Ready() {
+		err := v.pollDisplay()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
+func (v *MacMeta) Dispose() error {
+	select {
+	case v.done <- true:
+	default:
 	}
 	return nil
 }

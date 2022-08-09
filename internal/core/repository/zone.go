@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package zone
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,12 +13,22 @@ type zoneRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.ZoneRepository {
+func NewZoneRepository(db *gorm.DB) domain.ZoneRepository {
 	return &zoneRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Zone](db),
 	}
 }
+
+func (z zoneRepo) FindById(id string) (*domain.Zone, error) {
+	zone := domain.Zone{}
+	err := z.db.Model(&domain.Zone{}).Preload("Entities").Where("id = ?", id).Find(&zone).Error
+	if err != nil {
+		return nil, err
+	}
+	return &zone, nil
+}
+
 func (z zoneRepo) FindByName(name string) (*domain.Zone, error) {
 	zone := domain.Zone{}
 	err := z.db.Model(&domain.Zone{}).Preload("Entities").Where("name = ?", name).Find(&zone).Error

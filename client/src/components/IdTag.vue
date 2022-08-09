@@ -5,8 +5,7 @@ import IdHash from "@/components/IdHash.vue"
 import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
-import type {Remote} from "@/types";
-import type {Preferences} from "@/App.vue";
+import type {Preferences, Remote} from "@/types";
 
 let state = reactive({
   menu: false,
@@ -42,7 +41,7 @@ function reload() {
 
 <template>
   <div v-if="state.menu" class="context context-id" @click="state.menu = false"></div>
-  <div class=" tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
+  <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
        @click="toggleMenu">
     <div class="px-1">
       <IdHash></IdHash>
@@ -71,7 +70,7 @@ function reload() {
     </div>
   </div>
 
-  <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 p-1">
+  <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 py-1">
     <Plot :cols="1" :rows="1">
       <div class="subplot d-flex align-items-end align-items-center lh-1 gap-1">
         <div class="label-o2">􀉩</div>
@@ -183,10 +182,6 @@ function reload() {
   100% {
     transform: scale(1);
   }
-}
-
-.subplot:active {
-  animation: click 200ms ease forwards;
 }
 
 .tag-container:active {

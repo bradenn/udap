@@ -14,13 +14,13 @@ type attributeService struct {
 	channel    chan<- domain.Mutation
 }
 
-func (u *attributeService) EmitAll() error {
-	all, err := u.FindAll()
+func (a *attributeService) EmitAll() error {
+	all, err := a.FindAll()
 	if err != nil {
 		return err
 	}
 	for _, attribute := range *all {
-		err = u.emit(&attribute)
+		err = a.emit(&attribute)
 		if err != nil {
 			return err
 		}
@@ -28,11 +28,11 @@ func (u *attributeService) EmitAll() error {
 	return nil
 }
 
-func (u *attributeService) emit(attribute *domain.Attribute) error {
-	if u.channel == nil {
+func (a *attributeService) emit(attribute *domain.Attribute) error {
+	if a.channel == nil {
 		return fmt.Errorf("channel is null")
 	}
-	u.channel <- domain.Mutation{
+	a.channel <- domain.Mutation{
 		Status:    "update",
 		Operation: "attribute",
 		Body:      *attribute,
@@ -41,16 +41,16 @@ func (u *attributeService) emit(attribute *domain.Attribute) error {
 	return nil
 }
 
-func (u *attributeService) Watch(ref chan<- domain.Mutation) error {
-	if u.channel != nil {
+func (a *attributeService) Watch(ref chan<- domain.Mutation) error {
+	if a.channel != nil {
 		return fmt.Errorf("channel in use")
 	}
-	u.channel = ref
+	a.channel = ref
 	return nil
 }
 
-func (u *attributeService) FindAllByEntity(entity string) (*[]domain.Attribute, error) {
-	return u.repository.FindAllByEntity(entity)
+func (a *attributeService) FindAllByEntity(entity string) (*[]domain.Attribute, error) {
+	return a.repository.FindAllByEntity(entity)
 }
 
 func NewService(repository domain.AttributeRepository, operator domain.AttributeOperator) domain.AttributeService {
@@ -61,105 +61,105 @@ func NewService(repository domain.AttributeRepository, operator domain.Attribute
 	}
 }
 
-func (u *attributeService) Register(attribute *domain.Attribute) error {
-	err := u.repository.Register(attribute)
+func (a *attributeService) Register(attribute *domain.Attribute) error {
+	err := a.repository.Register(attribute)
 	if err != nil {
 		return err
 	}
-	err = u.operator.Register(attribute)
+	err = a.operator.Register(attribute)
 	if err != nil {
 		return err
 	}
 
-	err = u.emit(attribute)
+	err = a.emit(attribute)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *attributeService) Request(entity string, key string, value string) error {
-	e, err := u.repository.FindByComposite(entity, key)
+func (a *attributeService) Request(entity string, key string, value string) error {
+	e, err := a.repository.FindByComposite(entity, key)
 	if err != nil {
 		return err
 	}
-	err = u.operator.Request(e, value)
+	err = a.operator.Request(e, value)
 	if err != nil {
 		return err
 	}
-	err = u.repository.Update(e)
+	err = a.repository.Update(e)
 	if err != nil {
 		return err
 	}
-	err = u.emit(e)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *attributeService) Set(entity string, key string, value string) error {
-	e, err := u.repository.FindByComposite(entity, key)
-	if err != nil {
-		return err
-	}
-	err = u.operator.Update(e, value, time.Now())
-	if err != nil {
-		return err
-	}
-	err = u.repository.Update(e)
-	if err != nil {
-		return err
-	}
-	err = u.emit(e)
+	err = a.emit(e)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *attributeService) Update(entity string, key string, value string, stamp time.Time) error {
-	e, err := u.repository.FindByComposite(entity, key)
+func (a *attributeService) Set(entity string, key string, value string) error {
+	e, err := a.repository.FindByComposite(entity, key)
 	if err != nil {
 		return err
 	}
-	err = u.operator.Update(e, value, stamp)
+	err = a.operator.Update(e, value, time.Now())
 	if err != nil {
 		return err
 	}
-	err = u.repository.Update(e)
+	err = a.repository.Update(e)
 	if err != nil {
 		return err
 	}
-	err = u.emit(e)
+	err = a.emit(e)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u attributeService) FindByComposite(entity string, key string) (*domain.Attribute, error) {
-	return u.repository.FindByComposite(entity, key)
+func (a *attributeService) Update(entity string, key string, value string, stamp time.Time) error {
+	e, err := a.repository.FindByComposite(entity, key)
+	if err != nil {
+		return err
+	}
+	err = a.operator.Update(e, value, stamp)
+	if err != nil {
+		return err
+	}
+	err = a.repository.Update(e)
+	if err != nil {
+		return err
+	}
+	err = a.emit(e)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *attributeService) FindByComposite(entity string, key string) (*domain.Attribute, error) {
+	return a.repository.FindByComposite(entity, key)
 }
 
 // Repository Mapping
 
-func (u attributeService) FindAll() (*[]domain.Attribute, error) {
-	return u.repository.FindAll()
+func (a *attributeService) FindAll() (*[]domain.Attribute, error) {
+	return a.repository.FindAll()
 }
 
-func (u attributeService) FindById(id string) (*domain.Attribute, error) {
-	return u.repository.FindById(id)
+func (a *attributeService) FindById(id string) (*domain.Attribute, error) {
+	return a.repository.FindById(id)
 }
 
-func (u attributeService) Create(attribute *domain.Attribute) error {
-	return u.repository.Create(attribute)
+func (a *attributeService) Create(attribute *domain.Attribute) error {
+	return a.repository.Create(attribute)
 }
 
-func (u attributeService) FindOrCreate(attribute *domain.Attribute) error {
-	return u.repository.FindOrCreate(attribute)
+func (a *attributeService) FindOrCreate(attribute *domain.Attribute) error {
+	return a.repository.FindOrCreate(attribute)
 }
 
-func (u attributeService) Delete(attribute *domain.Attribute) error {
-	return u.repository.Delete(attribute)
+func (a *attributeService) Delete(attribute *domain.Attribute) error {
+	return a.repository.Delete(attribute)
 }

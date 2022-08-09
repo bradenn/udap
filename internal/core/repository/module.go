@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package module
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type moduleRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.ModuleRepository {
+func NewModuleRepository(db *gorm.DB) domain.ModuleRepository {
 	return &moduleRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Module](db),

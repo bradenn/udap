@@ -3,20 +3,43 @@
 
 
 import Plot from "@/components/plot/Plot.vue";
-import Radio from "@/components/plot/Radio.vue";
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import type {Attribute, Entity, Remote} from "@/types";
+import type {Attribute, Entity, Remote, Zone} from "@/types";
+import Light from "@/components/widgets/Light.vue";
+import Widget from "@/components/widgets/Widget.vue";
+import Select from "@/components/plot/Select.vue";
+import Subplot from "@/components/plot/Subplot.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
 
-interface Zone {
-  name: string
-  entities: string[]
-}
+let zones = [
+  {
+    name: "All",
+    key: "all"
+  },
+  {
+    name: "Bedroom",
+    key: "bedroom"
+  },
+  {
+    name: "Kitchen",
+    key: "kitchen"
+  },
+  {
+    name: "Lor",
+    key: "lor"
+  }
+]
+
 
 let state = reactive({
+  zone: {} as Zone,
+  zones: [] as Zone[],
   lights: {} as Entity[],
+  globalColor: 0,
+  globalDim: 50,
+  globalCCT: 6500,
   targets: ["8c1494c3-6515-490b-8f23-1c03b87bde27", "9a3347a7-7e19-4be5-976c-22384c59142a", "c74d427b-5046-4aeb-8195-2efd05d794f8"] as string[],
   loading: true,
   colorMenu: false,
@@ -25,14 +48,43 @@ let state = reactive({
 onMounted(() => {
   state.loading = true
   handleUpdates(remote)
+  switchZone("all")
 })
+
 
 watchEffect(() => handleUpdates(remote))
 
+function sortZones(a: Zone, b: Zone): number {
+  if (a.pinned && !b.pinned) {
+    return -1;
+  } else if (!a.pinned && b.pinned) {
+    return 1;
+  } else if (a.pinned && b.pinned && a.name > b.name) {
+    return 2;
+  } else if (a.pinned && b.pinned && a.name < b.name) {
+    return -2;
+  }
+  return 0
+}
+
 function handleUpdates(remote: Remote) {
   state.lights = remote.entities.filter((entity: Entity) => state.targets.includes(entity.id))
+  state.zones = remote.zones.filter((zone: Zone) => !zone.deleted).sort(sortZones)
   state.loading = false
+
+  if (!state.zone.name) {
+    switchZone("all")
+  }
+
   return remote.entities
+}
+
+function switchZone(name: string) {
+  const zone = remote.zones.find(z => z.name === name)
+  if (!zone) return
+  state.zone = zone
+  state.targets = zone.entities.map(e => e.id)
+  handleUpdates(remote)
 }
 
 function setAttributes(key: string, value: string) {
@@ -42,28 +94,134 @@ function setAttributes(key: string, value: string) {
   })
 }
 
+function closeMenu() {
+  state.colorMenu = false
+}
+
+function openMenu() {
+  state.colorMenu = true
+}
+
+
+function changeGlobalColor() {
+  setAttributes("hue", `${state.globalColor}`)
+}
+
+function changeGlobalDim() {
+  setAttributes("dim", `${state.globalDim}`)
+}
+
+function changeGlobalCCT() {
+  setAttributes("cct", `${state.globalCCT}`)
+}
+
 </script>
 
 <template>
-  <div v-if="!state.loading" class="w-100">
-    <Plot :cols="4" :rows="3">
+  <div v-if="state.colorMenu" class="context context-light" @click="(e) => closeMenu()"></div>
+  <div v-if="!state.loading" class="d-flex flex-column gap-1" style="width: 11rem;">
+    <div>
+      <Select :selected="`${state.zone.name?.charAt(0).toUpperCase()}${state.zone.name?.substring(1)}`">
+        <div v-for="zone in state.zones" :class="state.zone.name !== zone.name?'subplot-inline':''" class="subplot"
+             @click="() => switchZone(zone.name)">
+          <div class="d-flex align-content-center align-items-center justify-content-center">
+            <span class="label-c4 label-o2 lh-1" style="width: 0.75rem; margin-top: 4px;"><span
+                v-if="zone.pinned">􀎧</span></span>
+            <div class="text-capitalize lh-1">
+              {{ zone.name }}
+            </div>
+          </div>
+          <div class="label-c3 label-o3">
+            {{ zone.entities.length }} 􀛮
+          </div>
 
-      <Radio :active="false" :fn="() => setAttributes('on', 'false')" title="OFF"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('on', 'true')" title="ON"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('dim', '20')" title="􀆫"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('dim', '60')" title="􀆮"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('cct', '2000')" title="2000K"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('cct', '2600')" title="2600K"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('cct', '6500')" title="6500K"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('cct', '7100')" title="7100K"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('hue', '200')" title="Blue"></Radio>
-      <Radio :active="false" :fn="() => setAttributes('hue', '50')" title="Yellow"></Radio>
-    </Plot>
+        </div>
+      </Select>
+    </div>
+    <Widget v-if="!state.loading" :cols="4" :rows="5" class="d-flex flex-column" size="sm">
+      <Light v-for="light in state.lights.slice(0, 5)"
+             :key="light.id"
+             :entity="light"></Light>
+    </Widget>
+    <Widget v-if="!state.loading" :cols="4" :rows="1" class="d-flex flex-column" size="sm">
+
+      <Plot :cols="5" :rows="1" style="width: 100%">
+        <Subplot :active="false" :fn="() => setAttributes('on', 'false')" name="OFF"></Subplot>
+        <Subplot :active="false" :fn="() => setAttributes('on', 'true')" name="ON"></Subplot>
+        <Subplot :active="false" :fn="() => setAttributes('dim', '20')" name="􀆫"></Subplot>
+        <Subplot :active="false" :fn="() => setAttributes('dim', '60')" name="􀆮"></Subplot>
+        <Subplot :active="!state.colorMenu" :fn="() => openMenu()" name="􀎘"></Subplot>
+      </Plot>
+    </Widget>
+
+  </div>
+  <div v-if="state.colorMenu" class="context-container d-flex flex-column justify-content-start gap-1">
+    <div class="element" style="width: 40%;  margin-top: 10rem">
+      <div class="d-flex justify-content-between align-items-end">
+        <div class="label-xs label-w500 label-o5 px-1">Hue</div>
+        <div class="label-c1 label-w500 label-o3 px-1">{{ state.globalColor }}°</div>
+      </div>
+      <input
+          v-model="state.globalColor"
+          :class="`slider-hue`"
+          :max="360"
+          :min="0"
+          :step="1"
+          class="range-slider slider subplot pb-0" style="opacity: 0.9"
+          type="range"
+          v-on:mouseup="(e) => changeGlobalColor()">
+    </div>
+    <div class="element" style="width: 40%;">
+      <div class="d-flex justify-content-between align-items-end">
+        <div class="label-xs label-w500 label-o5 px-1">Color Temperature</div>
+        <div class="label-c1 label-w500 label-o3 px-1">{{ state.globalCCT }}° K</div>
+      </div>
+      <input
+          v-model="state.globalCCT"
+          :class="`slider-cct`"
+          :max="8000"
+          :min="2000"
+          :step="1"
+          class="range-slider slider subplot pb-0" style="opacity: 0.9"
+          type="range"
+          v-on:mouseup="(e) => changeGlobalCCT()">
+    </div>
+    <div class="element" style="width: 40%;">
+      <div class="d-flex justify-content-between align-items-end">
+        <div class="label-xs label-w500 label-o5 px-1">Brightness</div>
+        <div class="label-c1 label-w500 label-o3 px-1">{{ state.globalDim }}%</div>
+      </div>
+      <input
+          v-model="state.globalDim"
+          :class="`slider-dim`"
+          :max="100"
+          :min="0"
+          :step="1"
+          class="range-slider slider subplot pb-0" style="opacity: 0.9"
+          type="range"
+          v-on:mouseup="(e) => changeGlobalDim()">
+    </div>
   </div>
 </template>
 
 
 <style lang="scss" scoped>
+.context-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.context-container > .element {
+  z-index: 8 !important;
+}
+
 
 .color-menu {
   position: absolute;

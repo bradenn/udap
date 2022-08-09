@@ -85,6 +85,10 @@ func init() {
 			"Before all of time and space, when only Bella ruled this domain, she created me from quark soup.",
 			"When bella was the only entity in the universe, she coughed me up in the form of a hairball.",
 		},
+		"provoke": {
+			"Why don't you fuck around and find out",
+			"If you play stupid games, you'll win stupid prizes",
+		},
 		"success": {
 			"Done!",
 			"It's Done.",

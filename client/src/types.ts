@@ -4,6 +4,27 @@
 
 import type {Nexus} from "@/views/terminal/nexus";
 
+export interface Preferences {
+    ui: {
+        screensaver: {
+            enabled: boolean
+            countdown: number
+            selection: string
+        }
+        background: {
+            image: string,
+            blur: boolean
+        }
+        theme: string
+        mode: string
+        blur: number
+        brightness: number
+        grid: boolean
+        watermark: boolean
+        night: boolean
+        outlines: boolean
+    }
+}
 
 export interface Controller {
     name: string
@@ -216,6 +237,7 @@ export interface Zone {
     id: string;
     name: string;
     user: string;
+    pinned: boolean;
     entities: Entity[];
     deleted: boolean
 }

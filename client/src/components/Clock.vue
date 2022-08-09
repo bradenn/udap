@@ -67,14 +67,16 @@ function updateTime() {
   transition: font-size 50ms ease-in;
 }
 
+$dist: 2px;
+
 .time {
   z-index: 22 !important;
   font-size: 2rem;
   line-height: 2rem;
   font-weight: 600;
   font-family: "SF Pro Rounded", sans-serif;
-  color: rgba(255, 255, 255, 0.6);
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  color: rgba(232, 231, 231, 0.9);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
   transition: font-size 50ms ease-in;
 }
 
@@ -83,7 +85,7 @@ function updateTime() {
   line-height: 0.75rem;
   font-weight: 500;
 
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(201, 188, 188, 0.7);
   font-family: "SF Pro Rounded", sans-serif;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }

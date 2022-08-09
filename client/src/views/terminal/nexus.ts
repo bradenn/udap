@@ -92,7 +92,7 @@ export class Nexus {
     public requestAttribute(entity: string, key: string, value: string) {
 
         let nexus = new Preference(PreferenceTypes.Controller).get()
-        axios.post(`http://${nexus}/entities/${entity}/attributes/${key}/request`, value).then(r => {
+        axios.post(`http://10.0.1.2:3020/entities/${entity}/attributes/${key}/request`, value).then(r => {
             console.log(r)
         }).catch(r => {
             console.log(r)

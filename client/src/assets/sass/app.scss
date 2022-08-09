@@ -116,10 +116,15 @@ $fontColors: (
         "7": 7,
         "8": 8,
 );
+.el {
+
+
+}
 
 @each $clr, $i in $fontColors {
   .label-o#{$clr} {
     color: rgba(255, 255, 255, $i * 0.125);
+
   }
 }
 
@@ -154,7 +159,7 @@ $fontColors: (
 }
 
 .context.context-id {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(20px);
 }
 
 .router-link-active.dock-link, .router-link-active.dock-icon {
@@ -231,7 +236,7 @@ $fontColors: (
   font-family: "SF Pro Rounded", sans-serif !important;
   //color: rgba(255, 255, 255, 0.5);
   //background-color: $element-fg;
-  border-radius: 0.3rem;
+  border-radius: 0.3rem !important;
   //box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.05);
   //border: 1px solid rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.55);
@@ -463,22 +468,21 @@ $fontColors: (
 
 /* width */
 ::-webkit-scrollbar {
-
-  width: 1rem;
+  width: 0.35rem;
   max-height: calc(100% - 2em);
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
   height: calc(100% - 1em) !important;
-  border-radius: 0.3rem;
+  border-radius: 0.2rem;
   @extend .surface;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
   @extend .element-secondary;
-  border-radius: 0.3rem;
+  border-radius: 0.2rem;
 }
 
 

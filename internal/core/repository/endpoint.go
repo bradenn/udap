@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package endpoint
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type endpointRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.EndpointRepository {
+func NewEndpointRepository(db *gorm.DB) domain.EndpointRepository {
 	return &endpointRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Endpoint](db),

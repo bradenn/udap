@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package user
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type userRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.UserRepository {
+func NewUserRepository(db *gorm.DB) domain.UserRepository {
 	return &userRepo{
 		db:    db,
 		Store: generic.NewStore[domain.User](db),

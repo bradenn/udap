@@ -443,12 +443,10 @@ func MonitorStats() (System, error) {
 	if isGPU {
 		gpu, err := queryGPU()
 		if err != nil {
-			log.Err(err)
 			return system, err
 		}
 		compute, err := parseCompute(gpu)
 		if err != nil {
-			log.Err(err)
 			return system, err
 		}
 
@@ -481,7 +479,7 @@ var isGPU bool
 func SendUpdate(conn *websocket.Conn) error {
 	stats, err := MonitorStats()
 	if err != nil {
-		return nil
+		log.Err(err)
 	}
 	err = conn.WriteJSON(stats)
 	if err != nil {

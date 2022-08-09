@@ -75,14 +75,6 @@ const props = defineProps<Props>()
   box-shadow: inset 0 0 3px 2px rgba(255, 0, 0, 0.5) !important;
 }
 
-.subplot:active {
-  animation: click 100ms ease forwards !important;
-}
-
-.subplot:hover {
-  animation: click 100ms ease forwards !important;
-}
-
 .subplot {
   justify-content: center;
 }

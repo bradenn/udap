@@ -31,6 +31,7 @@ type EntityService interface {
 	FindById(id string) (*Entity, error)
 	FindByName(name string) (*Entity, error)
 	Create(*Entity) error
+	ChangeIcon(id string, icon string) error
 	Config(id string, value string) error
 	FindOrCreate(*Entity) error
 	Register(*Entity) error

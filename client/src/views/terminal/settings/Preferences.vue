@@ -2,12 +2,10 @@
 <script lang="ts" setup>
 import Header from "@/components/Header.vue";
 import {inject, reactive} from "vue";
-import {Preference} from "@/preferences";
-import {PreferenceTypes} from "@/types";
+import type {Preferences} from "@/types";
 import Plot from "@/components/plot/Plot.vue";
 import axios from "axios";
 import Subplot from "@/components/plot/Subplot.vue";
-import type {Preferences} from "@/App.vue";
 
 let state = reactive({
   loading: true,
@@ -26,8 +24,8 @@ const defaults = {
       identifier: "waves",
     },
     {
-      name: "Cliffs",
-      identifier: "cliffs",
+      name: "Swirl",
+      identifier: "swirl",
     },
     {
       name: "Lies",
@@ -72,6 +70,16 @@ const defaults = {
       identifier: "cursor",
     },
   ],
+  screensavers: [
+    {
+      name: "Bubbles",
+      identifier: "bubbles",
+    },
+    {
+      name: "Warp",
+      identifier: "warp",
+    }
+  ],
   themes: [
     {
       name: "Dark",
@@ -95,20 +103,21 @@ function loadImage(image: string) {
 }
 
 function changeBackground(name: string): any {
-  new Preference(PreferenceTypes.Background).set(name)
   state.loading = true
   loadImage(name);
   preferences.ui.background.image = name
 }
 
 function changeTheme(name: string): any {
-  new Preference(PreferenceTypes.Theme).set(name)
   preferences.ui.theme = name
 }
 
 function changeTouchmode(mode: string): any {
-  new Preference(PreferenceTypes.TouchMode).set(mode)
   preferences.ui.mode = mode
+}
+
+function changeScreensaver(screensaver: string): any {
+  preferences.ui.screensaver.selection = screensaver
 }
 
 </script>
@@ -148,6 +157,14 @@ function changeTouchmode(mode: string): any {
           <Subplot v-for="mode in defaults.touchModes" :active="preferences.ui.mode === mode.identifier"
                    :fn="() => changeTouchmode(mode.identifier)"
                    :name="mode.name" @click="">
+          </Subplot>
+        </Plot>
+
+        <Plot :cols="2" :rows="1" class="flex-grow-1" title="Screensavers">
+          <Subplot v-for="screensaver in defaults.screensavers"
+                   :active="preferences.ui.screensaver.selection === screensaver.identifier"
+                   :fn="() => changeScreensaver(screensaver.identifier)"
+                   :name="screensaver.name" @click="">
           </Subplot>
         </Plot>
 

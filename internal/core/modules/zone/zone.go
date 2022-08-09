@@ -5,10 +5,11 @@ package zone
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
+	"udap/internal/core/repository"
 )
 
 func New(db *gorm.DB) domain.ZoneService {
-	repo := NewRepository(db)
+	repo := repository.NewZoneRepository(db)
 	service := NewService(repo)
 	return service
 }

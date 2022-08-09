@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package device
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type deviceRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.DeviceRepository {
+func NewDeviceRepository(db *gorm.DB) domain.DeviceRepository {
 	return &deviceRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Device](db),

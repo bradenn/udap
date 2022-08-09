@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package notification
+package repository
 
 import (
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ type notificationRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) domain.NotificationRepository {
+func NewNotificationRepository(db *gorm.DB) domain.NotificationRepository {
 	return &notificationRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Notification](db),
