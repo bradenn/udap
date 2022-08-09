@@ -37,6 +37,9 @@ let state = reactive({
   zone: {} as Zone,
   zones: [] as Zone[],
   lights: {} as Entity[],
+  globalColor: 0,
+  globalDim: 50,
+  globalCCT: 6500,
   targets: ["8c1494c3-6515-490b-8f23-1c03b87bde27", "9a3347a7-7e19-4be5-976c-22384c59142a", "c74d427b-5046-4aeb-8195-2efd05d794f8"] as string[],
   loading: true,
   colorMenu: false,
@@ -91,10 +94,31 @@ function setAttributes(key: string, value: string) {
   })
 }
 
+function closeMenu() {
+  state.colorMenu = false
+}
+
+function openMenu() {
+  state.colorMenu = true
+}
+
+
+function changeGlobalColor() {
+  setAttributes("hue", `${state.globalColor}`)
+}
+
+function changeGlobalDim() {
+  setAttributes("dim", `${state.globalDim}`)
+}
+
+function changeGlobalCCT() {
+  setAttributes("cct", `${state.globalCCT}`)
+}
 
 </script>
 
 <template>
+  <div v-if="state.colorMenu" class="context context-light" @click="(e) => closeMenu()"></div>
   <div v-if="!state.loading" class="d-flex flex-column gap-1" style="width: 11rem;">
     <div>
       <Select :selected="`${state.zone.name?.charAt(0).toUpperCase()}${state.zone.name?.substring(1)}`">
@@ -119,22 +143,85 @@ function setAttributes(key: string, value: string) {
              :key="light.id"
              :entity="light"></Light>
     </Widget>
-    <Widget v-if="!state.loading" :cols="4" :rows="3" class="d-flex flex-column" size="sm">
+    <Widget v-if="!state.loading" :cols="4" :rows="1" class="d-flex flex-column" size="sm">
 
-      <Plot :cols="4" :rows="1" style="width: 100%">
+      <Plot :cols="5" :rows="1" style="width: 100%">
         <Subplot :active="false" :fn="() => setAttributes('on', 'false')" name="OFF"></Subplot>
         <Subplot :active="false" :fn="() => setAttributes('on', 'true')" name="ON"></Subplot>
         <Subplot :active="false" :fn="() => setAttributes('dim', '20')" name="􀆫"></Subplot>
         <Subplot :active="false" :fn="() => setAttributes('dim', '60')" name="􀆮"></Subplot>
+        <Subplot :active="!state.colorMenu" :fn="() => openMenu()" name="􀎘"></Subplot>
       </Plot>
     </Widget>
 
   </div>
-
+  <div v-if="state.colorMenu" class="context-container d-flex flex-column justify-content-start gap-1">
+    <div class="element" style="width: 40%;  margin-top: 10rem">
+      <div class="d-flex justify-content-between align-items-end">
+        <div class="label-xs label-w500 label-o5 px-1">Hue</div>
+        <div class="label-c1 label-w500 label-o3 px-1">{{ state.globalColor }}°</div>
+      </div>
+      <input
+          v-model="state.globalColor"
+          :class="`slider-hue`"
+          :max="360"
+          :min="0"
+          :step="1"
+          class="range-slider slider subplot pb-0" style="opacity: 0.9"
+          type="range"
+          v-on:mouseup="(e) => changeGlobalColor()">
+    </div>
+    <div class="element" style="width: 40%;">
+      <div class="d-flex justify-content-between align-items-end">
+        <div class="label-xs label-w500 label-o5 px-1">Color Temperature</div>
+        <div class="label-c1 label-w500 label-o3 px-1">{{ state.globalCCT }}° K</div>
+      </div>
+      <input
+          v-model="state.globalCCT"
+          :class="`slider-cct`"
+          :max="8000"
+          :min="2000"
+          :step="1"
+          class="range-slider slider subplot pb-0" style="opacity: 0.9"
+          type="range"
+          v-on:mouseup="(e) => changeGlobalCCT()">
+    </div>
+    <div class="element" style="width: 40%;">
+      <div class="d-flex justify-content-between align-items-end">
+        <div class="label-xs label-w500 label-o5 px-1">Brightness</div>
+        <div class="label-c1 label-w500 label-o3 px-1">{{ state.globalDim }}%</div>
+      </div>
+      <input
+          v-model="state.globalDim"
+          :class="`slider-dim`"
+          :max="100"
+          :min="0"
+          :step="1"
+          class="range-slider slider subplot pb-0" style="opacity: 0.9"
+          type="range"
+          v-on:mouseup="(e) => changeGlobalDim()">
+    </div>
+  </div>
 </template>
 
 
 <style lang="scss" scoped>
+.context-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.context-container > .element {
+  z-index: 8 !important;
+}
+
 
 .color-menu {
   position: absolute;

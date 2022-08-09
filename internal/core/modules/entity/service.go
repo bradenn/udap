@@ -3,23 +3,24 @@
 package entity
 
 import (
-	"fmt"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 	"udap/internal/log"
 )
 
 type entityService struct {
 	repository domain.EntityRepository
 	channel    chan<- domain.Mutation
+	generic.Watchable
 }
 
-func (u *entityService) EmitAll() error {
+func (u entityService) EmitAll() error {
 	all, err := u.FindAll()
 	if err != nil {
 		return err
 	}
 	for _, entity := range *all {
-		err = u.emit(&entity)
+		err = u.emit(entity)
 		if err != nil {
 			return err
 		}
@@ -27,27 +28,34 @@ func (u *entityService) EmitAll() error {
 	return nil
 }
 
-func (u *entityService) emit(entity *domain.Entity) error {
-	if u.channel == nil {
-		return nil
+func (u entityService) mutate(entity *domain.Entity) error {
+	err := u.repository.Update(entity)
+	if err != nil {
+		return err
 	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "entity",
-		Body:      *entity,
-		Id:        entity.Id,
+	err = u.emit(*entity)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (u *entityService) Watch(mut chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel already set")
+func (u entityService) emit(entity domain.Entity) error {
+	err := u.Emit(entity, entity.Id)
+	if err != nil {
+		log.Err(err)
 	}
-	u.channel = mut
-
 	return nil
 }
+
+// func (u *entityService) Watch(mut chan<- domain.Mutation) error {
+// 	if u.channel != nil {
+// 		return fmt.Errorf("channel already set")
+// 	}
+// 	u.channel = mut
+//
+// 	return nil
+// }
 
 func (u entityService) Config(id string, value string) error {
 	entity, err := u.FindById(id)
@@ -59,7 +67,7 @@ func (u entityService) Config(id string, value string) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(entity)
+	err = u.emit(*entity)
 	if err != nil {
 		return err
 	}
@@ -72,7 +80,7 @@ func (u entityService) Register(entity *domain.Entity) error {
 		return err
 	}
 	log.Event("Entity '%s' registered.", entity.Name)
-	err = u.emit(entity)
+	err = u.emit(*entity)
 	if err != nil {
 		return err
 	}
@@ -80,7 +88,22 @@ func (u entityService) Register(entity *domain.Entity) error {
 }
 
 func NewService(repository domain.EntityRepository) domain.EntityService {
-	return &entityService{repository: repository}
+	return &entityService{
+		Watchable:  generic.NewWatchable("entity"),
+		repository: repository}
+}
+
+func (u entityService) ChangeIcon(id string, icon string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	byId.Icon = icon
+	err = u.mutate(byId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Repository Mapping

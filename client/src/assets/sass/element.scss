@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Braden Nicholson
 
 // Static
-$element-bg: rgba(30, 33, 36, 0.4);
+$element-bg: rgba(28, 28, 30, 0.4);
 $element-fg: rgba(255, 255, 255, 0.035);
 $element-bg-active: lighten($element-bg, 10%);
 $element-shadow: rgba(0, 0, 0, 0.2);
@@ -33,9 +33,9 @@ $loadInDistance: 0.95;
   border-radius: inherit;
 
   // Blur Features
-  //mix-blend-mode: lighten;
-  background-blend-mode: lighten;
-  backdrop-filter: blur(20px);
+
+  background-blend-mode: overlay;
+  backdrop-filter: blur(25px);
 }
 
 .bg-blur:before {
@@ -77,9 +77,35 @@ $themes: (
   }
 }
 
+
+.subplot.subplot-button {
+  transition: all 50ms;
+}
+
+.subplot.subplot-button:active {
+  opacity: 0.8;
+  animation: element-click 200ms forwards linear;
+}
+
+@keyframes element-click {
+  0% {
+    transform: scale3d(0.96, 0.96, 0.96);
+  }
+  100% {
+    transform: scale3d(0.92, 0.92, 0.92);
+  }
+}
+
+.subplot-button {
+  height: 1.65rem;
+  min-width: 4rem;
+  display: flex;
+  justify-content: center !important;
+}
+
 .element-secondary {
   background-color: $element-fg;
-  mix-blend-mode: lighten;
+
 
   //box-shadow: 0 0 8px 0.2px opacify($element-shadow, 0.005);
 }
@@ -100,7 +126,7 @@ $themes: (
 
   animation: loadIn 150ms forwards;
   padding: 0.25rem;
-  border-radius: 0.5rem;
+  border-radius: 0.5rem !important;
 
 }
 
@@ -134,17 +160,3 @@ $themes: (
 }
 
 
-@keyframes element-click {
-  0% {
-    transform: scale(1);
-  }
-  15% {
-    transform: scale(0.90);
-  }
-  80% {
-    transform: scale(0.96);
-  }
-  100% {
-    transform: scale(1);
-  }
-}

@@ -140,7 +140,7 @@ function toggleEntity(entity: Entity) {
 
 <template>
   <div>
-    <div class="d-flex justify-content-start py-2 px-0">
+    <div v-if="false" class="d-flex justify-content-start py-2 px-0">
       <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-map fa-fw`"></i></div>
       <div class="label-w500 opacity-100 label-xxl px-2">Zones</div>
       <div class="flex-fill"></div>
@@ -168,9 +168,7 @@ function toggleEntity(entity: Entity) {
     <div v-else-if="state.mode === 'list'">
       <div class="pane-container">
         <div class="element p-1 ">
-          <div>
-            <div></div>
-          </div>
+
           <div v-for="zone in state.zones" :key="zone.id" @click="() => selectZone(zone.id)">
             <div :class="zone.id === state.selectedZone.id?'subplot':'subplot subplot-inline'"
                  class="d-flex justify-content-between align-items-center">
@@ -191,83 +189,87 @@ function toggleEntity(entity: Entity) {
           </div>
 
         </div>
-        <div class="zone-spec element p-2 pt-1">
-          <div class="d-flex">
-            <div class="label-lg label-r label-w500 text-capitalize">{{ state.selectedZone.name }}</div>
-            <div></div>
-          </div>
-          <div class="h-sep mb-2"></div>
-          <div class="d-flex justify-content-between mx-1">
 
-            <div>
-              <div class="label-c1 lh-1 label-r label-w500 label-o4">Pinned</div>
-              <div class="label-c2 label-o2 lh-1">A pinned zone will show up first on any list of zones.</div>
-            </div>
-            <div v-if="state.selectedZone">
-              <div v-if="!state.selectedZone.pinned" class="subplot subplot-button"
-                   @click="(e) => pinZone()">Pin</div>
-              <div v-else class="subplot subplot-button"
-                   @click="(e) => unpinZone()">Unpin</div>
-            </div>
-          </div>
-          <div class="h-sep my-2"></div>
-          <div class="d-flex justify-content-between mb-1 mx-1">
-            <div>
-              <div class="label-c1 lh-1 label-r label-w500 label-o4">Entities</div>
-              <div class="label-c2 label-o2">The following entities are included in this zone.</div>
-            </div>
-            <div>
-              <div v-if="state.listMode === 'view'" class="subplot subplot-button"
-                   @click="(e) => setListMode('modify')">Modify</div>
-              <div v-if="state.listMode === 'modify'" class="subplot subplot-button"
-                   @click="(e) => setListMode('view')">Done</div>
-            </div>
-          </div>
-          <div v-if="state.selectedZone" class="zones scroll-element mx-1">
+        <div class="zone-spec gap-1">
 
-            <div v-for="entity in state.selectedZone.entities" v-if="state.listMode === 'view'" class="subplot p-2 ">
-              <div class="d-flex gap-1">
-                <div>
-                  {{ entity.icon }}
-                </div>
-                <div class="text-capitalize">
-                  {{ entity.name }}
-                </div>
+          <div class="element p-1 px-1">
+            <div class="d-flex justify-content-between">
+
+              <div class="info-bar">
+                <div class="label-c1 lh-1 label-r label-w500 label-o4">Pinned</div>
+                <div class="label-c2 label-o2 lh-1">A pinned zone will show up first on any list of zones.</div>
               </div>
-              <span class="label-o3">{{ entity.module }}</span>
-            </div>
-            <div
-                v-for="entity in state.entities"
-                v-if="state.listMode === 'modify'"
-                :class="state.selectedZone.entities.find(en => en.id === entity.id)?'':'subplot-inline'"
-                class="subplot p-2"
-                @click="(e) => toggleEntity(entity)">
-              <div class="d-flex gap-1">
-                <div>
-                  {{ entity.icon }}
-                </div>
-                <div class="text-capitalize">
-                  {{ entity.name }}
-                </div>
+              <div v-if="state.selectedZone">
+                <div v-if="!state.selectedZone.pinned" class="subplot subplot-button"
+                     @click="(e) => pinZone()">Pin</div>
+                <div v-else class="subplot subplot-button"
+                     @click="(e) => unpinZone()">Unpin</div>
               </div>
-              <span class="label-o3">{{ entity.module }}</span>
             </div>
           </div>
-          <div class="h-sep mb-2"></div>
-          <div class="d-flex justify-content-between mx-1">
-            <div>
-              <div class="label-c1 lh-1 label-r label-w500 label-o4">Disable</div>
+
+          <div class="element p-1 px-1">
+            <div class="d-flex justify-content-between mb-1">
+              <div class="info-bar">
+                <div class="label-c1 lh-1 label-r label-w500 label-o4">Entities</div>
+                <div class="label-c2 label-o2">The following entities are included in this zone.</div>
+              </div>
+              <div>
+                <div v-if="state.listMode === 'view'" class="subplot subplot-button"
+                     @click="(e) => setListMode('modify')">Modify</div>
+                <div v-if="state.listMode === 'modify'" class="subplot subplot-button"
+                     @click="(e) => setListMode('view')">Done</div>
+              </div>
+            </div>
+            <div v-if="state.selectedZone" class="zones scroll-element mx-1">
+
+              <div v-for="entity in state.selectedZone.entities" v-if="state.listMode === 'view'" class="subplot p-2 ">
+                <div class="d-flex gap-1">
+                  <div>
+                    {{ entity.icon }}
+                  </div>
+                  <div class="text-capitalize">
+                    {{ entity.name }}
+                  </div>
+                </div>
+                <span class="label-o3">{{ entity.module }}</span>
+              </div>
               <div
-                  class="label-c2 label-o2 label-w500 lh-1">Deleted zones will be made invisible, but can be recovered later.</div>
+                  v-for="entity in state.entities"
+                  v-if="state.listMode === 'modify'"
+                  :class="state.selectedZone.entities.find(en => en.id === entity.id)?'':'subplot-inline'"
+                  class="subplot p-2"
+                  @click="(e) => toggleEntity(entity)">
+                <div class="d-flex gap-1">
+                  <div>
+                    {{ entity.icon }}
+                  </div>
+                  <div class="text-capitalize">
+                    {{ entity.name }}
+                  </div>
+                </div>
+                <span class="label-o3">{{ entity.module }}</span>
+              </div>
             </div>
-            <div v-if="state.selectedZone">
-              <div v-if="!state.selectedZone.deleted" class="subplot subplot-button"
-                   @click="(e) => deleteZone()">Delete</div>
-              <div v-else class="subplot subplot-button"
-                   @click="(e) => restoreZone()">Restore</div>
-            </div>
-
           </div>
+
+          <div class="element p-1 px-1">
+            <div class="d-flex justify-content-between">
+              <div class="info-bar">
+                <div class="label-c1 label-w500 label-o4">Visibility</div>
+                <div
+                    class="label-c2 label-o2 label-w500">Deleted zones will be made invisible, but can be recovered later.</div>
+              </div>
+              <div v-if="state.selectedZone">
+                <div v-if="!state.selectedZone.deleted" class="subplot subplot-button"
+                     @click="(e) => deleteZone()">Hide</div>
+                <div v-else class="subplot subplot-button"
+                     @click="(e) => restoreZone()">Show</div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -285,6 +287,17 @@ function toggleEntity(entity: Entity) {
 
 <style lang="scss" scoped>
 
+.info-bar {
+  margin-left: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.info-bar > div {
+  line-height: 0.75rem;
+}
+
 .scroll-element {
   height: 12rem;
   padding-right: 0.25rem;
@@ -296,12 +309,6 @@ function toggleEntity(entity: Entity) {
   border: 1px solid white !important;
 }
 
-.subplot-button {
-  height: 1.5rem;
-  width: 4rem;
-  display: flex;
-  justify-content: center;
-}
 
 .subplot {
   max-height: 2rem;

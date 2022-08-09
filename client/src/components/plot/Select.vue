@@ -71,12 +71,12 @@ function dragScroll(e: DragEvent) {
 }
 
 .select-active {
-
+  z-index: 200 !important;
 }
 
 .select {
   position: relative !important;
-  z-index: 200 !important;
+
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -114,14 +114,6 @@ function dragScroll(e: DragEvent) {
 
 }
 
-
-.subplot:active {
-  animation: click 100ms ease forwards !important;
-}
-
-.subplot:hover {
-  animation: click 100ms ease forwards !important;
-}
 
 .subplot {
   justify-content: center;

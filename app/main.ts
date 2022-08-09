@@ -25,6 +25,7 @@ function createWindow() {
     // win.webContents.debugger.on('detach', (event, reason) => {
     //     console.log('Debugger detached due to: ', reason)
     // })
+    attachTouchMode()
 
     win.webContents.setZoomFactor(1)
     win.loadURL('http://localhost:5002')

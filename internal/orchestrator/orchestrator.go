@@ -65,7 +65,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second,
-		mutations:  make(chan domain.Mutation, 16),
+		mutations:  make(chan domain.Mutation, 32),
 	}, nil
 }
 
@@ -185,6 +185,7 @@ func (o *orchestrator) Run() error {
 	routes.NewAttributeRouter(o.controller.Attributes).RouteAttributes(o.router)
 	routes.NewZoneRouter(o.controller.Zones).RouteZones(o.router)
 	routes.NewDeviceRouter(o.controller.Devices).RouteDevices(o.router)
+	routes.NewEntityRouter(o.controller.Entities).RouteEntities(o.router)
 	routes.NewEndpointRouter(o.endpoints).RouteEndpoints(o.router)
 	routes.NewModuleRouter(o.modules).RouteModules(o.router)
 

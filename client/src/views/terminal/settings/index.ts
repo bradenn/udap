@@ -5,7 +5,6 @@ import Preferences from "@/views/terminal/settings/Preferences.vue";
 import Connection from "@/views/terminal/settings/Connection.vue";
 import Modules from "@/views/terminal/settings/module/Modules.vue";
 import Endpoints from "@/views/terminal/settings/endpoint/Endpoints.vue";
-import Timings from "@/views/terminal/settings/Timings.vue";
 import Zone from "@/views/terminal/settings/zone/Zone.vue";
 import Zones from "@/views/terminal/settings/zone/Zones.vue";
 import Entities from "@/views/terminal/settings/entity/Entities.vue";
@@ -97,15 +96,15 @@ export default {
                     },
                 ]
             },
-            {
-                path: '/terminal/settings/timings',
-                name: 'Timings',
-                icon: 'clock',
-                meta: {
-                    order: 6,
-                },
-                component: Timings
-            },
+            // {
+            //     path: '/terminal/settings/timings',
+            //     name: 'Timings',
+            //     icon: 'clock',
+            //     meta: {
+            //         order: 6,
+            //     },
+            //     component: Timings
+            // },
 
 
             {
@@ -113,7 +112,7 @@ export default {
                 name: 'Zone',
                 icon: 'map',
                 meta: {
-                    order: 7,
+                    order: 6,
                 },
                 component: Zone,
                 children: [

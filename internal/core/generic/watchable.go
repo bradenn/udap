@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 	"udap/internal/core/domain"
-	"udap/internal/core/domain/common"
+	"udap/internal/log"
 )
 
 type Watchable struct {
@@ -21,7 +21,7 @@ func NewWatchable(classification string) Watchable {
 	}
 }
 
-func (w *Watchable) emit(element *common.Persistent) error {
+func (w *Watchable) Emit(element any, id string) error {
 	if w.channel == nil {
 		return fmt.Errorf("channel is null")
 	}
@@ -29,11 +29,11 @@ func (w *Watchable) emit(element *common.Persistent) error {
 	payload := domain.Mutation{
 		Status:    "update",
 		Operation: w.classification,
-		Body:      *element,
-		Id:        element.Id,
+		Body:      element,
+		Id:        id,
 	}
-	// Set a timer to cancel sending after 50 milliseconds
-	timer := time.NewTimer(time.Millisecond * 50)
+	// Set a timer to cancel sending after 100 milliseconds
+	timer := time.NewTimer(time.Millisecond * 100)
 	select {
 	// Attempt to push the payload to the channel
 	case w.channel <- payload:
@@ -42,6 +42,7 @@ func (w *Watchable) emit(element *common.Persistent) error {
 		// Exit normally
 		return nil
 	case <-timer.C:
+		log.Event("emit failed for '%s'", w.classification)
 		// Exit quietly if the payload could not be sent
 		return nil
 	}

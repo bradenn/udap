@@ -184,10 +184,6 @@ function reload() {
   }
 }
 
-.subplot:active {
-  animation: click 200ms ease forwards;
-}
-
 .tag-container:active {
   animation: click 100ms ease forwards;
 }
