@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type userService struct {
 	repository domain.UserRepository
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.User]
 }
 
 func (u *userService) EmitAll() error {
@@ -19,33 +20,11 @@ func (u *userService) EmitAll() error {
 		return err
 	}
 	for _, user := range *all {
-		err = u.emit(&user)
+		err = u.Emit(user)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (u *userService) emit(user *domain.User) error {
-	if u.channel == nil {
-		return nil
-	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "user",
-		Body:      *user,
-		Id:        user.Id,
-	}
-	return nil
-}
-
-func (u *userService) Watch(mut chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel already set")
-	}
-	u.channel = mut
-
 	return nil
 }
 

@@ -1,6 +1,5 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import Header from "@/components/Header.vue";
 import {inject, reactive} from "vue";
 import type {Preferences} from "@/types";
 import Plot from "@/components/plot/Plot.vue";
@@ -123,9 +122,9 @@ function changeScreensaver(screensaver: string): any {
 </script>
 
 <template>
-  <div>
-    <Header class="px-2 pb-1" icon="bars-progress" name="Preferences"></Header>
-    <div class="px-2">
+  <div class="h-100">
+
+    <div class="">
       <div>
         <Plot :cols="5" :rows="2" title="Background">
           <div v-for="background in defaults.backgrounds" @click="changeBackground(background.identifier)">

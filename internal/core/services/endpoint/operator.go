@@ -5,6 +5,7 @@ package endpoint
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
+	"time"
 	"udap/internal/controller"
 	"udap/internal/core/domain"
 	"udap/internal/log"
@@ -176,16 +177,28 @@ func (m *endpointOperator) CloseAll() error {
 }
 
 func (m *endpointOperator) SendAll(id string, operation string, payload any) error {
+
 	transmission := Response{
+		Endpoint:  "",
 		Id:        id,
 		Status:    "success",
 		Operation: operation,
 		Body:      payload,
 	}
+	timer := time.NewTimer(time.Millisecond * 500)
+	select {
+	// Attempt to push the payload to the channel
+	case m.localTransmit <- transmission:
+		// Cancel the timer if payload is sent
+		timer.Stop()
+		// Exit normally
+		return nil
+	case <-timer.C:
+		log.Event("transit transmission timed out")
+		// Exit quietly if the payload could not be sent
+		return nil
+	}
 
-	m.localTransmit <- transmission
-
-	return nil
 }
 
 func (m *endpointOperator) Send(id string, operation string, payload any) error {

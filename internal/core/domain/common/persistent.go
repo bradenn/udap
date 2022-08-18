@@ -12,6 +12,10 @@ type Persistent struct {
 	Id        string     `json:"id" gorm:"primary_key;type:string;default:uuid_generate_v4()"`
 }
 
+func (p Persistent) GetId() string {
+	return p.Id
+}
+
 type Persist[T any] interface {
 	FindAll() (*[]T, error)
 	FindById(id string) (*T, error)

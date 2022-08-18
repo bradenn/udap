@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import moment from 'moment'
 import {onMounted, reactive} from "vue";
+import {useRouter} from "vue-router";
 
 
 let props = defineProps<{
@@ -42,6 +43,12 @@ function updateTime() {
   state.date = m.format("dddd, MMMM Do, YYYY");
 }
 
+const router = useRouter()
+
+function currentPageName() {
+  let last = router.currentRoute.value.matched.length
+  return router.currentRoute.value.matched[last - 1].name
+}
 
 </script>
 
@@ -50,7 +57,7 @@ function updateTime() {
     <div :class="`time${props.small?'-sm':''}`" class="top" @click="$router.push('/terminal/home')"
          v-html="state.time"></div>
     <div v-if="props.small">
-      <div class="page-title"> {{ $router.currentRoute.value.matched[1].name }}</div>
+      <div class="page-title"> {{ currentPageName() }}</div>
     </div>
     <div v-if="!props.small" class="date" v-html="state.date"></div>
   </div>

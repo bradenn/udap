@@ -3,15 +3,15 @@
 package endpoint
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type endpointService struct {
 	repository domain.EndpointRepository
 	operator   domain.EndpointOperator
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.Endpoint]
 }
 
 func (u *endpointService) SendAll(target string, operation string, payload any) error {
@@ -28,32 +28,11 @@ func (u *endpointService) EmitAll() error {
 		return err
 	}
 	for _, endpoint := range *all {
-		err = u.emit(&endpoint)
+		err = u.Emit(endpoint)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (u *endpointService) emit(endpoint *domain.Endpoint) error {
-	if u.channel == nil {
-		return fmt.Errorf("channel is null")
-	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "endpoint",
-		Body:      *endpoint,
-		Id:        endpoint.Id,
-	}
-	return nil
-}
-
-func (u *endpointService) Watch(ref chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel in use")
-	}
-	u.channel = ref
 	return nil
 }
 

@@ -4,36 +4,38 @@ package generic
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
 )
 
-type Watchable struct {
-	channel        chan<- domain.Mutation
-	classification string
+type Identifiable interface {
+	GetId() string
 }
 
-func NewWatchable(classification string) Watchable {
-	return Watchable{
-		channel:        nil,
-		classification: classification,
-	}
+type Watchable[T Identifiable] struct {
+	channel chan<- domain.Mutation
 }
 
-func (w *Watchable) Emit(element any, id string) error {
+func (w *Watchable[T]) Emit(element T) error {
 	if w.channel == nil {
 		return fmt.Errorf("channel is null")
 	}
+	classification := strings.ToLower(reflect.TypeOf(element).Name())
+
+	eId := element.GetId()
 
 	payload := domain.Mutation{
 		Status:    "update",
-		Operation: w.classification,
+		Operation: classification,
 		Body:      element,
-		Id:        id,
+		Id:        eId,
 	}
+
 	// Set a timer to cancel sending after 100 milliseconds
-	timer := time.NewTimer(time.Millisecond * 100)
+	timer := time.NewTimer(time.Millisecond * 500)
 	select {
 	// Attempt to push the payload to the channel
 	case w.channel <- payload:
@@ -42,17 +44,14 @@ func (w *Watchable) Emit(element any, id string) error {
 		// Exit normally
 		return nil
 	case <-timer.C:
-		log.Event("emit failed for '%s'", w.classification)
+		log.Event("emit failed for '%s'", classification)
 		// Exit quietly if the payload could not be sent
 		return nil
 	}
 
 }
 
-func (w *Watchable) Watch(ref chan<- domain.Mutation) error {
-	if w.channel != nil {
-		return fmt.Errorf("channel in use")
-	}
+func (w *Watchable[T]) Watch(ref chan<- domain.Mutation) error {
 	w.channel = ref
 	return nil
 }

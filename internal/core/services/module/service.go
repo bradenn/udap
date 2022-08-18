@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 	"udap/internal/log"
 	"udap/internal/pulse"
 )
@@ -19,7 +20,7 @@ const DIR = "modules"
 type moduleService struct {
 	repository domain.ModuleRepository
 	operator   domain.ModuleOperator
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.Module]
 }
 
 const (
@@ -33,37 +34,16 @@ const (
 	ERROR         = "error"
 )
 
-func (u *moduleService) Watch(ref chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel in use")
-	}
-	u.channel = ref
-	return nil
-}
-
 func (u *moduleService) EmitAll() error {
 	all, err := u.FindAll()
 	if err != nil {
 		return err
 	}
 	for _, module := range *all {
-		err = u.emit(&module)
+		err = u.Emit(module)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (u *moduleService) emit(module *domain.Module) error {
-	if u.channel == nil {
-		return fmt.Errorf("channel is null")
-	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "module",
-		Body:      *module,
-		Id:        module.Id,
 	}
 	return nil
 }
@@ -227,7 +207,7 @@ func (u *moduleService) setState(module *domain.Module, state string) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(module)
+	err = u.Emit(*module)
 	if err != nil {
 		return err
 	}
@@ -386,7 +366,7 @@ func (u moduleService) Disable(id string) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(module)
+	err = u.Emit(*module)
 	if err != nil {
 		return err
 	}
@@ -398,7 +378,7 @@ func (u moduleService) save(module *domain.Module) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(module)
+	err = u.Emit(*module)
 	if err != nil {
 		return err
 	}
@@ -415,7 +395,7 @@ func (u moduleService) Enable(id string) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(module)
+	err = u.Emit(*module)
 	if err != nil {
 		return err
 	}

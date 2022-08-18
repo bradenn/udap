@@ -3,15 +3,15 @@
 package device
 
 import (
-	"fmt"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type deviceService struct {
 	repository  domain.DeviceRepository
 	utilization map[string]domain.Utilization
-	channel     chan<- domain.Mutation
+	generic.Watchable[domain.Device]
 }
 
 func (u *deviceService) EmitAll() error {
@@ -29,15 +29,10 @@ func (u *deviceService) EmitAll() error {
 }
 
 func (u *deviceService) emit(device *domain.Device) error {
-	if u.channel == nil {
-		return nil
-	}
 	device.Utilization = u.utilization[device.Id]
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "device",
-		Body:      *device,
-		Id:        device.Id,
+	err := u.Emit(*device)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -73,15 +68,6 @@ func (u *deviceService) Utilization(id string, utilization domain.Utilization) e
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func (u *deviceService) Watch(mut chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel already set")
-	}
-	u.channel = mut
-
 	return nil
 }
 

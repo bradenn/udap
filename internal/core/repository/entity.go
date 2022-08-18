@@ -13,6 +13,14 @@ type entityRepo struct {
 	db *gorm.DB
 }
 
+func (u entityRepo) FindAll() (*[]domain.Entity, error) {
+	var res []domain.Entity
+	if err := u.db.Model(domain.Entity{}).Find(&res).Error; err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
 func (u entityRepo) FindByName(name string) (*domain.Entity, error) {
 	entity := domain.Entity{}
 	err := u.db.Model(&domain.Entity{}).Where("name = ?", name).Find(&entity).Error

@@ -3,35 +3,46 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"strconv"
-	"sync"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/plugin"
-	"udap/platform/dmx"
 )
 
 var Module Squid
 
-type Squid struct {
-	plugin.Module
-	dmx      dmx.DMXController
-	state    map[int]int
-	entities map[int]string
-	receiver chan domain.Attribute
-	mutex    sync.RWMutex
-
-	update chan Command
-
-	connected bool
+type Channel struct {
+	Channel int `json:"channel"`
+	Value   int `json:"value"`
 }
 
-type Command struct {
-	read  bool
-	id    int
-	value int
+func (c *Channel) isOn() bool {
+	return c.Value > 0
+}
+
+func (c *Channel) toPercent() int {
+	return int((float64(c.Value) / 255.0) * 100.0)
+}
+
+func (c *Channel) fromPercent(percent int) int {
+	return int((float64(percent) / 100.0) * 255.0)
+}
+
+type Status struct {
+	Channels []Channel `json:"channels"`
+}
+
+type Squid struct {
+	plugin.Module
+	entities map[int]string
+	receiver chan domain.Attribute
+
+	connected bool
 }
 
 func init() {
@@ -39,7 +50,7 @@ func init() {
 		Name:        "squid",
 		Type:        "module",
 		Description: "Control LOR Light Controller",
-		Version:     "2.1",
+		Version:     "3.0",
 		Author:      "Braden Nicholson",
 	}
 
@@ -47,61 +58,15 @@ func init() {
 }
 
 func (s *Squid) setChannelValue(channel int, value int) (err error) {
-	if !s.connected {
-		return fmt.Errorf("squid is not connected")
-	}
-
 	if value > 100 || value < 0 {
 		return fmt.Errorf("desired value '%d' is invalid", value)
 	}
-	var adjustedValue byte
-	adjustedValue = uint8(math.Round((float64(value) / 100.0) * 255.0))
+	var adjustedValue int
+	adjustedValue = int(math.Round((float64(value) / 100.0) * 255.0))
 
-	err = s.dmx.SetChannel(int16(channel), adjustedValue)
+	err = s.remoteRequest(channel, adjustedValue)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-//
-// getChannelValue polls the dmx controller for the current value of the channel
-func (s *Squid) getChannelValue(channel int) (value int, err error) {
-	if !s.connected {
-		return 0, fmt.Errorf("squid is not connected")
-	}
-
-	res, err := s.dmx.GetChannel(int16(channel))
-	if err != nil {
-		return 0, err
-	}
-	newValue := (res / 255.0) * 100.0
-	return int(newValue), nil
-}
-
-func (s *Squid) getLocalValue(channel int) (value int) {
-	level := 0
-	s.mutex.RLock()
-	level = s.state[channel]
-	s.mutex.RUnlock()
-
-	return level
-}
-
-func (s *Squid) setLocalValue(channel int, value int) error {
-
-	payload := Command{
-		read:  false,
-		id:    channel,
-		value: value,
-	}
-
-	select {
-	case s.update <- payload:
-		return nil
-	case <-time.After(time.Millisecond * 100):
-		s.WarnF("setting local value for channel %d timed out", channel)
 	}
 
 	return nil
@@ -112,24 +77,87 @@ func (s *Squid) handleDimState(channel int, value string) error {
 	if err != nil {
 		return err
 	}
-	s.setValue(channel, int(parseInt))
-	return nil
-}
 
-func (s *Squid) setValue(channel int, value int) {
-	s.LogF("Setting %d to %d", channel, value)
-	s.mutex.Lock()
-	s.state[channel] = value
-	s.mutex.Unlock()
+	err = s.setChannelValue(channel, int(parseInt))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Squid) handleOnState(channel int, value string) error {
 	if value == "true" {
-		s.setValue(channel, 100)
+		err := s.setChannelValue(channel, 100)
+		if err != nil {
+			return err
+		}
 	} else {
-		s.setValue(channel, 0)
+		err := s.setChannelValue(channel, 0)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func (s *Squid) remoteRequest(channel int, value int) error {
+	c := Channel{
+		Channel: channel,
+		Value:   value,
+	}
+	marshal, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	buf.Write(marshal)
+	client := http.Client{Timeout: time.Millisecond * 500}
+	post, err := client.Post("http://10.0.1.76/channel", "application/json", &buf)
+
+	defer func() {
+		post.Body.Close()
+	}()
+
+	if err != nil {
+		return err
+	}
+
+	var response bytes.Buffer
+	_, err = response.ReadFrom(post.Body)
+	if err != nil {
+		return err
+	}
+
+	if response.String() != "okay" {
+		return fmt.Errorf("request failed")
+	}
+
+	return nil
+
+}
+
+func (s *Squid) remoteFetch() (Status, error) {
+	client := http.Client{Timeout: time.Millisecond * 500}
+	get, err := client.Get("http://10.0.1.76/status")
+	defer get.Body.Close()
+	if err != nil {
+		return Status{}, err
+	}
+
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(get.Body)
+	if err != nil {
+		return Status{}, err
+	}
+
+	status := Status{}
+	err = json.Unmarshal(buf.Bytes(), &status)
+	if err != nil {
+		return Status{}, err
+	}
+
+	return status, err
 }
 
 func (s *Squid) handleAttribute(attr domain.Attribute) error {
@@ -157,9 +185,8 @@ func (s *Squid) handleAttribute(attr domain.Attribute) error {
 }
 
 func (s *Squid) registerDevices() error {
-	if !s.connected {
-		return nil
-	}
+	s.entities = map[int]string{}
+	s.receiver = make(chan domain.Attribute)
 	for i := 1; i <= 16; i++ {
 
 		entity := &domain.Entity{
@@ -183,10 +210,6 @@ func (s *Squid) registerDevices() error {
 		}
 
 		s.entities[i] = entity.Id
-		err = s.setLocalValue(i, 0)
-		if err != nil {
-			return err
-		}
 
 		err = s.Attributes.Register(on)
 		if err != nil {
@@ -219,56 +242,17 @@ func (s *Squid) Setup() (plugin.Config, error) {
 	if err != nil {
 		return plugin.Config{}, err
 	}
-	return s.Config, nil
-}
-
-func (s *Squid) connect() error {
+	err = s.InitConfig("address", "10.0.1.76")
+	if err != nil {
+		return plugin.Config{}, err
+	}
 	s.connected = false
-
-	config := dmx.NewConfig(0x02)
-	config.GetUSBContext()
-
-	defer func() {
-		if r := recover(); r != nil {
-			s.connected = false
-			s.ErrF("DMX Panicked: %s", r)
-			return
-		}
-	}()
-
-	s.dmx = dmx.NewDMXController(config)
-
-	err := s.dmx.Connect()
-	if err != nil {
-		return err
-	}
-
-	s.connected = true
-	s.update = make(chan Command)
-
-	s.receiver = make(chan domain.Attribute)
-
-	s.state = map[int]int{}
-
-	s.entities = map[int]string{}
-
-	s.mutex = sync.RWMutex{}
-
-	go s.mux()
-
-	err = s.registerDevices()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.Config, nil
 }
 
 func (s *Squid) mux() {
 	for {
 		select {
-		case cmd := <-s.update:
-			s.setValue(cmd.id, cmd.value)
 		case attr := <-s.receiver:
 			err := s.handleAttribute(attr)
 			if err != nil {
@@ -281,22 +265,24 @@ func (s *Squid) mux() {
 
 func (s *Squid) pull() error {
 	if !s.connected {
-		s.WarnF("not connected")
 		return nil
 	}
+	fetch, err := s.remoteFetch()
+	if err != nil {
+		return err
+	}
 
-	for i, entity := range s.entities {
+	for _, channel := range fetch.Channels {
+		entity := s.entities[channel.Channel]
 
-		stateNum := "0"
-		value := s.getLocalValue(i)
-		stateNum = fmt.Sprintf("%d", value)
-		err := s.Attributes.Update(entity, "dim", stateNum, time.Now())
+		dimValue := fmt.Sprintf("%d", channel.toPercent())
+		err = s.Attributes.Update(entity, "dim", dimValue, time.Now())
 		if err != nil {
 			return err
 		}
 
 		state := "false"
-		if value > 0 {
+		if channel.isOn() {
 			state = "true"
 		}
 		err = s.Attributes.Update(entity, "on", state, time.Now())
@@ -317,46 +303,13 @@ func (s *Squid) Update() error {
 	return nil
 }
 
-func (s *Squid) renderer() {
-	for {
-
-		if !s.connected {
-			s.ErrF("not connected, exiting render loop")
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-		for i := 1; i <= 16; i++ {
-			s.mutex.RLock()
-			err := s.setChannelValue(i, s.state[i])
-			s.mutex.RUnlock()
-			if err != nil {
-				s.ErrF("failed to set the value for channel %d: %s", i, err.Error())
-			}
-		}
-
-		err := s.dmx.Render()
-		if err != nil {
-			s.ErrF("%s", err.Error())
-			break
-		}
-
-	}
-
-	err := s.dmx.Close()
-	if err != nil {
-		s.ErrF("%s", err.Error())
-	}
-}
-
 // Run is called after Setup, concurrent with Update
 func (s *Squid) Run() (err error) {
-
-	err = s.connect()
+	err = s.registerDevices()
 	if err != nil {
 		return err
 	}
-
-	go s.renderer()
-
+	go s.mux()
+	s.connected = true
 	return nil
 }

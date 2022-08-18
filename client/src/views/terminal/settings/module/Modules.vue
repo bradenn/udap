@@ -66,15 +66,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
 </script>
 
 <template>
-  <div>
-    <div class="d-flex justify-content-between py-2 px-1">
-      <div class="d-flex justify-content-start">
-        <div class="label-w500 label-o3 label-xxl"><i :class="`fa-solid fa-layer-group fa-fw`"></i></div>
-        <div class="label-w500 opacity-100 label-xxl px-2">Modules</div>
-      </div>
-
-
-    </div>
+  <div class="h-100">
     <div v-if="!state.loading" class="d-flex flex-column gap-1">
 
 

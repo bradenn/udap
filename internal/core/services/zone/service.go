@@ -5,11 +5,12 @@ package zone
 import (
 	"fmt"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type zoneService struct {
 	repository domain.ZoneRepository
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.Zone]
 }
 
 func (u *zoneService) EmitAll() error {
@@ -18,23 +19,10 @@ func (u *zoneService) EmitAll() error {
 		return err
 	}
 	for _, zone := range *all {
-		err = u.emit(&zone)
+		err = u.Emit(zone)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (u *zoneService) emit(zone *domain.Zone) error {
-	if u.channel == nil {
-		return nil
-	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "zone",
-		Body:      *zone,
-		Id:        zone.Id,
 	}
 	return nil
 }
@@ -48,19 +36,10 @@ func (u *zoneService) mutate(zone *domain.Zone) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(zone)
+	err = u.Emit(*zone)
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func (u *zoneService) Watch(mut chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel already set")
-	}
-	u.channel = mut
-
 	return nil
 }
 
@@ -184,7 +163,7 @@ func (u *zoneService) Create(zone *domain.Zone) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(zone)
+	err = u.Emit(*zone)
 	if err != nil {
 		return err
 	}

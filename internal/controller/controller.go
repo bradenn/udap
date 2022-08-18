@@ -5,14 +5,14 @@ package controller
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
-	"udap/internal/core/modules/attribute"
-	"udap/internal/core/modules/device"
-	"udap/internal/core/modules/entity"
-	"udap/internal/core/modules/logs"
-	"udap/internal/core/modules/network"
-	"udap/internal/core/modules/notification"
-	"udap/internal/core/modules/user"
-	"udap/internal/core/modules/zone"
+	"udap/internal/core/services/attribute"
+	"udap/internal/core/services/device"
+	"udap/internal/core/services/entity"
+	"udap/internal/core/services/logs"
+	"udap/internal/core/services/network"
+	"udap/internal/core/services/notification"
+	"udap/internal/core/services/user"
+	"udap/internal/core/services/zone"
 )
 
 type Controller struct {
@@ -98,12 +98,17 @@ func (c *Controller) WatchAll(resp chan domain.Mutation) {
 
 func (c *Controller) EmitAll() error {
 
-	err := c.Attributes.EmitAll()
+	err := c.Entities.EmitAll()
 	if err != nil {
 		return err
 	}
 
-	err = c.Entities.EmitAll()
+	err = c.Zones.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Attributes.EmitAll()
 	if err != nil {
 		return err
 	}
@@ -124,11 +129,6 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Networks.EmitAll()
-	if err != nil {
-		return err
-	}
-
-	err = c.Zones.EmitAll()
 	if err != nil {
 		return err
 	}

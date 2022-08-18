@@ -3,15 +3,15 @@
 package attribute
 
 import (
-	"fmt"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type attributeService struct {
 	repository domain.AttributeRepository
 	operator   domain.AttributeOperator
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.Attribute]
 }
 
 func (a *attributeService) EmitAll() error {
@@ -20,32 +20,11 @@ func (a *attributeService) EmitAll() error {
 		return err
 	}
 	for _, attribute := range *all {
-		err = a.emit(&attribute)
+		err = a.Emit(attribute)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (a *attributeService) emit(attribute *domain.Attribute) error {
-	if a.channel == nil {
-		return fmt.Errorf("channel is null")
-	}
-	a.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "attribute",
-		Body:      *attribute,
-		Id:        attribute.Id,
-	}
-	return nil
-}
-
-func (a *attributeService) Watch(ref chan<- domain.Mutation) error {
-	if a.channel != nil {
-		return fmt.Errorf("channel in use")
-	}
-	a.channel = ref
 	return nil
 }
 
@@ -57,7 +36,6 @@ func NewService(repository domain.AttributeRepository, operator domain.Attribute
 	return &attributeService{
 		repository: repository,
 		operator:   operator,
-		channel:    nil,
 	}
 }
 
@@ -71,7 +49,7 @@ func (a *attributeService) Register(attribute *domain.Attribute) error {
 		return err
 	}
 
-	err = a.emit(attribute)
+	err = a.Emit(*attribute)
 	if err != nil {
 		return err
 	}
@@ -91,7 +69,7 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 	if err != nil {
 		return err
 	}
-	err = a.emit(e)
+	err = a.Emit(*e)
 	if err != nil {
 		return err
 	}
@@ -111,7 +89,7 @@ func (a *attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
-	err = a.emit(e)
+	err = a.Emit(*e)
 	if err != nil {
 		return err
 	}
@@ -131,7 +109,7 @@ func (a *attributeService) Update(entity string, key string, value string, stamp
 	if err != nil {
 		return err
 	}
-	err = a.emit(e)
+	err = a.Emit(*e)
 	if err != nil {
 		return err
 	}

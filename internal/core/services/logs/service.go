@@ -3,13 +3,13 @@
 package logs
 
 import (
-	"fmt"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type logService struct {
 	repository domain.LogRepository
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.Log]
 }
 
 func (u *logService) EmitAll() error {
@@ -18,33 +18,11 @@ func (u *logService) EmitAll() error {
 		return err
 	}
 	for _, log := range all {
-		err = u.emit(&log)
+		err = u.Emit(log)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (u *logService) emit(log *domain.Log) error {
-	if u.channel == nil {
-		return nil
-	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "log",
-		Body:      *log,
-		Id:        log.Id,
-	}
-	return nil
-}
-
-func (u *logService) Watch(mut chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel already set")
-	}
-	u.channel = mut
-
 	return nil
 }
 
@@ -59,7 +37,7 @@ func (u *logService) Create(log *domain.Log) error {
 	if err != nil {
 		return err
 	}
-	err = u.emit(log)
+	err = u.Emit(*log)
 	if err != nil {
 		return err
 	}

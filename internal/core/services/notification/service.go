@@ -3,13 +3,13 @@
 package notification
 
 import (
-	"fmt"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type notificationService struct {
 	repository domain.NotificationRepository
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.Notification]
 }
 
 func (u *notificationService) EmitAll() error {
@@ -18,32 +18,11 @@ func (u *notificationService) EmitAll() error {
 		return err
 	}
 	for _, notification := range *all {
-		err = u.emit(&notification)
+		err = u.Emit(notification)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (u *notificationService) emit(notification *domain.Notification) error {
-	if u.channel == nil {
-		return nil
-	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "notification",
-		Body:      *notification,
-		Id:        notification.Id,
-	}
-	return nil
-}
-
-func (u *notificationService) Watch(mut chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel already set")
-	}
-	u.channel = mut
 	return nil
 }
 

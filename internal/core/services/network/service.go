@@ -3,13 +3,13 @@
 package network
 
 import (
-	"fmt"
 	"udap/internal/core/domain"
+	"udap/internal/core/generic"
 )
 
 type networkService struct {
 	repository domain.NetworkRepository
-	channel    chan<- domain.Mutation
+	generic.Watchable[domain.Network]
 }
 
 func (u *networkService) EmitAll() error {
@@ -18,33 +18,11 @@ func (u *networkService) EmitAll() error {
 		return err
 	}
 	for _, network := range *all {
-		err = u.emit(&network)
+		err = u.Emit(network)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (u *networkService) emit(network *domain.Network) error {
-	if u.channel == nil {
-		return nil
-	}
-	u.channel <- domain.Mutation{
-		Status:    "update",
-		Operation: "network",
-		Body:      *network,
-		Id:        network.Id,
-	}
-	return nil
-}
-
-func (u *networkService) Watch(mut chan<- domain.Mutation) error {
-	if u.channel != nil {
-		return fmt.Errorf("channel already set")
-	}
-	u.channel = mut
-
 	return nil
 }
 

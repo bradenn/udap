@@ -231,6 +231,7 @@ export interface Device {
     ipv6: string;
 }
 
+
 export interface Zone {
     created: string;
     updated: string;
@@ -241,6 +242,7 @@ export interface Zone {
     entities: Entity[];
     deleted: boolean
 }
+
 
 export interface Endpoint {
     created: string;
