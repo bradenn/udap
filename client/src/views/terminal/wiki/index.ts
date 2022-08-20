@@ -9,6 +9,9 @@ const wikiRoutes = {
     name: 'Wiki',
     component: Wiki,
     icon: 'fa-book',
+    meta: {
+        status: 'wip'
+    },
     children: [
         {
             path: '/terminal/wiki',

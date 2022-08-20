@@ -7,6 +7,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import Confirm from "@/components/plot/Confirm.vue";
 import axios from "axios";
+import {useRouter} from "vue-router";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -63,6 +64,13 @@ function groupBy<T>(xs: T[], key: string): T[] {
     return rv;
   }, {});
 }
+
+const router = useRouter();
+
+function editModule(id: string) {
+  router.push(`/terminal/settings/modules/${id}`)
+}
+
 </script>
 
 <template>
@@ -113,7 +121,7 @@ function groupBy<T>(xs: T[], key: string): T[] {
                      title="Disable"></Confirm>
             <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀅉" style="width: 3rem;"
                    title=""></Radio>
-            <Radio :active="false" :fn="() => reloadModule(module.name)" sf="􀍟" style="width: 3rem;"
+            <Radio :active="false" :fn="() => editModule(module.id)" sf="􀍟" style="width: 3rem;"
                    title=""></Radio>
           </div>
         </Plot>

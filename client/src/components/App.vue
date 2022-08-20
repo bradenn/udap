@@ -5,6 +5,7 @@
 interface App {
   name: string
   icon?: string
+  status?: string
 }
 
 let props = defineProps<App>()
@@ -14,6 +15,7 @@ let props = defineProps<App>()
 <template>
   <div class="app-container">
     <div class="app-icon element">
+      <div v-if="props.status === 'wip'" class="marker">•</div>
       <i v-if="props.icon" :class="props.icon" class="fa-solid fa-fw"></i>
       <i v-else class="fa-solid fa-circle fa-fw"></i>
     </div>
@@ -22,7 +24,12 @@ let props = defineProps<App>()
 </template>
 
 <style lang="scss" scoped>
-
+.marker {
+  position: absolute;
+  top: -0.25rem;
+  left: 0.25rem;
+  color: rgba(255, 128, 12, 0.4)
+}
 
 .app-container {
   display: flex;

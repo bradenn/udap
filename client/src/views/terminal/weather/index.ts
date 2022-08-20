@@ -10,6 +10,9 @@ const weatherRoutes = {
     redirect: '/terminal/weather/summary',
     component: WeatherApp,
     icon: 'fa-cloud-sun',
+    meta: {
+        status: "wip"
+    },
     children: [
         {
             path: '/terminal/weather/summary',

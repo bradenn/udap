@@ -53,6 +53,7 @@ export interface Module {
     updated: string;
     id: string;
     name: string
+    uuid: string
     path: string
     type: string
     enabled: boolean

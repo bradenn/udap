@@ -203,6 +203,10 @@ $fontColors: (
   box-shadow: none !important;
 }
 
+.text-warning {
+  mix-blend-mode: overlay;
+}
+
 .timeline-sm {
   width: 100%;
   height: 8px;
@@ -468,7 +472,7 @@ $fontColors: (
 
 /* width */
 ::-webkit-scrollbar {
-  width: 0.35rem;
+  width: 0.8rem;
   max-height: calc(100% - 2em);
 }
 

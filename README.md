@@ -41,4 +41,31 @@ concurrent commands, but for larger loads, instancing is recommended.
 | Terminal | An authoritative nexus instance (Used for configuration and management) |
 | Pad      | A general use nexus instance, can be used by anyone without authentication if configured by terminal. |
 
+## Front-end elements
+
+#### Element
+
+An element is a super class of a Plot, Pane, or other ui element that has a blurred background.
+
+### Plots
+
+A Plot is a grid-like element that contains a fixed number of cells defined by a number of rows and columns.
+Plots can be configured to have a title and alt button. Plots are usually used to hold buttons or other contextual
+elements.
+
+##### Plot Selection (from Settings->Preferences page)
+
+![Plot Buttons](./images/plot_buttons.png)
+
+##### Plot Module (from Settings->Modules page)
+
+Plots can contain custom dom to serve whatever purpose is needed:
+![Plot Buttons](./images/plot_module.png)
+
+##### Plot Buttons (from Global context Menu)
+
+Plots are best used for providing many buttons for easy selection.
+
+![Plot Buttons](./images/plot_multi.png)
+
 #### Copyright &copy; 2019-2022 Braden Nicholson

@@ -19,6 +19,7 @@ let state = reactive({
   loading: true,
   selectedEntity: {} as Entity,
   moduleEntities: [] as Entity[],
+  selectedAttributes: [] as Attribute[],
   selectedModule: "",
   configOption: ""
 })
@@ -63,6 +64,9 @@ function selectEntity(entity: string) {
   const find = remote.entities.find(e => e.id === entity)
   if (!find) return
   state.selectedEntity = find
+  const attrs = remote.attributes.filter(e => e.entity === entity)
+  if (!attrs) return
+  state.selectedAttributes = attrs
 }
 
 function setConfig(conf: string) {
@@ -157,6 +161,21 @@ function parsePosition(pos: string) {
         </PaneDialogue>
         <PanePopup v-if="isOpen('position')" :close="closePopup"
                    title="Position">
+        </PanePopup>
+        <PaneDialogue v-if="state.selectedEntity?.position"
+                      :alt="state.selectedEntity?.position !== '{}'?parsePosition(state.selectedEntity?.position):''"
+                      subtext="Assign default states for attributes in the event of a power loss"
+                      title="Defaults">
+          <div class="subplot subplot-button" @click="(e) => setConfig('defaults')">
+            Configure
+          </div>
+        </PaneDialogue>
+        <PanePopup v-if="isOpen('defaults')" :close="closePopup"
+                   title="Defaults">
+          <div v-for="attribute in state.selectedAttributes" :key="attribute.id">
+            {{ attribute.key }}
+            {{ attribute.value }}
+          </div>
         </PanePopup>
         <PaneDialogue v-if="state.selectedEntity?.position"
                       alt="Peak: 15 W, Linear"

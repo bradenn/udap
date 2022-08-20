@@ -107,7 +107,9 @@ function getRoutes() {
       <Widget :cols="1" :rows="4" class="" size="sm"
               style="">
         <div class="widget-apps">
-          <App v-for="i in state.apps" :icon="i.icon || 'fa-square'" :name="i.name" @click="router.push(i.path)"></App>
+          <App v-for="i in state.apps" :key="i.name" :icon="i.icon || 'fa-square'" :name="i.name"
+               :status="i?.meta?.status"
+               @click="router.push(i.path)"></App>
         </div>
       </Widget>
 

@@ -3,7 +3,7 @@
 import Settings from "@/views/terminal/settings/Settings.vue";
 import Preferences from "@/views/terminal/settings/Preferences.vue";
 import Connection from "@/views/terminal/settings/Connection.vue";
-import Modules from "@/views/terminal/settings/module/Modules.vue";
+import module from "@/views/terminal/settings/module";
 import Endpoints from "@/views/terminal/settings/endpoint/Endpoints.vue";
 import Zone from "@/views/terminal/settings/zone/Zone.vue";
 import Zones from "@/views/terminal/settings/zone/Zones.vue";
@@ -40,15 +40,7 @@ export default {
                 },
                 component: Connection
             },
-            {
-                path: '/terminal/settings/modules',
-                name: 'Modules',
-                icon: 'layer-group',
-                meta: {
-                    order: 2,
-                },
-                component: Modules
-            },
+            module,
             {
                 path: '/terminal/settings/endpoints',
                 name: 'Endpoints',

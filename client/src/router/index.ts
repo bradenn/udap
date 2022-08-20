@@ -266,6 +266,9 @@ const calculatorRoute = {
     path: '/terminal/calculator',
     name: 'Calculator',
     component: Calculator,
+    meta: {
+        status: 'wip'
+    },
     icon: 'fa-calculator',
 }
 

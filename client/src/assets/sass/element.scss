@@ -85,6 +85,11 @@ $themes: (
   font-weight: 600 !important;
 }
 
+.text-accent {
+  color: rgba(255, 149, 0, 1) !important;
+  mix-blend-mode: multiply;
+}
+
 .subplot-primary-inline {
   background-color: transparent !important;
 }
@@ -123,6 +128,9 @@ $themes: (
   //box-shadow: 0 0 8px 0.2px opacify($element-shadow, 0.005);
 }
 
+.subplot-inline.subplot-active {
+  background-color: $element-fg !important;
+}
 
 //.element-secondary:active {
 //  background-color: $element-bg-active;
