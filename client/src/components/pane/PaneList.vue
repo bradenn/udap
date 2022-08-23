@@ -10,6 +10,11 @@ interface Plot {
 
 let props = defineProps<Plot>()
 
+function close() {
+  if (props.close) {
+    props.close()
+  }
+}
 
 </script>
 
@@ -18,7 +23,7 @@ let props = defineProps<Plot>()
     <div v-if="props.title" class="popup-nav">
       <div class="nav-area justify-content-start">
         <div v-if="props.previous" class="nav-area justify-content-start">
-          <div class="d-flex gap-1 label-o3 px-2 align-items-center text-accent" @click="(e) => props.close()">
+          <div class="d-flex gap-1 label-o3 px-2 align-items-center text-accent" @click="(e) => close()">
             <div class="label-c1">􀆉</div>
             <div class="label-c2 lh-1">Back</div>
           </div>

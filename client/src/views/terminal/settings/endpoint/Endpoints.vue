@@ -43,7 +43,7 @@ function setMode(mode: string) {
     <div v-if="state.mode === 'list'">
       <Plot :cols="1" :rows="1" class="mb-1" small style="width: 6rem;">
         <Radio :active="false" :fn="() => setMode(state.mode === 'create'?'list':'create')"
-               :title="state.mode === 'create'?'Cancel':'New Endpoint'"></Radio>
+               :title="state.mode === 'list'?'Cancel':'New Endpoint'"></Radio>
       </Plot>
       <div class="endpoint-container w-100">
         <div v-for="endpoint in state.endpoints"

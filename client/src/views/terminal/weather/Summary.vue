@@ -1,10 +1,12 @@
-<!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
+// Copyright (c) 2022 Braden Nicholson
 import moment from "moment";
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Attribute, Entity, Remote} from "@/types";
 import type {CurrentWeather, Weather} from "@/weather";
 import {getWeatherIcon, getWeatherState} from "@/weather"
+import PaneList from "@/components/pane/PaneList.vue";
+import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
 
 interface WeatherProps {
   current: CurrentWeather
@@ -86,6 +88,10 @@ function roundDecimal(input: number, places: number) {
   return Math.round(input * Math.pow(10, places)) / Math.pow(10, places)
 }
 
+function asDate(ms: number): string {
+  return moment(ms).format("HH:mm AA")
+}
+
 </script>
 <template>
   <div class="element p-2 pt-1">
@@ -121,7 +127,10 @@ function roundDecimal(input: number, places: number) {
               <div class="label-c3 label-w400 label-o3 mt-1">
                 {{ state.latest.hourly_units.temperature_2m }}
               </div>
+
+
             </div>
+
             <div class="d-flex align-items-center justify-content-center">
               <div v-if="state.latest.hourly.precipitation[hour] > 0" class="label-c3 label-w500 label-o4 mt-1 rain">
                 {{ state.latest.hourly.precipitation[hour] }}
@@ -129,9 +138,24 @@ function roundDecimal(input: number, places: number) {
             </div>
           </div>
 
+
         </div>
 
       </div>
+    </div>
+  </div>
+
+  <PaneList class="mt-1" style="width: 12rem">
+    <PaneListItemInline :active="false" :subtext="asDate(state.latest.daily.sunrise[0])" icon="􀆱"
+                        title="Sunrise"></PaneListItemInline>
+    <PaneListItemInline :active="false" :subtext="asDate(state.latest.daily.sunset[0])" icon="􀆳"
+                        title="Sunset"></PaneListItemInline>
+  </PaneList>
+
+  <div class="element mt-1">
+    <div class="label-c3 label-w400 label-o3 mt-1">
+
+      {{ state.latest.daily }}
     </div>
   </div>
 
