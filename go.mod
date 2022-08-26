@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Ullaakut/nmap/v2 v2.2.0
+	github.com/arran4/golang-ical v0.0.0-20220517104411-fd89fefb0182
 	github.com/brutella/hc v1.2.4
 	github.com/gerow/go-color v0.0.0-20140219113758-125d37f527f1
 	github.com/go-chi/chi v1.5.4
