@@ -1,38 +1,76 @@
 <script lang="ts" setup>
 
 
-import {onMounted, reactive} from "vue";
+import {inject, onMounted, reactive, watchEffect} from "vue";
+import type {Attribute, Entity, Preferences, Remote, Status} from "@/types";
 
-
-let state = reactive<{
-  canvas: HTMLCanvasElement
-  tick: number
-}>({
+let state = reactive({
   canvas: {} as HTMLCanvasElement,
-  tick: 0
+  tick: 0,
+  menu: false,
+  reloading: true,
+  connected: false,
+  zoneEntity: {} as Entity,
+  zoneAttribute: {} as Attribute,
+  status: {} as Status
 })
+
+let preferences: Preferences = inject("preferences") as Preferences
+let remote: Remote = inject('remote') as Remote
+let system: any = inject('system')
+
+onMounted(() => {
+  update()
+  state.reloading = false
+})
+
+watchEffect(() => {
+  state.connected = remote.connected
+  update()
+  return state.zoneAttribute
+})
+
+function update() {
+  let entity = remote.entities.find(e => e.name === 'faces')
+  if (!entity) return
+  state.zoneEntity = entity
+
+  let attr = remote.attributes.find(e => e.key === 'deskFace')
+  if (!attr) return
+  state.zoneAttribute = attr
+
+  let stat = JSON.parse(attr.value) as Status
+  if (!stat) return
+
+  state.status = stat
+
+}
+
 
 onMounted(() => {
   loadCanvas()
   drawCanvas()
-  // setInterval(drawCanvas, 100)
+  setInterval(drawCanvas, 100)
 })
 
 function loadCanvas() {
   state.canvas = document.getElementById("canvas-id") as HTMLCanvasElement
   const ctx = state.canvas.getContext('2d')
   if (!ctx) return
-  ctx.scale(0.5, 0.5)
+
+  ctx.scale(1, 1)
+
 }
 
 function drawCanvas() {
+
   const ctx = state.canvas.getContext('2d')
   if (!ctx) return
   ctx.clearRect(0, 0, state.canvas.width, state.canvas.height)
 
-  let n = 24;
+  let n = Math.round(300 * (1 - state.status.predictions[0].distance));
 
-  let diam = 84;
+  let diam = 600;
   let div = (Math.PI * 2) / n;
 
 
@@ -49,6 +87,7 @@ function drawCanvas() {
     ctx.stroke()
 
   }
+
   state.tick += 1;
 
 
@@ -58,14 +97,15 @@ function drawCanvas() {
 
 <template>
   <div class="canvas-container top">
-    <canvas id="canvas-id" height="42" width="42"></canvas>
+    {{ state.status.predictions[0].name }}
+    <canvas id="canvas-id" height="600" width="600"></canvas>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .canvas-container {
-  height: 42px;
-  width: 42px;
+  height: 600px;
+  width: 600px;
 
   aspect-ratio: 1/1 !important;
 }

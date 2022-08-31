@@ -249,7 +249,7 @@ const defenseRoutes = {
     children: [
         {
             path: '/terminal/defense/overview',
-            name: 'DefenseOverview',
+            name: 'Sentry Overview',
             component: DefenseOverview,
         },
     ]

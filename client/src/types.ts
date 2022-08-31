@@ -4,6 +4,42 @@
 
 import type {Nexus} from "@/views/terminal/nexus";
 
+
+export interface Landmarks {
+    rightEye: {
+        xa: number;
+        ya: number;
+        xb: number;
+        yb: number;
+    };
+    leftEye: {
+        xa: number;
+        ya: number;
+        xb: number;
+        yb: number;
+    };
+    nose: {
+        x: number;
+        y: number;
+    };
+}
+
+export interface Prediction {
+    name: string;
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+    distance: number;
+    landmarks: Landmarks;
+}
+
+export interface Status {
+    zone: string;
+    predictions: Prediction[];
+    updated: string;
+}
+
 export interface Preferences {
     ui: {
         screensaver: {
@@ -24,6 +60,16 @@ export interface Preferences {
         night: boolean
         outlines: boolean
     }
+}
+
+export interface Calendar {
+    description: string;
+    summary: string;
+    location: string;
+    rule: string;
+    start: string;
+    days: string;
+    end: string;
 }
 
 export interface Controller {

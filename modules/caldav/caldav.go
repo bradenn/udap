@@ -117,7 +117,7 @@ func (c *CalDav) poll() {
 	if err != nil {
 		return
 	}
-
+	var events []Event
 	for _, event := range cal.Events() {
 		start, err := event.GetStartAt()
 		if err != nil {
@@ -167,17 +167,16 @@ func (c *CalDav) poll() {
 				continue
 			}
 		}
+		events = append(events, ev)
 
-		marshal, err := json.Marshal(ev)
-		if err != nil {
-			return
-		}
-
-		err = c.Attributes.Update(c.entityId, "calendar", string(marshal), time.Now())
-		if err != nil {
-			break
-		}
-
+	}
+	marshal, err := json.Marshal(events)
+	if err != nil {
+		return
+	}
+	err = c.Attributes.Update(c.entityId, "calendar", string(marshal), time.Now())
+	if err != nil {
+		return
 	}
 
 }

@@ -1,16 +1,18 @@
 <script lang="ts" setup>
 
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import IdHash from "@/components/IdHash.vue"
 import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
-import type {Preferences, Remote} from "@/types";
+import type {Attribute, Entity, Preferences, Remote, Status} from "@/types";
 
 let state = reactive({
   menu: false,
   reloading: true,
   connected: false,
+  zoneEntity: {} as Entity,
+  zoneAttribute: {} as Attribute,
+  status: {} as Status
 })
 
 let preferences: Preferences = inject("preferences") as Preferences
@@ -18,13 +20,31 @@ let remote: Remote = inject('remote') as Remote
 let system: any = inject('system')
 
 onMounted(() => {
+  update()
   state.reloading = false
 })
 
 watchEffect(() => {
   state.connected = remote.connected
-  return state.connected
+  update()
+  return state.zoneAttribute
 })
+
+function update() {
+  let entity = remote.entities.find(e => e.name === 'faces')
+  if (!entity) return
+  state.zoneEntity = entity
+
+  let attr = remote.attributes.find(e => e.key === 'deskFace')
+  if (!attr) return
+  state.zoneAttribute = attr
+
+  let stat = JSON.parse(attr.value) as Status
+  if (!stat) return
+
+  state.status = stat
+
+}
 
 function toggleMenu() {
 
@@ -41,17 +61,37 @@ function reload() {
 
 <template>
   <div v-if="state.menu" class="context context-id" @click="state.menu = false"></div>
+
   <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
        @click="toggleMenu">
-    <div class="px-1">
-      <IdHash></IdHash>
-    </div>
+    <div class="d-flex flex-column label-o4">
+      <div class="d-flex gap-2 label-c2 align-items-center">
+        <div class="user-container">
 
-    <div class="d-flex flex-column gap-0">
-      <div class="label-c2 label-o5 lh-1 label-r">Braden Nicholson</div>
-      <div class="label-c3 label-o2 label-r label-w500 lh-1"
-           style="font-family: 'Roboto Light', sans-serif;"><span v-if="state.connected">Connected</span><span v-else>Disconnected</span>
+          <div v-for="p in state.status.predictions" class="user">
+            {{ p.name.charAt(0).toUpperCase() }}
+          </div>
+
+        </div>
+
+
+        <div>
+          <div class="label-c2 label-o5 lh-1 label-r">
+            Braden Nicholson
+          </div>
+          <div class="label-c3 label-o2 label-r label-w500 lh-1"
+               style="font-family: 'Roboto Light', sans-serif;"><span v-if="state.connected">Connected</span><span
+              v-else>Disconnected</span>
+          </div>
+        </div>
       </div>
+
+    </div>
+    <div class="id-icon px-2">
+      􀙇
+    </div>
+    <div class="id-icon">
+      􀌌
     </div>
     <div class="flex-grow-1"></div>
 
@@ -60,7 +100,7 @@ function reload() {
         <span class="label-c3 label-w300">&nbsp;DOWN</span>
       </div>
     </div>
-    <div class="label-c2 label-o2 px-1">
+    <div class="label-c2 label-o2 px-2">
       <div v-if="state.menu">
         <i class="fa-solid fa-caret-down "></i>
       </div>
@@ -155,10 +195,49 @@ function reload() {
 </template>
 
 <style lang="scss" scoped>
+.id-icon {
+  font-size: 0.60rem;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.65);
+  mix-blend-mode: overlay;
+}
+
+.user-container {
+  display: flex;
+}
+
+.user-container .user:not(:first-child) {
+  margin-left: -0.25rem;
+
+  z-index: 1000 !important;
+}
+
+.user {
+  backdrop-filter: blur(24px) !important;
+  z-index: 12000 !important;
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.75rem;
+  margin-left: 0.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(53, 127, 166, 0.65);
+  color: rgba(255, 255, 255, 0.8);
+  mix-blend-mode: overlay;
+  border-radius: 100%;
+
+  box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.2), inset 0 1px 4px 2px rgba(255, 255, 255, 0.1), inset 0 0 8px 1px rgba(0, 0, 0, 0.1);
+}
+
+.user-secondary {
+
+}
 
 .tag-container {
-  height: 2.5rem;
+  height: 2.25rem;
   z-index: 22;
+  border-radius: 2rem !important;
 }
 
 .tag-summary {
@@ -169,35 +248,21 @@ function reload() {
   z-index: 22;
 }
 
-@keyframes slideIn {
-  0% {
-    transform: scale(1);
-  }
-  15% {
-    transform: scale(1.05);
-  }
-  30% {
-    transform: scale(1.015);
-  }
-  100% {
-    transform: scale(1);
-  }
+.tag-container {
+  animation: none;
 }
 
 .tag-container:active {
-  animation: click 100ms ease forwards;
+  animation: tagClick 100ms ease forwards !important;
 }
 
 
-@keyframes click {
+@keyframes tagClick {
   0% {
     transform: scale(1.0);
   }
   25% {
     transform: scale(0.98);
-  }
-  30% {
-    transform: scale(0.97);
   }
   100% {
     transform: scale(1);

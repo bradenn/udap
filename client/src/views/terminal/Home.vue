@@ -9,6 +9,7 @@ import App from "@/components/App.vue";
 import Spotify from "@/components/widgets/Spotify.vue";
 import Macros from "@/components/widgets/Macros.vue";
 import type {Attribute, Entity, Remote} from "@/types";
+import Calendar from "@/components/widgets/Calendar.vue";
 
 // Define the local reactive data for this view
 let state = reactive<{
@@ -87,7 +88,7 @@ function getRoutes() {
 
   <div :class="``" class="d-flex justify-content-between gap-3 mt-1 pb-4 h-100 w-100">
 
-    <div class="widget-grid flex-grow-1">
+    <div class="widget-grid">
 
       <Macros></Macros>
 
@@ -96,7 +97,9 @@ function getRoutes() {
       <!--      </Widget>-->
 
     </div>
-
+    <div class="widget-grid">
+      <Calendar></Calendar>
+    </div>
     <div :class="``" class="widget-grid-vertical" style="max-width: 13rem">
       <Widget :cols="1" :rows="1" size="sm">
         <Spotify></Spotify>
