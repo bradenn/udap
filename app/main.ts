@@ -15,7 +15,7 @@ function createWindow() {
         backgroundColor: '#000000',
         autoHideMenuBar: true,
         show: true,
-        kiosk: false,
+        kiosk: true,
         fullscreen: true,
         removeMenu: true,
         frame: false,
@@ -25,7 +25,7 @@ function createWindow() {
     // win.webContents.debugger.on('detach', (event, reason) => {
     //     console.log('Debugger detached due to: ', reason)
     // })
-    attachTouchMode()
+    // attachTouchMode()
 
     win.webContents.setZoomFactor(1)
     win.loadURL('http://localhost:5002')

@@ -1,13 +1,12 @@
-<!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
+// Copyright (c) 2022 Braden Nicholson
 import moment from "moment";
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Attribute, Entity, Remote} from "@/types";
 import type {CurrentWeather, Weather} from "@/weather";
-import {getWeatherIcon} from "@/weather";
-
-import WeatherWidget from '@/components/widgets/Weather.vue'
-import Daytime from "@/views/terminal/weather/Daytime.vue";
+import {getWeatherIcon, getWeatherState} from "@/weather"
+import PaneList from "@/components/pane/PaneList.vue";
+import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
 
 interface WeatherProps {
   current: CurrentWeather
@@ -85,70 +84,79 @@ function parseWeather(we: Weather) {
   state.loading = false
 }
 
+function roundDecimal(input: number, places: number) {
+  return Math.round(input * Math.pow(10, places)) / Math.pow(10, places)
+}
+
+function asDate(ms: number): string {
+  return moment(ms).format("HH:mm AA")
+}
+
 </script>
 <template>
-  <Daytime :latest="state.latest"></Daytime>
-  <h3>Hourly</h3>
-  <WeatherWidget class="" style="max-width: 15rem; "></WeatherWidget>
-
-  <div class="element px-2 pt-0">
-    <div v-if="state.latest.hourly" class="d-flex flex-row justify-content-between align-items-end">
-      <div
-          v-for="(hour) in Array(12).keys()">
-        <div v-if="state.latest.hourly.temperature_2m[hour]"
-             :class="new Date().getHours()===hour?'':''"
-             class=" d-flex flex-column align-items-center justify-content-center px-3">
-          <div class="label-c3 label-w400 label-o3 mt-1">
-            {{ moment(new Date().setHours(new Date().getHours() + hour)).format("hA") }}
-          </div>
-          <div class="label-sm label-o4">
-            {{ getWeatherIcon(state.latest.hourly.weathercode[new Date().getHours() + hour], hour) }}
-          </div>
-          <div class="d-flex align-items-center justify-content-center">
-            <div class="label-c3 label-w500 label-o4 mt-1">
-              {{ state.latest.hourly.temperature_2m[new Date().getHours() + hour] }}
-            </div>
-
+  <div class="element p-2 pt-1">
+    <div class=" d-flex flex-row align-items-center">
+      <div class="flex-shrink-1 " style="min-width: 9rem; padding-left: 0.25rem">
+        <h2 class="lh-md">{{ roundDecimal(state.latest.current_weather.temperature, 0) }}° F</h2>
+        <div class="label-c1 label-r label-w400 label-o4 lh-1">{{
+            getWeatherState(state.latest.current_weather.weathercode)
+          }}
+        </div>
+        <div class="label-c1 label-r label-o3 label-w400 ">High {{ Math.round(state.ranges.temp.max) }}° • Low
+          {{ Math.round(state.ranges.temp.min) }}°
+        </div>
+      </div>
+      <div v-if="state.latest.hourly" class="d-flex flex-row justify-content-between align-items-end"
+           style="width: 100%">
+        <div
+            v-for="(hour) in Array(12).keys()">
+          <div v-if="state.latest.hourly.temperature_2m[hour]"
+               :class="new Date().getHours()===hour?'':''"
+               class=" d-flex flex-column align-items-center justify-content-center px-3">
             <div class="label-c3 label-w400 label-o3 mt-1">
-              {{ state.latest.hourly_units.temperature_2m }}
+              {{ moment(new Date().setHours(new Date().getHours() + hour)).format("hA") }}
+            </div>
+            <div class="label-sm label-o4">
+              {{ getWeatherIcon(state.latest.hourly.weathercode[new Date().getHours() + hour], hour) }}
+            </div>
+            <div class="d-flex align-items-center justify-content-center">
+              <div class="label-c3 label-w500 label-o4 mt-1">
+                {{ state.latest.hourly.temperature_2m[new Date().getHours() + hour] }}
+              </div>
+
+              <div class="label-c3 label-w400 label-o3 mt-1">
+                {{ state.latest.hourly_units.temperature_2m }}
+              </div>
+
+
+            </div>
+
+            <div class="d-flex align-items-center justify-content-center">
+              <div v-if="state.latest.hourly.precipitation[hour] > 0" class="label-c3 label-w500 label-o4 mt-1 rain">
+                {{ state.latest.hourly.precipitation[hour] }}
+              </div>
             </div>
           </div>
-          <div class="d-flex align-items-center justify-content-center">
-            <div v-if="state.latest.hourly.precipitation[hour] > 0" class="label-c3 label-w500 label-o4 mt-1 rain">
-              {{ state.latest.hourly.precipitation[hour] }}
-            </div>
-          </div>
+
+
         </div>
 
       </div>
-
     </div>
-    <div>Rain</div>
-    <div v-if="state.latest.hourly" class="d-flex flex-row justify-content-between align-items-end">
+  </div>
 
-      <div v-for="(hour) in Array(12).keys()">
-        <div v-if="state.latest.hourly.temperature_2m[hour]"
-             :class="new Date().getHours()===hour?'':''"
-             class=" d-flex flex-column align-items-center justify-content-center px-3">
-          <div class="label-c3 label-w400 label-o3 mt-1">
-            {{ moment(new Date().setHours(new Date().getHours() + hour)).format("hA") }}
-          </div>
-          <div class="label-sm label-o4">
-            {{ getWeatherIcon(state.latest.hourly.weathercode[hour], hour) }}
-          </div>
-          <div class="d-flex align-items-center justify-content-center">
-            <div class="label-c3 label-w500 label-o4 mt-1">
-              {{ state.latest.hourly.precipitation[hour] }}
-            </div>
+  <PaneList class="mt-1" style="width: 12rem">
+    <PaneListItemInline :active="false" :subtext="asDate(state.latest.daily.sunrise[0])" icon="􀆱"
+                        title="Sunrise"></PaneListItemInline>
+    <PaneListItemInline :active="false" :subtext="asDate(state.latest.daily.sunset[0])" icon="􀆳"
+                        title="Sunset"></PaneListItemInline>
+  </PaneList>
 
-            <div class="label-c3 label-w400 label-o3 mt-1">
-              {{ state.latest.hourly_units.precipitation }}
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="element mt-1">
+    <div class="label-c3 label-w400 label-o3 mt-1">
+
+      {{ state.latest.daily }}
     </div>
-
   </div>
 
 

@@ -1,7 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import Header from "@/components/Header.vue";
 import type {Log, Remote} from "@/types";
 import moment from "moment";
 
@@ -82,7 +81,6 @@ function parseTime(time: string): string {
 
 <template>
   <div class="h-100">
-    <Header class="px-2 pb-1" icon="cloud" name="Connection"></Header>
 
     <div class="element log-container">
       <div class="d-flex align-items-center justify-content-between">
@@ -158,7 +156,7 @@ function parseTime(time: string): string {
 }
 
 .log-container {
-  height: 75%;
+  height: 100%;
   display: flex;
   flex-direction: column;
 

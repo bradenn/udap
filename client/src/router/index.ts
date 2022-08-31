@@ -249,7 +249,7 @@ const defenseRoutes = {
     children: [
         {
             path: '/terminal/defense/overview',
-            name: 'DefenseOverview',
+            name: 'Sentry Overview',
             component: DefenseOverview,
         },
     ]
@@ -266,6 +266,9 @@ const calculatorRoute = {
     path: '/terminal/calculator',
     name: 'Calculator',
     component: Calculator,
+    meta: {
+        status: 'wip'
+    },
     icon: 'fa-calculator',
 }
 

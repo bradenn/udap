@@ -95,6 +95,7 @@ func (m *Module) Connect(ctrl *controller.Controller) error {
 }
 
 func (m *Module) InitConfig(key string, value string) error {
+
 	return nil
 }
 

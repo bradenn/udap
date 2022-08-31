@@ -23,6 +23,7 @@ type EntityRepository interface {
 	common.Persist[Entity]
 	Register(*Entity) error
 	FindByName(name string) (*Entity, error)
+	FindAll() (*[]Entity, error)
 }
 
 type EntityService interface {

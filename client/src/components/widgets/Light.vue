@@ -141,8 +141,9 @@ function toggleMenu(): void {
       </div>
       <div class="w-100 d-flex flex-column gap">
         <div
-            v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key === 'dim' || attribute.key === 'cct' || attribute.key === 'hue')">
-          <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
+            v-for="attribute in state.attributes.filter((attr: Attribute) => attr.key === 'dim' || attr.key === 'cct' || attr.key === 'hue')"
+            :key="attribute.id">
+          <AttributeComponent :attribute="attribute" :entity-id="props.entity.id" primitive
                               small></AttributeComponent>
         </div>
       </div>

@@ -5,7 +5,23 @@ import router from '@/router'
 import {inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
 import "@/types";
 import IdTag from "@/components/IdTag.vue";
-import type {Identifiable, Log, Metadata, Preferences, Remote, Session, Timing, User} from "@/types";
+import type {
+  Attribute,
+  Device,
+  Endpoint,
+  Entity,
+  Identifiable,
+  Log,
+  Metadata,
+  Module,
+  Network,
+  Preferences,
+  Remote,
+  Session,
+  Timing,
+  User,
+  Zone
+} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
 import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
@@ -29,16 +45,16 @@ onMounted(() => {
 let remote = reactive<Remote>({
   connected: false,
   metadata: {} as Metadata,
-  entities: [],
-  attributes: [],
-  devices: [],
-  networks: [],
-  endpoints: [],
-  users: [],
-  timings: [],
-  modules: [],
-  zones: [],
-  logs: [],
+  entities: [] as Entity[],
+  attributes: [] as Attribute[],
+  devices: [] as Device[],
+  networks: [] as Network[],
+  endpoints: [] as Endpoint[],
+  users: [] as User[],
+  timings: [] as Timing[],
+  modules: [] as Module[],
+  zones: [] as Zone[],
+  logs: [] as Log[],
   nexus: {} as Nexus
 });
 
@@ -334,43 +350,41 @@ provide('remote', remote)
       v-on:mousemove="dragContinue"
       v-if="!screensaver.hideTerminal" v-on:mouseup="dragStop">
     <div class="generic-container gap-2">
-      <div :class="`generic-slot-sm ` ">
+      <div :class="`generic-slot-lg ` ">
         <Clock :small="!state.showClock"></Clock>
       </div>
-
+      <div></div>
       <div class="generic-slot-sm ">
         <IdTag></IdTag>
       </div>
 
     </div>
 
-    <div
-        class="route-view">
+    <div class="route-view">
       <div>
-
         <Sideapp v-if="state.sideApp" :style="`transform: translateX(${-state.scrollX}px);`">
           <CalculatorQuick v-if="state.sideApp"></CalculatorQuick>
         </Sideapp>
       </div>
-      <router-view v-slot="{ Component }">
+
+      <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
         <component :is="Component"/>
       </router-view>
 
 
-      <div class="justify-content-center d-flex align-items-center align-content-center">
-        <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">
-          <div v-if="$route.matched[1].children.length > 1">
-            <Plot :cols="$route.matched[1].children.length" :rows="1"
-                  class="bottom-nav">
-              <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
-                       :name="route.name"
-                       :to="route.path"></Subplot>
-            </Plot>
-          </div>
+    </div>
+    <div class="justify-content-center d-flex align-items-center align-content-center">
+      <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">
+        <div v-if="$route.matched[1].children.length > 1">
+          <Plot :cols="$route.matched[1].children.length" :rows="1"
+                class="bottom-nav">
+            <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
+                     :name="route.name"
+                     :to="route.path"></Subplot>
+          </Plot>
         </div>
       </div>
     </div>
-
     <div
         :style="`transform: translateY(${-state.scrollY}px);`"
         class="home-bar top"></div>

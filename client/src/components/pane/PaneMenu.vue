@@ -10,6 +10,7 @@ let props = defineProps<Plot>()
 
 <template>
   <div class="element p-1">
+    
     <div v-if="props.title" class="d-flex align-items-center justify-content-between">
       <div class="label-c1  label-o4 label-w500 px-1">{{ props.title }}</div>
       <div class="label-c2  label-o3 label-w400 px-1">{{ props.alt }}</div>

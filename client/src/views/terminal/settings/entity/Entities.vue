@@ -7,6 +7,8 @@ import Plot from "@/components/plot/Plot.vue";
 import PaneMenu from "@/components/pane/PaneMenu.vue";
 import PaneMenuItem from "@/components/pane/PaneMenuItem.vue";
 import PaneDialogue from "@/components/pane/PaneDialogue.vue";
+import PanePopup from "@/components/pane/PanePopup.vue";
+import entityService from "@/services/entityService";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -17,8 +19,12 @@ let state = reactive({
   loading: true,
   selectedEntity: {} as Entity,
   moduleEntities: [] as Entity[],
+  selectedAttributes: [] as Attribute[],
   selectedModule: "",
+  configOption: ""
 })
+
+const icons = ["􀛭", "􀊨", "􀝎", "􀇔", "􀙫", "􀍉", "􀎲", "􀲰", "􀢹", "􀧘", "􀪯", "􀥔", "􁁋", "􀎚", "􁃗", "􀍽", "􀬗", "􀵔"]
 
 onMounted(() => {
   state.loading = true
@@ -45,16 +51,38 @@ function groupBy<T>(xs: T[], key: string): T[] {
 }
 
 function selectModule(module: string) {
+  closePopup()
   state.selectedModule = module
   let entities = remote.entities.filter(e => e.module === module)
   if (!entities) return
   state.moduleEntities = entities
+
 }
 
 function selectEntity(entity: string) {
+  closePopup()
   const find = remote.entities.find(e => e.id === entity)
   if (!find) return
   state.selectedEntity = find
+  const attrs = remote.attributes.filter(e => e.entity === entity)
+  if (!attrs) return
+  state.selectedAttributes = attrs
+}
+
+function setConfig(conf: string) {
+  state.configOption = conf
+}
+
+function closePopup(): void {
+  state.configOption = ''
+}
+
+function isOpen(key: string): boolean {
+  return state.configOption === key
+}
+
+function setIcon() {
+  entityService.setIcon(state.selectedEntity.id, state.selectedEntity.icon)
 }
 
 function parsePosition(pos: string) {
@@ -71,10 +99,6 @@ function parsePosition(pos: string) {
 
 <template>
   <div>
-    <div class="d-flex justify-content-start pb-1 px-1">
-      <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-layer-group fa-fw`"></i></div>
-      <div class="label-w500 opacity-100 label-xxl px-2">Entities</div>
-    </div>
 
     <div v-if="!state.loading" class="entity-grid">
 
@@ -105,10 +129,21 @@ function parsePosition(pos: string) {
         <PaneDialogue :alt="state.selectedEntity.icon"
                       subtext="The icon assigned by default can be modified to better represent the entity's purpose"
                       title="Icon">
-          <div class="subplot subplot-button">
-            Select Icon
+          <div class="subplot subplot-button" @click="(e) => setConfig('icon')">
+            Configure
           </div>
         </PaneDialogue>
+        <PanePopup v-if="isOpen('icon')" :apply="setIcon"
+                   :close="closePopup" title="Select an Icon">
+          <div class="icon-grid">
+            <div v-for="icon in icons"
+                 :class="`${state.selectedEntity.icon === icon?'subplot-active':'subplot-inline'}`"
+                 class="subplot subplot-button"
+                 @click="state.selectedEntity.icon = icon">
+              {{ icon }}
+            </div>
+          </div>
+        </PanePopup>
         <PaneDialogue :alt="state.selectedEntity.neural"
                       subtext="Allow UDAP's neural network to determine the appropriate state for this light at any given time"
                       title="Neural">
@@ -120,10 +155,39 @@ function parsePosition(pos: string) {
                       :alt="state.selectedEntity?.position !== '{}'?parsePosition(state.selectedEntity?.position):''"
                       subtext="Assign coordinates to the approximate location of this entity within a zone."
                       title="Position">
-          <div class="subplot subplot-button">
-            Set Position
+          <div class="subplot subplot-button" @click="(e) => setConfig('position')">
+            Configure
           </div>
         </PaneDialogue>
+        <PanePopup v-if="isOpen('position')" :close="closePopup"
+                   title="Position">
+        </PanePopup>
+        <PaneDialogue v-if="state.selectedEntity?.position"
+                      :alt="state.selectedEntity?.position !== '{}'?parsePosition(state.selectedEntity?.position):''"
+                      subtext="Assign default states for attributes in the event of a power loss"
+                      title="Defaults">
+          <div class="subplot subplot-button" @click="(e) => setConfig('defaults')">
+            Configure
+          </div>
+        </PaneDialogue>
+        <PanePopup v-if="isOpen('defaults')" :close="closePopup"
+                   title="Defaults">
+          <div v-for="attribute in state.selectedAttributes" :key="attribute.id">
+            {{ attribute.key }}
+            {{ attribute.value }}
+          </div>
+        </PanePopup>
+        <PaneDialogue v-if="state.selectedEntity?.position"
+                      alt="Peak: 15 W, Linear"
+                      subtext="Assign coordinates to the approximate location of this entity within a zone."
+                      title="Energy Usage">
+          <div class="subplot subplot-button" @click="(e) => setConfig('power')">
+            Configure
+          </div>
+        </PaneDialogue>
+        <PanePopup v-if="isOpen('power')" :close="closePopup"
+                   title="Power Usage">
+        </PanePopup>
       </div>
 
       <div v-for="(entities, module) in state.modules" v-if="false">
@@ -157,16 +221,26 @@ function parsePosition(pos: string) {
 
 <style scoped>
 
+
 .pane-fill {
+  position: relative;
   grid-column: 3 / 6;
   grid-row: 1 / 1;
   display: flex;
   flex-direction: column;
 }
 
+.icon-grid {
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  grid-template-rows: repeat(1, 1fr);
+  grid-template-columns: repeat(8, 1fr);
+}
+
 .entity-grid {
   width: 100%;
-  height: 80%;
+  height: 100%;
   display: grid;
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;

@@ -19,7 +19,7 @@ let props = defineProps<Plot>()
                 <span class="label-c4 label-o2 lh-1 pt-1" style="width: 0.4rem; margin-top: 6px;"><span
                     v-if="props.icon">{{ props.icon }}</span></span>
       <div class="py-1 px-1">
-        <div class="label-c1 text-capitalize label-w600 label-o5 lh-1">{{ props.title }}</div>
+        <div class="label-c2 text-capitalize label-w400 label-o5 lh-sm title">{{ props.title }}</div>
 
         <div class="label-c3 label-w600 label-o3">{{ props.subtext }}</div>
       </div>
@@ -33,5 +33,6 @@ let props = defineProps<Plot>()
 
 
 <style lang="scss" scoped>
-
+.title {
+}
 </style>

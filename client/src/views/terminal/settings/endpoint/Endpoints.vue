@@ -40,18 +40,11 @@ function setMode(mode: string) {
 <template>
   <div v-if="!state.loading">
 
-    <div class="d-flex justify-content-start py-2 px-1">
-      <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-expand fa-fw`"></i></div>
-      <div class="label-w500 opacity-100 label-xxl px-2">Endpoints</div>
-      <div class="flex-fill"></div>
-
-      <Plot :cols="1" :rows="1" small style="width: 6rem;">
-        <Radio :active="false" :fn="() => setMode(state.mode === 'create'?'list':'create')"
-               :title="state.mode === 'create'?'Cancel':'New Endpoint'"></Radio>
-      </Plot>
-    </div>
     <div v-if="state.mode === 'list'">
-
+      <Plot :cols="1" :rows="1" class="mb-1" small style="width: 6rem;">
+        <Radio :active="false" :fn="() => setMode(state.mode === 'create'?'list':'create')"
+               :title="state.mode === 'list'?'Cancel':'New Endpoint'"></Radio>
+      </Plot>
       <div class="endpoint-container w-100">
         <div v-for="endpoint in state.endpoints"
              :key="endpoint.id" class="">

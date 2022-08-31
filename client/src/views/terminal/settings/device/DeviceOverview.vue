@@ -82,11 +82,7 @@ function goTo(target: string) {
 
 <template>
   <div v-if="!state.loading">
-    <div class="d-flex justify-content-start py-2 px-1">
-      <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-expand fa-fw`"></i></div>
-      <div class="label-w500 opacity-100 label-xxl px-2">Devices</div>
-      <div class="flex-fill"></div>
-    </div>
+
 
     <div v-if="state.mode === 'list'">
 
