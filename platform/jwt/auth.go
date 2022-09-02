@@ -24,7 +24,7 @@ func AuthToken(token string) (string, error) {
 
 	val, ok := content.Get("id")
 	if !ok {
-		return "", fmt.Errorf("malformed jwt... This is a serious concern")
+		return "", fmt.Errorf("malformed jwt... This is a serious concern (security or ACAP?)")
 	}
 
 	s := val.(string)
