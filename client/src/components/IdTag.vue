@@ -10,6 +10,7 @@ let state = reactive({
   menu: false,
   reloading: true,
   connected: false,
+  link: false,
   zoneEntity: {} as Entity,
   zoneAttribute: {} as Attribute,
   status: {} as Status
@@ -60,7 +61,8 @@ function reload() {
 </script>
 
 <template>
-  <div v-if="state.menu" class="context context-id" @click="state.menu = false"></div>
+  <div v-if="state.menu" class="context context-id" @click="state.menu = false">
+  </div>
 
   <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
        @click="toggleMenu">
@@ -88,14 +90,18 @@ function reload() {
 
     </div>
     <div class="id-icon px-2">
-      􀙇
+
+      <span v-if="state.connected">􀙇</span>
+      <span v-else>􀙈</span>
     </div>
     <div class="id-icon">
-      􀌌
+      <span v-if="state.connected">􀌌</span>
+      <span v-else>􀌐</span>
+
     </div>
     <div class="flex-grow-1"></div>
 
-    <div v-if="remote.nexus.state > 1" class="d-flex flex-column gap-0 justify-content-end align-items-end ">
+    <div v-if="remote?.nexus.state > 1" class="d-flex flex-column gap-0 justify-content-end align-items-end ">
       <div class="label-c3 label-o2 px-1">
         <span class="label-c3 label-w300">&nbsp;DOWN</span>
       </div>
@@ -222,12 +228,12 @@ function reload() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(53, 127, 166, 0.65);
+  background-color: rgba(44, 45, 45, 0.25);
   color: rgba(255, 255, 255, 0.8);
   mix-blend-mode: overlay;
   border-radius: 100%;
 
-  box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.2), inset 0 1px 4px 2px rgba(255, 255, 255, 0.1), inset 0 0 8px 1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.2), inset 0 1px 4px 2px rgba(255, 255, 255, 0.05), inset 0 0 6px 1px rgba(0, 0, 0, 0.05);
 }
 
 .user-secondary {
