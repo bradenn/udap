@@ -136,6 +136,7 @@ func (o *orchestrator) runServer() error {
 
 func (o *orchestrator) handleMutations() error {
 	for response := range o.mutations {
+		// o.modules.HandleEmits(response)
 		err := o.endpoints.SendAll(response.Id, response.Operation, response.Body)
 		if err != nil {
 			log.Err(err)

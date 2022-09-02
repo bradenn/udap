@@ -22,6 +22,10 @@ type moduleOperator struct {
 	runtime map[string]plugin.ModuleInterface
 }
 
+func (m *moduleOperator) HandleEmit(mutation domain.Mutation) error {
+	return nil
+}
+
 const PATH = "./modules"
 
 func NewOperator(ctrl *controller.Controller) domain.ModuleOperator {

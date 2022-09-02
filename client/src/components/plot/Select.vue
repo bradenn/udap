@@ -3,6 +3,7 @@
 
 import {reactive} from "vue";
 import Subplot from "@/components/plot/Subplot.vue";
+import Scroll from "@/components/Scroll.vue";
 
 interface Props {
   selected: string
@@ -29,9 +30,9 @@ function dragScroll(e: DragEvent) {
       <div class="label-c1  label-o4 label-w500 px-1">Zones</div>
       <div class="label-c2 label-w500 label-r label-o3 px-1 text-link"></div>
     </div>
-    <div class="select-scroll" @drag="dragScroll">
+    <Scroll class="select-scroll">
       <slot></slot>
-    </div>
+    </Scroll>
     <div class="h-sep my-1"></div>
     <div class="d-flex gap-1 justify-content-between" style="height: 1.75rem">
       <div></div>

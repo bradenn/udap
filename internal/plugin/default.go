@@ -94,8 +94,11 @@ func (m *Module) Connect(ctrl *controller.Controller) error {
 	return nil
 }
 
-func (m *Module) InitConfig(key string, value string) error {
+func (m *Module) OnEmit() error {
+	return nil
+}
 
+func (m *Module) InitConfig(key string, value string) error {
 	return nil
 }
 

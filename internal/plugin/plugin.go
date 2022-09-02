@@ -20,6 +20,8 @@ type ModuleInterface interface {
 	Update() error
 	// Dispose provides module-relevant data
 	Dispose() error
+	// OnEmit catches all emit events
+	OnEmit() error
 }
 
 // Load attempts to load the plugin from a given path

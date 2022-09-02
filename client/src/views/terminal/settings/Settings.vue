@@ -113,10 +113,8 @@ function dragStop(e: MouseEvent) {
 
 <template>
   <div class="d-flex flex-row align-content-start align-items-start gap h-100"
-       v-on:mousedown="dragStart"
-       v-on:mousemove="dragContinue"
-       v-on:mouseup="dragStop">
-    <div :style="`transform: translateX(${-state.scrollX}px) !important;`" class="flex-grow-1 h-100">
+  >
+    <div class="flex-grow-1 h-100">
       <router-view v-slot="{ Component }" class="h-100">
 
         <transition :name="state.transitionName"
