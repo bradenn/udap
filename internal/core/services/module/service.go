@@ -360,8 +360,6 @@ func (u *moduleService) SetConfig(id string, key string, value string) error {
 		return err
 	}
 
-	byId.Config[key] = value
-
 	err = u.save(byId)
 	if err != nil {
 		return err

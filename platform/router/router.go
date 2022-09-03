@@ -18,10 +18,11 @@ func New() chi.Router {
 	router.Use(corsHeaders())
 	// Status Middleware
 	router.Use(middleware.Heartbeat("/status"))
-	// Seek, verify and validate JWT tokens
-	router.Use(jwt.VerifyToken())
 	// Load JWT Keys
 	jwt.LoadKeys()
+	// Seek, verify and validate JWT tokens
+	router.Use(jwt.VerifyToken())
+
 	return router
 }
 

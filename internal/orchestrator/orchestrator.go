@@ -59,7 +59,6 @@ func NewOrchestrator() (Orchestrator, error) {
 	}
 	// Initialize Router
 	r := router.New()
-
 	return &orchestrator{
 		db:         db,
 		router:     r,
@@ -183,17 +182,18 @@ func (o *orchestrator) Run() error {
 	}()
 
 	// Initialize and route applicable domains
+	o.router.Group(func(r chi.Router) {
+		r.Use(jwt.Authenticator)
+		routes.NewUserRouter(o.controller.Users).RouteUsers(r)
+		routes.NewAttributeRouter(o.controller.Attributes).RouteAttributes(r)
+		routes.NewZoneRouter(o.controller.Zones).RouteZones(r)
+		routes.NewDeviceRouter(o.controller.Devices).RouteDevices(r)
+		routes.NewEntityRouter(o.controller.Entities).RouteEntities(r)
+		routes.NewModuleRouter(o.modules).RouteModules(r)
+	})
 	routes.NewEndpointRouter(o.endpoints).RouteEndpoints(o.router)
-	o.router.Use(jwt.VerifyToken())
-	routes.NewUserRouter(o.controller.Users).RouteUsers(o.router)
-	routes.NewAttributeRouter(o.controller.Attributes).RouteAttributes(o.router)
-	routes.NewZoneRouter(o.controller.Zones).RouteZones(o.router)
-	routes.NewDeviceRouter(o.controller.Devices).RouteDevices(o.router)
-	routes.NewEntityRouter(o.controller.Entities).RouteEntities(o.router)
-	routes.NewModuleRouter(o.modules).RouteModules(o.router)
 
 	runtimes.NewModuleRuntime(o.modules)
-
 	go func() {
 		defer wg.Done()
 		err := o.runServer()

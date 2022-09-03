@@ -13,7 +13,7 @@ type ModuleInterface interface {
 	// Setup is called when the plugin is first loaded
 	Setup() (Config, error)
 	// Connect c
-	Connect(*controller.Controller) error
+	Connect(*controller.Controller, string) error
 	// Run provides module-relevant data
 	Run() error
 	// Update is used to assign channels

@@ -18,19 +18,19 @@ type ModuleConfig struct {
 
 type Module struct {
 	common.Persistent
-	Name        string            `json:"name"`
-	Path        string            `json:"path"`
-	UUID        string            `json:"uuid"`
-	Type        string            `json:"type"`
-	Description string            `json:"description"`
-	Version     string            `json:"version"`
-	Author      string            `json:"author"`
-	Channel     chan Module       `json:"-" gorm:"-"`
-	Config      map[string]string `json:"config"`
-	State       string            `json:"state"`
-	Running     bool              `json:"running" gorm:"default:false"`
-	Enabled     bool              `json:"enabled" gorm:"default:true"`
-	Recover     int               `json:"recover"`
+	Name        string      `json:"name"`
+	Path        string      `json:"path"`
+	UUID        string      `json:"uuid"`
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Version     string      `json:"version"`
+	Author      string      `json:"author"`
+	Channel     chan Module `json:"-" gorm:"-"`
+	Config      string      `json:"config"`
+	State       string      `json:"state"`
+	Running     bool        `json:"running" gorm:"default:false"`
+	Enabled     bool        `json:"enabled" gorm:"default:true"`
+	Recover     int         `json:"recover"`
 }
 
 func (m *Module) SessionId() string {

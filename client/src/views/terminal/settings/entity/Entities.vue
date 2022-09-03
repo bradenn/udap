@@ -21,7 +21,8 @@ let state = reactive({
   moduleEntities: [] as Entity[],
   selectedAttributes: [] as Attribute[],
   selectedModule: "",
-  configOption: ""
+  configOption: "",
+  error: ""
 })
 
 const icons = ["􀛭", "􀊨", "􀝎", "􀇔", "􀙫", "􀍉", "􀎲", "􀲰", "􀢹", "􀧘", "􀪯", "􀥔", "􁁋", "􀎚", "􁃗", "􀍽", "􀬗", "􀵔"]
@@ -82,7 +83,11 @@ function isOpen(key: string): boolean {
 }
 
 function setIcon() {
-  entityService.setIcon(state.selectedEntity.id, state.selectedEntity.icon)
+  entityService.setIcon(state.selectedEntity.id, state.selectedEntity.icon).then(res => {
+    state.error = JSON.stringify(res)
+  }).catch(err => {
+    state.error = JSON.stringify(err)
+  })
 }
 
 function parsePosition(pos: string) {
@@ -99,7 +104,6 @@ function parsePosition(pos: string) {
 
 <template>
   <div>
-
     <div v-if="!state.loading" class="entity-grid">
 
       <PaneMenu

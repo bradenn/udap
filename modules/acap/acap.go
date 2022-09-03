@@ -17,15 +17,13 @@ type Acap struct {
 }
 
 func init() {
-	config := plugin.Config{
+	Module.Config = plugin.Config{
 		Name:        "acap",
-		Type:        "module",
+		Type:        "daemon",
 		Description: "Automated Casualty Avoidance Protocol",
 		Version:     "0.1.0 beta",
 		Author:      "Braden Nicholson",
 	}
-
-	Module.Config = config
 }
 
 func (a *Acap) Setup() (plugin.Config, error) {
@@ -34,6 +32,12 @@ func (a *Acap) Setup() (plugin.Config, error) {
 		return plugin.Config{}, err
 	}
 	return a.Config, nil
+}
+
+func (a *Acap) Update() error {
+	if a.Ready() {
+	}
+	return nil
 }
 
 func (a *Acap) Run() error {
@@ -53,11 +57,5 @@ func (a *Acap) Run() error {
 
 	a.entityId = entity.Id
 
-	return nil
-}
-
-func (a *Acap) Update() error {
-	if a.Ready() {
-	}
 	return nil
 }
