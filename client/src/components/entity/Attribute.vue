@@ -4,6 +4,7 @@ import Range from "./Range.vue";
 import Toggle from "./Toggle.vue";
 import {inject} from "vue";
 import type {Attribute} from "@/types";
+import attributeService from "@/services/attributeService";
 
 // Define the props for this component
 let props = defineProps<{
@@ -17,9 +18,7 @@ let remote: any = inject('remote')
 
 // Apply changes made to an attribute
 function commitChange(attribute: Attribute) {
-  // Make the request to the websocket object
-  let id: string = props.entityId
-  remote.nexus.requestAttribute(id, attribute.key, attribute.request)
+  attributeService.request(attribute)
 }
 
 </script>
