@@ -13,7 +13,7 @@ let headers = {
 
 export default {
     async post(url: string, data?: {} | undefined): Promise<void> {
-        return axios.post(url, data, headers)
+        return await axios.post(url, data, headers)
     }
 }
 

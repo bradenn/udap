@@ -26,6 +26,7 @@ type Module struct {
 	Version     string      `json:"version"`
 	Author      string      `json:"author"`
 	Channel     chan Module `json:"-" gorm:"-"`
+	Config      string      `json:"config"`
 	State       string      `json:"state"`
 	Running     bool        `json:"running" gorm:"default:false"`
 	Enabled     bool        `json:"enabled" gorm:"default:true"`
@@ -57,11 +58,13 @@ type ModuleOperator interface {
 	Dispose(module string, uuid string) error
 	Run(uuid string) error
 	Update(uuid string) error
+	HandleEmit(mutation Mutation) error
 }
 
 type ModuleService interface {
 	Observable
 	Discover() error
+	HandleEmits(mutation Mutation) error
 	Build(module *Module) error
 	Load(module *Module) error
 	Update(module *Module) error

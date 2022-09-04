@@ -22,6 +22,7 @@ type Module struct {
 	Config
 	LastUpdate time.Time
 	Frequency  time.Duration
+	UUID       string
 	*controller.Controller
 }
 
@@ -88,14 +89,18 @@ func (m *Module) Ready() bool {
 }
 
 // Connect is called once at the launch of the module
-func (m *Module) Connect(ctrl *controller.Controller) error {
+func (m *Module) Connect(ctrl *controller.Controller, uuid string) error {
 	m.LastUpdate = time.Now()
 	m.Controller = ctrl
+	m.UUID = uuid
+	return nil
+}
+
+func (m *Module) OnEmit() error {
 	return nil
 }
 
 func (m *Module) InitConfig(key string, value string) error {
-
 	return nil
 }
 

@@ -44,7 +44,7 @@ let terminal = inject("terminal") as Terminal
 function update() {
   state.logs = remote.logs.sort((a, b) => moment(a.time).valueOf() > moment(b.time).valueOf() ? -1 : 1)
 
-  state.moduleLogs = state.logs.filter(l => l.group === "module")
+  state.moduleLogs = state.logs
 
   state.logs.forEach(l => {
     if (!l.level) {

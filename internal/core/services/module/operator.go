@@ -22,6 +22,10 @@ type moduleOperator struct {
 	runtime map[string]plugin.ModuleInterface
 }
 
+func (m *moduleOperator) HandleEmit(mutation domain.Mutation) error {
+	return nil
+}
+
 const PATH = "./modules"
 
 func NewOperator(ctrl *controller.Controller) domain.ModuleOperator {
@@ -120,7 +124,7 @@ func (m *moduleOperator) Load(module string, uuid string) (domain.ModuleConfig, 
 		return domain.ModuleConfig{}, fmt.Errorf("cannot read module")
 	}
 	// Connect the module to the UDAP runtime
-	err = mod.Connect(m.ctrl)
+	err = mod.Connect(m.ctrl, uuid)
 	if err != nil {
 		return domain.ModuleConfig{}, err
 	}

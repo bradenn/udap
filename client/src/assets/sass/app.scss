@@ -472,21 +472,23 @@ $fontColors: (
 
 /* width */
 ::-webkit-scrollbar {
-  width: 0.8rem;
+  width: 12px;
   max-height: calc(100% - 2em);
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-  height: calc(100% - 1em) !important;
-  border-radius: 0.2rem;
-  @extend .surface;
+
+  visibility: hidden !important;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
   @extend .element-secondary;
+  border: solid 2px transparent;
+  background-clip: content-box;
   border-radius: 0.2rem;
+
 }
 
 

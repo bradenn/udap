@@ -34,6 +34,14 @@ const (
 	ERROR         = "error"
 )
 
+func (u *moduleService) HandleEmits(mutation domain.Mutation) error {
+	err := u.operator.HandleEmit(mutation)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *moduleService) EmitAll() error {
 	all, err := u.FindAll()
 	if err != nil {
@@ -289,7 +297,7 @@ func NewService(repository domain.ModuleRepository, operator domain.ModuleOperat
 	}
 }
 
-func (u moduleService) Discover() error {
+func (u *moduleService) Discover() error {
 	// Format the pattern for glob search
 	pattern := fmt.Sprintf("./%s/*/*.go", DIR)
 	// Run the search for go files
@@ -346,17 +354,31 @@ func (u *moduleService) BuildAll() error {
 	return nil
 }
 
+func (u *moduleService) SetConfig(id string, key string, value string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	err = u.save(byId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Repository Mapping
 
-func (u moduleService) FindAll() (*[]domain.Module, error) {
+func (u *moduleService) FindAll() (*[]domain.Module, error) {
 	return u.repository.FindAll()
 }
 
-func (u moduleService) FindByName(name string) (*domain.Module, error) {
+func (u *moduleService) FindByName(name string) (*domain.Module, error) {
 	return u.repository.FindByName(name)
 }
 
-func (u moduleService) Disable(id string) error {
+func (u *moduleService) Disable(id string) error {
 	module, err := u.repository.FindById(id)
 	if err != nil {
 		return err
@@ -373,7 +395,7 @@ func (u moduleService) Disable(id string) error {
 	return nil
 }
 
-func (u moduleService) save(module *domain.Module) error {
+func (u *moduleService) save(module *domain.Module) error {
 	err := u.repository.Update(module)
 	if err != nil {
 		return err
@@ -385,7 +407,7 @@ func (u moduleService) save(module *domain.Module) error {
 	return nil
 }
 
-func (u moduleService) Enable(id string) error {
+func (u *moduleService) Enable(id string) error {
 	module, err := u.repository.FindById(id)
 	if err != nil {
 		return err
@@ -402,7 +424,7 @@ func (u moduleService) Enable(id string) error {
 	return nil
 }
 
-func (u moduleService) Reload(name string) error {
+func (u *moduleService) Reload(name string) error {
 
 	target, err := u.FindByName(name)
 	if err != nil {
@@ -430,7 +452,7 @@ func (u moduleService) Reload(name string) error {
 	return nil
 }
 
-func (u moduleService) Halt(name string) error {
+func (u *moduleService) Halt(name string) error {
 	byName, err := u.FindByName(name)
 	if err != nil {
 		return err

@@ -9,6 +9,7 @@ import Light from "@/components/widgets/Light.vue";
 import Widget from "@/components/widgets/Widget.vue";
 import Select from "@/components/plot/Select.vue";
 import Subplot from "@/components/plot/Subplot.vue";
+import attributeService from "@/services/attributeService";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -89,8 +90,8 @@ function switchZone(name: string) {
 
 function setAttributes(key: string, value: string) {
   remote.attributes.filter((a: Attribute) => a.key == key && state.targets.includes(a.entity)).forEach(v => {
-    remote.nexus.requestAttribute(v.entity, key, value)
-
+    v.request = value
+    attributeService.request(v)
   })
 }
 
