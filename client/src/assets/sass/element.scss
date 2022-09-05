@@ -1,6 +1,7 @@
 // Copyright (c) 2022 Braden Nicholson
 
 // Static
+$text-accent: rgba(255, 149, 0, 1);
 $element-bg: rgba(28, 28, 30, 0.4);
 $element-fg: rgba(255, 255, 255, 0.035);
 $element-bg-active: lighten($element-bg, 10%);
@@ -81,12 +82,13 @@ $themes: (
 .subplot-primary {
   font-family: "SF Pro Display", sans-serif !important;
   //color: rgba(255, 159, 10, 1) !important;
-  color: rgba(10, 132, 255, 1) !important;
+  color: $text-accent !important;
+  mix-blend-mode: multiply;
   font-weight: 600 !important;
 }
 
 .text-accent {
-  color: rgba(255, 149, 0, 1) !important;
+  color: $text-accent !important;
   mix-blend-mode: multiply;
 }
 
@@ -129,6 +131,7 @@ $themes: (
 }
 
 .subplot-inline.subplot-active {
+  user-select: none !important;
   background-color: $element-fg !important;
 }
 
@@ -141,7 +144,7 @@ $themes: (
 // Element Definition
 
 .element {
-
+  user-select: none !important;
   @extend .bg-blur;
   position: relative;
 

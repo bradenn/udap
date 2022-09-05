@@ -94,12 +94,21 @@ export interface Remote {
     nexus: Nexus
 }
 
+
+export interface ModuleVariable {
+    name: string;
+    description: string;
+    default: string;
+}
+
 export interface Module {
     created: string;
     updated: string;
     id: string;
     name: string
     uuid: string
+    config: string
+    variables: string
     path: string
     type: string
     enabled: boolean

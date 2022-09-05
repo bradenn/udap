@@ -5,6 +5,7 @@ package module
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -138,12 +139,19 @@ func (m *moduleOperator) Load(module string, uuid string) (domain.ModuleConfig, 
 	if err != nil {
 		return domain.ModuleConfig{}, err
 	}
+
+	marshal, err := json.Marshal(setup.Variables)
+	if err != nil {
+		return domain.ModuleConfig{}, err
+	}
+
 	conf := domain.ModuleConfig{
 		Name:        setup.Name,
 		Type:        setup.Type,
 		Description: setup.Description,
 		Version:     setup.Version,
 		Author:      setup.Author,
+		Variables:   string(marshal),
 	}
 	return conf, nil
 }

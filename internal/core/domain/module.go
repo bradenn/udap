@@ -14,6 +14,7 @@ type ModuleConfig struct {
 	Description string `json:"description"`
 	Version     string `json:"version"`
 	Author      string `json:"author"`
+	Variables   string `json:"variables"`
 }
 
 type Module struct {
@@ -25,8 +26,9 @@ type Module struct {
 	Description string      `json:"description"`
 	Version     string      `json:"version"`
 	Author      string      `json:"author"`
+	Variables   string      `json:"variables"`
 	Channel     chan Module `json:"-" gorm:"-"`
-	Config      string      `json:"config"`
+	Config      string      `json:"config" gorm:"default:'{}'"`
 	State       string      `json:"state"`
 	Running     bool        `json:"running" gorm:"default:false"`
 	Enabled     bool        `json:"enabled" gorm:"default:true"`
@@ -50,6 +52,7 @@ func (m *Module) CompiledPath() string {
 type ModuleRepository interface {
 	common.Persist[Module]
 	FindByName(name string) (*Module, error)
+	FindByUUID(uuid string) (*Module, error)
 }
 
 type ModuleOperator interface {
@@ -64,6 +67,9 @@ type ModuleOperator interface {
 type ModuleService interface {
 	Observable
 	Discover() error
+	InitConfig(string, string, string) error
+	SetConfig(string, string, string) error
+	GetConfig(string, string) (string, error)
 	HandleEmits(mutation Mutation) error
 	Build(module *Module) error
 	Load(module *Module) error

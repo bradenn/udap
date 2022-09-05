@@ -519,6 +519,10 @@ func (g *Govee) Update() error {
 }
 
 func (g *Govee) Run() error {
+	err := g.InitConfig("key", "<api key>")
+	if err != nil {
+		return err
+	}
 	devices, err := g.fetchDevices()
 	if err != nil {
 		return err

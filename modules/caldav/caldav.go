@@ -29,6 +29,7 @@ func (c *CalDav) mux() {
 }
 
 func (c *CalDav) Setup() (plugin.Config, error) {
+
 	err := c.UpdateInterval(time.Minute * 5)
 	if err != nil {
 		return plugin.Config{}, err
@@ -37,6 +38,10 @@ func (c *CalDav) Setup() (plugin.Config, error) {
 }
 
 func (c *CalDav) Run() error {
+	err := c.InitConfig("server", "https://example.com")
+	if err != nil {
+		c.ErrF("%s", err)
+	}
 	c.receiver = make(chan domain.Attribute, 1)
 	entity := &domain.Entity{
 		Name:   "caldav",
@@ -44,7 +49,7 @@ func (c *CalDav) Run() error {
 		Module: c.Config.Name,
 	}
 
-	err := c.Entities.Register(entity)
+	err = c.Entities.Register(entity)
 	if err != nil {
 		return err
 	}
@@ -68,6 +73,13 @@ func (c *CalDav) Run() error {
 		return err
 	}
 
+	config, err := c.GetConfig("server")
+	if err != nil {
+		return err
+	}
+
+	c.LogF("Config value for '%s' is '%s'", "server", config)
+
 	return nil
 }
 
@@ -79,12 +91,22 @@ func (c *CalDav) Update() error {
 }
 
 func init() {
+
+	configVariables := []plugin.Variable{
+		{
+			Name:    "server",
+			Default: "https://examples.com",
+			Description: "The module will poll calendar info from any CalDAV server. " +
+				"Ensure the address begins with 'https://'.",
+		},
+	}
 	config := plugin.Config{
 		Name:        "caldav",
 		Type:        "module",
 		Description: "Get calendar events from any caldav interface",
 		Version:     "0.1.0",
 		Author:      "Braden Nicholson",
+		Variables:   configVariables,
 	}
 
 	Module.Config = config

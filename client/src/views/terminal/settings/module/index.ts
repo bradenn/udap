@@ -12,6 +12,7 @@ import Module from "@/views/terminal/settings/module/Module.vue";
 import Metadata from "@/views/terminal/settings/module/pages/Metadata.vue";
 import Versions from "@/views/terminal/settings/module/pages/Versions.vue";
 import Actions from "@/views/terminal/settings/module/pages/Actions.vue";
+import Config from "@/views/terminal/settings/module/pages/Config.vue";
 
 const routes = {
     path: '/terminal/settings/modules',
@@ -40,6 +41,11 @@ const routes = {
                     path: '/terminal/settings/modules/:moduleId/actions',
                     name: 'Module Actions',
                     component: Actions,
+                },
+                {
+                    path: '/terminal/settings/modules/:moduleId/config',
+                    name: 'Module Config',
+                    component: Config,
                 },
                 {
                     path: '/terminal/settings/modules/:moduleId/metadata',

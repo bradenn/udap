@@ -40,6 +40,7 @@ function formatDate(date: string): string {
     <PaneListItem :active="false" :subtext="state.module.version" title="Version"></PaneListItem>
     <PaneListItem :active="false" :subtext="formatDate(state.module.created)" title="Installed"></PaneListItem>
     <PaneListItem :active="false" :subtext="formatDate(state.module.updated)" title="Last Compilation"></PaneListItem>
+    <PaneListItem :active="false" :subtext="state.module.config || '--'" title="Config"></PaneListItem>
   </PaneList>
 </template>
 

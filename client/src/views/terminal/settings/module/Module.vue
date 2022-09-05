@@ -19,9 +19,11 @@ function goBack() {
 
 <template>
   <div class="entity-grid">
-    <PaneList :close="goBack" :previous="true" title="Module">
+    <PaneList :close="goBack" :previous="true" :title="`Module`">
       <PaneMenuLink :to="`/terminal/settings/modules/${moduleId}/actions`" subtext="Make changes to the module runtime"
                     title="Actions"></PaneMenuLink>
+      <PaneMenuLink :to="`/terminal/settings/modules/${moduleId}/config`" subtext="Module runtime config"
+                    title="Config"></PaneMenuLink>
       <PaneMenuLink :to="`/terminal/settings/modules/${moduleId}/metadata`" subtext="Module-defined information"
                     title="Metadata"></PaneMenuLink>
       <PaneMenuLink :to="`/terminal/settings/modules/${moduleId}/versions`" subtext="Previously compiled versions"
