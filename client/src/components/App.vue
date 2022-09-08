@@ -16,10 +16,10 @@ let props = defineProps<App>()
   <div class="app-container">
     <div class="app-icon element">
       <div v-if="props.status === 'wip'" class="marker">•</div>
-      <i v-if="props.icon" :class="props.icon" class="fa-solid fa-fw"></i>
+      <i v-if="props.icon" :class="props.icon" class="fa-solid fa-fw app-icon-char"></i>
       <i v-else class="fa-solid fa-circle fa-fw"></i>
     </div>
-    <div class="app-name">{{ props.name }}</div>
+    <div class="app-name pt-1">{{ props.name }}</div>
   </div>
 </template>
 
@@ -44,7 +44,6 @@ let props = defineProps<App>()
 }
 
 .app-icon {
-
   width: 2.5rem;
   height: 2.5rem;
   display: flex;
@@ -52,9 +51,14 @@ let props = defineProps<App>()
   align-items: center;
   justify-content: center;
   aspect-ratio: 1/1 !important;
-  border-radius: 0.6rem;
+  border-radius: 0.54rem !important;
   font-size: 0.9rem;
-  color: rgba(200, 200, 200, 0.6);
+  color: rgba(255, 255, 255, 0.6);
+  filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1)) !important;
+}
+
+.app-icon-char {
+  filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
 }
 
 .app-container:active {
@@ -63,10 +67,13 @@ let props = defineProps<App>()
 }
 
 .app-name {
-  font-size: 0.6rem;
-  font-family: "SF Pro Display", sans-serif;
-  font-weight: 400;
+  font-family: 'SF Pro Text';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 16px;
   text-shadow: 0 0 1px rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 0.55)
+  color: rgba(255, 255, 255, 0.8);
+  mix-blend-mode: luminosity;
 }
 </style>

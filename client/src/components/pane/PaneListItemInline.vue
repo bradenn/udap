@@ -10,7 +10,7 @@ let props = defineProps<Plot>()
 </script>
 
 <template>
-  <div class="d-flex justify-content-between align-items-center subplot subplot-inline w-100">
+  <div class="d-flex justify-content-between align-items-center subplot subplot-inline w-100 py-2">
     <div class="d-flex align-items-center">
               <span class="label-c3 label-o4" style="padding-right: 5px;"><span
                   v-if="props.icon">{{ props.icon }}</span></span>

@@ -91,7 +91,7 @@ function toggleMenu(): void {
     <div class="entity-small element">
       <div class="entity-header mb-2 ">
         <div class="label-o5">
-          {{ props.entity.icon || '􀛮' }}
+          {{ props.entity.icon }}
         </div>
         <div class="label-c1 label-w400 label-o4 px-2">
           {{ props.entity.name }}
@@ -105,7 +105,7 @@ function toggleMenu(): void {
     <div v-if="!state.showMenu" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">
       <div class="entity-header mb-2 ">
         <div :class="state.powerAttribute.value === 'true'?'light-on':'light-off'" class="label-o5">
-          {{ (!(props.entity.icon) ? '􀛮' : state.powerAttribute.value === 'true' ? props.entity.icon : '􀛭') }}
+          {{ (props.entity.icon || '􀛭') }}
 
         </div>
         <div class="label-c1 label-w400 label-o4 px-2">

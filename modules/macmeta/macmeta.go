@@ -142,7 +142,7 @@ func (v *MacMeta) displayOff() error {
 }
 
 func (v *MacMeta) Setup() (plugin.Config, error) {
-	err := v.UpdateInterval(5000)
+	err := v.UpdateInterval(2000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
