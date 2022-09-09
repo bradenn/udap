@@ -184,14 +184,15 @@ func (o *orchestrator) Run() error {
 	// Initialize and route applicable domains
 	o.router.Group(func(r chi.Router) {
 		r.Use(jwt.Authenticator)
-		routes.NewUserRouter(o.controller.Users).RouteUsers(r)
-		routes.NewAttributeRouter(o.controller.Attributes).RouteAttributes(r)
-		routes.NewZoneRouter(o.controller.Zones).RouteZones(r)
-		routes.NewDeviceRouter(o.controller.Devices).RouteDevices(r)
-		routes.NewEntityRouter(o.controller.Entities).RouteEntities(r)
-		routes.NewModuleRouter(o.modules).RouteModules(r)
+		routes.NewUserRouter(o.controller.Users).RouteInternal(r)
+		routes.NewAttributeRouter(o.controller.Attributes).RouteInternal(r)
+		routes.NewZoneRouter(o.controller.Zones).RouteInternal(r)
+		routes.NewDeviceRouter(o.controller.Devices).RouteInternal(r)
+		routes.NewEntityRouter(o.controller.Entities).RouteInternal(r)
+		routes.NewModuleRouter(o.modules).RouteInternal(r)
+		routes.NewEndpointRouter(o.endpoints).RouteInternal(r)
 	})
-	routes.NewEndpointRouter(o.endpoints).RouteEndpoints(o.router)
+	routes.NewEndpointRouter(o.endpoints).RouteExternal(o.router)
 
 	runtimes.NewModuleRuntime(o.modules)
 	go func() {

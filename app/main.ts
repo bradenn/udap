@@ -11,7 +11,7 @@ function createWindow() {
             preload: path.join(__dirname, "preload.js"),
         },
         showCursor: false,
-        title: "Udap-Nexus Terminal Endpoint",
+        title: "UDAP Endpoint",
         backgroundColor: '#000000',
         autoHideMenuBar: true,
         show: true,
