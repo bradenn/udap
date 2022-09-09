@@ -27,3 +27,11 @@ func (m moduleRepo) FindByName(name string) (*domain.Module, error) {
 	}
 	return &target, nil
 }
+
+func (m moduleRepo) FindByUUID(uuid string) (*domain.Module, error) {
+	var target domain.Module
+	if err := m.db.Where("uuid = ?", uuid).First(&target).Error; err != nil {
+		return nil, err
+	}
+	return &target, nil
+}

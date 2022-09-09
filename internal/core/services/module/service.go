@@ -3,6 +3,7 @@
 package module
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"path/filepath"
@@ -90,7 +91,7 @@ func (u *moduleService) Run(module *domain.Module) error {
 		return fmt.Errorf("module must not be running to run")
 	}
 	// Mark the module start as starting
-	err := u.setState(module, STARTING)
+	err := u.setState(module.Id, STARTING)
 	if err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func (u *moduleService) Run(module *domain.Module) error {
 	err = u.operator.Run(module.UUID)
 	if err != nil {
 		// Set the module state to error if the run fails
-		err = u.setState(module, ERROR)
+		err = u.setState(module.Id, ERROR)
 		if err != nil {
 			return err
 		}
@@ -107,7 +108,7 @@ func (u *moduleService) Run(module *domain.Module) error {
 	// Set the module as running so it can begin updating
 	module.Running = true
 	// Mark the module as running
-	err = u.setState(module, RUNNING)
+	err = u.setState(module.Id, RUNNING)
 	if err != nil {
 		return err
 	}
@@ -121,6 +122,7 @@ func (u *moduleService) Load(module *domain.Module) error {
 	if err != nil {
 		return err
 	}
+	module.Variables = config.Variables
 	module.Version = config.Version
 	module.Description = config.Description
 	module.Type = config.Type
@@ -130,7 +132,7 @@ func (u *moduleService) Load(module *domain.Module) error {
 		return err
 	}
 	// Set the state if the operation was a success, setState will also update the module data
-	err = u.setState(module, IDLE)
+	err = u.setState(module.Id, IDLE)
 	if err != nil {
 		return err
 	}
@@ -160,7 +162,7 @@ func (u *moduleService) Dispose(module *domain.Module) error {
 		return fmt.Errorf("module must be enabled and running to dispose")
 	}
 	// Mark the state as halting, since it may take a while
-	err := u.setState(module, HALTING)
+	err := u.setState(module.Id, HALTING)
 	if err != nil {
 		return err
 	}
@@ -176,7 +178,7 @@ func (u *moduleService) Dispose(module *domain.Module) error {
 		time.Since(start).Truncate(time.Millisecond).String())
 	module.UUID = ""
 	// Mark the module as stopped if the disposal was successful
-	err = u.setState(module, STOPPED)
+	err = u.setState(module.Id, STOPPED)
 	if err != nil {
 		return err
 	}
@@ -209,13 +211,17 @@ func (u *moduleService) UpdateAll() error {
 	return nil
 }
 
-func (u *moduleService) setState(module *domain.Module, state string) error {
-	module.State = state
-	err := u.repository.Update(module)
+func (u *moduleService) setState(id string, state string) error {
+	byId, err := u.repository.FindById(id)
 	if err != nil {
 		return err
 	}
-	err = u.Emit(*module)
+	byId.State = state
+	err = u.repository.Update(byId)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*byId)
 	if err != nil {
 		return err
 	}
@@ -338,13 +344,13 @@ func (u *moduleService) BuildAll() error {
 			err = u.Build(&mod)
 			if err != nil {
 				log.Err(err)
-				err = u.setState(&mod, ERROR)
+				err = u.setState(mod.Id, ERROR)
 				if err != nil {
 					return
 				}
 				return
 			}
-			err = u.setState(&mod, UNINITIALIZED)
+			err = u.setState(mod.Id, UNINITIALIZED)
 			if err != nil {
 				return
 			}
@@ -354,11 +360,82 @@ func (u *moduleService) BuildAll() error {
 	return nil
 }
 
-func (u *moduleService) SetConfig(id string, key string, value string) error {
-	byId, err := u.repository.FindById(id)
+func (u *moduleService) GetConfig(id string, key string) (string, error) {
+	byId, err := u.repository.FindByUUID(id)
+	if err != nil {
+		return "", err
+	}
+
+	var values map[string]string
+	err = json.Unmarshal([]byte(byId.Config), &values)
+	if err != nil {
+		err = nil
+		values = map[string]string{}
+	}
+
+	value, ok := values[key]
+	if !ok {
+		return "", fmt.Errorf("config value on key '%s' does not exist", key)
+	}
+
+	return value, nil
+}
+
+func (u *moduleService) InitConfig(id string, key string, value string) error {
+	byId, err := u.repository.FindByUUID(id)
 	if err != nil {
 		return err
 	}
+
+	var values map[string]string
+	err = json.Unmarshal([]byte(byId.Config), &values)
+	if err != nil {
+		err = nil
+		values = map[string]string{}
+	}
+
+	val := values[key]
+	if val != "" {
+		return nil
+	}
+
+	values[key] = value
+
+	marshal, err := json.Marshal(values)
+	if err != nil {
+		return err
+	}
+
+	byId.Config = string(marshal)
+
+	err = u.save(byId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *moduleService) SetConfig(id string, key string, value string) error {
+	byId, err := u.repository.FindByUUID(id)
+	if err != nil {
+		return err
+	}
+
+	var values map[string]string
+	err = json.Unmarshal([]byte(byId.Config), &values)
+	if err != nil {
+		err = nil
+		values = map[string]string{}
+	}
+
+	values[key] = value
+
+	marshal, err := json.Marshal(values)
+	if err != nil {
+		return err
+	}
+
+	byId.Config = string(marshal)
 
 	err = u.save(byId)
 	if err != nil {

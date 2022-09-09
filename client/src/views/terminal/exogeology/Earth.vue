@@ -9,7 +9,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 
 let state = reactive({
-  satellite: "GOES17",
+  satellite: "GOES18",
   mode: "GEOCOLOR",
   section: "FD",
   currentImage: "/custom/1808x1808.jpg",
@@ -118,9 +118,9 @@ const viewModes = [{
 
 const satellites = [
   {
-    name: "GOES 17",
+    name: "GOES 18",
     alt: "West",
-    key: "GOES17",
+    key: "GOES18",
   },
   {
     name: "GOES 16",
@@ -287,12 +287,12 @@ function buildURL() {
           <div class="d-flex flex-column gap w-25  flex-grow-0">
             <div class="label-o4 label-sm label-r label-w500 lh-1">Satellite</div>
             <Plot :cols="2" :rows="1">
-              <Subplot v-for="sat in satellites" :active="state.satellite===sat.key" :alt="sat.alt"
+              <Subplot v-for="sat in satellites" :active="state.satellite===sat.key" :alt="''"
                        :fn="() => selectSatellite(sat.key)"
                        :name="sat.name"
                        icon="satellite"></Subplot>
             </Plot>
-            <div class="label-o4 label-sm label-r label-w500 lh-1">Prespective</div>
+            <div class="label-o4 label-sm label-r label-w500 lh-1">Perspective</div>
             <Plot :cols="2" :rows="2">
               <Subplot v-for="sect in sections" :active="sect.key === state.section || state.toggles.section"
                        :alt="sect.alt" :fn="() => selectSection(sect.key)"
@@ -377,6 +377,10 @@ function buildURL() {
 
 .preview:hover {
   transform: scale(1.2);
+}
+
+.earth-background {
+  border-radius: 20rem !important;
 }
 
 .earth-full-disk {

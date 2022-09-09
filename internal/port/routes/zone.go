@@ -11,21 +11,21 @@ import (
 	"udap/internal/core/domain"
 )
 
-type ZoneRouter interface {
-	RouteZones(router chi.Router)
-}
-
 type zoneRouter struct {
 	service domain.ZoneService
 }
 
-func NewZoneRouter(service domain.ZoneService) ZoneRouter {
+func (r zoneRouter) RouteExternal(_ chi.Router) {
+
+}
+
+func NewZoneRouter(service domain.ZoneService) Routable {
 	return zoneRouter{
 		service: service,
 	}
 }
 
-func (r zoneRouter) RouteZones(router chi.Router) {
+func (r zoneRouter) RouteInternal(router chi.Router) {
 	router.Post("/zones/create", r.create)
 	router.Route("/zones/{id}", func(local chi.Router) {
 		local.Post("/delete", r.delete)

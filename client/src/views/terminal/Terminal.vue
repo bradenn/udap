@@ -30,6 +30,7 @@ import Subplot from "@/components/plot/Subplot.vue";
 import Sideapp from "@/views/terminal/Sideapp.vue";
 import Bubbles from "@/views/screensaver/Bubbles.vue";
 import Warp from "@/views/screensaver/Warp.vue";
+import Input from "@/views/Input.vue";
 
 // -- Websockets --
 
@@ -179,7 +180,12 @@ let state = reactive({
   scrollY: 0,
   scrollXBack: 0,
   scrollYBack: 0,
-
+  input: {
+    open: false,
+    meta: {} as InputProps,
+    cb: (a: string) => {
+    },
+  },
   dragA: {
     x: 0,
     y: 0
@@ -220,6 +226,36 @@ function dragStart(e: MouseEvent) {
   setTimeout(timeout, 10)
   // Otherwise, we consider the swipes
 }
+
+interface InputProps {
+  name: string
+  value: string
+  description: string
+  icon?: string
+  type?: string
+}
+
+function openInput(props: InputProps, cb: (a: string) => void) {
+  if (!state.input.open) {
+    state.input.open = true
+    state.input.meta = props
+    state.input.cb = cb
+  }
+}
+
+function applyInput(a: string) {
+  state.input.cb(a)
+  closeInput()
+}
+
+function closeInput() {
+  state.input.open = false
+  state.input.meta = {} as InputProps
+  state.input.cb = () => {
+  }
+}
+
+provide("input", openInput)
 
 // While the user is still dragging
 function dragContinue(e: MouseEvent) {
@@ -393,6 +429,8 @@ provide('remote', remote)
            class="screensaver-overlay"></Bubbles>
   <Warp v-else-if="screensaver.show && preferences.ui.screensaver.selection === 'warp'"
         class="screensaver-overlay"></Warp>
+  <Input v-if="state.input.open" :apply="applyInput" :close="closeInput" :description="state.input.meta.description"
+         :name="state.input.meta.name" :value="state.input.meta.value"></Input>
 </template>
 
 <style lang="scss" scoped>

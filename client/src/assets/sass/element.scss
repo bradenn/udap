@@ -1,6 +1,7 @@
 // Copyright (c) 2022 Braden Nicholson
 
 // Static
+$text-accent: rgba(255, 149, 0, 1);
 $element-bg: rgba(28, 28, 30, 0.4);
 $element-fg: rgba(255, 255, 255, 0.035);
 $element-bg-active: lighten($element-bg, 10%);
@@ -17,25 +18,22 @@ $element-bg-hover: rgba(255, 128, 0, 0.280);
 
 // Options
 
-$loadInDistance: 0.95;
+$loadInDistance: 0.98;
 /* Blur Definitions */
 .bg-blur {
   position: relative;
-  box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
+  //box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
   transform: translate3d(0, 0, 0) translateZ(0);
   backface-visibility: visible;
   -webkit-backface-visibility: hidden;
-  -webkit-perspective: 1000px;
-
-  perspective: 1000px;
   overflow: hidden;
   content: ' ';
   border-radius: inherit;
-
+  filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
   // Blur Features
-  filter: drop-shadow(0px 8px 64px rgba(0, 0, 0, 0.1));
+  //filter: drop-shadow(0px 8px 64px rgba(0, 0, 0, 0.1));
   backdrop-filter: blur(80px);
-  background-blend-mode: overlay;
+  /*background-blend-mode: overlay;*/
   //backdrop-filter: blur(25px);
 }
 
@@ -43,16 +41,15 @@ $loadInDistance: 0.95;
   position: absolute;
   top: 0;
   right: 0;
-
 }
 
 
 @keyframes loadIn {
   0% {
-    transform: scale3d($loadInDistance, $loadInDistance, $loadInDistance);
+    transform: scale3d($loadInDistance, $loadInDistance, $loadInDistance) translateZ(0);
   }
   100% {
-    transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1) translateZ(0);
   }
 }
 
@@ -61,7 +58,7 @@ $loadInDistance: 0.95;
 
 /* Theme Definitions */
 $themes: (
-        "light": rgba(209, 209, 214, 0.1),
+        "light": rgba(245, 245, 245, 0.4),
         "dark": $element-bg,
 );
 
@@ -81,12 +78,13 @@ $themes: (
 .subplot-primary {
   font-family: "SF Pro Display", sans-serif !important;
   //color: rgba(255, 159, 10, 1) !important;
-  color: rgba(10, 132, 255, 1) !important;
+  color: $text-accent !important;
+  mix-blend-mode: multiply;
   font-weight: 600 !important;
 }
 
 .text-accent {
-  color: rgba(255, 149, 0, 1) !important;
+  color: $text-accent !important;
   mix-blend-mode: multiply;
 }
 
@@ -123,12 +121,11 @@ $themes: (
 
 .element-secondary {
   background-color: $element-fg;
-
-
   //box-shadow: 0 0 8px 0.2px opacify($element-shadow, 0.005);
 }
 
 .subplot-inline.subplot-active {
+  user-select: none !important;
   background-color: $element-fg !important;
 }
 
@@ -141,10 +138,10 @@ $themes: (
 // Element Definition
 
 .element {
-
+  user-select: none !important;
   @extend .bg-blur;
   position: relative;
-
+  box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
   animation: loadIn 150ms forwards;
   padding: 0.25rem;
   //border-radius: 12px;

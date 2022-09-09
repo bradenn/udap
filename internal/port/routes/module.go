@@ -9,21 +9,17 @@ import (
 	"udap/internal/log"
 )
 
-type ModuleRouter interface {
-	RouteModules(router chi.Router)
-}
-
 type moduleRouter struct {
 	service domain.ModuleService
 }
 
-func NewModuleRouter(service domain.ModuleService) ModuleRouter {
+func NewModuleRouter(service domain.ModuleService) Routable {
 	return &moduleRouter{
 		service: service,
 	}
 }
 
-func (r *moduleRouter) RouteModules(router chi.Router) {
+func (r *moduleRouter) RouteInternal(router chi.Router) {
 	router.Route("/modules/{id}", func(local chi.Router) {
 		local.Post("/reload", r.reload)
 		local.Post("/build", r.build)
@@ -31,6 +27,10 @@ func (r *moduleRouter) RouteModules(router chi.Router) {
 		local.Post("/enable", r.enable)
 		local.Post("/halt", r.halt)
 	})
+}
+
+func (r *moduleRouter) RouteExternal(_ chi.Router) {
+
 }
 
 func (r moduleRouter) reload(w http.ResponseWriter, req *http.Request) {

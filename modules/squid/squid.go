@@ -305,6 +305,10 @@ func (s *Squid) Update() error {
 
 // Run is called after Setup, concurrent with Update
 func (s *Squid) Run() (err error) {
+	err = s.InitConfig("address", "10.0.1.1")
+	if err != nil {
+		return err
+	}
 	err = s.registerDevices()
 	if err != nil {
 		return err

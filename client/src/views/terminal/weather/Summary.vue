@@ -14,7 +14,10 @@ interface WeatherProps {
   entity: Entity
   forecast: Attribute
   loading: boolean
-  ranges: any
+  ranges: any,
+  sun: any,
+  rain: any,
+  lastUpdate: number
 }
 
 let state = reactive<WeatherProps>({
@@ -23,6 +26,14 @@ let state = reactive<WeatherProps>({
   entity: {} as Entity,
   forecast: {} as Attribute,
   loading: false,
+  lastUpdate: 0 as number,
+  sun: {
+    setting: "" as string,
+    rising: "" as string,
+  },
+  rain: {
+    rainfall: 0 as number
+  },
   ranges: {
     temp: {
       min: 100,
@@ -78,9 +89,15 @@ function parseWeather(we: Weather) {
     }
 
   }
-
-
   state.latest = we as Weather
+
+  state.sun.rising = asDate(state.latest.daily.sunrise[0] * 1000)
+  state.sun.setting = asDate(state.latest.daily.sunset[0] * 1000)
+
+  state.rain.rainfall = state.latest.daily.precipitation_sum[0]
+
+
+  state.lastUpdate = new Date().valueOf();
   state.loading = false
 }
 
@@ -88,8 +105,12 @@ function roundDecimal(input: number, places: number) {
   return Math.round(input * Math.pow(10, places)) / Math.pow(10, places)
 }
 
+function timeSince(ms: number): string {
+  return moment(ms).fromNow()
+}
+
 function asDate(ms: number): string {
-  return moment(ms).format("HH:mm AA")
+  return moment(ms).utc(true).format("h:mm A")
 }
 
 </script>
@@ -145,19 +166,15 @@ function asDate(ms: number): string {
     </div>
   </div>
 
-  <PaneList class="mt-1" style="width: 12rem">
-    <PaneListItemInline :active="false" :subtext="asDate(state.latest.daily.sunrise[0])" icon="􀆱"
+  <PaneList :alt='timeSince(state.lastUpdate)' class="mt-1" style="width: 12rem" title="Today">
+
+    <PaneListItemInline :active="false" :subtext="state.sun.rising" icon="􀆱"
                         title="Sunrise"></PaneListItemInline>
-    <PaneListItemInline :active="false" :subtext="asDate(state.latest.daily.sunset[0])" icon="􀆳"
+    <PaneListItemInline :active="false" :subtext="state.sun.setting" icon="􀆳"
                         title="Sunset"></PaneListItemInline>
+    <PaneListItemInline :active="false" :subtext="`${state.rain.rainfall} in`" icon="􀇆"
+                        title="Rainfall"></PaneListItemInline>
   </PaneList>
-
-  <div class="element mt-1">
-    <div class="label-c3 label-w400 label-o3 mt-1">
-
-      {{ state.latest.daily }}
-    </div>
-  </div>
 
 
 </template>

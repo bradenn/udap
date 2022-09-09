@@ -10,25 +10,25 @@ import (
 	"udap/internal/core/domain"
 )
 
-type UserRouter interface {
-	RouteUsers(router chi.Router)
-}
-
 type userRouter struct {
 	service domain.UserService
 }
 
-func NewUserRouter(service domain.UserService) UserRouter {
+func NewUserRouter(service domain.UserService) Routable {
 	return userRouter{
 		service: service,
 	}
 }
 
-func (r userRouter) RouteUsers(router chi.Router) {
+func (r userRouter) RouteInternal(router chi.Router) {
 	router.Route("/users", func(local chi.Router) {
 		local.Post("/register", r.register)
 		local.Post("/authenticate", r.authenticate)
 	})
+}
+
+func (r userRouter) RouteExternal(_ chi.Router) {
+
 }
 
 func (r userRouter) authenticate(w http.ResponseWriter, req *http.Request) {

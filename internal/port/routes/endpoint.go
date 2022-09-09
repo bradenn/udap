@@ -13,26 +13,26 @@ import (
 	"udap/platform/jwt"
 )
 
-type EndpointRouter interface {
-	RouteEndpoints(router chi.Router)
-}
-
 type endpointRouter struct {
 	service domain.EndpointService
 }
 
-func NewEndpointRouter(service domain.EndpointService) EndpointRouter {
+func NewEndpointRouter(service domain.EndpointService) Routable {
 	return &endpointRouter{
 		service: service,
 	}
 }
 
-func (r *endpointRouter) RouteEndpoints(router chi.Router) {
+func (r *endpointRouter) RouteExternal(router chi.Router) {
+	router.Route("/endpoints", func(local chi.Router) {
+		router.Get("/register/{key}", r.authenticate)
+		router.Get("/socket/{token}", r.enroll)
+	})
+}
 
-	router.Get("/socket/{token}", r.enroll)
+func (r *endpointRouter) RouteInternal(router chi.Router) {
 	router.Route("/endpoints", func(local chi.Router) {
 		local.Get("/create", r.create)
-		local.Get("/register/{key}", r.authenticate)
 	})
 }
 

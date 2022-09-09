@@ -11,11 +11,18 @@ import (
 )
 
 type Config struct {
+	Name        string     `json:"name"`
+	Type        string     `json:"type"` // Module, Daemon, etc.
+	Description string     `json:"description"`
+	Version     string     `json:"version"`
+	Author      string     `json:"author"`
+	Variables   []Variable `json:"variables"`
+}
+
+type Variable struct {
 	Name        string `json:"name"`
-	Type        string `json:"type"` // Module, Daemon, etc.
+	Default     string `json:"default"`
 	Description string `json:"description"`
-	Version     string `json:"version"`
-	Author      string `json:"author"`
 }
 
 type Module struct {
@@ -72,6 +79,22 @@ func (m *Module) ErrF(format string, args ...any) {
 	}
 }
 
+func (m *Module) Err(err error) {
+	out := domain.Log{
+		Group:   "module",
+		Level:   "error",
+		Event:   m.Name,
+		Time:    time.Now(),
+		Message: fmt.Sprintf("Error: %s", err.Error()),
+	}
+	log.Event("%s::%s %s", out.Group, out.Event, out.Message)
+	err = nil
+	err = m.Logs.Create(&out)
+	if err != nil {
+		return
+	}
+}
+
 // UpdateInterval is called once at the launch of the module
 func (m *Module) UpdateInterval(frequency time.Duration) error {
 	m.Frequency = time.Millisecond * frequency
@@ -101,17 +124,15 @@ func (m *Module) OnEmit() error {
 }
 
 func (m *Module) InitConfig(key string, value string) error {
-	return nil
+	return m.Modules.InitConfig(m.UUID, key, value)
 }
 
-func (m *Module) GetConfig(key string) error {
-
-	return nil
+func (m *Module) GetConfig(key string) (string, error) {
+	return m.Modules.GetConfig(m.UUID, key)
 }
 
-func (m *Module) SetConfig(key string) error {
-
-	return nil
+func (m *Module) SetConfig(key string, value string) error {
+	return m.Modules.SetConfig(m.UUID, key, value)
 }
 
 // Dispose is called once at the launch of the module

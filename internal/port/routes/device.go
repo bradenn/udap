@@ -10,24 +10,24 @@ import (
 	"udap/internal/core/domain"
 )
 
-type DeviceRouter interface {
-	RouteDevices(router chi.Router)
-}
-
 type deviceRouter struct {
 	service domain.DeviceService
 }
 
-func NewDeviceRouter(service domain.DeviceService) DeviceRouter {
+func NewDeviceRouter(service domain.DeviceService) Routable {
 	return deviceRouter{
 		service: service,
 	}
 }
 
-func (r deviceRouter) RouteDevices(router chi.Router) {
+func (r deviceRouter) RouteInternal(router chi.Router) {
 	router.Route("/devices", func(local chi.Router) {
 		local.Post("/update", r.update)
 	})
+}
+
+func (r deviceRouter) RouteExternal(_ chi.Router) {
+
 }
 
 func (r deviceRouter) update(w http.ResponseWriter, req *http.Request) {

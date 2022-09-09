@@ -55,17 +55,17 @@ elements.
 
 ##### Plot Selection (from Settings->Preferences page)
 
-![Plot Buttons](./images/plot_buttons.png)
+![Plot Buttons](./docs/images/plot_buttons.png)
 
 ##### Plot Module (from Settings->Modules page)
 
 Plots can contain custom dom to serve whatever purpose is needed:
-![Plot Buttons](./images/plot_module.png)
+![Plot Buttons](./docs/images/plot_module.png)
 
 ##### Plot Buttons (from Global context Menu)
 
 Plots are best used for providing many buttons for easy selection.
 
-![Plot Buttons](./images/plot_multi.png)
+![Plot Buttons](./docs/images/plot_multi.png)
 
 #### Copyright &copy; 2019-2022 Braden Nicholson

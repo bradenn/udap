@@ -9,24 +9,23 @@ import (
 	"udap/internal/core/domain"
 )
 
-type EntityRouter interface {
-	RouteEntities(router chi.Router)
-}
-
 type entityRouter struct {
 	service domain.EntityService
 }
 
-func NewEntityRouter(service domain.EntityService) EntityRouter {
+func NewEntityRouter(service domain.EntityService) Routable {
 	return &entityRouter{
 		service: service,
 	}
 }
 
-func (r entityRouter) RouteEntities(router chi.Router) {
+func (r entityRouter) RouteInternal(router chi.Router) {
 	router.Route("/entities/{id}", func(local chi.Router) {
 		local.Post("/icon", r.changeIcon)
 	})
+}
+
+func (r entityRouter) RouteExternal(_ chi.Router) {
 }
 
 func (r entityRouter) changeIcon(w http.ResponseWriter, req *http.Request) {

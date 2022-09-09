@@ -28,7 +28,9 @@ function close() {
             <div class="label-c2 lh-1">Back</div>
           </div>
         </div>
-        <div v-else class="label-c1  label-o4 label-w500 px-1">{{ props.title }}</div>
+        <div v-else class="px-1 d-flex justify-content-between w-100">
+          <div class="label-c1  label-o4 label-w500">{{ props.title }}</div>
+        </div>
       </div>
 
       <div class="nav-area justify-content-center">
@@ -37,9 +39,10 @@ function close() {
       <div class="nav-area justify-content-center">
       </div>
       <div class="nav-area justify-content-end">
+
       </div>
     </div>
-    <div class="pt-1">
+    <div class="">
       <slot></slot>
     </div>
   </div>

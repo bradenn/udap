@@ -9,24 +9,24 @@ import (
 	"udap/internal/core/domain"
 )
 
-type AttributeRouter interface {
-	RouteAttributes(router chi.Router)
-}
-
 type attributeRouter struct {
 	service domain.AttributeService
 }
 
-func NewAttributeRouter(service domain.AttributeService) AttributeRouter {
-	return &attributeRouter{
-		service: service,
-	}
-}
-
-func (r *attributeRouter) RouteAttributes(router chi.Router) {
+func (r *attributeRouter) RouteInternal(router chi.Router) {
 	router.Route("/entities/{id}/attributes/{key}", func(local chi.Router) {
 		local.Post("/request", r.request)
 	})
+}
+
+func (r *attributeRouter) RouteExternal(_ chi.Router) {
+
+}
+
+func NewAttributeRouter(service domain.AttributeService) Routable {
+	return &attributeRouter{
+		service: service,
+	}
 }
 
 func (r *attributeRouter) request(w http.ResponseWriter, req *http.Request) {
