@@ -396,7 +396,7 @@ provide('remote', remote)
 
     </div>
 
-    <div class="route-view">
+    <div class="route-view pt-1">
       <div>
         <Sideapp v-if="state.sideApp" :style="`transform: translateX(${-state.scrollX}px);`">
           <CalculatorQuick v-if="state.sideApp"></CalculatorQuick>

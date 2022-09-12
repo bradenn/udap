@@ -7,7 +7,7 @@ rules:
       - action: utter_query
 
 nlu:
-  - intent: query/personal_identity
+  - intent: personal_identity
     examples: |
       - who am I
       - do you know who I am
@@ -17,7 +17,7 @@ nlu:
       - tell me who I am
       - tell me my name
 
-  - intent: query/time
+  - intent: time
     examples: |
       - what time is it
       - what is the time
@@ -28,7 +28,7 @@ nlu:
       - what hour is it
       - what is the hour
 
-  - intent: query/date
+  - intent: date
     examples: |
       - what is the date
       - what's the date
@@ -40,7 +40,7 @@ nlu:
       - what day is it
       - what is the day
 
-  - intent: query/temperature
+  - intent: temperature
     examples: |
       - what is the temperature
       - what's the temperature
@@ -55,7 +55,7 @@ nlu:
       - is it hot
       - should I wear a sweatshirt 
 
-  - intent: query/weather
+  - intent: weather
     examples: |
       - whats the weather like
       - what is the current weather
@@ -69,13 +69,13 @@ nlu:
       - is it cloudy today
       - is it going to rain
 
-  - intent: query/pod_bay_doors
+  - intent: pod_bay_doors
     examples: |
       - open the pod bay doors
       - open the pod-bay doors
       - please open the pod bay doors, hal
 
-  - intent: query/define
+  - intent: define
     examples: |
       - define the word (fortnight)[word] 
       - please define the term (stand)[word] 

@@ -31,9 +31,7 @@ func (r *endpointRouter) RouteExternal(router chi.Router) {
 }
 
 func (r *endpointRouter) RouteInternal(router chi.Router) {
-	router.Route("/endpoints", func(local chi.Router) {
-		local.Get("/create", r.create)
-	})
+	router.Get("/endpoints/create", r.create)
 }
 
 func (r *endpointRouter) create(w http.ResponseWriter, req *http.Request) {

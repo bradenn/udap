@@ -65,10 +65,10 @@ function currentPageName() {
 
 <style lang="scss" scoped>
 .page-title {
-  font-size: 2rem;
+  font-size: 1.9rem;
   line-height: 2rem;
   font-weight: 600;
-  font-family: "SF Pro Rounded", sans-serif;
+  font-family: "SF Pro Display", sans-serif;
   color: rgba(255, 255, 255, 0.6);
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
   transition: font-size 50ms ease-in;

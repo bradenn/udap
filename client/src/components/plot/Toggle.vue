@@ -11,7 +11,7 @@ let props = defineProps<Toggle>()
 </script>
 
 <template>
-  <div :class="`${props.active?'active':''}`" class="subplot " @click="(e) => props.fn()">
+  <div :class="`${props.active?'':'subplot-inline'}`" class="subplot " @click="(e) => props.fn()">
     <div>{{ props.title }}</div>
     <div class="d-flex justify-content-center align-items-center align-content-center ">
 
