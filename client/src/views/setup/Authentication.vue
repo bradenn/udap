@@ -81,17 +81,17 @@ function enterChar(char: string) {
         <div class="d-flex flex-row gap justify-content-between mt-3">
           <div v-for="(v, k) in state.spaces" :key=k
                :class="`${state.cursor === k?'border-fog':'border-transparent'}`"
-               class="surface character border label-o4">{{ v }}
+               class="subplot character border label-o4">{{ v }}
           </div>
         </div>
         <div class="d-flex flex-row mt-3 justify-content-between align-items-center text-danger">
           <div class="label-lg label-w500">{{ errorMessage }}</div>
-          <div class="surface d-inline-block label-lg label-o5 label-w600 px-4 py-2" @click="authenticate">
+          <div class="subplot d-inline-block label-lg label-o5 label-w600 px-4 py-2" @click="authenticate">
             Verify&nbsp;&nbsp;<span class="label-o3 label-md">􀆊</span></div>
         </div>
       </div>
     </div>
-    <SimpleKeyboard :input="enterChar" keySet="alpha-numeric" keyboardClass="simple-keyboard"></SimpleKeyboard>
+    <SimpleKeyboard :input="enterChar" keySet="" keyboardClass="simple-keyboard"></SimpleKeyboard>
   </div>
 
 </template>

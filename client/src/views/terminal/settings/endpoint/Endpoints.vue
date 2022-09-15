@@ -5,6 +5,10 @@ import type {Device, Endpoint, Remote} from "@/types";
 import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import Loader from "@/components/Loader.vue";
+import PaneList from "@/components/pane/PaneList.vue";
+import ListInput from "@/components/pane/ListInput.vue";
+import PaneMenuItem from "@/components/pane/PaneMenuItem.vue";
+import endpointService from "@/services/endpointService";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -13,6 +17,9 @@ let state = reactive({
   endpoints: {} as Endpoint[],
   devices: {} as Device[],
   loading: true,
+  toCreate: {
+    name: ""
+  } as Endpoint,
   mode: "list"
 })
 
@@ -35,16 +42,24 @@ function setMode(mode: string) {
   state.mode = mode
 }
 
+function createEndpoint() {
+  endpointService.createEndpoint(state.toCreate).then(res => {
+    state.toCreate.name = `${res}`
+  }).catch(err => {
+    state.toCreate.name = `${err}`
+  })
+}
+
 </script>
 
 <template>
   <div v-if="!state.loading">
-
+    <Plot :cols="1" :rows="1" class="mb-1" small style="width: 6rem;">
+      <Radio :active="false" :fn="() => setMode(state.mode === 'create'?'list':'create')"
+             :title="state.mode !== 'list'?'Cancel':'New Endpoint'"></Radio>
+    </Plot>
     <div v-if="state.mode === 'list'">
-      <Plot :cols="1" :rows="1" class="mb-1" small style="width: 6rem;">
-        <Radio :active="false" :fn="() => setMode(state.mode === 'create'?'list':'create')"
-               :title="state.mode === 'list'?'Cancel':'New Endpoint'"></Radio>
-      </Plot>
+
       <div class="endpoint-container w-100">
         <div v-for="endpoint in state.endpoints"
              :key="endpoint.id" class="">
@@ -57,7 +72,15 @@ function setMode(mode: string) {
       </div>
     </div>
     <div v-else-if="state.mode === 'create'">
-      Create mode!
+
+      <PaneList style="width: 15rem;" title="Configuration">
+        <ListInput :change="(s: string) => state.toCreate.name = s"
+                   :value="state.toCreate.name"
+                   description="The name of the endpoint"
+                   name="Endpoint Name" type="text"></ListInput>
+        <PaneMenuItem :active="false" :fn="createEndpoint" subtext="" title="Create"></PaneMenuItem>
+      </PaneList>
+
     </div>
   </div>
 

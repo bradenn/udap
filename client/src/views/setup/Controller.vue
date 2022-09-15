@@ -72,7 +72,7 @@ function getController() {
           <div class="d-flex flex-column gap mt-3">
             <div v-for="controller in state.controllers" :key="controller.address"
                  :class="`${state.selected === controller.address?'border border-fog':'border border-transparent'}`"
-                 class="surface d-flex justify-content-between px-3 py-2" @click="setController(controller.address)">
+                 class="subplot d-flex justify-content-between px-3 py-2" @click="setController(controller.address)">
               <div class="d-flex flex-column justify-content-start">
                 <div class="label-md label-o5 label-w500">{{ controller.name }}</div>
                 <div class="label-o3 label-w500 label-sm">
@@ -91,9 +91,9 @@ function getController() {
 
           </div>
           <div class="d-flex flex-row mt-3 justify-content-end">
-            <router-link class="surface d-inline-block label-lg label-o5 label-w600 px-4 py-2"
+            <router-link class="subplot label-xl lh-1 label-o5 label-w600 px-4 py-2"
                          to="/setup/authentication">
-              Authentication&nbsp;&nbsp;<span class="label-o3 label-md">􀆊</span></router-link>
+              Authentication&nbsp;&nbsp;<span class="label-o3 label-md lh-1">􀆊</span></router-link>
           </div>
         </div>
       </div>
