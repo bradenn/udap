@@ -9,7 +9,7 @@ const preferenceDefaults: Preferences = {
   ui: {
     screensaver: {
       enabled: true,
-      countdown: 60 * 5,
+      countdown: 60 * 10,
       selection: "bubbles"
     },
     background: {
@@ -222,7 +222,7 @@ provide('preferences', preferences)
 }
 
 .backdrop-blurred {
-  filter: blur(26px);
+  filter: blur(20px);
 }
 
 .backdrop:after {
