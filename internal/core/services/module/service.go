@@ -107,6 +107,10 @@ func (u *moduleService) Run(module *domain.Module) error {
 	}
 	// Set the module as running so it can begin updating
 	module.Running = true
+	err = u.repository.Update(module)
+	if err != nil {
+		return err
+	}
 	// Mark the module as running
 	err = u.setState(module.Id, RUNNING)
 	if err != nil {
