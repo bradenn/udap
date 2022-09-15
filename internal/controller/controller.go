@@ -28,6 +28,11 @@ type Controller struct {
 	Modules       domain.ModuleService
 }
 
+type CoreModule interface {
+	Watch(chan domain.Mutation) error
+	EmitAll() error
+}
+
 func NewController(db *gorm.DB) (*Controller, error) {
 	c := &Controller{}
 	c.Attributes = attribute.New(db)

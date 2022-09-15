@@ -10,7 +10,7 @@ private-key.pem
 */node_modules
 /pkg/vosk/large_model
 /pkg/vosk/model
-/pkg/vosk/model_gr
+/pkg/vosk/model
 
 spotify.json
 /db-data

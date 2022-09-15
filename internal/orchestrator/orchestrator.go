@@ -182,6 +182,7 @@ func (o *orchestrator) Run() error {
 	}()
 
 	// Initialize and route applicable domains
+
 	o.router.Group(func(r chi.Router) {
 		r.Use(jwt.Authenticator)
 		routes.NewUserRouter(o.controller.Users).RouteInternal(r)
@@ -193,7 +194,6 @@ func (o *orchestrator) Run() error {
 		routes.NewEndpointRouter(o.endpoints).RouteInternal(r)
 	})
 	routes.NewEndpointRouter(o.endpoints).RouteExternal(o.router)
-
 	runtimes.NewModuleRuntime(o.modules)
 	go func() {
 		defer wg.Done()

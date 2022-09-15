@@ -7,6 +7,10 @@ import type {CurrentWeather, Weather} from "@/weather";
 import {getWeatherIcon, getWeatherState} from "@/weather"
 import PaneList from "@/components/pane/PaneList.vue";
 import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
+import * as THREE from "three";
+import {LineGeometry} from "three/examples/jsm/lines/LineGeometry";
+import {LineMaterial} from "three/examples/jsm/lines/LineMaterial";
+import {Line2} from "three/examples/jsm/lines/Line2";
 
 interface WeatherProps {
   current: CurrentWeather
@@ -52,6 +56,8 @@ let state = reactive<WeatherProps>({
 
 onMounted(() => {
   state.loading = true
+  handleUpdates(remote)
+  renderGraph()
 })
 
 let remote = inject("remote") as Remote
@@ -73,7 +79,7 @@ function handleUpdates(remote: Remote) {
 function parseWeather(we: Weather) {
 
   state.current = we.current_weather
-
+  if (!we) return;
   if (we.hourly.temperature_2m.length <= 0) return
   for (let i = 0; i < we.hourly.temperature_2m.length; i++) {
     if (state.ranges.temp.max < we.hourly.temperature_2m[i]) {
@@ -113,14 +119,104 @@ function asDate(ms: number): string {
   return moment(ms).utc(true).format("h:mm A")
 }
 
+let renderer = {} as THREE.WebGLRenderer
+let camera = {} as THREE.OrthographicCamera
+let scene = {} as THREE.Scene
+
+
+function setCamera(x: number, y: number, z: number) {
+  camera.position.set(x, y, z);
+
+}
+
+
+function render() {
+  renderer.setClearColor(0x000000, 0);
+
+  renderer.render(scene, camera);
+}
+
+function animate() {
+
+  render()
+}
+
+function renderGraph() {
+  renderer = new THREE.WebGLRenderer({antialias: true});
+  renderer.shadowMap.enabled = true;
+  let element = document.getElementById("weather-chart")
+  if (!element) return
+
+  renderer.setSize(element.clientWidth, element.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+
+  element.appendChild(renderer.domElement)
+  let width = element.clientWidth
+  let height = element.clientHeight
+
+  camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -1000, 1000);
+  // camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
+
+  setCamera(0, 0, 1000)
+
+
+  scene = new THREE.Scene();
+
+  const points = [];
+  let x = 0;
+  let samples = 24;
+  let divisor = width / samples
+
+  let diff = state.ranges.temp.max - state.ranges.temp.min;
+  for (let i = 0; i < samples; i++) {
+    let value = state.latest.hourly.temperature_2m[i] - state.ranges.temp.min
+    x += divisor;
+    points.push(new THREE.Vector3(-(width / 2) + x, (value / diff) * height / 2.0, 0));
+  }
+
+  const positions = [];
+  const colors = [];
+  for (let point of points) {
+    positions.push(point.x, point.y, 0)
+    colors.push(0.2, 0.2, 0.8)
+  }
+
+  const geometry = new LineGeometry();
+  geometry.setPositions(positions);
+  geometry.setColors(colors);
+
+  let matLine = new LineMaterial({
+
+    color: 0xffffff,
+    linewidth: 5, // in world units with size attenuation, pixels otherwise
+    vertexColors: true,
+    worldUnits: true,
+
+    //resolution:  // to be set by renderer, eventually
+    dashed: false,
+    alphaToCoverage: true,
+
+  });
+
+  let line = new Line2(geometry, matLine);
+  line.computeLineDistances();
+  line.scale.set(1, 1, 1,)
+
+  scene.add(line);
+
+
+  requestAnimationFrame(animate);
+  animate()
+}
+
 </script>
 <template>
-  <div class="element p-2 pt-1">
+  <div v-if="!state.loading" class="element p-2 pt-1">
     <div class=" d-flex flex-row align-items-center">
       <div class="flex-shrink-1 " style="min-width: 9rem; padding-left: 0.25rem">
-        <h2 class="lh-md">{{ roundDecimal(state.latest.current_weather.temperature, 0) }}° F</h2>
+        <h2 class="lh-md">{{ roundDecimal(state.latest.current_weather?.temperature, 0) }}° F</h2>
         <div class="label-c1 label-r label-w400 label-o4 lh-1">{{
-            getWeatherState(state.latest.current_weather.weathercode)
+            getWeatherState(state.latest.current_weather?.weathercode)
           }}
         </div>
         <div class="label-c1 label-r label-o3 label-w400 ">High {{ Math.round(state.ranges.temp.max) }}° • Low
@@ -131,7 +227,7 @@ function asDate(ms: number): string {
            style="width: 100%">
         <div
             v-for="(hour) in Array(12).keys()">
-          <div v-if="state.latest.hourly.temperature_2m[hour]"
+          <div v-if="state.latest.hourly?.temperature_2m[hour]"
                :class="new Date().getHours()===hour?'':''"
                class=" d-flex flex-column align-items-center justify-content-center px-3">
             <div class="label-c3 label-w400 label-o3 mt-1">
@@ -165,17 +261,20 @@ function asDate(ms: number): string {
       </div>
     </div>
   </div>
+  <div v-if="!state.loading" class="d-flex gap-2">
+    <PaneList :alt='timeSince(state.lastUpdate)' class="mt-1" style="width: 12rem" title="Today">
 
-  <PaneList :alt='timeSince(state.lastUpdate)' class="mt-1" style="width: 12rem" title="Today">
-
-    <PaneListItemInline :active="false" :subtext="state.sun.rising" icon="􀆱"
-                        title="Sunrise"></PaneListItemInline>
-    <PaneListItemInline :active="false" :subtext="state.sun.setting" icon="􀆳"
-                        title="Sunset"></PaneListItemInline>
-    <PaneListItemInline :active="false" :subtext="`${state.rain.rainfall} in`" icon="􀇆"
-                        title="Rainfall"></PaneListItemInline>
-  </PaneList>
-
+      <PaneListItemInline :subtext="state.sun.rising" icon="􀆱"
+                          title="Sunrise"></PaneListItemInline>
+      <PaneListItemInline :subtext="state.sun.setting" icon="􀆳"
+                          title="Sunset"></PaneListItemInline>
+      <PaneListItemInline :subtext="`${state.rain.rainfall} in`" icon="􀇆"
+                          title="Rainfall"></PaneListItemInline>
+    </PaneList>
+    <div class="element mt-1 w-100">
+      <div id="weather-chart" style="width: 100%; min-width:400px; height: 400px"></div>
+    </div>
+  </div>
 
 </template>
 

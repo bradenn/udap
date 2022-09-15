@@ -88,7 +88,7 @@ func NewRecognizer(response chan Response, status chan string, speaking *bool) R
 	rr := RemoteRecognizer{
 		response:    response,
 		status:      status,
-		writeBuffer: make(chan bytes.Buffer),
+		writeBuffer: make(chan bytes.Buffer, 8),
 		closeBuffer: make(chan bool),
 		state:       make(chan bool),
 		mutex:       sync.RWMutex{},

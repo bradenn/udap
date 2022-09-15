@@ -24,16 +24,12 @@ func NewEndpointRouter(service domain.EndpointService) Routable {
 }
 
 func (r *endpointRouter) RouteExternal(router chi.Router) {
-	router.Route("/endpoints", func(local chi.Router) {
-		router.Get("/register/{key}", r.authenticate)
-		router.Get("/socket/{token}", r.enroll)
-	})
+	router.Get("/endpoints/register/{key}", r.authenticate)
+	router.Get("/socket/{token}", r.enroll)
 }
 
 func (r *endpointRouter) RouteInternal(router chi.Router) {
-	router.Route("/endpoints", func(local chi.Router) {
-		local.Get("/create", r.create)
-	})
+	router.Post("/endpoints/create", r.create)
 }
 
 func (r *endpointRouter) create(w http.ResponseWriter, req *http.Request) {

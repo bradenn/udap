@@ -8,7 +8,7 @@ rules:
 
 
 nlu:
-  - intent: lore/creator
+  - intent: creator
     examples: |
       - who made you
       - who is your creator
@@ -18,7 +18,7 @@ nlu:
       - when where you made
       - what made you
 
-  - intent: lore/identify
+  - intent: identify
     examples: |
       - who are you
       - what are you
@@ -30,7 +30,7 @@ nlu:
       - what type of entity are you
       - what can I call you
 
-  - intent: lore/identify_bella
+  - intent: identify_bella
     examples: |
       - who is bella
       - can you tell me about bella
@@ -39,7 +39,7 @@ nlu:
       - is bella your creator
       - tell me about bella
 
-  - intent: lore/birthday
+  - intent: birthday
     examples: |
       - when were you made
       - when were you first put online
@@ -53,7 +53,7 @@ nlu:
       - whats your b-day
       - whats your bday
 
-  - intent: lore/sentient
+  - intent: sentient
     examples: |
       - are you sentient
       - are you alive

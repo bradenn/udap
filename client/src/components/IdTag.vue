@@ -117,15 +117,6 @@ function reload() {
   </div>
 
   <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 py-1">
-    <Plot :cols="1" :rows="1">
-      <div class="subplot d-flex align-items-end align-items-center lh-1 gap-1">
-        <div class="label-o2">􀉩</div>
-        <div class="label-o4 label-r label-w600">Braden Nicholson</div>
-        <div class="flex-fill"></div>
-        <div class="px-1 label-o2"> 􀉯</div>
-      </div>
-    </Plot>
-
     <Plot :cols="4" :rows="1">
       <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
         <div class="label-o4 label-c2"><i class="fa-solid fa-house fa-fw"></i></div>
@@ -180,7 +171,7 @@ function reload() {
              :max=20
              :min=4
              :step=1
-             class="slider-small"
+             class="slider-small slider-dim"
              type="range"
              @mousemove.stop>
     </Plot>

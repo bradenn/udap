@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"os/exec"
 	"strings"
 	"time"
@@ -122,12 +123,15 @@ func (v *MacMeta) displayOn() error {
 }
 
 func (v *MacMeta) pollDisplay() error {
-	cmd := exec.Command("pmset", "-g")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "/bin/bash", "-c",
+		"system_profiler SPDisplaysDataType | grep 'Display Asleep' | wc -l")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
 	}
-	v.requestState(strings.Contains(string(output), "powerd"))
+	v.requestState(strings.Contains(string(output), "0"))
 	return nil
 }
 
@@ -142,7 +146,7 @@ func (v *MacMeta) displayOff() error {
 }
 
 func (v *MacMeta) Setup() (plugin.Config, error) {
-	err := v.UpdateInterval(2000)
+	err := v.UpdateInterval(5000)
 	if err != nil {
 		return plugin.Config{}, err
 	}

@@ -31,6 +31,7 @@ import Sideapp from "@/views/terminal/Sideapp.vue";
 import Bubbles from "@/views/screensaver/Bubbles.vue";
 import Warp from "@/views/screensaver/Warp.vue";
 import Input from "@/views/Input.vue";
+import Glance from "@/views/terminal/Glance.vue";
 
 // -- Websockets --
 
@@ -167,6 +168,7 @@ provide("session", session)
 
 // Stores the changing components of the main terminal
 let state = reactive({
+  locked: false,
   sideApp: false,
   isDragging: false,
   timeout: null,
@@ -284,6 +286,7 @@ function dragContinue(e: MouseEvent) {
 
     if (isBottom) {
       if (bottomPull > gestureThreshold) {
+        state.locked = false
         router.push("/terminal/home")
       }
       if (state.dragA.y > dragB.y) {
@@ -380,51 +383,51 @@ provide('remote', remote)
 
 <template>
 
-  <div
-      class="terminal"
-      v-on:mousedown="dragStart"
-      v-on:mousemove="dragContinue"
-      v-if="!screensaver.hideTerminal" v-on:mouseup="dragStop">
-    <div class="generic-container gap-2">
-      <div :class="`generic-slot-lg ` ">
-        <Clock :small="!state.showClock"></Clock>
+  <div v-if="!screensaver.hideTerminal"
+       class="terminal"
+       v-on:mousedown="dragStart"
+       v-on:mousemove="dragContinue" v-on:mouseup="dragStop">
+    <Glance v-if="state.locked"></Glance>
+    <div v-else class="d-inline">
+      <div class="generic-container gap-2">
+        <div :class="`generic-slot-lg ` " v-on:click="(e) => state.locked = true">
+          <Clock :small="!state.showClock"></Clock>
+        </div>
+        <div></div>
+        <div class="generic-slot-sm ">
+          <IdTag></IdTag>
+        </div>
+
       </div>
-      <div></div>
-      <div class="generic-slot-sm ">
-        <IdTag></IdTag>
+      <div class="route-view pt-1">
+        <div>
+          <Sideapp v-if="state.sideApp" :style="`transform: translateX(${-state.scrollX}px);`">
+            <CalculatorQuick v-if="state.sideApp"></CalculatorQuick>
+          </Sideapp>
+        </div>
+
+        <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
+          <component :is="Component"/>
+        </router-view>
+
+
       </div>
-
-    </div>
-
-    <div class="route-view">
-      <div>
-        <Sideapp v-if="state.sideApp" :style="`transform: translateX(${-state.scrollX}px);`">
-          <CalculatorQuick v-if="state.sideApp"></CalculatorQuick>
-        </Sideapp>
-      </div>
-
-      <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
-        <component :is="Component"/>
-      </router-view>
-
-
-    </div>
-    <div class="justify-content-center d-flex align-items-center align-content-center">
-      <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">
-        <div v-if="$route.matched[1].children.length > 1">
-          <Plot :cols="$route.matched[1].children.length" :rows="1"
-                class="bottom-nav">
-            <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
-                     :name="route.name"
-                     :to="route.path"></Subplot>
-          </Plot>
+      <div class="justify-content-center d-flex align-items-center align-content-center">
+        <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">
+          <div v-if="$route.matched[1].children.length > 1">
+            <Plot :cols="$route.matched[1].children.length" :rows="1"
+                  class="bottom-nav">
+              <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
+                       :name="route.name"
+                       :to="route.path"></Subplot>
+            </Plot>
+          </div>
         </div>
       </div>
     </div>
-    <div
-        :style="`transform: translateY(${-state.scrollY}px);`"
-        class="home-bar top"></div>
+    <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
   </div>
+
   <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"
            class="screensaver-overlay"></Bubbles>
   <Warp v-else-if="screensaver.show && preferences.ui.screensaver.selection === 'warp'"

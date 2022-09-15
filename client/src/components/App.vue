@@ -53,7 +53,7 @@ let props = defineProps<App>()
   aspect-ratio: 1/1 !important;
   border-radius: 0.54rem !important;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1)) !important;
 }
 
@@ -67,13 +67,13 @@ let props = defineProps<App>()
 }
 
 .app-name {
-  font-family: 'SF Pro Text';
+  font-family: 'SF Pro Text', sans-serf, serif;
   font-style: normal;
   font-weight: 500;
   font-size: 16px;
   line-height: 16px;
   text-shadow: 0 0 1px rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.6);
   mix-blend-mode: luminosity;
 }
 </style>

@@ -222,7 +222,7 @@ func (w *Atlas) Update() error {
 }
 
 func (w *Atlas) speak(text string) error {
-	text = strings.ReplaceAll(text, "!alias", w.alias)
+
 	w.status.Synthesizer = "speaking"
 	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*25)
 	// Cancel the timeout of it exits before the timeout is up
@@ -586,8 +586,9 @@ func (w *Atlas) retort(text string) error {
 	}
 	var buf bytes.Buffer
 	buf.Write(marshal)
+	w.LogF("Heard: %s", text)
 
-	resp, err := http.Post("http://10.0.1.201:5005/model/parse", "application/json", &buf)
+	resp, err := http.Post("http://10.0.1.2:5005/model/parse", "application/json", &buf)
 	if err != nil {
 		w.ErrF("Neural Network response failed: %s", err.Error())
 		return err
@@ -611,7 +612,7 @@ func (w *Atlas) retort(text string) error {
 	if err != nil {
 		return err
 	}
-	log.Event("Intent: %s (%.2f)", rasa.Intent.Name, rasa.Intent.Confidence)
+	w.LogF("Intent: %s (%.2f)", rasa.Intent.Name, rasa.Intent.Confidence)
 
 	switch intent := rasa.Intent.Name; intent {
 	case "entity":

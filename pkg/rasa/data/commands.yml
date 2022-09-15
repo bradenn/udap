@@ -1,5 +1,11 @@
 version: "3.0"
 
+rules:
+  - rule: respond command
+    steps:
+      - intent: entity
+      - action: utter_success
+
 nlu:
   - synonym: close
     examples: |
