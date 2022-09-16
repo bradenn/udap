@@ -8,9 +8,6 @@ import {getWeatherIcon, getWeatherState} from "@/weather"
 import PaneList from "@/components/pane/PaneList.vue";
 import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
 import * as THREE from "three";
-import {LineGeometry} from "three/examples/jsm/lines/LineGeometry";
-import {LineMaterial} from "three/examples/jsm/lines/LineMaterial";
-import {Line2} from "three/examples/jsm/lines/Line2";
 
 interface WeatherProps {
   current: CurrentWeather
@@ -21,10 +18,12 @@ interface WeatherProps {
   ranges: any,
   sun: any,
   rain: any,
-  lastUpdate: number
+  lastUpdate: number,
+  canvas: HTMLCanvasElement
 }
 
 let state = reactive<WeatherProps>({
+  canvas: {} as HTMLCanvasElement,
   current: {} as CurrentWeather,
   latest: {} as Weather,
   entity: {} as Entity,
@@ -57,7 +56,7 @@ let state = reactive<WeatherProps>({
 onMounted(() => {
   state.loading = true
   handleUpdates(remote)
-  renderGraph()
+  loadCanvas()
 })
 
 let remote = inject("remote") as Remote
@@ -141,73 +140,184 @@ function animate() {
   render()
 }
 
-function renderGraph() {
-  renderer = new THREE.WebGLRenderer({antialias: true});
-  renderer.shadowMap.enabled = true;
-  let element = document.getElementById("weather-chart")
-  if (!element) return
 
-  renderer.setSize(element.clientWidth, element.clientHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
+function loadCanvas() {
+  state.canvas = document.getElementById("weather-chart") as HTMLCanvasElement
+  const ctx = state.canvas.getContext('2d')
+  if (!ctx) return
 
-  element.appendChild(renderer.domElement)
-  let width = element.clientWidth
-  let height = element.clientHeight
+  const scale = 1
 
-  camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -1000, 1000);
-  // camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
+  ctx.scale(scale, scale)
+  state.canvas.width = state.canvas.clientWidth / scale
+  state.canvas.height = state.canvas.clientHeight / scale
 
-  setCamera(0, 0, 1000)
-
-
-  scene = new THREE.Scene();
-
-  const points = [];
-  let x = 0;
-  let samples = 24;
-  let divisor = width / samples
-
-  let diff = state.ranges.temp.max - state.ranges.temp.min;
-  for (let i = 0; i < samples; i++) {
-    let value = state.latest.hourly.temperature_2m[i] - state.ranges.temp.min
-    x += divisor;
-    points.push(new THREE.Vector3(-(width / 2) + x, (value / diff) * height / 2.0, 0));
-  }
-
-  const positions = [];
-  const colors = [];
-  for (let point of points) {
-    positions.push(point.x, point.y, 0)
-    colors.push(0.2, 0.2, 0.8)
-  }
-
-  const geometry = new LineGeometry();
-  geometry.setPositions(positions);
-  geometry.setColors(colors);
-
-  let matLine = new LineMaterial({
-
-    color: 0xffffff,
-    linewidth: 5, // in world units with size attenuation, pixels otherwise
-    vertexColors: true,
-    worldUnits: true,
-
-    //resolution:  // to be set by renderer, eventually
-    dashed: false,
-    alphaToCoverage: true,
-
-  });
-
-  let line = new Line2(geometry, matLine);
-  line.computeLineDistances();
-  line.scale.set(1, 1, 1,)
-
-  scene.add(line);
-
-
-  requestAnimationFrame(animate);
-  animate()
+  drawCanvas();
 }
+
+function lerp(v0: number, v1: number, t: number): number {
+  return (1 - t) * v0 + t * v1;
+}
+
+function drawCanvas() {
+
+  const ctx = state.canvas.getContext('2d')
+
+  if (!ctx) return
+  ctx.clearRect(0, 0, state.canvas.width, state.canvas.height)
+
+
+  ctx.strokeStyle = `rgba(255,255,255,${0.5})`
+  ctx.fillStyle = `rgba(255,255,255,${0.6})`
+  ctx.lineWidth = 3
+  ctx.lineCap = "round"
+  ctx.lineJoin = "round"
+  ctx.beginPath()
+  // ctx.moveTo(-2, state.canvas.height / 2)
+
+  let div = state.latest.hourly.temperature_2m.length;
+  let chunk = state.canvas.width / div;
+  let avg = (state.ranges.temp.max + state.ranges.temp.min) / 2
+  for (let i = 0; i < state.canvas.width; i++) {
+    let index = Math.floor(i / chunk)
+    let floor = state.latest.hourly.temperature_2m[index]
+    let next = state.latest.hourly.temperature_2m[index + 1]
+    let dist = i % chunk;
+    let interp = lerp(floor, next, dist / chunk);
+
+    ctx.lineTo(i, (state.canvas.height / 2) - (interp - avg) * 4)
+  }
+  ctx.moveTo(state.canvas.width, (state.canvas.height / 2))
+  ctx.closePath()
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.lineWidth = 2
+  ctx.strokeStyle = `rgba(255,255,255,${0.1})`
+  for (let i = 0; i < state.canvas.width; i++) {
+    let index = Math.floor(i / chunk)
+    let time = state.latest.hourly.time[index] * 1000
+    if (new Date(time).getHours() === 0) {
+      let fmt = moment(time).format("dddd")
+      ctx.font = "20px SF Pro Display"
+
+      ctx.fillText(fmt, i + 10, 20)
+      ctx.moveTo(i, 0)
+      ctx.lineTo(i, (state.canvas.height))
+      ctx.closePath()
+      i += chunk - 1;
+    }
+    if (new Date(time).getDate() == new Date().getDate() && new Date(time).getHours() == new Date().getHours()) {
+      let fmt = moment(time).format("dddd")
+      ctx.font = "20px SF Pro Display"
+      ctx.lineWidth = 5
+      ctx.moveTo(i, 60)
+      ctx.lineTo(i, (state.canvas.height) - 60)
+      ctx.closePath()
+      i += chunk - 1;
+    }
+    ctx.lineWidth = 2
+  }
+  ctx.stroke()
+
+  ctx.beginPath()
+  ctx.lineWidth = 2
+  ctx.strokeStyle = `rgba(255,255,255,${0.1})`
+  let nowX = new Date().getTime();
+
+  ctx.closePath()
+  ctx.stroke()
+
+  ctx.lineWidth = 2
+  ctx.lineDashOffset = 10
+  ctx.strokeStyle = `rgba(255,255,255,${0.1})`
+  ctx.setLineDash([2, 8])
+  ctx.beginPath()
+  let maxY = (state.canvas.height / 2) - (state.ranges.temp.max - avg) * 4;
+  ctx.fillText(state.ranges.temp.max, 10, maxY - 10)
+  ctx.moveTo(0, maxY)
+  ctx.lineTo(state.canvas.width, maxY)
+  ctx.closePath()
+
+  ctx.stroke()
+
+  ctx.beginPath()
+  let minY = (state.canvas.height / 2) - (state.ranges.temp.min - avg) * 4;
+  ctx.fillText(state.ranges.temp.min, 10, minY + 25)
+  ctx.moveTo(0, minY)
+  ctx.lineTo(state.canvas.width, minY)
+  ctx.closePath()
+
+  ctx.stroke()
+
+}
+
+// function renderGraph() {
+//   renderer = new THREE.WebGLRenderer({antialias: true});
+//   renderer.shadowMap.enabled = true;
+//   let element = document.getElementById("weather-chart")
+//   if (!element) return
+//
+//   renderer.setSize(element.clientWidth, element.clientHeight);
+//   renderer.setPixelRatio(window.devicePixelRatio);
+//
+//   element.appendChild(renderer.domElement)
+//   let width = element.clientWidth
+//   let height = element.clientHeight
+//
+//   camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -1000, 1000);
+//   // camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
+//
+//   setCamera(0, 0, 1000)
+//
+//
+//   scene = new THREE.Scene();
+//
+//   const points = [];
+//   let x = 0;
+//   let samples = 24;
+//   let divisor = width / samples
+//
+//   let diff = state.ranges.temp.max - state.ranges.temp.min;
+//   for (let i = 0; i < samples; i++) {
+//     let value = state.latest.hourly.temperature_2m[i] - state.ranges.temp.min
+//     x += divisor;
+//     points.push(new THREE.Vector3(-(width / 2) + x, (value / diff) * height / 2.0, 0));
+//   }
+//
+//   const positions = [];
+//   const colors = [];
+//   for (let point of points) {
+//     positions.push(point.x, point.y, 0)
+//     colors.push(0.2, 0.2, 0.8)
+//   }
+//
+//   const geometry = new LineGeometry();
+//   geometry.setPositions(positions);
+//   geometry.setColors(colors);
+//
+//   let matLine = new LineMaterial({
+//
+//     color: 0xffffff,
+//     linewidth: 5, // in world units with size attenuation, pixels otherwise
+//     vertexColors: true,
+//     worldUnits: true,
+//
+//     //resolution:  // to be set by renderer, eventually
+//     dashed: false,
+//     alphaToCoverage: true,
+//
+//   });
+//
+//   let line = new Line2(geometry, matLine);
+//   line.computeLineDistances();
+//   line.scale.set(1, 1, 1,)
+//
+//   scene.add(line);
+//
+//
+//   requestAnimationFrame(animate);
+//   animate()
+// }
 
 </script>
 <template>
@@ -272,7 +382,7 @@ function renderGraph() {
                           title="Rainfall"></PaneListItemInline>
     </PaneList>
     <div class="element mt-1 w-100">
-      <div id="weather-chart" style="width: 100%; min-width:400px; height: 400px"></div>
+      <canvas id="weather-chart" style="width: 100%; min-width:400px; height: 400px"></canvas>
     </div>
   </div>
 
