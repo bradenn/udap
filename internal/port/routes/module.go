@@ -53,7 +53,7 @@ func (r moduleRouter) build(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			return
 		}
-		err = r.service.Build(mod)
+		err = r.service.Build(mod.Id)
 		if err != nil {
 			http.Error(w, "invalid module name", 401)
 		}

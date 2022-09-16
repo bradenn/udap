@@ -7,7 +7,6 @@ import type {CurrentWeather, Weather} from "@/weather";
 import {getWeatherIcon, getWeatherState} from "@/weather"
 import PaneList from "@/components/pane/PaneList.vue";
 import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
-import * as THREE from "three";
 
 interface WeatherProps {
   current: CurrentWeather
@@ -159,6 +158,14 @@ function lerp(v0: number, v1: number, t: number): number {
   return (1 - t) * v0 + t * v1;
 }
 
+function trendLine(ctx: CanvasRenderingContext2D, points: number[]) {
+
+}
+
+function drawWeek(days: number) {
+
+}
+
 function drawCanvas() {
 
   const ctx = state.canvas.getContext('2d')
@@ -167,7 +174,7 @@ function drawCanvas() {
   ctx.clearRect(0, 0, state.canvas.width, state.canvas.height)
 
 
-  ctx.strokeStyle = `rgba(255,255,255,${0.5})`
+  ctx.strokeStyle = `rgba(255,200,64,${0.5})`
   ctx.fillStyle = `rgba(255,255,255,${0.6})`
   ctx.lineWidth = 3
   ctx.lineCap = "round"
@@ -190,6 +197,8 @@ function drawCanvas() {
   ctx.moveTo(state.canvas.width, (state.canvas.height / 2))
   ctx.closePath()
   ctx.stroke()
+
+
   ctx.beginPath()
   ctx.lineWidth = 2
   ctx.strokeStyle = `rgba(255,255,255,${0.1})`
@@ -248,6 +257,44 @@ function drawCanvas() {
   ctx.closePath()
 
   ctx.stroke()
+  ctx.setLineDash([0, 0])
+  ctx.beginPath()
+  // ctx.moveTo(-2, state.canvas.height / 2)
+  div = state.latest.hourly.precipitation.length;
+  chunk = state.canvas.width / div;
+  avg = (state.ranges.rain.max + state.ranges.rain.min) / 2
+  ctx.strokeStyle = `rgba(128,128,255,${0.5})`
+  for (let i = 0; i < state.canvas.width; i++) {
+    let index = Math.floor(i / chunk)
+    let floor = state.latest.hourly.precipitation[index]
+    let next = state.latest.hourly.precipitation[index + 1]
+    let dist = i % chunk;
+    let interp = lerp(floor, next, dist / chunk);
+
+    ctx.lineTo(i, minY - interp * (state.canvas.height) * 2)
+  }
+  ctx.moveTo(state.canvas.width, (state.canvas.height / 2))
+  ctx.closePath()
+  ctx.stroke()
+
+  ctx.beginPath()
+  // ctx.moveTo(-2, state.canvas.height / 2)
+  div = state.latest.hourly.relativehumidity_2m.length;
+  chunk = state.canvas.width / div;
+  ctx.strokeStyle = `rgba(128,255,255,${0.5})`
+  for (let i = 0; i < state.canvas.width; i++) {
+    let index = Math.floor(i / chunk)
+    let floor = state.latest.hourly.relativehumidity_2m[index]
+    let next = state.latest.hourly.relativehumidity_2m[index + 1]
+    let dist = i % chunk;
+    let interp = lerp(floor, next, dist / chunk);
+
+    ctx.lineTo(i, minY - interp)
+  }
+  ctx.moveTo(state.canvas.width, (state.canvas.height / 2))
+  ctx.closePath()
+  ctx.stroke()
+
 
 }
 
@@ -382,6 +429,10 @@ function drawCanvas() {
                           title="Rainfall"></PaneListItemInline>
     </PaneList>
     <div class="element mt-1 w-100">
+      <div>
+        <div class="label-c1 label-o5 label-w500 px-1">Temperature</div>
+        <div></div>
+      </div>
       <canvas id="weather-chart" style="width: 100%; min-width:400px; height: 400px"></canvas>
     </div>
   </div>
