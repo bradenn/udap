@@ -800,16 +800,6 @@ hr {
   font-weight: 400;
 }
 
-
-/*.notification {
-  @extend .element;
-  display: flex;
-  width: 16rem;
-  height: 48px;
-  justify-content: start;
-  align-items: start;
-}*/
-
 .album-sm {
 
   border-radius: 0.25rem !important;
@@ -842,14 +832,6 @@ hr {
   justify-content: center;
   align-content: end;
   align-items: end;
-}
-
-.not-important {
-
-}
-
-.entity-media {
-  @extend .element;
 }
 
 .home-bar {

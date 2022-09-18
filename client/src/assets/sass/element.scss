@@ -2,12 +2,12 @@
 
 // Static
 $text-accent: rgba(255, 149, 0, 1);
-$element-bg: rgba(28, 28, 30, 0.4);
+$element-bg: rgba(26, 26, 26, 0.5);
 $element-fg: rgba(255, 255, 255, 0.035);
 $element-bg-active: lighten($element-bg, 10%);
 $element-shadow: rgba(0, 0, 0, 0.2);
 
-$element-border: lighten($element-bg, 16%);
+$element-border: lighten($element-bg, 12%);
 
 $element-border-radius: 0.25rem;
 
@@ -22,19 +22,15 @@ $loadInDistance: 0.98;
 /* Blur Definitions */
 .bg-blur {
   position: relative;
-  //box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
   transform: translate3d(0, 0, 0) translateZ(0);
   backface-visibility: visible;
   -webkit-backface-visibility: hidden;
-  overflow: hidden;
   content: ' ';
+  overflow: hidden;
+
   border-radius: inherit;
-  filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
-  // Blur Features
-  //filter: drop-shadow(0px 8px 64px rgba(0, 0, 0, 0.1));
-  backdrop-filter: blur(80px);
-  /*background-blend-mode: overlay;*/
-  //backdrop-filter: blur(25px);
+
+  backdrop-filter: blur(27.1828px);
 }
 
 .bg-blur:before {
@@ -58,20 +54,17 @@ $loadInDistance: 0.98;
 
 /* Theme Definitions */
 $themes: (
-        "light": rgba(245, 245, 245, 0.4),
+        "light": rgba(245, 245, 245, 0.08),
         "dark": $element-bg,
 );
 
 @each $clr, $i in $themes {
 
   .theme-#{$clr} {
-
     .element {
       background-color: $i !important;
-
+      box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
     }
-
-
   }
 }
 
@@ -104,10 +97,10 @@ $themes: (
 
 @keyframes element-click {
   0% {
-    transform: scale3d(0.96, 0.96, 0.96);
+    //transform: scale3d(0.96, 0.96, 0.96);
   }
   100% {
-    transform: scale3d(0.92, 0.92, 0.92);
+    //transform: scale3d(0.92, 0.92, 0.92);
   }
 }
 
@@ -138,12 +131,16 @@ $themes: (
 // Element Definition
 
 .element {
-  user-select: none !important;
+
   @extend .bg-blur;
   position: relative;
-  box-shadow: 0 0 12px 2px $element-shadow, inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
-  animation: loadIn 150ms forwards;
+  filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
+  background-blend-mode: soft-light;
+  //
+  animation: loadIn 150ms forwards cubic-bezier(0, 1.05, .85, .96) !important;
   padding: 0.25rem;
+  backface-visibility: hidden;
+  will-change: transform;
   //border-radius: 12px;
   border-radius: 0.5rem !important;
 
@@ -158,12 +155,6 @@ $themes: (
 .element-group {
   background-color: transparent !important;
   padding: 0.25rem !important;
-}
-
-// Element Variations
-
-.element.element-green {
-
 }
 
 

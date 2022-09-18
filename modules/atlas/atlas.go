@@ -864,6 +864,7 @@ func (w *Atlas) register() error {
 }
 
 func (w *Atlas) Run() error {
+	return nil
 
 	err := w.register()
 	if err != nil {

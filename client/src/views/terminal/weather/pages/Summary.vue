@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2022 Braden Nicholson -->
+
 <script lang="ts" setup>
 // Copyright (c) 2022 Braden Nicholson
 import moment from "moment";
@@ -7,6 +9,8 @@ import type {CurrentWeather, Weather} from "@/weather";
 import {getWeatherIcon, getWeatherState} from "@/weather"
 import PaneList from "@/components/pane/PaneList.vue";
 import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
+import Scroll from "@/components/Scroll.vue";
+import HorizontalChart from "@/components/charts/HorizontalChart.vue";
 
 interface WeatherProps {
   current: CurrentWeather
@@ -41,6 +45,10 @@ let state = reactive<WeatherProps>({
       min: 100,
       max: -100,
     },
+    humidity: {
+      min: 100,
+      max: -100,
+    },
     wind: {
       min: 100,
       max: 0,
@@ -55,7 +63,7 @@ let state = reactive<WeatherProps>({
 onMounted(() => {
   state.loading = true
   handleUpdates(remote)
-  loadCanvas()
+
 })
 
 let remote = inject("remote") as Remote
@@ -92,6 +100,12 @@ function parseWeather(we: Weather) {
       state.ranges.rain.min = we.hourly.precipitation[i]
     }
 
+    if (state.ranges.humidity.max < we.hourly.relativehumidity_2m[i]) {
+      state.ranges.humidity.max = we.hourly.relativehumidity_2m[i]
+    } else if (state.ranges.humidity.min > we.hourly.relativehumidity_2m[i]) {
+      state.ranges.humidity.min = we.hourly.relativehumidity_2m[i]
+    }
+
   }
   state.latest = we as Weather
 
@@ -103,6 +117,7 @@ function parseWeather(we: Weather) {
 
   state.lastUpdate = new Date().valueOf();
   state.loading = false
+  loadCanvas()
 }
 
 function roundDecimal(input: number, places: number) {
@@ -210,19 +225,20 @@ function drawCanvas() {
       ctx.font = "20px SF Pro Display"
 
       ctx.fillText(fmt, i + 10, 20)
-      ctx.moveTo(i, 0)
-      ctx.lineTo(i, (state.canvas.height))
+      if (index !== 0) {
+        ctx.moveTo(i, 0)
+        ctx.lineTo(i, (state.canvas.height))
+      }
       ctx.closePath()
-      i += chunk - 1;
+      i += chunk;
     }
     if (new Date(time).getDate() == new Date().getDate() && new Date(time).getHours() == new Date().getHours()) {
-      let fmt = moment(time).format("dddd")
       ctx.font = "20px SF Pro Display"
       ctx.lineWidth = 5
       ctx.moveTo(i, 60)
       ctx.lineTo(i, (state.canvas.height) - 60)
       ctx.closePath()
-      i += chunk - 1;
+      i += chunk;
     }
     ctx.lineWidth = 2
   }
@@ -242,7 +258,7 @@ function drawCanvas() {
   ctx.setLineDash([2, 8])
   ctx.beginPath()
   let maxY = (state.canvas.height / 2) - (state.ranges.temp.max - avg) * 4;
-  ctx.fillText(state.ranges.temp.max, 10, maxY - 10)
+  ctx.fillText(state.ranges.temp.max + " F", 10, maxY - 10)
   ctx.moveTo(0, maxY)
   ctx.lineTo(state.canvas.width, maxY)
   ctx.closePath()
@@ -251,7 +267,7 @@ function drawCanvas() {
 
   ctx.beginPath()
   let minY = (state.canvas.height / 2) - (state.ranges.temp.min - avg) * 4;
-  ctx.fillText(state.ranges.temp.min, 10, minY + 25)
+  ctx.fillText(state.ranges.temp.min + " F", 10, minY + 25)
   ctx.moveTo(0, minY)
   ctx.lineTo(state.canvas.width, minY)
   ctx.closePath()
@@ -298,145 +314,116 @@ function drawCanvas() {
 
 }
 
-// function renderGraph() {
-//   renderer = new THREE.WebGLRenderer({antialias: true});
-//   renderer.shadowMap.enabled = true;
-//   let element = document.getElementById("weather-chart")
-//   if (!element) return
-//
-//   renderer.setSize(element.clientWidth, element.clientHeight);
-//   renderer.setPixelRatio(window.devicePixelRatio);
-//
-//   element.appendChild(renderer.domElement)
-//   let width = element.clientWidth
-//   let height = element.clientHeight
-//
-//   camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, -1000, 1000);
-//   // camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-//
-//   setCamera(0, 0, 1000)
-//
-//
-//   scene = new THREE.Scene();
-//
-//   const points = [];
-//   let x = 0;
-//   let samples = 24;
-//   let divisor = width / samples
-//
-//   let diff = state.ranges.temp.max - state.ranges.temp.min;
-//   for (let i = 0; i < samples; i++) {
-//     let value = state.latest.hourly.temperature_2m[i] - state.ranges.temp.min
-//     x += divisor;
-//     points.push(new THREE.Vector3(-(width / 2) + x, (value / diff) * height / 2.0, 0));
-//   }
-//
-//   const positions = [];
-//   const colors = [];
-//   for (let point of points) {
-//     positions.push(point.x, point.y, 0)
-//     colors.push(0.2, 0.2, 0.8)
-//   }
-//
-//   const geometry = new LineGeometry();
-//   geometry.setPositions(positions);
-//   geometry.setColors(colors);
-//
-//   let matLine = new LineMaterial({
-//
-//     color: 0xffffff,
-//     linewidth: 5, // in world units with size attenuation, pixels otherwise
-//     vertexColors: true,
-//     worldUnits: true,
-//
-//     //resolution:  // to be set by renderer, eventually
-//     dashed: false,
-//     alphaToCoverage: true,
-//
-//   });
-//
-//   let line = new Line2(geometry, matLine);
-//   line.computeLineDistances();
-//   line.scale.set(1, 1, 1,)
-//
-//   scene.add(line);
-//
-//
-//   requestAnimationFrame(animate);
-//   animate()
-// }
+function getWeekday(ms: number): string {
+  return moment(ms * 1000).format("dddd")
+}
 
 </script>
 <template>
-  <div v-if="!state.loading" class="element p-2 pt-1">
-    <div class=" d-flex flex-row align-items-center">
-      <div class="flex-shrink-1 " style="min-width: 9rem; padding-left: 0.25rem">
-        <h2 class="lh-md">{{ roundDecimal(state.latest.current_weather?.temperature, 0) }}° F</h2>
-        <div class="label-c1 label-r label-w400 label-o4 lh-1">{{
-            getWeatherState(state.latest.current_weather?.weathercode)
-          }}
+  <div class="d-flex flex-column gap-1">
+    <div v-if="!state.loading" class="element p-2 pt-1">
+      <div class=" d-flex flex-row align-items-center">
+        <div class="flex-shrink-1 " style="min-width: 9rem; padding-left: 0.25rem">
+          <h2 class="lh-md">{{ roundDecimal(state.latest.current_weather?.temperature, 0) }}° F</h2>
+          <div class="label-c1 label-r label-w400 label-o4 lh-1">{{
+              getWeatherState(state.latest.current_weather?.weathercode)
+            }}
+          </div>
+          <div class="label-c1 label-r label-o3 label-w400 ">High {{ Math.round(state.ranges.temp.max) }}° • Low
+            {{ Math.round(state.ranges.temp.min) }}°
+          </div>
         </div>
-        <div class="label-c1 label-r label-o3 label-w400 ">High {{ Math.round(state.ranges.temp.max) }}° • Low
-          {{ Math.round(state.ranges.temp.min) }}°
-        </div>
-      </div>
-      <div v-if="state.latest.hourly" class="d-flex flex-row justify-content-between align-items-end"
-           style="width: 100%">
-        <div
-            v-for="(hour) in Array(12).keys()">
-          <div v-if="state.latest.hourly?.temperature_2m[hour]"
-               :class="new Date().getHours()===hour?'':''"
-               class=" d-flex flex-column align-items-center justify-content-center px-3">
-            <div class="label-c3 label-w400 label-o3 mt-1">
-              {{ moment(new Date().setHours(new Date().getHours() + hour)).format("hA") }}
-            </div>
-            <div class="label-sm label-o4">
-              {{ getWeatherIcon(state.latest.hourly.weathercode[new Date().getHours() + hour], hour) }}
-            </div>
-            <div class="d-flex align-items-center justify-content-center">
-              <div class="label-c3 label-w500 label-o4 mt-1">
-                {{ state.latest.hourly.temperature_2m[new Date().getHours() + hour] }}
-              </div>
-
+        <div v-if="state.latest.hourly" class="d-flex flex-row justify-content-between align-items-end"
+             style="width: 100%">
+          <div
+              v-for="(hour) in Array(12).keys()">
+            <div v-if="state.latest.hourly?.temperature_2m[hour]"
+                 :class="new Date().getHours()===hour?'':''"
+                 class=" d-flex flex-column align-items-center justify-content-center px-3">
               <div class="label-c3 label-w400 label-o3 mt-1">
-                {{ state.latest.hourly_units.temperature_2m }}
+                {{ moment(new Date().setHours(new Date().getHours() + hour)).format("hA") }}
               </div>
+              <div class="label-sm label-o4">
+                {{ getWeatherIcon(state.latest.hourly.weathercode[new Date().getHours() + hour], hour) }}
+              </div>
+              <div v-if="state.latest.hourly.precipitation[new Date().getHours()+hour] <= 0.0001"
+                   class="d-flex align-items-center justify-content-center">
+                <div class="label-c3 label-w500 label-o4 mt-1">
+                  {{ state.latest.hourly.temperature_2m[new Date().getHours() + hour] }}
+                </div>
 
+                <div class="label-c3 label-w400 label-o3 mt-1">
+                  {{ state.latest.hourly_units.temperature_2m }}
+                </div>
 
+              </div>
+              <div v-else class="d-flex align-items-center justify-content-center">
+                <div class="label-c3 label-w500 label-o4 mt-1 rain">
+                  {{ state.latest.hourly.precipitation[new Date().getHours() + hour] }}"
+                </div>
+              </div>
             </div>
 
-            <div class="d-flex align-items-center justify-content-center">
-              <div v-if="state.latest.hourly.precipitation[hour] > 0" class="label-c3 label-w500 label-o4 mt-1 rain">
-                {{ state.latest.hourly.precipitation[hour] }}
-              </div>
-            </div>
+
           </div>
 
-
         </div>
+      </div>
+    </div>
+    <div v-if="!state.loading" class="d-flex gap-1 flex-row">
+      <PaneList :alt='timeSince(state.lastUpdate)' style="width: 13rem !important;" title="Today">
+        <PaneListItemInline :subtext="state.sun.rising" icon="􀆱"
+                            title="Sunrise"></PaneListItemInline>
+        <PaneListItemInline :subtext="state.sun.setting" icon="􀆳"
+                            title="Sunset"></PaneListItemInline>
+        <PaneListItemInline :subtext="`${state.rain.rainfall} in`" icon="􀇆"
+                            title="Rainfall"></PaneListItemInline>
+      </PaneList>
+      <div class=" d-flex flex-column gap-1 w-100">
+        <div class="element d-flex flex-column p-2 pt-1">
+          <div>
+            <div class="label-o4 label-w500 label-c1 py-1">This Week</div>
+          </div>
+          <Scroll horizontal style="overflow-x: scroll">
+            <div class="d-flex flex-column" style="width: 200%">
+              <HorizontalChart :scale="2"
+                               :sections-names="state.latest.hourly.time.filter(t => (t*1000)%(24*60*60*1000) === 0).map(t => getWeekday(t))"
+                               :values="state.latest.hourly.temperature_2m.map(p => ((p-state.ranges.temp.min)/(state.ranges.temp.max-state.ranges.temp.min)))"
+                               :valuesPerSection="24"
+                               color="rgba(255,159,10,0.4)"
+                               name="Temperature">
 
+              </HorizontalChart>
+              <HorizontalChart :scale="2"
+                               :sections-names="state.latest.hourly.time.filter(t => (t*1000)%(24*60*60*1000) === 0).map(t => '')"
+                               :values="state.latest.hourly.precipitation.map(p => ((p-state.ranges.rain.min)/(state.ranges.rain.max-state.ranges.rain.min)))"
+                               :valuesPerSection="24"
+                               color="rgba(10,132,255,0.4)"
+                               name="Rain">
+
+              </HorizontalChart>
+
+              <HorizontalChart :scale="2"
+                               :sections-names="state.latest.hourly.time.filter(t => (t*1000)%(24*60*60*1000) === 0).map(t => '')"
+                               :values="state.latest.hourly.relativehumidity_2m.map(p => ((p-state.ranges.humidity.min)/(state.ranges.humidity.max-state.ranges.humidity.min)))"
+                               :valuesPerSection="24"
+                               color="rgba(100,210,255,0.4)"
+                               name="Humidity">
+
+              </HorizontalChart>
+            </div>
+          </Scroll>
+        </div>
+        <div>
+
+          <!--          <Scroll :horizontal="true" style=" overflow-x: scroll; max-width: 100%;" class="">-->
+          <!--            <canvas id="weather-chart"-->
+          <!--                    style=" min-width:400px; width: 150%; height: 300px; "></canvas>-->
+          <!--          </Scroll>-->
+        </div>
       </div>
     </div>
   </div>
-  <div v-if="!state.loading" class="d-flex gap-2">
-    <PaneList :alt='timeSince(state.lastUpdate)' class="mt-1" style="width: 12rem" title="Today">
-
-      <PaneListItemInline :subtext="state.sun.rising" icon="􀆱"
-                          title="Sunrise"></PaneListItemInline>
-      <PaneListItemInline :subtext="state.sun.setting" icon="􀆳"
-                          title="Sunset"></PaneListItemInline>
-      <PaneListItemInline :subtext="`${state.rain.rainfall} in`" icon="􀇆"
-                          title="Rainfall"></PaneListItemInline>
-    </PaneList>
-    <div class="element mt-1 w-100">
-      <div>
-        <div class="label-c1 label-o5 label-w500 px-1">Temperature</div>
-        <div></div>
-      </div>
-      <canvas id="weather-chart" style="width: 100%; min-width:400px; height: 400px"></canvas>
-    </div>
-  </div>
-
 </template>
 
 <style scoped>

@@ -2,8 +2,6 @@
 
 import {createRouter, createWebHashHistory} from "vue-router";
 
-import wiki from "@/views/terminal/wiki"
-
 // Settings views
 import settings from "@/views/terminal/settings/index";
 
@@ -306,7 +304,6 @@ const terminalRoutes = {
         alienRoutes,
         defenseRoutes,
         layoutRoutes,
-        wiki
     ],
 }
 

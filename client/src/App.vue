@@ -75,7 +75,10 @@ let state = reactive({
 
 onMounted(() => {
   resetCountdown()
+
+
 })
+
 
 let screensaver = reactive({
   show: false,
@@ -126,7 +129,7 @@ provide('preferences', preferences)
       class="root" v-on:mousedown="(e) => resetCountdown()">
     <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
          :src="`/custom/${preferences.ui.background.image}@4x.png`"
-         alt="Background" class="backdrop "/>
+         alt="" class="backdrop "/>
 
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
@@ -156,9 +159,6 @@ provide('preferences', preferences)
 
 <style lang="scss">
 
-* {
-  cursor: none !important;
-}
 
 .overlay-notification {
   position: fixed;

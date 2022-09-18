@@ -3,8 +3,8 @@ import router from '@/router'
 import Root from '@/App.vue'
 // @ts-ignore
 import MathJax, {initMathJax, renderByMathjax} from 'mathjax-vue3'
-import 'bootstrap/dist/css/bootstrap-grid.css';
-import 'bootstrap/dist/css/bootstrap-utilities.css';
+import '@/assets/bootstrap-grid.css';
+import '@/assets/bootstrap-utilities.css';
 import '@/assets/reset.css';
 
 import '@/assets/sass/app.scss';
@@ -14,7 +14,7 @@ function onMathJaxReady() {
     renderByMathjax(el)
 }
 
-initMathJax({}, onMathJaxReady)
+initMathJax({url: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js'}, onMathJaxReady)
 
 const app = createApp(Root)
 // @ts-ignore

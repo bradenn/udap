@@ -94,6 +94,7 @@ function bytesToString(bytes: number, si: boolean = false, dp: number = 2): stri
 </script>
 
 <template>
+
   <div v-if="!state.loading">
     <div class="d-flex justify-content-start py-2 gap-2">
       <Plot :cols="1" :rows="1">

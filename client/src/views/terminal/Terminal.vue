@@ -297,30 +297,6 @@ function dragContinue(e: MouseEvent) {
         screensaver.startScreensaver()
       }
     }
-    let sideAppLockTarget = 445;
-    let sideAppLockDelta = 5;
-    if (isRight && !state.sideAppLock) {
-      if (rightPull >= gestureThreshold) {
-        state.sideApp = true
-        if (sideAppLockTarget - rightPull <= sideAppLockDelta) {
-          state.scrollX = 445
-          state.sideAppLock = true
-        } else {
-          state.sideAppLock = false
-        }
-
-        state.scrollX += e.movementX
-      }
-
-    }
-
-    if (isRight && !state.sideAppLock) {
-      state.scrollX = state.dragA.x - dragB.x
-    } else if (state.sideAppLock && sideAppLockTarget - rightPull <= sideAppLockDelta) {
-      state.sideAppLock = false
-    }
-
-
   }
 }
 
@@ -335,38 +311,18 @@ function dragStop(e: MouseEvent) {
   state.verified = false;
   // Reset current position
   state.dragA = {x: 0, y: 0}
-  if (state.scrollX !== 0 && state.scrollX !== 445) {
-    if (state.scrollXBack == 0) {
-      let target = state.scrollX >= 128 ? 445 : 0;
-      state.scrollXBack = setInterval(() => {
-        state.scrollX -= (state.scrollX - target) * 0.05
-        if (Math.abs(target - state.scrollX) < 0.1) {
-          clearInterval(state.scrollXBack)
-          state.scrollX = target
-          if (target == 0) {
-            state.scrollX = 0
-            state.sideApp = false
-            state.sideAppLock = false
-          }
-          state.scrollXBack = 0
-        }
-      }, 5)
-    } else {
-      clearInterval(state.scrollXBack)
-    }
-  }
 
   if (Math.abs(state.scrollY) != 0 && state.scrollYBack == 0) {
     if (state.scrollYBack == 0) {
       state.scrollYBack = setInterval(() => {
         if (state.isDragging) return
-        state.scrollY -= state.scrollY * 0.05
+        state.scrollY -= state.scrollY * 0.2
         if (Math.abs(state.scrollY) < 0.01) {
           state.scrollY = 0
           state.scrollYBack = 0
           clearInterval(state.scrollYBack)
         }
-      }, 5)
+      }, 14)
     } else {
       clearInterval(state.scrollYBack)
     }
@@ -451,11 +407,11 @@ provide('remote', remote)
 @keyframes animateIn {
   0% {
     transform: scale(0.98);
-    opacity: 0.4;
+    //opacity: 0.4;
   }
   50% {
     transform: scale(0.99);
-    opacity: 0.8;
+    //opacity: 0.8;
   }
   100% {
     transform: scale(1);

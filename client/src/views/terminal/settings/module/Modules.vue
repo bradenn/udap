@@ -145,7 +145,7 @@ function editModule(id: string) {
 
 .module-container > * {
   visibility: hidden;
-  animation: plot-load 75ms ease-in-out forwards;
+  animation: plot-load 75ms ease-in-out forwards !important;
 }
 
 .tick {
