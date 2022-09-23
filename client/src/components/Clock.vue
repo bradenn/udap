@@ -54,14 +54,10 @@ function currentPageName() {
 </script>
 
 <template>
+
+
   <div v-if="props.large">
 
-    <div class="time-xl mt-3">
-      <div v-for="c in state.time">
-        <div v-if="c === ':'" class="vertical-colon">{{ c }}</div>
-        <div v-else>{{ c }}</div>
-      </div>
-    </div>
     <div class="date" v-html="state.date"></div>
   </div>
   <div v-else>
@@ -74,7 +70,9 @@ function currentPageName() {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
+
+
 .vertical-colon {
   margin-bottom: 30px;
 }

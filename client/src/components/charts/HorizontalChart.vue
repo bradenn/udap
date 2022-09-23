@@ -9,10 +9,12 @@ interface ChartValues {
 
 interface ChartProps {
   name: string
+  unit?: string
   values: number[]
   valuesPerSection: number
   sectionsNames: string[]
   color: string
+  marker: number
   scale: number
 }
 
@@ -21,12 +23,22 @@ let props = defineProps<ChartProps>()
 let state = reactive({
   ctx: {} as CanvasRenderingContext2D,
   width: 0 as number,
-  height: 0 as number
+  height: 0 as number,
+  min: 100 as number,
+  max: -100 as number,
 })
 
 onMounted(() => {
+
   loadDom()
 })
+
+function calcMinMax() {
+  for (let i = 0; i < props.values.length; i++) {
+    if (props.values[i] > state.max) state.max = props.values[i]
+    else if (props.values[i] < state.min) state.min = props.values[i]
+  }
+}
 
 function lerp(v0: number, v1: number, t: number): number {
   return (1 - t) * v0 + t * v1;
@@ -51,10 +63,11 @@ function loadDom() {
   ctx.translate(0, 0)
 
   ctx.clearRect(0, 0, state.width, state.height)
-
+  calcMinMax()
   drawHorizontalLines()
   drawSections()
   drawLerpLine()
+  drawMarkers()
 }
 
 function drawLerpLine() {
@@ -70,7 +83,7 @@ function drawLerpLine() {
 
     let idx = Math.floor(i / chunk)
     let dx = lerp(props.values[idx], props.values[idx + 1], (i % chunk) / chunk)
-    ctx.lineTo(i, (state.height - 6) - dx * (state.height / 1.5))
+    ctx.lineTo(i, (state.height - 6) - ((dx - state.min) / (state.max - state.min)) * (state.height / 1.5))
 
   }
   ctx.moveTo(state.width, state.height / 2)
@@ -98,10 +111,33 @@ function drawHorizontalLines() {
 
 }
 
+function drawMarkers() {
+  let ctx = state.ctx
+  ctx.lineWidth = 2
+  ctx.setLineDash([])
+  ctx.lineDashOffset = 2
+  ctx.fillStyle = props.color
+  ctx.strokeStyle = `rgba(255,255,255,${0.1})`
+  ctx.font = "bold 30px SF Pro Rounded"
+
+  let chunk = (state.width / props.values.length);
+  let dx = ((props.values[props.marker] - state.min) / (state.max - state.min))
+
+  ctx.beginPath()
+  ctx.moveTo(props.marker * chunk, 0)
+  ctx.lineTo(props.marker * chunk, state.height)
+  ctx.closePath()
+  ctx.stroke()
+  ctx.fillText(`${props.values[props.marker]}${props.unit ? props.unit : ''}`, props.marker * chunk + 4, (state.height - 6) - dx * (state.height / 1.5) - 20)
+  ctx.ellipse(props.marker * chunk, (state.height - 6) - dx * (state.height / 1.5), 6, 6, 0, 0, 2 * Math.PI)
+  ctx.fill()
+}
+
 function drawSections() {
   let ctx = state.ctx
   ctx.lineWidth = 2
   ctx.setLineDash([4, 8])
+
   ctx.lineDashOffset = 2
   ctx.strokeStyle = `rgba(255,255,255,${0.2})`
   ctx.fillStyle = `rgba(255,255,255,${0.5})`

@@ -346,10 +346,17 @@ provide('remote', remote)
     <Glance v-if="state.locked"></Glance>
     <div v-else class="d-inline">
       <div class="generic-container gap-2">
-        <div :class="`generic-slot-lg ` " v-on:click="(e) => state.locked = true">
+        <div class="generic-slot-sm" v-on:click="(e) => state.locked = true">
           <Clock :small="!state.showClock"></Clock>
         </div>
-        <div></div>
+
+        <div class="generic-slot-sm ">
+          <div v-if="false" class="element p-2" style="width: 13rem !important;">
+            {{ remote.logs.find(l => ((new Date().valueOf() - new Date(l.time).valueOf()) >= 60000)) }}
+            <div class="label-c2 label-w500 label-o5 lh-1">Worldspace</div>
+            <div class="label-c3 label-w400 label-o3 lh-1">Matthew has arrived</div>
+          </div>
+        </div>
         <div class="generic-slot-sm ">
           <IdTag></IdTag>
         </div>
@@ -446,10 +453,6 @@ provide('remote', remote)
   100% {
     bottom: 2.5rem;
   }
-}
-
-
-.generic-container {
 }
 
 .v-enter-active,

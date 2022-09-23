@@ -9,7 +9,7 @@
     "start": "tsc && electron --max-old-space-size=8192 ."
   },
   "dependencies": {
-    "electron": "18.2.0",
+    "electron": "21.0.0-beta.7",
     "typescript": "^4.6.4"
   }
 }

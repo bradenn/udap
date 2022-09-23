@@ -70,7 +70,7 @@ function reload() {
       <div class="d-flex gap-2 label-c2 align-items-center">
         <div class="user-container">
 
-          <div v-for="p in state.status.predictions" class="user">
+          <div v-for="p in state.status.predictions" class="subplot user">
             {{ p.name.charAt(0).toUpperCase() }}
           </div>
 
@@ -210,8 +210,7 @@ function reload() {
 }
 
 .user {
-  backdrop-filter: blur(24px) !important;
-  z-index: 12000 !important;
+
   width: 1.5rem;
   height: 1.5rem;
   font-size: 0.75rem;
@@ -219,12 +218,11 @@ function reload() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(44, 45, 45, 0.25);
-  color: rgba(255, 255, 255, 0.8);
-  mix-blend-mode: overlay;
-  border-radius: 100%;
 
-  box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.2), inset 0 1px 4px 2px rgba(255, 255, 255, 0.05), inset 0 0 6px 1px rgba(0, 0, 0, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+
+  border-radius: 100% !important;
+
 }
 
 .user-secondary {

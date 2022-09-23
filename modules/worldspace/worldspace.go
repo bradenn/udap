@@ -82,6 +82,68 @@ func (w *Worldspace) Update() error {
 	return nil
 }
 
+type Departure struct {
+	Meta string `json:"meta"`
+	Time string `json:"time"`
+}
+
+func (w *Worldspace) handleDeparture(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "id")
+	a := Departure{}
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(request.Body)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(buf.Bytes(), &a)
+	if err != nil {
+		return
+	}
+
+	// err := w.Attributes.Update(w.entityId, "homeKitArrivals", string(marshal), time.Now())
+	// if err != nil {
+	// 	w.LogF("%s", err.Error())
+	// 	return
+	// }
+
+	w.LogF("%s has departed (%s)", id, a.Time)
+
+	writer.WriteHeader(200)
+
+}
+
+type Arrival struct {
+	Meta string `json:"meta"`
+	Time string `json:"time"`
+}
+
+func (w *Worldspace) handleArrival(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "id")
+	a := Arrival{}
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(request.Body)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(buf.Bytes(), &a)
+	if err != nil {
+		return
+	}
+
+	// err := w.Attributes.Update(w.entityId, "homeKitArrivals", string(marshal), time.Now())
+	// if err != nil {
+	// 	w.LogF("%s", err.Error())
+	// 	return
+	// }
+
+	w.LogF("%s has arrived (%s) (%s)", id, a.Time, a.Meta)
+
+	writer.WriteHeader(200)
+
+}
+
 func (w *Worldspace) handleMotion(writer http.ResponseWriter, request *http.Request) {
 	zone := chi.URLParam(request, "zone")
 
@@ -127,6 +189,8 @@ func (w *Worldspace) Run() error {
 	w.server.Addr = "0.0.0.0:5058"
 	router := chi.NewRouter()
 	router.Post("/motion/{zone}", w.handleMotion)
+	router.Post("/arrive/{id}", w.handleArrival)
+	router.Post("/depart/{id}", w.handleDeparture)
 	w.server.Handler = router
 	entity := domain.Entity{
 		Name:   "faces",

@@ -371,7 +371,8 @@ function getWeekday(ms: number): string {
       </div>
     </div>
     <div v-if="!state.loading" class="d-flex gap-1 flex-row">
-      <PaneList :alt='timeSince(state.lastUpdate)' style="width: 13rem !important;" title="Today">
+      <PaneList :alt='timeSince(state.lastUpdate)' style="width: 13rem !important; height: 14rem !important;"
+                title="Today">
         <PaneListItemInline :subtext="state.sun.rising" icon="􀆱"
                             title="Sunrise"></PaneListItemInline>
         <PaneListItemInline :subtext="state.sun.setting" icon="􀆳"
@@ -381,31 +382,36 @@ function getWeekday(ms: number): string {
       </PaneList>
       <div class=" d-flex flex-column gap-1 w-100">
         <div class="element d-flex flex-column p-2 pt-1">
-          <div>
+          <div class="d-flex justify-content-between lh-1">
             <div class="label-o4 label-w500 label-c1 py-1">This Week</div>
+            <div v-if="state.latest.hourly.precipitation[new Date().getHours()] >= 0.0001"
+                 class="label-o3 label-w500 label-r label-c2 py-1">Tut, Tut, Looks Like Rain</div>
           </div>
-          <Scroll horizontal style="overflow-x: scroll">
+          <Scroll horizontal style="overflow-x: scroll; height: 100%">
             <div class="d-flex flex-column" style="width: 200%">
-              <HorizontalChart :scale="2"
+              <HorizontalChart :marker="new Date().getHours()" :scale="2"
+                               :values="state.latest.hourly.temperature_2m"
                                :sections-names="state.latest.hourly.time.filter(t => (t*1000)%(24*60*60*1000) === 0).map(t => getWeekday(t))"
-                               :values="state.latest.hourly.temperature_2m.map(p => ((p-state.ranges.temp.min)/(state.ranges.temp.max-state.ranges.temp.min)))"
+                               unit="° F"
                                :valuesPerSection="24"
                                color="rgba(255,159,10,0.4)"
                                name="Temperature">
 
               </HorizontalChart>
-              <HorizontalChart :scale="2"
+              <HorizontalChart :marker="new Date().getHours()" :scale="2"
+                               :values="state.latest.hourly.precipitation"
                                :sections-names="state.latest.hourly.time.filter(t => (t*1000)%(24*60*60*1000) === 0).map(t => '')"
-                               :values="state.latest.hourly.precipitation.map(p => ((p-state.ranges.rain.min)/(state.ranges.rain.max-state.ranges.rain.min)))"
+                               unit='"'
                                :valuesPerSection="24"
                                color="rgba(10,132,255,0.4)"
                                name="Rain">
 
               </HorizontalChart>
 
-              <HorizontalChart :scale="2"
+              <HorizontalChart :marker="new Date().getHours()" :scale="2"
+                               :values="state.latest.hourly.relativehumidity_2m"
                                :sections-names="state.latest.hourly.time.filter(t => (t*1000)%(24*60*60*1000) === 0).map(t => '')"
-                               :values="state.latest.hourly.relativehumidity_2m.map(p => ((p-state.ranges.humidity.min)/(state.ranges.humidity.max-state.ranges.humidity.min)))"
+                               unit="%"
                                :valuesPerSection="24"
                                color="rgba(100,210,255,0.4)"
                                name="Humidity">

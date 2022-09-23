@@ -48,6 +48,8 @@ function updateTime() {
 
 
 <style lang="scss">
+
+
 .lock-header {
   display: flex;
   justify-content: center;

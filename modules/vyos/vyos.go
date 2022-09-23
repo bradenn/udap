@@ -262,6 +262,9 @@ func (v *Vyos) Setup() (plugin.Config, error) {
 
 func (v *Vyos) updateUtilization(utilization domain.Utilization) error {
 	deviceId := v.devicesIds[utilization.Network.Ipv4]
+	if deviceId == "" {
+		return nil
+	}
 	err := v.Devices.Utilization(deviceId, utilization)
 	if err != nil {
 		return err
