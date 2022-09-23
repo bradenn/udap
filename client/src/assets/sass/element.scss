@@ -65,6 +65,10 @@ $themes: (
       background-color: $i !important;
       filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
       box-shadow: inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
+
+      * {
+        filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.08));
+      }
     }
   }
 }

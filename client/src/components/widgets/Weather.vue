@@ -232,7 +232,7 @@ function toggleMenu() {
     </div>
 
   </div>
-  <div v-else class="element gap w-100 h-100 p-2 weather-widget" @click="toggleMenu">
+  <div v-else class="element clear gap w-100 h-100 p-2 weather-widget" @click="toggleMenu">
     <div class="d-flex justify-content-between align-items-center">
       <div class="label-xl label-o6 label-w500 lh-1 ">{{ Math.round(state.current.temperature) }}°</div>
       <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-end" style="gap: 0.125rem">
@@ -525,15 +525,16 @@ function toggleMenu() {
 
 }
 
-.g13 {
-  background: #fda65a;
-  background: -moz-linear-gradient(top, #fda65a 0%, #ffe467 100%);
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #fda65a), color-stop(100%, #ffe467));
-  background: -webkit-linear-gradient(top, #fda65a 0%, #ffe467 100%);
-  background: -o-linear-gradient(top, #fda65a 0%, #ffe467 100%);
-  background: -ms-linear-gradient(top, #fda65a 0%, #ffe467 100%);
-  background: linear-gradient(to bottom, #fda65a 0%, #ffe467 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fda65a', endColorstr='#ffe467', GradientType=0);
+.rain {
+  box-shadow: inset 0 0 12px 0.5px opacify(rgba(44, 44, 44, 0.6), 0.00125) !important;
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(54, 104, 169, 0.5)), color-stop(40%, rgba(41, 92, 147, 0.5)), color-stop(100%, rgba(61, 77, 105, 0.5)));
+
+}
+
+
+.overcast {
+  box-shadow: inset 0 0 12px 0.5px opacify(rgba(44, 44, 44, 0.6), 0.00125) !important;
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(144, 144, 144, 0.6)), color-stop(20%, rgba(144, 144, 144, 0.6)), color-stop(100%, rgba(77, 77, 77, 0.4)));
 
 }
 
