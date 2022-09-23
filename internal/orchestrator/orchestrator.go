@@ -4,9 +4,7 @@ package orchestrator
 
 import (
 	"fmt"
-	"github.com/go-chi/chi"
 	"gorm.io/gorm"
-	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -22,19 +20,18 @@ import (
 	"udap/internal/port/runtimes"
 	"udap/internal/pulse"
 	"udap/platform/database"
-	"udap/platform/jwt"
-	"udap/platform/router"
 )
 
 type orchestrator struct {
 	db         *gorm.DB
-	router     chi.Router
-	server     *http.Server
-	maxTick    time.Duration
 	controller *controller.Controller
-	done       chan bool
-	modules    domain.ModuleService
-	endpoints  domain.EndpointService
+
+	server  Server
+	maxTick time.Duration
+	done    chan bool
+
+	modules   domain.ModuleService
+	endpoints domain.EndpointService
 
 	mutations chan domain.Mutation
 }
@@ -57,11 +54,12 @@ func NewOrchestrator() (Orchestrator, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Initialize Router
-	r := router.New()
+	// Initialize Server
+	server := NewServer()
+	// Initialize Orchestrator
 	return &orchestrator{
 		db:         db,
-		router:     r,
+		server:     server,
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second,
@@ -73,6 +71,7 @@ func (o *orchestrator) Start() error {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+
 	go func() {
 		for range c {
 			_ = o.server.Close()
@@ -101,10 +100,12 @@ func (o *orchestrator) Start() error {
 }
 
 func (o *orchestrator) Update() error {
+
 	err := o.modules.UpdateAll()
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -117,19 +118,6 @@ func (o *orchestrator) broadcastTimings() error {
 			Body:      proc,
 			Id:        s,
 		}
-	}
-	return nil
-}
-
-func (o *orchestrator) runServer() error {
-	o.server = &http.Server{Addr: ":3020", Handler: o.router}
-	o.server.ReadTimeout = time.Second
-	o.server.WriteTimeout = time.Second * 2
-	o.server.IdleTimeout = time.Second * 30
-	o.server.ReadHeaderTimeout = time.Second * 2
-	err := o.server.ListenAndServe()
-	if err != nil {
-		return err
 	}
 	return nil
 }
@@ -182,43 +170,58 @@ func (o *orchestrator) Run() error {
 	}()
 
 	// Initialize and route applicable domains
+	o.server.AddRoutes(
+		routes.NewEndpointRouter(o.controller.Endpoints),
+		routes.NewAttributeRouter(o.controller.Attributes),
+		routes.NewUserRouter(o.controller.Users),
+		routes.NewZoneRouter(o.controller.Zones),
+		routes.NewDeviceRouter(o.controller.Devices),
+		routes.NewEntityRouter(o.controller.Entities),
+		routes.NewModuleRouter(o.modules),
+		routes.NewEndpointRouter(o.endpoints),
+	)
 
-	o.router.Group(func(r chi.Router) {
-		r.Use(jwt.Authenticator)
-		routes.NewUserRouter(o.controller.Users).RouteInternal(r)
-		routes.NewAttributeRouter(o.controller.Attributes).RouteInternal(r)
-		routes.NewZoneRouter(o.controller.Zones).RouteInternal(r)
-		routes.NewDeviceRouter(o.controller.Devices).RouteInternal(r)
-		routes.NewEntityRouter(o.controller.Entities).RouteInternal(r)
-		routes.NewModuleRouter(o.modules).RouteInternal(r)
-		routes.NewEndpointRouter(o.endpoints).RouteInternal(r)
-	})
-	routes.NewEndpointRouter(o.endpoints).RouteExternal(o.router)
+	// o.router.Group(func(r chi.Router) {
+	//
+	// 	routes.NewUserRouter(o.controller.Users).RouteInternal(r)
+	// 	routes.NewAttributeRouter(o.controller.Attributes).RouteInternal(r)
+	// 	routes.NewZoneRouter(o.controller.Zones).RouteInternal(r)
+	// 	routes.NewDeviceRouter(o.controller.Devices).RouteInternal(r)
+	// 	routes.NewEntityRouter(o.controller.Entities).RouteInternal(r)
+	// 	routes.NewModuleRouter(o.modules).RouteInternal(r)
+	// 	routes.NewEndpointRouter(o.endpoints).RouteInternal(r)
+	// })
+	// routes.NewEndpointRouter(o.endpoints).RouteExternal(o.router)
 	runtimes.NewModuleRuntime(o.modules)
+
 	go func() {
 		defer wg.Done()
-		err := o.runServer()
+		err := o.server.Run()
 		if err != nil {
 			// log.Err(err)
 			return
 		}
 	}()
 
+	t := time.NewTimer(o.maxTick + time.Millisecond*100)
+
 	go func() {
 		defer wg.Done()
 		for {
 			pulse.Begin("update")
+			t.Reset(o.maxTick + time.Millisecond*100)
 			select {
 			case <-o.done:
 				log.Event("Event loop exiting...")
 				o.Terminate("Terminated")
 				close(o.mutations)
 				return
-			case <-time.After(o.maxTick + time.Millisecond*100):
+			case <-t.C:
 				log.Event("Orchestrator event loop timed out")
 				pulse.End("update")
 				continue
 			case err := <-o.tick():
+				t.Stop()
 				if err != nil {
 					log.Err(err)
 				}
