@@ -21,12 +21,13 @@ function createWindow() {
         frame: false,
     });
 
+
     // attachTouchMode()
     // win.webContents.debugger.on('detach', (event, reason) => {
     //     console.log('Debugger detached due to: ', reason)
     // })
     // attachTouchMode()
-
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     win.webContents.setZoomFactor(1)
     win.loadURL('http://localhost:5002')
 
@@ -55,6 +56,12 @@ function attachTouchMode() {
     });
 }
 
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+    // On certificate error we disable default behaviour (stop loading the page)
+    // and we then say "it is all fine - true" to the callback
+    event.preventDefault();
+    callback(true);
+});
 
 app.whenReady().then(() => {
     createWindow();

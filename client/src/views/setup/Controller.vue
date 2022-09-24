@@ -5,6 +5,8 @@ import type {Controller} from "@/types"
 import {PreferenceTypes} from "@/types";
 
 import axios from "axios"
+
+
 import {Preference} from "@/preferences"
 
 
@@ -26,10 +28,16 @@ onMounted(() => {
   }
 })
 
+
 // Verify a controller is up and running, update the controller if it is
 function testController(controller: Controller) {
+
   // Send a get request to the heartbeat endpoint of the provided controller app
-  axios.get(`http://${controller.address}/status`).then(res => {
+  axios.get(`https://${controller.address}/status`, {
+    httpsAgent: {
+      rejectUnauthorized: false
+    }
+  }).then(res => {
     // Set the controller's status to reflect the successful request
     controller.status = true
     // Select the current controller, this will ensure a live controller will be selected by default (if possible)
@@ -38,6 +46,7 @@ function testController(controller: Controller) {
     // Set the controller to reflect its down status
     controller.status = false
   })
+
 }
 
 // Recommend a working app controller to the user, typically the production node

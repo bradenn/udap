@@ -18,7 +18,11 @@ let remote: any = inject('remote')
 
 // Apply changes made to an attribute
 function commitChange(attribute: Attribute) {
-  attributeService.request(attribute)
+  attributeService.request(attribute).then(res => {
+    console.log(res)
+  }).catch(err => {
+    console.log(err)
+  })
 }
 
 </script>

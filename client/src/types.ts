@@ -5,6 +5,12 @@
 import type {Nexus} from "@/views/terminal/nexus";
 
 
+export interface ApiRateLimit {
+    remaining: number,
+    limit: number,
+    reset: number,
+}
+
 export interface Landmarks {
     rightEye: {
         xa: number;

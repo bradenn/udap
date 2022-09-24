@@ -62,6 +62,12 @@ type Device struct {
 	} `json:"properties"`
 }
 
+type RateLimit struct {
+	Remaining string `json:"remaining"`
+	Limit     string `json:"limit"`
+	Reset     string `json:"reset"`
+}
+
 type Response struct {
 	Data    json.RawMessage `json:"data"`
 	Message string          `json:"message"`
@@ -72,7 +78,10 @@ var Module Govee
 
 type Govee struct {
 	plugin.Module
-	devices map[string]Device
+	devices   map[string]Device
+	mutable   chan domain.Attribute
+	immutable chan domain.Attribute
+	done      chan bool
 }
 
 func init() {
@@ -85,6 +94,33 @@ func init() {
 	}
 
 	Module.Config = config
+}
+
+func (g *Govee) listen() {
+	for {
+		select {
+		case attribute := <-g.mutable:
+			err := g.setState(attribute)
+			if err != nil {
+				g.Err(err)
+				continue
+			}
+		case attribute := <-g.immutable:
+			g.WarnF("Attribute '%s' is immutable", attribute.Key)
+		case <-g.done:
+			return
+		}
+	}
+}
+
+func (g *Govee) Dispose() error {
+	select {
+	case g.done <- true:
+	default:
+		return nil
+	}
+
+	return nil
 }
 
 func (g *Govee) fetchDevices() ([]Device, error) {
@@ -108,6 +144,65 @@ func (g *Govee) fetchDevices() ([]Device, error) {
 // 98:34:d4:ad:fc:0a:3f:2d H6003 Workstation
 // 3d:b2:d4:ad:fc:09:38:0f H6003 Kitchen
 // 6d:2f:d4:ad:fc:09:3f:25 H6003 Nightstand
+
+func (g *Govee) sendApiDeviceRequest(id string, method string, path string, body json.RawMessage) (json.RawMessage,
+	error) {
+
+	var buf bytes.Buffer
+	buf.Write(body)
+
+	c := http.Client{}
+	defer c.CloseIdleConnections()
+	c.Timeout = time.Millisecond * 500
+	p := fmt.Sprintf("https://developer-api.govee.com/v1/devices%s", path)
+	request, err := http.NewRequest(method, p, &buf)
+	if err != nil {
+		return nil, err //
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Govee-API-Key", os.Getenv("goveeApi"))
+	do, err := c.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	buf = bytes.Buffer{}
+	_, err = buf.ReadFrom(do.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	r := Response{}
+	err = json.Unmarshal(buf.Bytes(), &r)
+	if err != nil {
+		return nil, err
+	}
+
+	rl := RateLimit{
+		Remaining: do.Header.Get("API-RateLimit-Remaining"),
+		Limit:     do.Header.Get("API-RateLimit-Limit"),
+		Reset:     do.Header.Get("API-RateLimit-Reset"),
+	}
+
+	marshal, err := json.Marshal(rl)
+	if err != nil {
+		return nil, err
+	}
+
+	err = g.Attributes.Update(id, "api", string(marshal), time.Now())
+	if err != nil {
+		return nil, err
+	}
+
+	_ = do.Body.Close()
+
+	if r.Code != 200 {
+		g.WarnF("API Request failed: %s", fmt.Errorf("update failed '%s'", r.Message))
+		return nil, fmt.Errorf("update failed '%s'", r.Message)
+	}
+	return r.Data, nil
+}
 
 func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage) (json.RawMessage, error) {
 
@@ -155,7 +250,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
 	stamp := time.Now()
-	request, err := g.sendApiRequest("GET", path, nil)
+	request, err := g.sendApiDeviceRequest(id, "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -169,6 +264,18 @@ func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 	for _, value := range a.Properties {
 		for s, message := range value {
 			switch s {
+			case "online":
+				var str string
+				err = json.Unmarshal(message, &str)
+				if err != nil {
+					break
+				}
+				err = g.Attributes.Update(id, "online", str, stamp)
+				if err != nil {
+					fmt.Println(err)
+					break
+				}
+				break
 			case "powerState":
 				var str string
 				err = json.Unmarshal(message, &str)
@@ -233,95 +340,19 @@ func (g *Govee) getAllStates(device Device, id string) (interface{}, error) {
 	return nil, nil
 }
 
-func mapInt(in float64, l1 float64, h1 float64, l2 float64, h2 float64) float64 {
-	return l2 + (h2-l2)*((in-l1)/(h1-l1))
-}
-
-func (g *Govee) getSingleState(device Device, mode string) (string, error) {
-	path := fmt.Sprintf("/state?device=%s&&model=%s", device.Device, device.Model)
-
-	request, err := g.sendApiRequest("GET", path, nil)
-	if err != nil {
-		return "", err
-	}
-
-	a := StateResponse{}
-	err = json.Unmarshal(request, &a)
-	if err != nil {
-		log.Err(err)
-		return "", err
-	}
-
-	for _, value := range a.Properties {
-		for s, message := range value {
-			switch s {
-			case "powerState":
-				if mode == "on" {
-					var st string
-					err = json.Unmarshal(message, &st)
-					if err != nil {
-						return "", err
-					}
-					if st == "on" {
-						return "true", nil
-					} else {
-						return "false", nil
-					}
-				}
-				break
-			case "colorTem":
-				if mode == "cct" {
-					var out int
-					err = json.Unmarshal(message, &out)
-					if err != nil {
-						return "", err
-					}
-					return fmt.Sprintf("%d", out), nil
-				}
-				break
-			case "brightness":
-				if mode == "dim" {
-					var out int
-					err = json.Unmarshal(message, &out)
-					if err != nil {
-						return "", err
-					}
-
-					return fmt.Sprintf("%d", out), nil
-				}
-				break
-			case "color":
-				if mode == "hue" {
-					var col Color
-					err = json.Unmarshal(message, &col)
-					if err != nil {
-						return "", err
-					}
-					rg := color.RGB{R: float64(col.R) / 255, G: float64(col.G) / 255, B: float64(col.B) / 255}
-					h := rg.ToHSL()
-					return fmt.Sprintf("%d", int(h.H)*360), nil
-				}
-				break
-			}
-		}
-	}
-
-	return "", nil
-}
-
-func (g *Govee) control(device Device, cmd Cmd) error {
+func (g *Govee) control(id string, cmd Cmd) error {
+	device := g.devices[id]
 	r := SetStateRequest{
 		Device: device.Device,
 		Model:  device.Model,
 		Cmd:    cmd,
 	}
-
 	marshal, err := json.Marshal(r)
 	if err != nil {
 		return err
 	}
 
-	_, err = g.sendApiRequest("PUT", "/control", marshal)
+	_, err = g.sendApiDeviceRequest(id, "PUT", "/control", marshal)
 	if err != nil {
 		return err
 	}
@@ -329,7 +360,7 @@ func (g *Govee) control(device Device, cmd Cmd) error {
 	return nil
 }
 
-func (g *Govee) setOn(device Device, b bool) error {
+func (g *Govee) setOn(id string, b bool) error {
 	ns := "off"
 	if b {
 		ns = "on"
@@ -338,7 +369,7 @@ func (g *Govee) setOn(device Device, b bool) error {
 		Name:  "turn",
 		Value: ns,
 	}
-	err := g.control(device, cmd)
+	err := g.control(id, cmd)
 	if err != nil {
 		return err
 	}
@@ -347,12 +378,25 @@ func (g *Govee) setOn(device Device, b bool) error {
 
 }
 
-func (g *Govee) setLevel(device Device, b int) error {
+func (g *Govee) setCCT(id string, b int) error {
+	cmd := Cmd{
+		Name:  "colorTem",
+		Value: b,
+	}
+	err := g.control(id, cmd)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *Govee) setLevel(id string, b int) error {
 	cmd := Cmd{
 		Name:  "brightness",
 		Value: b,
 	}
-	err := g.control(device, cmd)
+	err := g.control(id, cmd)
 	if err != nil {
 		return err
 	}
@@ -360,18 +404,40 @@ func (g *Govee) setLevel(device Device, b int) error {
 	return nil
 }
 
-func (g *Govee) setState(device Device, value string, mode string, id string) error {
+func (g *Govee) setHue(id string, hue int) error {
+	h := color.HSL{
+		H: float64(hue) / 360.0,
+		S: 1,
+		L: 0.5,
+	}
+	rgb := h.ToRGB()
+	c := Cmd{
+		Name: "color",
+		Value: Color{
+			R: int(rgb.R * 255),
+			G: int(rgb.G * 255),
+			B: int(rgb.B * 255),
+		},
+	}
+	err := g.control(id, c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *Govee) setState(attribute domain.Attribute) error {
+	// device Device, value string, mode string, id string
+	id := attribute.Entity
+	value := attribute.Request
+	mode := attribute.Key
 	switch mode {
 	case "cct":
 		val, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
-		cct := Cmd{
-			Name:  "colorTem",
-			Value: val,
-		}
-		err = g.control(device, cct)
+		err = g.setCCT(id, val)
 		if err != nil {
 			return err
 		}
@@ -382,21 +448,17 @@ func (g *Govee) setState(device Device, value string, mode string, id string) er
 			return err
 		}
 
-		err = g.setOn(device, parsed)
+		err = g.setOn(id, parsed)
 		if err != nil {
 			return err
 		}
-
+		break
 	case "dim":
 		val, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
-		err = g.setLevel(device, val)
-		if err != nil {
-			return err
-		}
-		err = g.setOn(device, val != 0)
+		err = g.setLevel(id, val)
 		if err != nil {
 			return err
 		}
@@ -406,46 +468,21 @@ func (g *Govee) setState(device Device, value string, mode string, id string) er
 		if err != nil {
 			return err
 		}
-		h := color.HSL{
-			H: float64(val) / 360.0,
-			S: 1,
-			L: 0.5,
-		}
-		rgb := h.ToRGB()
-		c := Cmd{
-			Name: "color",
-			Value: Color{
-				R: int(rgb.R * 255),
-				G: int(rgb.G * 255),
-				B: int(rgb.B * 255),
-			},
-		}
-		err = g.control(device, c)
+		err = g.setHue(id, val)
 		if err != nil {
 			return err
 		}
 		break
 	}
-	err := g.Attributes.Set(id, mode, value)
+	err := g.Attributes.Update(id, mode, value, time.Now())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *Govee) statePut(device Device, mode string, id string) func(value string) error {
-	return func(value string) error {
-		return g.setState(device, value, mode, id)
-	}
-}
-
-func (g *Govee) stateGet(device Device, mode string, id string) func() (string, error) {
-	return func() (string, error) {
-		return g.getSingleState(device, mode)
-	}
-}
-
-func GenerateAttributes(id string) []*domain.Attribute {
+func (g *Govee) generateAttributes(id string) []*domain.Attribute {
+	// Mutable
 	on := domain.Attribute{
 		Key:     "on",
 		Value:   "false",
@@ -453,7 +490,7 @@ func GenerateAttributes(id string) []*domain.Attribute {
 		Type:    "toggle",
 		Order:   0,
 		Entity:  id,
-		Channel: make(chan domain.Attribute),
+		Channel: g.mutable,
 	}
 	dim := domain.Attribute{
 		Key:     "dim",
@@ -462,7 +499,7 @@ func GenerateAttributes(id string) []*domain.Attribute {
 		Type:    "range",
 		Order:   1,
 		Entity:  id,
-		Channel: make(chan domain.Attribute),
+		Channel: g.mutable,
 	}
 	cct := domain.Attribute{
 		Key:     "cct",
@@ -471,7 +508,7 @@ func GenerateAttributes(id string) []*domain.Attribute {
 		Type:    "range",
 		Order:   3,
 		Entity:  id,
-		Channel: make(chan domain.Attribute),
+		Channel: g.mutable,
 	}
 	hue := domain.Attribute{
 		Key:     "hue",
@@ -480,9 +517,28 @@ func GenerateAttributes(id string) []*domain.Attribute {
 		Type:    "range",
 		Order:   4,
 		Entity:  id,
-		Channel: make(chan domain.Attribute),
+		Channel: g.mutable,
 	}
-	return []*domain.Attribute{&on, &dim, &hue, &cct}
+	// Immutable
+	api := domain.Attribute{
+		Key:     "api",
+		Value:   "{remaining: 0, limit: 0, reset: 0}",
+		Request: "0",
+		Type:    "media",
+		Order:   5,
+		Entity:  id,
+		Channel: g.immutable,
+	}
+	online := domain.Attribute{
+		Key:     "online",
+		Value:   "false",
+		Request: "false",
+		Type:    "toggle",
+		Order:   6,
+		Entity:  id,
+		Channel: g.immutable,
+	}
+	return []*domain.Attribute{&on, &dim, &hue, &cct, &api, &online}
 }
 
 func (g *Govee) Setup() (plugin.Config, error) {
@@ -527,8 +583,12 @@ func (g *Govee) Run() error {
 	if err != nil {
 		return err
 	}
-
+	g.immutable = make(chan domain.Attribute)
+	g.mutable = make(chan domain.Attribute)
+	g.done = make(chan bool)
+	go g.listen()
 	for _, device := range devices {
+
 		s := &domain.Entity{
 			Name:   device.DeviceName,
 			Type:   "spectrum",
@@ -538,18 +598,10 @@ func (g *Govee) Run() error {
 		if err != nil {
 			return err
 		}
+
 		g.devices[s.Id] = device
-		attributes := GenerateAttributes(s.Id)
+		attributes := g.generateAttributes(s.Id)
 		for _, attribute := range attributes {
-			go func(dev Device, channel chan domain.Attribute) {
-				for attr := range channel {
-					err = g.statePut(dev, attr.Key, s.Id)(attr.Request)
-					if err != nil {
-						log.Err(err)
-						continue
-					}
-				}
-			}(device, attribute.Channel)
 			err = g.Attributes.Register(attribute)
 			if err != nil {
 				return err

@@ -33,7 +33,7 @@ func (r *moduleRouter) RouteExternal(_ chi.Router) {
 
 }
 
-func (r moduleRouter) reload(w http.ResponseWriter, req *http.Request) {
+func (r *moduleRouter) reload(w http.ResponseWriter, req *http.Request) {
 	id := chi.URLParam(req, "id")
 	if id != "" {
 		err := r.service.Reload(id)
@@ -46,7 +46,7 @@ func (r moduleRouter) reload(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(200)
 }
 
-func (r moduleRouter) build(w http.ResponseWriter, req *http.Request) {
+func (r *moduleRouter) build(w http.ResponseWriter, req *http.Request) {
 	id := chi.URLParam(req, "id")
 	if id != "" {
 		mod, err := r.service.FindByName(id)
@@ -61,7 +61,7 @@ func (r moduleRouter) build(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(200)
 }
 
-func (r moduleRouter) enable(w http.ResponseWriter, req *http.Request) {
+func (r *moduleRouter) enable(w http.ResponseWriter, req *http.Request) {
 	id := chi.URLParam(req, "id")
 	if id != "" {
 		err := r.service.Enable(id)
@@ -72,7 +72,7 @@ func (r moduleRouter) enable(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(200)
 }
 
-func (r moduleRouter) disable(w http.ResponseWriter, req *http.Request) {
+func (r *moduleRouter) disable(w http.ResponseWriter, req *http.Request) {
 	id := chi.URLParam(req, "id")
 	if id != "" {
 		err := r.service.Disable(id)
@@ -83,7 +83,7 @@ func (r moduleRouter) disable(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(200)
 }
 
-func (r moduleRouter) halt(w http.ResponseWriter, req *http.Request) {
+func (r *moduleRouter) halt(w http.ResponseWriter, req *http.Request) {
 	id := chi.URLParam(req, "id")
 	if id != "" {
 		err := r.service.Halt(id)

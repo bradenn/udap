@@ -4,7 +4,7 @@
 import request from "@/services/request";
 
 function getEndpoint(id: string, path: string): string {
-    return `http://10.0.1.2:3020/zones/${id}${path}`
+    return `/zones/${id}${path}`
 }
 
 export default {

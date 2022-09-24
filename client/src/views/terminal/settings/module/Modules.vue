@@ -6,8 +6,8 @@ import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import Confirm from "@/components/plot/Confirm.vue";
-import axios from "axios";
 import {useRouter} from "vue-router";
+import moduleService from "@/services/moduleService";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -46,23 +46,11 @@ function handleUpdates(remote: Remote) {
 }
 
 function reloadModule(id: string) {
-  axios.post(`http://localhost:3020/modules/${id}/reload`)
+  moduleService.reload(id)
 }
 
 function toggleEnabled(id: string, enabled: boolean) {
-  if (enabled) {
-    axios.post(`http://localhost:3020/modules/${id}/enable`)
-  } else {
-    axios.post(`http://localhost:3020/modules/${id}/disable`)
-  }
-}
-
-// groupBy creates several arrays of elements based on the value of a key
-function groupBy<T>(xs: T[], key: string): T[] {
-  return xs.reduce(function (rv: any, x: any): T {
-    (rv[x[key]] = rv[x[key]] || []).push(x);
-    return rv;
-  }, {});
+  moduleService.setEnabled(id, enabled)
 }
 
 const router = useRouter();

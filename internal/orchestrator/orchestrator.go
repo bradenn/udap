@@ -144,9 +144,9 @@ func (o *orchestrator) tick() <-chan error {
 			return
 		}
 		delta := time.Since(start)
-		if delta < o.maxTick && o.maxTick-delta > 250*time.Millisecond {
+		if delta < o.maxTick {
 			log.Tick("Elapsed: %s", delta.String())
-			time.Sleep(o.maxTick - delta - time.Millisecond*250)
+			time.Sleep(o.maxTick - delta)
 		}
 		out <- nil
 	}()
