@@ -5,7 +5,6 @@
 import * as THREE from "three";
 import {onMounted, onUnmounted} from "vue";
 import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass";
-import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 
 
@@ -47,7 +46,7 @@ let depth = 1500
 
 function initCamera() {
   // Initialize Camera
-  camera = new THREE.PerspectiveCamera(90, width / height, 1, 1000)
+  camera = new THREE.PerspectiveCamera(90, width / height, 1, 500)
   // camera = new THREE.OrthographicCamera(-width/2, width/2, he)
   camera.position.set(0, 0, 0);
   camera.lookAt(0, 0, 0)
@@ -113,7 +112,7 @@ function initGraphics() {
   // Set up the scene
   initScene()
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1, 1, 0.1);
+
 //   const renderTargetParameters = {
 //     minFilter: THREE.LinearFilter,
 //     magFilter: THREE.LinearFilter,
@@ -157,12 +156,12 @@ function initScene() {
 
   objs = new THREE.Object3D()
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 16; i++) {
     let ent = {
       uuid: `${i}`,
-      depth: 100 + Math.random() * 800,
+      depth: 200 + Math.random() * 200,
       direction: new THREE.Vector3(1 - Math.random() * 2, 1 - Math.random() * 2, 0),
-      velocity: new THREE.Vector3(Math.random() * 10, Math.random() * 10, 0)
+      velocity: new THREE.Vector3(Math.random() + 0.2, Math.random() + 0.2, 0)
     } as Entity
     ent.radius = 20 + Math.random() * 20 * (depth / 800)
     let w = visibleWidthAtZDepth(ent.depth, camera) / 2
@@ -276,7 +275,8 @@ function render() {
   width: 100%;
   height: 100%;
   top: 0;
-  backdrop-filter: blur(50px);
+  z-index: -10 !important;
+  backdrop-filter: blur(30px);
 
 }
 
@@ -284,7 +284,7 @@ function render() {
   width: 100%;
   height: 100%;
   position: absolute;
-  z-index: -10 !important;
+  z-index: -100 !important;
   animation: screensaverBegin 750ms ease-in-out forwards;
 }
 

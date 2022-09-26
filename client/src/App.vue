@@ -128,9 +128,12 @@ provide('preferences', preferences)
   <div
       :class="`${preferences.ui.night?'night-vision':''} theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness}`"
       class="root" v-on:mousedown="(e) => resetCountdown()">
+
     <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
          :src="`/custom/${preferences.ui.background.image}@4x.png`"
          alt="" class="backdrop "/>
+
+
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
         <div v-if="state.system.udap" class="label-r label-w600">{{ state.system.udap.system.version }}</div>

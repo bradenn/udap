@@ -81,7 +81,7 @@ function updateLight(attributes: Attribute[]): Attribute[] {
     state.apiAttribute = api
     state.rateLimit = JSON.parse(api.value) as ApiRateLimit
   } else {
-    state.apiAttribute = undefined
+    state.apiAttribute = {} as Attribute
   }
 
   return attributes

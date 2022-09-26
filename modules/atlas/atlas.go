@@ -578,6 +578,7 @@ func (w *Atlas) handleEntity(rasa RasaResponse) error {
 }
 
 func (w *Atlas) retort(text string) error {
+	return nil
 	p := Phrase{}
 	p.Text = text
 	marshal, err := json.Marshal(p)
@@ -839,8 +840,8 @@ func (w *Atlas) register() error {
 		Channel: w.statusChannel,
 	}
 
-	w.listenChannel = make(chan atlas.Response, 8)
-	w.recognizerStatusChannel = make(chan string, 8)
+	w.listenChannel = make(chan atlas.Response, 12)
+	w.recognizerStatusChannel = make(chan string, 12)
 
 	// Begin listening on the new channels
 	go w.listen()
@@ -864,7 +865,6 @@ func (w *Atlas) register() error {
 }
 
 func (w *Atlas) Run() error {
-	return nil
 
 	err := w.register()
 	if err != nil {
@@ -919,7 +919,7 @@ func (w *Atlas) Run() error {
 	w.status.Synthesizer = "idle"
 
 	recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel, w.speaking)
-	done, err := recognizer.Connect("10.0.1.201")
+	done, err := recognizer.Connect("10.0.1.11")
 	if err != nil {
 		w.ErrF("Failed to connect to remote host: %s", err.Error())
 		return err

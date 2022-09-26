@@ -5,24 +5,29 @@ package atlas
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"github.com/gordonklaus/portaudio"
 	"github.com/gorilla/websocket"
 	"net/url"
-	"sync"
 	"time"
 	"udap/internal/log"
 )
 
 type Response struct {
-	Result []struct {
-		Conf  float64 `json:"conf"`
-		End   float64 `json:"end"`
-		Start float64 `json:"start"`
-		Word  string  `json:"word"`
-	} `json:"result"`
-	Text string `json:"text"`
+	Text     string `json:"text"`
+	Segments []struct {
+		Id               int     `json:"id"`
+		Seek             int     `json:"seek"`
+		Start            float64 `json:"start"`
+		End              float64 `json:"end"`
+		Text             string  `json:"text"`
+		Tokens           []int   `json:"tokens"`
+		Temperature      float64 `json:"temperature"`
+		AvgLogprob       float64 `json:"avg_logprob"`
+		CompressionRatio float64 `json:"compression_ratio"`
+		NoSpeechProb     float64 `json:"no_speech_prob"`
+	} `json:"segments"`
+	Language string `json:"language"`
 }
 
 type Config struct {
@@ -38,45 +43,10 @@ type Body struct {
 type RemoteRecognizer struct {
 	response    chan Response
 	status      chan string
-	speaking    *bool
 	remote      url.URL
 	writeBuffer chan bytes.Buffer
-	closeBuffer chan bool
 	done        chan bool
-	listening   bool
-	quiet       bool
-	threshold   float64
-	isListening bool
-	mutex       sync.RWMutex
 	state       chan bool
-}
-
-func (r *RemoteRecognizer) requestState(isListening bool) error {
-	select {
-	case r.state <- isListening:
-		return nil
-	case <-time.After(time.Millisecond * 100):
-		return fmt.Errorf("timedout")
-	}
-}
-
-func (r *RemoteRecognizer) checkListening() bool {
-	value := false
-	r.mutex.RLock()
-	value = r.isListening
-	r.mutex.RUnlock()
-	return value
-}
-
-func (r *RemoteRecognizer) listenState() {
-	for {
-		select {
-		case res := <-r.state:
-			r.mutex.Lock()
-			r.isListening = res
-			r.mutex.Unlock()
-		}
-	}
 }
 
 type Recognizer interface {
@@ -88,18 +58,9 @@ func NewRecognizer(response chan Response, status chan string, speaking *bool) R
 	rr := RemoteRecognizer{
 		response:    response,
 		status:      status,
-		writeBuffer: make(chan bytes.Buffer, 8),
-		closeBuffer: make(chan bool),
+		writeBuffer: make(chan bytes.Buffer, 3),
 		state:       make(chan bool),
-		mutex:       sync.RWMutex{},
-		isListening: false,
-		listening:   false,
-		quiet:       true,
-		threshold:   1.75,
-		speaking:    speaking,
 	}
-
-	go rr.listenState()
 
 	return &rr
 
@@ -111,24 +72,24 @@ func (r *RemoteRecognizer) sendChunk(in []int16) (err error) {
 	if err != nil {
 		return err
 	}
-
+	t := time.NewTimer(time.Millisecond * 500)
 	select {
 	case r.writeBuffer <- buf: // Put 2 in the channel unless it is full
+		t.Stop()
 		return nil
-	case <-time.After(time.Millisecond * 400):
+	case <-t.C:
 		return fmt.Errorf("timed out sending chunk")
 	}
 
 }
 
 func (r *RemoteRecognizer) close() error {
-	if !r.checkListening() {
-		return fmt.Errorf("close send failed, not listening")
-	}
+	t := time.NewTimer(time.Millisecond * 500)
 	select {
-	case r.closeBuffer <- true: // Put 2 in the channel unless it is full
+	case r.writeBuffer <- bytes.Buffer{}: // Put 2 in the channel unless it is full
+		t.Stop()
 		return nil
-	case <-time.After(time.Millisecond * 400):
+	case <-t.C:
 		return fmt.Errorf("timed out closing")
 	}
 }
@@ -139,36 +100,8 @@ func (r *RemoteRecognizer) listen(remote url.URL, ready chan bool) (err error) {
 	if err != nil {
 		return err
 	}
-	e := Body{
-		Config: Config{
-			SampleRate: 16000,
-		},
-	}
-
-	marshal, err := json.Marshal(e)
-	if err != nil {
-		ready <- false
-		return err
-	}
-
-	err = conn.WriteMessage(websocket.TextMessage, marshal)
-	if err != nil {
-		ready <- false
-		return err
-	}
 
 	defer func() {
-		err = r.requestState(false)
-		if err != nil {
-			log.Err(fmt.Errorf("failed to mark listening state"))
-			return
-		}
-		err = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure,
-			"done"))
-		if err != nil {
-			log.Err(err)
-			return
-		}
 		err = conn.Close()
 		if err != nil {
 			log.Err(err)
@@ -179,41 +112,38 @@ func (r *RemoteRecognizer) listen(remote url.URL, ready chan bool) (err error) {
 	conn.SetCloseHandler(func(code int, text string) error {
 		r.status <- "closed"
 		r.done <- true
+		log.Event("Disconnecting!")
 		return nil
 	})
-	err = r.requestState(true)
-	if err != nil {
-		ready <- false
-		return err
-	}
+
 	ready <- true
 	for {
 		select {
 		case buffer := <-r.writeBuffer:
-			r.status <- "listening"
-			err = conn.WriteMessage(websocket.BinaryMessage, buffer.Bytes())
-			if err != nil {
-				return err
+			if buffer.Len() == 0 {
+				log.Event("Closing!")
+				r.status <- "processing"
+				err = conn.WriteMessage(websocket.TextMessage, []byte("{\"eof\" : 1}"))
+				if err != nil {
+					r.status <- "disconnected"
+					return err
+				}
+				resp := Response{}
+				err = conn.ReadJSON(&resp)
+				if err != nil {
+					return err
+				}
+				r.status <- "idle"
+				r.response <- resp
+				return nil
+			} else {
+				log.Event("Writing!")
+				r.status <- "listening"
+				err = conn.WriteMessage(websocket.BinaryMessage, buffer.Bytes())
+				if err != nil {
+					return err
+				}
 			}
-			_, _, err = conn.ReadMessage()
-			if err != nil {
-				return err
-			}
-		case <-r.closeBuffer:
-			r.status <- "processing"
-			err = conn.WriteMessage(websocket.TextMessage, []byte("{\"eof\" : 1}"))
-			if err != nil {
-				r.status <- "disconnected"
-				return err
-			}
-			resp := Response{}
-			err = conn.ReadJSON(&resp)
-			if err != nil {
-				return err
-			}
-			r.status <- "idle"
-			r.response <- resp
-			return nil
 		case <-r.done:
 			return nil
 		}
@@ -230,7 +160,7 @@ func (r *RemoteRecognizer) Connect(host string) (doneChan chan bool, err error) 
 
 const (
 	SampleRate = 16000
-	BufferSize = 4000
+	BufferSize = 8196
 )
 
 func (r *RemoteRecognizer) Listen() error {
@@ -239,8 +169,8 @@ func (r *RemoteRecognizer) Listen() error {
 		return err
 	}
 
-	buffer := make([]int16, 4000)
-	stream, err := portaudio.OpenDefaultStream(1, 0, SampleRate, len(buffer), buffer)
+	buffer := make([]int16, BufferSize)
+	stream, err := portaudio.OpenDefaultStream(1, 0, SampleRate, BufferSize, buffer)
 	if err != nil {
 		return err
 	}
@@ -253,16 +183,39 @@ func (r *RemoteRecognizer) Listen() error {
 	)
 
 	listening = false
+
 	err = stream.Start()
 
 	if err != nil {
 		return err
 	}
 
+	ready := make(chan bool)
+
+	go func() {
+		for {
+			log.Event("Connecting!")
+			err = r.listen(r.remote, ready)
+			if err != nil {
+				log.Err(err)
+			}
+			time.Sleep(time.Second * 5)
+		}
+	}()
+
+	res := <-ready
+	if !res {
+		return fmt.Errorf("too many open streams")
+	}
+
 	defer func() {
 		err = stream.Stop()
 		if err != nil {
 			log.Err(err)
+			return
+		}
+		err = stream.Close()
+		if err != nil {
 			return
 		}
 		err = portaudio.Terminate()
@@ -272,9 +225,7 @@ func (r *RemoteRecognizer) Listen() error {
 		}
 	}()
 
-	timeout := time.Now()
-
-	d := NewDetector(len(buffer))
+	d := NewDetector(BufferSize)
 
 	for {
 		err = stream.Read()
@@ -291,21 +242,14 @@ func (r *RemoteRecognizer) Listen() error {
 
 		if listening {
 
-			if delta*2.0 <= last {
+			if delta*1.75 <= last {
 				if !quiet {
 					quietBegin = time.Now()
-				} else if time.Since(quietBegin) >= time.Millisecond*250 {
+				} else if time.Since(quietBegin) >= time.Second {
 					err = r.close()
 					if err != nil {
 						return err
 					}
-					return nil
-				} else if time.Since(timeout) >= time.Second*8 {
-					err = r.close()
-					if err != nil {
-						return err
-					}
-					return nil
 				}
 				quiet = true
 			} else {
@@ -319,25 +263,10 @@ func (r *RemoteRecognizer) Listen() error {
 
 		} else {
 
-			if delta >= last*2.25 {
-				ready := make(chan bool)
-
-				go func() {
-					err = r.listen(r.remote, ready)
-					if err != nil {
-						log.Err(err)
-					}
-				}()
-
-				res := <-ready
-				if !res {
-					return fmt.Errorf("too many open streams")
-				}
+			if delta >= last*1.75 {
 
 				listening = true
 				quiet = false
-
-				timeout = time.Now()
 
 				err = r.sendChunk(buffer)
 				if err != nil {
