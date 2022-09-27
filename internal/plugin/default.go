@@ -80,6 +80,9 @@ func (m *Module) ErrF(format string, args ...any) {
 }
 
 func (m *Module) Err(err error) {
+	if err == nil {
+		return
+	}
 	out := domain.Log{
 		Group:   "module",
 		Level:   "error",

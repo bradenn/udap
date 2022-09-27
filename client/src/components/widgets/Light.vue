@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import AttributeComponent from "@/components/entity/Attribute.vue"
-import type {Attribute, Entity, Remote} from "@/types"
+import type {ApiRateLimit, Attribute, Entity, Remote} from "@/types"
 // Establish a local reactive state
 let state = reactive<{
   loading: boolean,
@@ -12,7 +12,9 @@ let state = reactive<{
   powerAttribute: Attribute,
   shortStatus: string
   levelAttribute: Attribute,
+  apiAttribute: Attribute,
   attributes: Attribute[],
+  rateLimit: ApiRateLimit
 }>({
   loading: true,
   active: false,
@@ -21,6 +23,8 @@ let state = reactive<{
   shortStatus: "",
   levelAttribute: {} as Attribute,
   powerAttribute: {} as Attribute,
+  apiAttribute: {} as Attribute,
+  rateLimit: {} as ApiRateLimit,
   attributes: []
 })
 
@@ -72,7 +76,15 @@ function updateLight(attributes: Attribute[]): Attribute[] {
   state.active = on.value === "true" || on.request === "true"
   generateState()
   state.loading = false
-  return state.attributes
+  let api = state.attributes.find((a: Attribute) => a.key === 'api')
+  if (api) {
+    state.apiAttribute = api
+    state.rateLimit = JSON.parse(api.value) as ApiRateLimit
+  } else {
+    state.apiAttribute = {} as Attribute
+  }
+
+  return attributes
 }
 
 // Toggle the state of the context menu
@@ -85,7 +97,6 @@ function toggleMenu(): void {
 </script>
 
 <template>
-
   <div v-if="state.showMenu" class="context context-light" @click="toggleMenu"></div>
   <div v-if="state.loading" class="w-100 h-100">
     <div class="entity-small element">
@@ -118,8 +129,8 @@ function toggleMenu(): void {
 
         <div class="label-c1 label-o2 label-w500">{{ state.shortStatus }}</div>
 
-        <div v-if="state.powerAttribute.value ==='true'" class="label-c2 float-end label-o1 label-w600 label-mono">
-          {{ Math.round((parseInt(state.levelAttribute.value, 10) || 20) / 100.0 * 7 * 100) / 100 }}W
+        <div v-if="state.apiAttribute" class="label-c2 float-end label-o1 label-w600 label-mono">
+          {{ state.rateLimit.remaining }}/{{ state.rateLimit.limit }}
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/core/domain"
+	"udap/internal/log"
 )
 
 type attributeRouter struct {
@@ -14,9 +15,7 @@ type attributeRouter struct {
 }
 
 func (r *attributeRouter) RouteInternal(router chi.Router) {
-	router.Route("/entities/{id}/attributes/{key}", func(local chi.Router) {
-		local.Post("/request", r.request)
-	})
+	router.Post("/entities/{id}/attributes/{key}/request", r.request)
 }
 
 func (r *attributeRouter) RouteExternal(_ chi.Router) {
@@ -34,14 +33,17 @@ func (r *attributeRouter) request(w http.ResponseWriter, req *http.Request) {
 	key := chi.URLParam(req, "key")
 	buf := bytes.Buffer{}
 	_, err := buf.ReadFrom(req.Body)
+	defer req.Body.Close()
 	if err != nil {
+		w.Write([]byte(err.Error()))
 		w.WriteHeader(400)
 	}
 	if id != "" && key != "" {
-		err := r.service.Request(id, key, buf.String())
+		err = r.service.Request(id, key, buf.String())
 		if err != nil {
-			w.WriteHeader(400)
+			log.ErrF(err, "Funny Business:")
 		}
 	}
+	w.Write([]byte("OK"))
 	w.WriteHeader(200)
 }

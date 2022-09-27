@@ -1,7 +1,9 @@
-# UDAP v2.15.2
+# UDAP v2.15.3
+
 [![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/go.yml)
 [![Go CodeQL](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml)
 [![Typescript](https://github.com/bradenn/udap/actions/workflows/ts.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/ts.yml)
+
 ## Universal Device Aggregation Platform
 
 Udap aims to efficiently link and aggregate many unlike interfaces into a heuristic model that can be manipulated and
@@ -16,20 +18,14 @@ Any state within udap is stored within an attribute. These attributes belong to 
 An example:
 
 You have a smart light bulb. It has two settings through it's api (which you've linked via a module), brightness and
-color hue. Each of these settings becomes its own attribute. The smart bulb is represented as an entity whose id is
+color hue. Each of these settings becomes its own attribute. The smart bulb is represented as an entity who's 'id' is
 linked to the aforementioned attributes.
 
 Another examples:
 
-You want to connect spotify to udap. Spotify's API has a lot of options, but we can just focus three attributes:
-playing, currentSong First you create an entity to represent the api, then you create and provide functions for
-resolving each attribute.
-
-## Modules & Endpoint
-
-Both modules and Endpoints are permitted to make modification to entities and attributes. Any module and any endpoint
-can concurrently modify multiple entities and attributes at a time. The command buffer can be modified to accept 4096
-concurrent commands, but for larger loads, instancing is recommended.
+You want to connect spotify to udap. Spotify's API has a lot of options, but we can just focus two attributes:
+isPlaying and currentSong. First you create an entity to represent the api, then you create and provide channels for
+resolving each attribute's status.
 
 ## Glossary
 

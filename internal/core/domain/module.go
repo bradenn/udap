@@ -71,11 +71,11 @@ type ModuleService interface {
 	SetConfig(string, string, string) error
 	GetConfig(string, string) (string, error)
 	HandleEmits(mutation Mutation) error
-	Build(module *Module) error
-	Load(module *Module) error
-	Update(module *Module) error
-	Run(module *Module) error
-	Dispose(module *Module) error
+	Build(id string) error
+	Load(id string) error
+	Update(id string) error
+	Run(id string) error
+	Dispose(id string) error
 	UpdateAll() error
 	RunAll() error
 	DisposeAll() error

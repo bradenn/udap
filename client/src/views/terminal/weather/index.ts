@@ -2,7 +2,7 @@
 
 // Weather Routes
 import WeatherApp from "./Weather.vue";
-import Summary from "./Summary.vue";
+import Summary from "./pages/Summary.vue";
 
 const weatherRoutes = {
     path: '/terminal/weather',

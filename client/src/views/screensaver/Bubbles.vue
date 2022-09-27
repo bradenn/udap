@@ -5,9 +5,7 @@
 import * as THREE from "three";
 import {onMounted, onUnmounted} from "vue";
 import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass";
-import {UnrealBloomPass} from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
-import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader";
 
 
 let renderer = {} as THREE.WebGLRenderer
@@ -48,7 +46,7 @@ let depth = 1500
 
 function initCamera() {
   // Initialize Camera
-  camera = new THREE.PerspectiveCamera(90, width / height, 1, 1000)
+  camera = new THREE.PerspectiveCamera(90, width / height, 1, 500)
   // camera = new THREE.OrthographicCamera(-width/2, width/2, he)
   camera.position.set(0, 0, 0);
   camera.lookAt(0, 0, 0)
@@ -101,6 +99,7 @@ function initGraphics() {
   renderer.setPixelRatio(window.devicePixelRatio);
   // Set output encoding
   renderer.outputEncoding = THREE.LinearEncoding;
+
   // Add the renderer to the dom
   element.appendChild(renderer.domElement)
   // Assign resize function
@@ -113,7 +112,7 @@ function initGraphics() {
   // Set up the scene
   initScene()
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1, 1, 0.1);
+
 //   const renderTargetParameters = {
 //     minFilter: THREE.LinearFilter,
 //     magFilter: THREE.LinearFilter,
@@ -156,39 +155,33 @@ function initScene() {
   scene = new THREE.Scene()
 
   objs = new THREE.Object3D()
-  const hdrEquirect = new RGBELoader().load(
-      "./custom/textures/map.hdr",
-      () => {
-        hdrEquirect.mapping = THREE.EquirectangularReflectionMapping;
-      }
-  );
-  for (let i = 0; i < 20; i++) {
+
+  for (let i = 0; i < 16; i++) {
     let ent = {
       uuid: `${i}`,
-      depth: 100 + Math.random() * 800,
+      depth: 200 + Math.random() * 200,
       direction: new THREE.Vector3(1 - Math.random() * 2, 1 - Math.random() * 2, 0),
-      velocity: new THREE.Vector3(Math.random() * 2, Math.random() * 2, 0)
+      velocity: new THREE.Vector3(Math.random() + 0.2, Math.random() + 0.2, 0)
     } as Entity
-    ent.radius = 20 + Math.random() * 40 * (depth / 900)
+    ent.radius = 20 + Math.random() * 20 * (depth / 800)
     let w = visibleWidthAtZDepth(ent.depth, camera) / 2
     let h = visibleHeightAtZDepth(ent.depth, camera) / 2
 
-    const circle = new THREE.CylinderGeometry(ent.radius, ent.radius, 4, 48, 1, false, 0, Math.PI * 2)
+    const circle = new THREE.CylinderGeometry(ent.radius, ent.radius, 3, 48, 1, false, 0, Math.PI * 2)
     circle.rotateX(Math.PI / 2)
 
 
     let material = new THREE.MeshPhysicalMaterial({
       color: colors[Math.round(i % colors.length)],
-      transparent: true,
-      opacity: 0.8,
-      transmission: 0.5,
+      transparent: false,
+      opacity: 1,
+      transmission: 0.2,
       roughness: 0.5,
       clearcoat: 1,
       clearcoatRoughness: 1,
-      envMap: hdrEquirect,
     });
 
-    material.thickness = 4
+    material.thickness = 2
 
     const mesh = new THREE.Mesh(circle, material)
 
@@ -207,11 +200,11 @@ function initScene() {
   let ambient = new THREE.AmbientLight(0xffffff, 1)
   scene.add(ambient)
 
-  let direc = new THREE.DirectionalLight(0xffffff, 1)
-  direc.position.set(0, 0, 1)
-  scene.add(direc)
+  // let direc = new THREE.DirectionalLight(0xffffff, 1)
+  // direc.position.set(0, 0, 1)
+  // scene.add(direc)
   // scene.add(new THREE.CameraHelper(dirLight.shadow.camera));
-  scene.background = new THREE.Color(0x000000);
+  scene.background = new THREE.Color(0x00000000);
 
 }
 
@@ -270,7 +263,7 @@ function render() {
 
 <template>
   <div id="screensaver" class="screensaver-context"></div>
-  <div class="screensaver-context-blur"></div>
+  <div v-if="true" class="screensaver-context-blur"></div>
 </template>
 
 <style scoped>
@@ -278,18 +271,20 @@ function render() {
 
 .screensaver-context-blur {
   content: ' ';
-  position: absolute;
+
   width: 100%;
   height: 100%;
   top: 0;
-  backdrop-filter: blur(50px);
+  z-index: -10 !important;
+  backdrop-filter: blur(30px);
 
 }
 
 .screensaver-context {
   width: 100%;
   height: 100%;
-
+  position: absolute;
+  z-index: -100 !important;
   animation: screensaverBegin 750ms ease-in-out forwards;
 }
 

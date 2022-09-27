@@ -4,11 +4,9 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/Ullaakut/nmap/v2"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/icmp"
@@ -118,12 +116,20 @@ type Vyos struct {
 }
 
 func init() {
+	configVariables := []plugin.Variable{
+		{
+			Name:        "router",
+			Default:     "10.0.1.1",
+			Description: "The address to a vyOS router with api access enabled.",
+		},
+	}
 	config := plugin.Config{
 		Name:        "vyos",
 		Type:        "module",
 		Description: "Network interfaces controller",
-		Version:     "1.0.2",
+		Version:     "1.0.3",
 		Author:      "Braden Nicholson",
+		Variables:   configVariables,
 	}
 	Module.Config = config
 }
@@ -256,6 +262,9 @@ func (v *Vyos) Setup() (plugin.Config, error) {
 
 func (v *Vyos) updateUtilization(utilization domain.Utilization) error {
 	deviceId := v.devicesIds[utilization.Network.Ipv4]
+	if deviceId == "" {
+		return nil
+	}
 	err := v.Devices.Utilization(deviceId, utilization)
 	if err != nil {
 		return err
@@ -293,7 +302,7 @@ func (v *Vyos) beginListening() (err error) {
 	if err != nil {
 		return err
 	}
-	defer v.pingConn.Close()
+	defer v.Err(v.pingConn.Close())
 
 	for {
 		select {
@@ -428,52 +437,6 @@ func (v *Vyos) arpScan(network domain.Network) error {
 	return nil
 }
 
-func (v *Vyos) scanSubnet(network domain.Network) error {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	scanner, err := nmap.NewScanner(
-		nmap.WithConnectScan(),
-		nmap.WithTargets("10.0.1.0/24"),
-		nmap.WithInterface("en1"),
-		nmap.WithContext(ctx),
-	)
-
-	if err != nil {
-		return fmt.Errorf("unable to create nmap scanner: %v", err)
-	}
-
-	result, warnings, err := scanner.Run()
-	if err != nil {
-		return fmt.Errorf("network scan failed: %v", err)
-	}
-
-	if warnings != nil {
-		return fmt.Errorf("Warnings: \n %v", warnings)
-	}
-	// Use the results to print an example output
-	for _, host := range result.Hosts {
-
-		device := domain.Device{}
-
-		for _, addr := range host.Addresses {
-			switch addr.AddrType {
-			case "ipv4":
-				device.Ipv4 = addr.String()
-			case "ipv6":
-				device.Ipv6 = addr.String()
-			case "mac":
-				device.Mac = addr.String()
-			}
-		}
-
-		device.NetworkId = network.Id
-
-	}
-	return nil
-}
-
 type Response struct {
 	Success bool        `json:"success"`
 	Data    Dhcp        `json:"data"`
@@ -513,7 +476,12 @@ func (v *Vyos) fetchNetworks() error {
 	val.Set("key", "toor")
 	val.Set("data", "{\"op\": \"showConfig\", \"path\": [\"service\", \"dhcp-server\"]}")
 
-	request, err := client.PostForm("https://10.0.1.1:8005/retrieve", val)
+	router, err := v.GetConfig("router")
+	if err != nil {
+		return nil
+	}
+	routerApi := fmt.Sprintf("https://%s:8005/retrieve", router)
+	request, err := client.PostForm(routerApi, val)
 	if err != nil {
 		return fmt.Errorf("vyos index is non-existance")
 	}

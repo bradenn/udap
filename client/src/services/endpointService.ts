@@ -5,7 +5,7 @@ import request from "@/services/request";
 import type {Endpoint} from "@/types";
 
 function getEndpoint(id: string, path: string): string {
-    return `http://10.0.1.2:3020/endpoints/${id}${path}`
+    return `/endpoints/${id}${path}`
 }
 
 export default {

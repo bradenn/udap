@@ -75,7 +75,10 @@ let state = reactive({
 
 onMounted(() => {
   resetCountdown()
+
+
 })
+
 
 let screensaver = reactive({
   show: false,
@@ -121,12 +124,15 @@ provide('preferences', preferences)
 </script>
 
 <template>
+
   <div
       :class="`${preferences.ui.night?'night-vision':''} theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness}`"
       class="root" v-on:mousedown="(e) => resetCountdown()">
+
     <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
          :src="`/custom/${preferences.ui.background.image}@4x.png`"
-         alt="Background" class="backdrop "/>
+         alt="" class="backdrop "/>
+
 
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
@@ -149,16 +155,12 @@ provide('preferences', preferences)
 
     <router-view/>
 
-
   </div>
 
 </template>
 
 <style lang="scss">
 
-* {
-  cursor: none !important;
-}
 
 .overlay-notification {
   position: fixed;
@@ -204,13 +206,14 @@ provide('preferences', preferences)
 }
 
 .backdrop {
-  z-index: -2 !important;
+  position: absolute !important;
+  z-index: -10 !important;
   top: 0;
   left: 0;
-  background-color: rgba(28, 33, 40, 0.24);
-  transform: scale(1);
-  overflow: hidden;
-  position: absolute;
+  //background-color: rgba(28, 33, 40, 0.24);
+  //transform: scale(1);
+  //overflow: hidden;
+
   background-position: center;
   background-size: cover;
   object-fit: cover;

@@ -31,8 +31,8 @@ const defaults = {
       identifier: "lies",
     },
     {
-      name: "Yellow Lies",
-      identifier: "yellowLies",
+      name: "Ventura",
+      identifier: "ventura",
     },
     {
       name: "Nebula",

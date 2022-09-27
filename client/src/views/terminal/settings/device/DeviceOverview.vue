@@ -81,14 +81,14 @@ function goTo(target: string) {
 </script>
 
 <template>
+
   <div v-if="!state.loading">
-
-
     <div v-if="state.mode === 'list'">
 
       <div class="device-container">
         <Plot v-for="(device, index) in state.devices" :cols="1" :rows="1" :style="`animation-delay:${index*2}ms;`"
               class="plot-load">
+
           <div class="d-flex h-100 justify-content-between gap">
             <div class="subplot subplot-inline justify-content-between px-0 flex-grow-1">
               <div class="d-flex align-items-center">
@@ -110,7 +110,12 @@ function goTo(target: string) {
 
               <div class="label-c3 label-o4 d-flex flex-column justify-content-end align-items-end">
                 <div :class="`${ device.state === 'ONLINE'?'text-success':''}`" class="label-o3">
-                  &nbsp;{{ device.state === "ONLINE" ? `${nsToMs(device.latency)} ms` : device.state }}
+                  <div v-if="device.state === 'ONLINE'">
+                    {{ nsToMs(device.latency) }} ms
+                  </div>
+                  <div v-else>
+                    {{ device.state }}
+                  </div>
                 </div>
                 <div class="d-flex gap-1">
 
@@ -170,7 +175,7 @@ function goTo(target: string) {
 
 .device-container > * {
   visibility: hidden;
-  animation: plot-load 75ms ease-in-out forwards;
+  animation: plot-load 75ms ease-in-out forwards !important;
 }
 
 @keyframes plot-load {

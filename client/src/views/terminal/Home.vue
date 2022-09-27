@@ -86,9 +86,9 @@ function getRoutes() {
 
 <template>
 
-  <div :class="``" class="d-flex justify-content-between gap-3 mt-1 pb-4 h-100 w-100">
+  <div :class="``" class="d-flex justify-content-between terminal-home gap-3 mt-1 pb-4 h-100 w-100">
 
-    <div class="widget-grid">
+    <div class="widget-grid" style="max-width: 13rem">
 
       <Macros></Macros>
 
@@ -97,7 +97,7 @@ function getRoutes() {
       <!--      </Widget>-->
 
     </div>
-    <div class="widget-grid">
+    <div class="widget-grid d-flex justify-content-center mt-4">
       <Calendar></Calendar>
     </div>
     <div :class="``" class="widget-grid-vertical" style="max-width: 13rem">
@@ -133,6 +133,9 @@ $widget-2x-width: 14rem;
 
 $macro-width: 12rem;
 $macro-height: 2rem;
+.terminal-home > * {
+  //outline: 1px solid white;
+}
 
 
 .widget-macro > div {

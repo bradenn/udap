@@ -17,6 +17,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/jaedle/golang-tplink-hs100 v0.4.1
 	github.com/joho/godotenv v1.3.0
+	github.com/lestrrat-go/jwx v1.2.6
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/shirou/gopsutil/v3 v3.22.6
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
@@ -44,7 +45,6 @@ require (
 	github.com/lestrrat-go/blackmagic v1.0.0 // indirect
 	github.com/lestrrat-go/httpcc v1.0.0 // indirect
 	github.com/lestrrat-go/iter v1.0.1 // indirect
-	github.com/lestrrat-go/jwx v1.2.6 // indirect
 	github.com/lestrrat-go/option v1.0.0 // indirect
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

@@ -11,9 +11,18 @@ let headers = {
     }
 }
 
+function host(): string {
+    let ctrl = localStorage.getItem("controller")
+    if (ctrl) {
+        return ctrl
+    } else {
+        return ""
+    }
+}
+
 export default {
     async post(url: string, data?: {} | undefined): Promise<void> {
-        return await axios.post(url, data, headers)
+        return await axios.post(`https://${host()}${url}`, data, headers)
     }
 }
 

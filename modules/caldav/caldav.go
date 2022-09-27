@@ -73,13 +73,6 @@ func (c *CalDav) Run() error {
 		return err
 	}
 
-	config, err := c.GetConfig("server")
-	if err != nil {
-		return err
-	}
-
-	c.LogF("Config value for '%s' is '%s'", "server", config)
-
 	return nil
 }
 
@@ -95,11 +88,12 @@ func init() {
 	configVariables := []plugin.Variable{
 		{
 			Name:    "server",
-			Default: "https://examples.com",
+			Default: "https://example.com",
 			Description: "The module will poll calendar info from any CalDAV server. " +
 				"Ensure the address begins with 'https://'.",
 		},
 	}
+
 	config := plugin.Config{
 		Name:        "caldav",
 		Type:        "module",
