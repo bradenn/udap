@@ -1,4 +1,4 @@
-# UDAP v2.15.3
+# UDAP v2.15.4
 
 [![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/go.yml)
 [![Go CodeQL](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml)
@@ -36,6 +36,17 @@ resolving each attribute's status.
 | Nexus    | The front-end interface for all of UDAP |
 | Terminal | An authoritative nexus instance (Used for configuration and management) |
 | Pad      | A general use nexus instance, can be used by anyone without authentication if configured by terminal. |
+
+### Terminal Screenshots
+
+A screenshot of the terminal unlocked screen as of v2.15.1. (With the background blur setting enabled)
+![HomeScreen](./docs/images/home_2.15.1.png)
+
+#### Terminal App Examples
+
+The sentry app controls a ceiling-mounted laser used for entertaining cats. The interface provides realtime positioning
+on of the beam, and allows for manual targeting and attenuation.  
+![SentryApp](./docs/images/app_sentry.png)
 
 ## Front-end elements
 
