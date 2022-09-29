@@ -19,8 +19,6 @@ type Attribute struct {
 	Type      string         `json:"type"`
 	Order     int            `json:"order"`
 	Channel   chan Attribute `json:"-" gorm:"-"`
-	// put       FuncPut
-	// get       FuncGet
 }
 
 const (

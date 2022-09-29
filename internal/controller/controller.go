@@ -26,6 +26,7 @@ type Controller struct {
 	Zones         domain.ZoneService
 	Endpoints     domain.EndpointService
 	Modules       domain.ModuleService
+	Macros        domain.MacroService
 }
 
 type CoreModule interface {
@@ -99,6 +100,11 @@ func (c *Controller) WatchAll(resp chan domain.Mutation) {
 		return
 	}
 
+	err = c.Macros.Watch(resp)
+	if err != nil {
+		return
+	}
+
 }
 
 func (c *Controller) EmitAll() error {
@@ -149,6 +155,11 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Logs.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Macros.EmitAll()
 	if err != nil {
 		return err
 	}
