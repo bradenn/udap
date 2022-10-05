@@ -30,7 +30,9 @@ type Proc struct {
 	Pointer   string    `json:"pointer"`
 	Name      string    `json:"name"`
 	Start     time.Time `json:"start"`
+	StartNano int64     `json:"startNano"`
 	Stop      time.Time `json:"stop"`
+	StopNano  int64     `json:"stopNano"`
 	Delta     int       `json:"delta"`
 	Frequency int       `json:"frequency"`
 	Complete  bool      `json:"complete"`
@@ -57,6 +59,7 @@ func (h *Timing) handle() {
 
 		resident := h.waiting[proc.Pointer]
 		resident.Stop = time.Now()
+		resident.StopNano = resident.Stop.UnixNano()
 		resident.Complete = true
 		resident.Delta = int(time.Since(resident.Start).Nanoseconds())
 		h.mt.Lock()
@@ -70,6 +73,7 @@ func (h *Timing) begin(ref string) {
 	proc := Proc{}
 	proc.Pointer = ref
 	proc.Start = time.Now()
+	proc.StartNano = proc.Start.UnixNano()
 	proc.Complete = false
 	proc.Name = ref
 	h.handler <- proc

@@ -9,7 +9,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 
 let state = reactive({
-  satellite: "GOES18",
+  satellite: "GOES17",
   mode: "GEOCOLOR",
   section: "FD",
   currentImage: "/custom/1808x1808.jpg",
@@ -118,9 +118,9 @@ const viewModes = [{
 
 const satellites = [
   {
-    name: "GOES 18",
+    name: "GOES 17",
     alt: "West",
-    key: "GOES18",
+    key: "GOES17",
   },
   {
     name: "GOES 16",

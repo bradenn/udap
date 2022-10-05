@@ -53,7 +53,7 @@ func NewOperator(controller *controller.Controller) domain.EndpointOperator {
 		local:         map[string]*domain.Endpoint{},
 		done:          make(chan bool),
 		localChannel:  make(chan endpointOperation),
-		localTransmit: make(chan Response),
+		localTransmit: make(chan Response, 32),
 	}
 
 	go func() {

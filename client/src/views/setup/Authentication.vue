@@ -7,6 +7,7 @@ import axios from "axios"
 
 import {Preference} from "@/preferences"
 import {PreferenceTypes} from "@/types";
+import PaneInputBox from "@/components/pane/PaneInputBox.vue";
 
 // The reactive component for the spaces and cursor position
 let state = reactive({
@@ -55,6 +56,8 @@ function enterChar(char: string) {
     state.spaces[state.cursor] = ''
     // Exit the function
     return
+  } else if (char === "{enter}") {
+    authenticate()
   }
   // Return if the security code block is full
   if (state.cursor >= 8) return
@@ -64,40 +67,42 @@ function enterChar(char: string) {
   state.cursor++
 }
 
+function goBack() {
+  window.location.href = "/#/setup/controller"
+}
+
 </script>
 
 <template>
+  <div class="setup-page">
+    <PaneInputBox :apply="() => authenticate()" :close="() => goBack()" style="width: 26rem !important;"
+                  title="Authentication">
+      <div class="label-sm label-o5 label-w600 lh-sm px-2">Authentication Code</div>
+      <div class="label-o3 label-c1 lh-1 px-2">Please enter this terminal's eight-digit security code.</div>
 
-  <div class="container">
-    <div class="row  justify-content-center">
-    </div>
-    <div class="row mt-5 justify-content-center">
-      <div class="element p-3 window-medium">
-        <router-link class="label-md label-o5 label-w600 py-2" to="/setup/controller"><span
-            class="label-o3 label-md">􀯶&nbsp;</span> Change Controller
-        </router-link>
-        <h3 class="mb-1 mt-2">Authentication.</h3>
-        <div class="label-o4">Please enter this terminal's eight-digit security code.</div>
-        <div class="d-flex flex-row gap justify-content-between mt-3">
-          <div v-for="(v, k) in state.spaces" :key=k
-               :class="`${state.cursor === k?'border-fog':'border-transparent'}`"
-               class="subplot character border label-o4">{{ v }}
-          </div>
-        </div>
-        <div class="d-flex flex-row mt-3 justify-content-between align-items-center text-danger">
-          <div class="label-lg label-w500">{{ errorMessage }}</div>
-          <div class="subplot d-inline-block label-lg label-o5 label-w600 px-4 py-2" @click="authenticate">
-            Verify&nbsp;&nbsp;<span class="label-o3 label-md">􀆊</span></div>
+      <div class="d-flex flex-row gap justify-content-between mt-1 p-2">
+        <div v-for="(v, k) in state.spaces" :key=k
+             :class="`${state.cursor === k?'border-fog':'border-transparent'}`"
+             class="subplot character border label-o4">{{ v }}
         </div>
       </div>
-    </div>
+    </PaneInputBox>
     <SimpleKeyboard :input="enterChar" keySet="" keyboardClass="simple-keyboard"></SimpleKeyboard>
   </div>
-
 </template>
 
 
 <style scoped>
+.border-fog {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.setup-page {
+  display: flex;
+  justify-content: center;
+  margin-top: 6.25%;
+}
+
 .border-transparent {
   border-color: transparent !important;
 }

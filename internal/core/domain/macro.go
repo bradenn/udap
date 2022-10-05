@@ -29,7 +29,5 @@ type MacroService interface {
 	Run(id string) error
 	FindById(id string) (*Macro, error)
 	Create(*Macro) error
-	FindOrCreate(*Macro) error
-	Update(*Macro) error
-	Delete(*Macro) error
+	Delete(id string) error
 }

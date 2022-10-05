@@ -3,15 +3,10 @@
 import {config} from "@/config"
 import type {Controller} from "@/types"
 import {PreferenceTypes} from "@/types";
-
 import axios from "axios"
-
-
 import {Preference} from "@/preferences"
-
-
 import {onMounted, reactive} from "vue"
-
+import PaneInputBox from "@/components/pane/PaneInputBox.vue";
 // The local state of the component
 let state = reactive({
   selected: getController(),
@@ -27,7 +22,6 @@ onMounted(() => {
     testController(controller)
   }
 })
-
 
 // Verify a controller is up and running, update the controller if it is
 function testController(controller: Controller) {
@@ -68,52 +62,52 @@ function getController() {
   return new Preference(PreferenceTypes.Controller).get()
 }
 
+function next() {
+  window.location.href = "/#/setup/authentication"
+}
+
 </script>
 
 <template>
 
-  <div class="container">
-    <div class="row mt-5 justify-content-center">
-      <div class="window-medium">
-        <div class="element p-3">
-          <h3 class="mb-1">Controller.</h3>
-          <div class="label-o4">Please select a control nexus from the list below.</div>
-          <div class="d-flex flex-column gap mt-3">
-            <div v-for="controller in state.controllers" :key="controller.address"
-                 :class="`${state.selected === controller.address?'border border-fog':'border border-transparent'}`"
-                 class="subplot d-flex justify-content-between px-3 py-2" @click="setController(controller.address)">
-              <div class="d-flex flex-column justify-content-start">
-                <div class="label-md label-o5 label-w500">{{ controller.name }}</div>
-                <div class="label-o3 label-w500 label-sm">
+  <div class="d-flex justify-content-center" style="margin-top: 6.25%">
+    <PaneInputBox :apply="() => next()" :begin="true" style="width: 26rem !important;"
+                  title="Authentication">
+      <div class="label-sm label-o5 label-w600 lh-sm px-2">Controller</div>
+
+      <div class="label-o3 label-c1 lh-1 px-2">Please select a control nexus from the list below.</div>
+      <div class="d-flex flex-column gap-2 mt-2 px-2 pb-2">
+        <div v-for="controller in state.controllers" :key="controller.address"
+             :class="`${state.selected === controller.address?'border border-fog':'border border-transparent'}`"
+             class="subplot d-flex justify-content-between px-3 py-2" @click="setController(controller.address)">
+          <div class="d-flex flex-column justify-content-start">
+            <div class="label-md label-o5 label-w500">{{ controller.name }}</div>
+            <div class="label-o3 label-w500 label-sm">
                   <span v-if="controller.status" class="text-success"><i
                       class="fa-solid fa-circle-check fa-fw"></i></span>
-                  <span v-else class="text-warning"><i class="fa-solid fa-triangle-exclamation fa-fw"></i></span>
-                  {{ controller.address }}
-                </div>
-              </div>
-              <div v-if="state.selected === controller.address" class="d-flex align-items-end flex-column">
-                <div class="label-o4 label-w600">Selected</div>
-                <div v-if="!controller.status" class="label-o4 label-w300 label-sm text-danger">Unresponsive</div>
-              </div>
-              <div v-else-if="state.auto === controller.address" class="label-o2 label-w600">Suggested</div>
+              <span v-else class="text-warning"><i class="fa-solid fa-triangle-exclamation fa-fw"></i></span>
+              {{ controller.address }}
             </div>
-
           </div>
-          <div class="d-flex flex-row mt-3 justify-content-end">
-            <router-link class="subplot label-xl lh-1 label-o5 label-w600 px-4 py-2"
-                         to="/setup/authentication">
-              Authentication&nbsp;&nbsp;<span class="label-o3 label-md lh-1">􀆊</span></router-link>
+          <div v-if="state.selected === controller.address" class="d-flex align-items-end flex-column">
+            <div class="label-o4 label-w600">Selected</div>
+            <div v-if="!controller.status" class="label-o4 label-w300 label-sm text-danger">Unresponsive</div>
           </div>
+          <div v-else-if="state.auto === controller.address" class="label-o2 label-w600">Suggested</div>
         </div>
-      </div>
-    </div>
 
+      </div>
+    </PaneInputBox>
   </div>
 
 </template>
 
 
 <style scoped>
+.border-fog {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
 .border-transparent {
   border-color: transparent !important;
 }

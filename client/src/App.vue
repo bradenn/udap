@@ -13,15 +13,15 @@ const preferenceDefaults: Preferences = {
       selection: "bubbles"
     },
     background: {
-      image: "milk",
+      image: "swirl",
       blur: true
     },
     blur: 6,
     mode: "cursor",
     theme: "dark",
     brightness: 100,
-    grid: true,
-    watermark: true,
+    grid: false,
+    watermark: false,
     night: false,
     outlines: true,
   }

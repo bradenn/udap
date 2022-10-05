@@ -77,14 +77,10 @@ func (u *macroService) Create(macro *domain.Macro) error {
 	return nil
 }
 
-func (u *macroService) FindOrCreate(macro *domain.Macro) error {
-	return u.repository.FindOrCreate(macro)
-}
-
-func (u *macroService) Update(macro *domain.Macro) error {
-	return u.repository.Update(macro)
-}
-
-func (u *macroService) Delete(macro *domain.Macro) error {
-	return u.repository.Delete(macro)
+func (u *macroService) Delete(id string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	return u.repository.Delete(byId)
 }

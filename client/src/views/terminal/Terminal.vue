@@ -17,11 +17,14 @@ import type {
   Network,
   Preferences,
   Remote,
+  RemoteRequest,
   Session,
+  TerminalDiagnostics,
   Timing,
   User,
   Zone
 } from "@/types";
+import {memorySizeOf} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
 import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
@@ -34,12 +37,13 @@ import Input from "@/views/Input.vue";
 import Glance from "@/views/terminal/Glance.vue";
 
 // -- Websockets --
-
-let audio: HTMLAudioElement;
 onMounted(() => {
-  audio = new Audio('/sound/selection.mp3');
-
   remote.nexus = new Nexus(handleMessage)
+})
+
+onUnmounted(() => {
+  remote.nexus.ws.close()
+  remote = {} as Remote
 })
 
 
@@ -57,8 +61,19 @@ let remote = reactive<Remote>({
   modules: [] as Module[],
   zones: [] as Zone[],
   logs: [] as Log[],
-  nexus: {} as Nexus
+  nexus: {} as Nexus,
+  size: "" as string,
+  diagnostics: {
+    queue: [] as RemoteRequest[],
+    updates: new Map<string, number>(),
+    connected: false,
+    maxRSS: 0,
+    lastTarget: "",
+    lastUpdate: 0,
+    objects: 0
+  } as TerminalDiagnostics
 });
+
 
 let screensaver: any = inject("screensaver")
 let preferences = inject("preferences") as Preferences
@@ -66,8 +81,10 @@ let system: any = inject("system")
 
 // Handle and route incoming messages to the local cache
 function handleMessage(target: Target, data: any) {
+  remote.diagnostics.lastUpdate = new Date().valueOf()
   state.lastUpdate = new Date().valueOf()
   remote.connected = true
+  let dx = 0;
   switch (target) {
     case Target.Close:
       remote.connected = false
@@ -75,81 +92,78 @@ function handleMessage(target: Target, data: any) {
     case Target.Metadata:
       system.udap.system = data.system as Metadata
       remote.metadata = data as Metadata
-      break
-    case Target.Entity:
-      if (remote.entities.find((e: Identifiable) => e.id === data.id)) {
-        remote.entities = remote.entities.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.entities.push(data)
-      }
-      break
-    case Target.Attribute:
-      if (remote.attributes.find((e: Identifiable) => e.id === data.id)) {
-        remote.attributes = remote.attributes.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.attributes.push(data)
-      }
-      break
-    case Target.User:
-      if (remote.users.find((e: Identifiable) => e.id === data.id)) {
-        remote.users = remote.users.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.users.push(data)
-      }
-      break
-    case Target.Device:
-      if (remote.devices.find((e: Identifiable) => e.id === data.id)) {
-        remote.devices = remote.devices.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.devices.push(data)
-      }
-      break
-    case Target.Network:
-      if (remote.networks.find((e: Identifiable) => e.id === data.id)) {
-        remote.networks = remote.networks.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.networks.push(data)
-      }
-      break
-    case Target.Endpoint:
-      if (remote.endpoints.find((e: Identifiable) => e.id === data.id)) {
-        remote.endpoints = remote.endpoints.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.endpoints.push(data)
-      }
-      break
-
-    case Target.Module:
-      if (remote.modules.find((e: Identifiable) => e.id === data.id)) {
-        remote.modules = remote.modules.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.modules.push(data)
-      }
-      break
-    case Target.Zone:
-      if (remote.zones.find((e: Identifiable) => e.id === data.id)) {
-        remote.zones = remote.zones.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.zones.push(data)
-      }
+      dx = 1
       break
     case Target.Timing:
       if (remote.timings.find((e: Timing) => e.pointer === data.pointer)) {
         remote.timings = remote.timings.map((a: Timing) => a.pointer === data.pointer ? data : a)
+        dx = 0
       } else {
+
         remote.timings.push(data)
+        dx = 1
       }
+      break
+    case Target.Entity:
+      dx = createOrUpdate(remote.entities, data)
+      break
+    case Target.Attribute:
+      dx = createOrUpdate(remote.attributes, data)
+      break
+    case Target.User:
+      dx = createOrUpdate(remote.users, data)
+      break
+    case Target.Device:
+      dx = createOrUpdate(remote.devices, data)
+      break
+    case Target.Network:
+      dx = createOrUpdate(remote.networks, data)
+      break
+    case Target.Endpoint:
+      dx = createOrUpdate(remote.endpoints, data)
+      break
+    case Target.Module:
+      dx = createOrUpdate(remote.modules, data)
+      break
+    case Target.Zone:
+      dx = createOrUpdate(remote.zones, data)
       break
     case Target.Log:
-      if (remote.logs.find((e: Log) => e.id === data.id)) {
-        remote.logs = remote.logs.map((a: Log) => a.id === data.id ? data : a)
-      } else {
-        remote.logs.push(data)
-      }
+      dx = createOrUpdate(remote.entities, data)
       break
   }
+
+  let prev = remote.diagnostics.updates.get(target) || 0
+  remote.diagnostics.updates.set(target, prev + dx);
+  let session = {
+    target: target,
+    time: new Date().valueOf(),
+    operation: "update",
+    payload: data,
+    id: (data as Identifiable).id
+  } as RemoteRequest
+  remote.diagnostics.queue.push(session)
+  remote.diagnostics.lastTarget = target
+  if (remote.diagnostics.queue.length >= 10) {
+    remote.diagnostics.queue = remote.diagnostics.queue.slice(1, remote.diagnostics.queue.length - 1)
+  }
+
+
+  remote.diagnostics.maxRSS = memorySizeOf(remote)
+
+
 }
 
+function createOrUpdate(target: any[], data: Identifiable): number {
+  if (target.find((e: Identifiable) => e.id === data.id)) {
+    target = target.map((a: Identifiable) => a.id === data.id ? data : a)
+    return 0
+  } else {
+    target.push(data)
+    return 1
+  }
+
+}
 
 // -- Gesture Navigation --
 
@@ -346,7 +360,7 @@ provide('remote', remote)
     <Glance v-if="state.locked"></Glance>
     <div v-else class="d-inline">
       <div class="generic-container gap-2">
-        <div class="generic-slot-sm" v-on:click="(e) => state.locked = true">
+        <div class="" v-on:click="(e) => state.locked = true">
           <Clock :small="!state.showClock"></Clock>
         </div>
 

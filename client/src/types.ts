@@ -84,6 +84,16 @@ export interface Controller {
     status?: boolean
 }
 
+export interface TerminalDiagnostics {
+    connected: boolean
+    maxRSS: number
+    objects: number
+    lastUpdate: number
+    lastTarget: string
+    queue: RemoteRequest[]
+    updates: Map<string, number>
+}
+
 export interface Remote {
     connected: boolean,
     metadata: Metadata,
@@ -97,9 +107,18 @@ export interface Remote {
     timings: Timing[],
     zones: Zone[],
     logs: Log[],
-    nexus: Nexus
+    nexus: Nexus,
+    size: string,
+    diagnostics: TerminalDiagnostics
 }
 
+export interface RemoteRequest {
+    time: number
+    target: string,
+    operation: string,
+    payload: string,
+    id: string
+}
 
 export interface ModuleVariable {
     name: string;
@@ -128,11 +147,14 @@ export interface Timing {
     pointer: string;
     name: string;
     start: string;
+    startNano: number;
     stop: string;
+    stopNano: number;
     delta: number;
     frequency: number;
     complete: boolean;
     depth: number;
+    id: string;
 }
 
 export interface Metadata {
@@ -226,6 +248,46 @@ export interface Log {
 
 export interface Identifiable {
     id: string
+}
+
+export function memorySizeOf(obj: any) {
+    var bytes = 0;
+
+    function sizeOf(obj: any) {
+        if (obj !== null && obj !== undefined) {
+            switch (typeof obj) {
+                case 'number':
+                    bytes += 8;
+                    break;
+                case 'string':
+                    bytes += obj.length * 2;
+                    break;
+                case 'boolean':
+                    bytes += 4;
+                    break;
+                case 'object':
+                    var objClass = Object.prototype.toString.call(obj).slice(8, -1);
+                    if (objClass === 'Object' || objClass === 'Array') {
+                        for (var key in obj) {
+                            if (!obj.hasOwnProperty(key)) continue;
+                            sizeOf(obj[key]);
+                        }
+                    } else bytes += obj.toString().length * 2;
+                    break;
+            }
+        }
+        return bytes;
+    }
+
+
+    return sizeOf(obj);
+}
+
+export function formatByteSize(bytes: number) {
+    if (bytes < 1024) return bytes + " bytes";
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(3) + " KB";
+    else if (bytes < 1073741824) return (bytes / 1048576).toFixed(3) + " MB";
+    else return (bytes / 1073741824).toFixed(3) + " GB";
 }
 
 // Preferences

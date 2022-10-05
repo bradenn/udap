@@ -14,10 +14,18 @@ let state = reactive({
   date: "",
   timer: 0,
   day: "",
+  page: "",
+  parent: "",
 })
 
 onMounted(() => {
   startClock()
+  currentPageName()
+})
+
+const router = useRouter()
+router.afterEach(() => {
+  currentPageName()
 })
 
 
@@ -41,14 +49,25 @@ function updateTime() {
   state.time = moment().format("hh:mm:ss");
   let m = moment();
   m.year(m.year() + 10000)
-  state.date = m.format("dddd, MMMM Do");
+  state.date = m.format("dddd, MMMM Do, YYYY");
 }
 
-const router = useRouter()
 
 function currentPageName() {
   let last = router.currentRoute.value.matched.length
-  return router.currentRoute.value.matched[last - 1].name
+  let current = router.currentRoute.value.matched[last - 1]
+  let meta = current.meta
+  state.parent = ""
+  if (meta) {
+    if (meta.title) {
+      state.page = current?.meta?.title as string
+
+      return
+    }
+  }
+
+  state.page = current.name as string || ""
+
 }
 
 </script>
@@ -64,7 +83,8 @@ function currentPageName() {
     <div :class="`time${props.small?'-sm':''}`" class="top" @click="$router.push('/terminal/home')"
          v-html="state.time"></div>
     <div v-if="props.small">
-      <div class="page-title"> {{ currentPageName() }}</div>
+      <div class="page-title"> {{ state.page }}</div>
+      <div class="label-w500 label-c1 label-o3">{{ state.parent }}</div>
     </div>
     <div v-if="!props.small" class="date" v-html="state.date"></div>
   </div>
@@ -112,22 +132,22 @@ $dist: 2px;
 
 .time {
   z-index: 22 !important;
-  font-size: 2rem;
+  font-size: 1.9rem;
   line-height: 2rem;
   font-weight: 600;
-  font-family: "SF Pro Rounded", sans-serif;
-  color: rgba(232, 231, 231, 0.9);
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  font-family: "SF Pro Display", sans-serif;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
   transition: font-size 50ms ease-in;
 }
 
 .date {
-  font-size: 0.75rem;
-  line-height: 0.75rem;
+  font-size: 0.7rem;
+  line-height: 0.7rem;
   font-weight: 500;
 
   color: rgba(255, 255, 255, 0.4);
-  font-family: "SF Pro Rounded", sans-serif;
+  font-family: "SF Pro Display", sans-serif;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
   mix-blend-mode: screen;
 }
