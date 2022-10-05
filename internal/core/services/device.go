@@ -1,13 +1,20 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package device
+package services
 
 import (
+	"gorm.io/gorm"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/core/repository"
 )
+
+func NewDeviceService(db *gorm.DB) ports.DeviceService {
+	repo := repository.NewDeviceRepository(db)
+	return &deviceService{repository: repo, utilization: map[string]domain.Utilization{}}
+}
 
 type deviceService struct {
 	repository  ports.DeviceRepository
@@ -82,10 +89,6 @@ func (u deviceService) Register(device *domain.Device) error {
 		return err
 	}
 	return nil
-}
-
-func NewService(repository ports.DeviceRepository) ports.DeviceService {
-	return &deviceService{repository: repository, utilization: map[string]domain.Utilization{}}
 }
 
 // Repository Mapping

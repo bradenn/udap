@@ -1,13 +1,21 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package entity
+package services
 
 import (
+	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/core/repository"
 	"udap/internal/log"
 )
+
+func NewEntityService(db *gorm.DB) ports.EntityService {
+	repo := repository.NewEntityRepository(db)
+	return &entityService{
+		repository: repo}
+}
 
 type entityService struct {
 	repository ports.EntityRepository
@@ -70,12 +78,7 @@ func (u *entityService) Register(entity *domain.Entity) error {
 	return nil
 }
 
-func NewService(repository ports.EntityRepository) ports.EntityService {
-	return &entityService{
-		repository: repository}
-}
-
-func (u entityService) ChangeIcon(id string, icon string) error {
+func (u *entityService) ChangeIcon(id string, icon string) error {
 	byId, err := u.repository.FindById(id)
 	if err != nil {
 		return err
@@ -90,7 +93,7 @@ func (u entityService) ChangeIcon(id string, icon string) error {
 
 // Repository Mapping
 
-func (u entityService) FindByName(name string) (*domain.Entity, error) {
+func (u *entityService) FindByName(name string) (*domain.Entity, error) {
 	return u.repository.FindByName(name)
 }
 
@@ -98,19 +101,19 @@ func (u *entityService) FindAll() (*[]domain.Entity, error) {
 	return u.repository.FindAll()
 }
 
-func (u entityService) FindById(id string) (*domain.Entity, error) {
+func (u *entityService) FindById(id string) (*domain.Entity, error) {
 	return u.repository.FindById(id)
 }
 
-func (u entityService) Create(entity *domain.Entity) error {
+func (u *entityService) Create(entity *domain.Entity) error {
 	return u.repository.Create(entity)
 }
 
-func (u entityService) FindOrCreate(entity *domain.Entity) error {
+func (u *entityService) FindOrCreate(entity *domain.Entity) error {
 	return u.repository.FindOrCreate(entity)
 }
 
-func (u entityService) Update(entity *domain.Entity) error {
+func (u *entityService) Update(entity *domain.Entity) error {
 	return u.repository.Update(entity)
 }
 

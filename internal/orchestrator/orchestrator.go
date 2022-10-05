@@ -14,10 +14,9 @@ import (
 	"udap/internal/core"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
-	"udap/internal/core/services/endpoint"
-	"udap/internal/core/services/macro"
-	"udap/internal/core/services/module"
+	"udap/internal/core/services"
 	"udap/internal/log"
+	"udap/internal/operators"
 	"udap/internal/port/routes"
 	"udap/internal/port/runtimes"
 	"udap/internal/pulse"
@@ -92,12 +91,14 @@ func (o *orchestrator) Start() error {
 		return err
 	}
 
-	o.modules = module.New(o.db, o.controller)
-	o.endpoints = endpoint.New(o.db, o.controller)
+	o.modules = services.NewModuleService(o.db, operators.NewModuleOperator(o.controller))
+	o.endpoints = services.NewEndpointService(o.db, operators.NewEndpointOperator(o.controller))
+
+	o.controller.Attributes = services.NewAttributeService(o.db, operators.NewAttributeOperator())
+	o.controller.Macros = services.NewMacroService(o.db, operators.NewMacroOperator(o.controller))
 
 	o.controller.Endpoints = o.endpoints
 	o.controller.Modules = o.modules
-	o.controller.Macros = macro.New(o.db, o.controller)
 
 	return nil
 }

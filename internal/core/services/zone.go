@@ -1,13 +1,20 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package zone
+package services
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/core/repository"
 )
+
+func NewZoneService(db *gorm.DB) ports.ZoneService {
+	repo := repository.NewZoneRepository(db)
+	return &zoneService{repository: repo}
+}
 
 type zoneService struct {
 	repository ports.ZoneRepository
@@ -42,10 +49,6 @@ func (u *zoneService) mutate(zone *domain.Zone) error {
 		return err
 	}
 	return nil
-}
-
-func NewService(repository ports.ZoneRepository) ports.ZoneService {
-	return &zoneService{repository: repository}
 }
 
 func (u *zoneService) Restore(id string) error {

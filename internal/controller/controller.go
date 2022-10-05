@@ -6,14 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
-	"udap/internal/core/services/attribute"
-	"udap/internal/core/services/device"
-	"udap/internal/core/services/entity"
-	"udap/internal/core/services/logs"
-	"udap/internal/core/services/network"
-	"udap/internal/core/services/notification"
-	"udap/internal/core/services/user"
-	"udap/internal/core/services/zone"
+	"udap/internal/core/services"
 )
 
 type Controller struct {
@@ -37,14 +30,13 @@ type CoreModule interface {
 
 func NewController(db *gorm.DB) (*Controller, error) {
 	c := &Controller{}
-	c.Attributes = attribute.New(db)
-	c.Entities = entity.New(db)
-	c.Devices = device.New(db)
-	c.Networks = network.New(db)
-	c.Users = user.New(db)
-	c.Notifications = notification.New(db)
-	c.Zones = zone.New(db)
-	c.Logs = logs.New()
+	c.Entities = services.NewEntityService(db)
+	c.Devices = services.NewDeviceService(db)
+	c.Networks = services.NewNetworkService(db)
+	c.Users = services.NewUserService(db)
+	c.Notifications = services.NewNotificationService(db)
+	c.Zones = services.NewZoneService(db)
+	c.Logs = services.NewLogService()
 
 	return c, nil
 }

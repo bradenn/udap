@@ -19,37 +19,37 @@ import (
 	"udap/internal/plugin"
 )
 
-type moduleOperator struct {
+type moduleRuntime struct {
 	ctrl    *controller.Controller
 	runtime map[string]plugin.ModuleInterface
 }
 
-func (m *moduleOperator) HandleEmit(mutation domain.Mutation) error {
+func (m *moduleRuntime) HandleEmit(mutation domain.Mutation) error {
 	return nil
 }
 
 const PATH = "./modules"
 
 func NewModuleOperator(ctrl *controller.Controller) ports.ModuleOperator {
-	return &moduleOperator{
+	return &moduleRuntime{
 		ctrl:    ctrl,
 		runtime: map[string]plugin.ModuleInterface{},
 	}
 }
 
-func (m *moduleOperator) getModule(id string) (plugin.ModuleInterface, error) {
+func (m *moduleRuntime) getModule(id string) (plugin.ModuleInterface, error) {
 	if m.runtime[id] == nil {
 		return nil, fmt.Errorf("module not found")
 	}
 	return m.runtime[id], nil
 }
 
-func (m *moduleOperator) setModule(id string, moduleInterface plugin.ModuleInterface) error {
+func (m *moduleRuntime) setModule(id string, moduleInterface plugin.ModuleInterface) error {
 	m.runtime[id] = moduleInterface
 	return nil
 }
 
-func (m *moduleOperator) removeModule(id string) error {
+func (m *moduleRuntime) removeModule(id string) error {
 	delete(m.runtime, id)
 	return nil
 }
@@ -85,7 +85,7 @@ func generateBuildPath(module string, uuid string) string {
 }
 
 // Build will compile a valid plugin file into a readable binary
-func (m *moduleOperator) Build(module string, uuid string) error {
+func (m *moduleRuntime) Build(module string, uuid string) error {
 	// Generate the source file path from the module name
 	sourcePath := generateSourcePath(module)
 	// Generate the output build file path
@@ -112,7 +112,7 @@ func (m *moduleOperator) Build(module string, uuid string) error {
 
 // Load is used to find a pre-built plugin file, and load it into the local system.
 // The module reference should be saved to the repository after loading.
-func (m *moduleOperator) Load(module string, uuid string) (domain.ModuleConfig, error) {
+func (m *moduleRuntime) Load(module string, uuid string) (domain.ModuleConfig, error) {
 	// Create the binary file path
 	binary := generateBuildPath(module, uuid)
 	// Attempt to load the plugin binary
@@ -158,7 +158,7 @@ func (m *moduleOperator) Load(module string, uuid string) (domain.ModuleConfig, 
 }
 
 // Dispose is called at the end of the lifecycle, it attempts to halt activity.
-func (m *moduleOperator) Dispose(module string, uuid string) error {
+func (m *moduleRuntime) Dispose(module string, uuid string) error {
 	// Get the local module
 	local, err := m.getModule(uuid)
 	if err != nil {
@@ -190,7 +190,7 @@ func (m *moduleOperator) Dispose(module string, uuid string) error {
 }
 
 // Run attempts to initialize the plugin's runtime
-func (m *moduleOperator) Run(uuid string) error {
+func (m *moduleRuntime) Run(uuid string) error {
 	// Get the local module
 	local, err := m.getModule(uuid)
 	if err != nil {
@@ -205,7 +205,7 @@ func (m *moduleOperator) Run(uuid string) error {
 }
 
 // Update is called on every tick, it is the plugin's decision whether to use the time or defer.
-func (m *moduleOperator) Update(uuid string) error {
+func (m *moduleRuntime) Update(uuid string) error {
 	// Get the local module
 	local, err := m.getModule(uuid)
 	if err != nil {

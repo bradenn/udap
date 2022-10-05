@@ -1,11 +1,12 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package module
+package services
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -13,9 +14,19 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/core/repository"
 	"udap/internal/log"
 	"udap/internal/pulse"
 )
+
+func NewModuleService(db *gorm.DB, runtime ports.ModuleOperator) ports.ModuleService {
+	repo := repository.NewModuleRepository(db)
+	operator := runtime
+	return &moduleService{
+		repository: repo,
+		operator:   operator,
+	}
+}
 
 const DIR = "modules"
 
@@ -320,13 +331,6 @@ func (u *moduleService) LoadAll() error {
 	}
 	wg.Wait()
 	return nil
-}
-
-func NewService(repository ports.ModuleRepository, operator ports.ModuleOperator) ports.ModuleService {
-	return &moduleService{
-		repository: repository,
-		operator:   operator,
-	}
 }
 
 func (u *moduleService) Discover() error {

@@ -1,12 +1,18 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package logs
+package services
 
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/core/repository"
 )
+
+func NewLogService() ports.LogService {
+	repo := repository.NewLogsRepository()
+	return &logService{repository: repo}
+}
 
 type logService struct {
 	repository ports.LogRepository
@@ -25,10 +31,6 @@ func (u *logService) EmitAll() error {
 		}
 	}
 	return nil
-}
-
-func NewService(repository ports.LogRepository) ports.LogService {
-	return &logService{repository: repository}
 }
 
 // Repository Mapping

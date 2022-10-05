@@ -1,12 +1,20 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package macro
+package services
 
 import (
+	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/core/repository"
 )
+
+func NewMacroService(db *gorm.DB, operator ports.MacroOperator) ports.MacroService {
+	repo := repository.NewMacroRepository(db)
+
+	return &macroService{repository: repo, operator: operator}
+}
 
 type macroService struct {
 	repository ports.MacroRepository
@@ -50,10 +58,6 @@ func (u *macroService) mutate(macro *domain.Macro) error {
 		return err
 	}
 	return nil
-}
-
-func NewService(repository ports.MacroRepository, operator ports.MacroOperator) ports.MacroService {
-	return &macroService{repository: repository, operator: operator}
 }
 
 // Repository Mapping

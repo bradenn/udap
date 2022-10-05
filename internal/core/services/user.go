@@ -1,14 +1,21 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package user
+package services
 
 import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/core/repository"
 )
+
+func NewUserService(db *gorm.DB) ports.UserService {
+	repo := repository.NewUserRepository(db)
+	return &userService{repository: repo}
+}
 
 type userService struct {
 	repository ports.UserRepository
@@ -29,13 +36,9 @@ func (u *userService) EmitAll() error {
 	return nil
 }
 
-func NewService(repository ports.UserRepository) ports.UserService {
-	return &userService{repository: repository}
-}
-
 // Services
 
-func (u userService) Register(user *domain.User) error {
+func (u *userService) Register(user *domain.User) error {
 	password, err := HashPassword(user.Password)
 	if err != nil {
 		return err
@@ -48,7 +51,7 @@ func (u userService) Register(user *domain.User) error {
 	return nil
 }
 
-func (u userService) Authenticate(user *domain.User) error {
+func (u *userService) Authenticate(user *domain.User) error {
 	ref, err := u.repository.FindById(user.Id)
 	if err != nil {
 		return err
@@ -72,26 +75,26 @@ func CheckPasswordHash(password, hash string) bool {
 
 // Repository Mapping
 
-func (u userService) FindAll() (*[]domain.User, error) {
+func (u *userService) FindAll() (*[]domain.User, error) {
 	return u.repository.FindAll()
 }
 
-func (u userService) FindById(id string) (*domain.User, error) {
+func (u *userService) FindById(id string) (*domain.User, error) {
 	return u.repository.FindById(id)
 }
 
-func (u userService) Create(user *domain.User) error {
+func (u *userService) Create(user *domain.User) error {
 	return u.repository.Create(user)
 }
 
-func (u userService) FindOrCreate(user *domain.User) error {
+func (u *userService) FindOrCreate(user *domain.User) error {
 	return u.repository.FindOrCreate(user)
 }
 
-func (u userService) Update(user *domain.User) error {
+func (u *userService) Update(user *domain.User) error {
 	return u.repository.Update(user)
 }
 
-func (u userService) Delete(user *domain.User) error {
+func (u *userService) Delete(user *domain.User) error {
 	return u.repository.Delete(user)
 }
