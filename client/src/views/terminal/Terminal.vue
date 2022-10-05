@@ -145,7 +145,7 @@ function handleMessage(target: Target, data: any) {
   remote.diagnostics.queue.push(session)
   remote.diagnostics.lastTarget = target
   if (remote.diagnostics.queue.length >= 10) {
-    remote.diagnostics.queue = remote.diagnostics.queue.slice(1, remote.diagnostics.queue.length - 1)
+    remote.diagnostics.queue = remote.diagnostics.queue.slice(0, remote.diagnostics.queue.length - 2)
   }
 
 

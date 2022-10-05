@@ -21,6 +21,7 @@ type Controller struct {
 	Endpoints     ports.EndpointService
 	Modules       ports.ModuleService
 	Macros        ports.MacroService
+	Triggers      ports.TriggerService
 }
 
 type CoreModule interface {
@@ -37,6 +38,7 @@ func NewController(db *gorm.DB) (*Controller, error) {
 	c.Notifications = services.NewNotificationService(db)
 	c.Zones = services.NewZoneService(db)
 	c.Logs = services.NewLogService()
+	c.Triggers = services.NewTriggerService(db)
 
 	return c, nil
 }
@@ -98,6 +100,11 @@ func (c *Controller) WatchAll(resp chan domain.Mutation) {
 		return
 	}
 
+	err = c.Triggers.Watch(resp)
+	if err != nil {
+		return
+	}
+
 }
 
 func (c *Controller) EmitAll() error {
@@ -153,6 +160,11 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.Macros.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Triggers.EmitAll()
 	if err != nil {
 		return err
 	}
