@@ -14,20 +14,3 @@ type Macro struct {
 	Type        string `json:"type"`
 	Value       string `json:"value"`
 }
-
-type MacroRepository interface {
-	common.Persist[Macro]
-}
-
-type MacroOperator interface {
-	Run(macro Macro) error
-}
-
-type MacroService interface {
-	Observable
-	FindAll() (*[]Macro, error)
-	Run(id string) error
-	FindById(id string) (*Macro, error)
-	Create(*Macro) error
-	Delete(id string) error
-}

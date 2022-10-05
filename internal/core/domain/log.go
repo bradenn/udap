@@ -15,13 +15,3 @@ type Log struct {
 	Message string    `json:"message"`
 	Level   string    `json:"level"`
 }
-
-type LogRepository interface {
-	FindAll() ([]Log, error)
-	Create(*Log) error
-}
-
-type LogService interface {
-	Observable
-	Create(*Log) error
-}

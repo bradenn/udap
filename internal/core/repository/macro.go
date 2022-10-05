@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type macroRepository struct {
@@ -13,7 +14,7 @@ type macroRepository struct {
 	db *gorm.DB
 }
 
-func NewMacroRepository(db *gorm.DB) domain.MacroRepository {
+func NewMacroRepository(db *gorm.DB) ports.MacroRepository {
 	return &macroRepository{
 		db:    db,
 		Store: generic.NewStore[domain.Macro](db),

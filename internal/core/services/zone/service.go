@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type zoneService struct {
-	repository domain.ZoneRepository
+	repository ports.ZoneRepository
 	generic.Watchable[domain.Zone]
 }
 
@@ -43,7 +44,7 @@ func (u *zoneService) mutate(zone *domain.Zone) error {
 	return nil
 }
 
-func NewService(repository domain.ZoneRepository) domain.ZoneService {
+func NewService(repository ports.ZoneRepository) ports.ZoneService {
 	return &zoneService{repository: repository}
 }
 

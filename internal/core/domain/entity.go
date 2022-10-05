@@ -18,24 +18,3 @@ type Entity struct {
 	Neural    string `json:"neural" gorm:"default:'inactive'"` // Parent Module name
 	Predicted string `gorm:"-" json:"predicted"`               // scalar
 }
-
-type EntityRepository interface {
-	common.Persist[Entity]
-	Register(*Entity) error
-	FindByName(name string) (*Entity, error)
-	FindAll() (*[]Entity, error)
-}
-
-type EntityService interface {
-	Observable
-	FindAll() (*[]Entity, error)
-	FindById(id string) (*Entity, error)
-	FindByName(name string) (*Entity, error)
-	Create(*Entity) error
-	ChangeIcon(id string, icon string) error
-	Config(id string, value string) error
-	FindOrCreate(*Entity) error
-	Register(*Entity) error
-	Update(*Entity) error
-	Delete(*Entity) error
-}

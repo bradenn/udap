@@ -5,11 +5,12 @@ package macro
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type macroService struct {
-	repository domain.MacroRepository
-	operator   domain.MacroOperator
+	repository ports.MacroRepository
+	operator   ports.MacroOperator
 	generic.Watchable[domain.Macro]
 }
 
@@ -51,7 +52,7 @@ func (u *macroService) mutate(macro *domain.Macro) error {
 	return nil
 }
 
-func NewService(repository domain.MacroRepository, operator domain.MacroOperator) domain.MacroService {
+func NewService(repository ports.MacroRepository, operator ports.MacroOperator) ports.MacroService {
 	return &macroService{repository: repository, operator: operator}
 }
 

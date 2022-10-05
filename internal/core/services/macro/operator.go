@@ -5,13 +5,14 @@ package macro
 import (
 	"udap/internal/controller"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type macroOperator struct {
 	ctrl *controller.Controller
 }
 
-func NewOperator(ctrl *controller.Controller) domain.MacroOperator {
+func NewOperator(ctrl *controller.Controller) ports.MacroOperator {
 	return &macroOperator{
 		ctrl: ctrl,
 	}

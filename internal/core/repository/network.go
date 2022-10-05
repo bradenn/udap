@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type networkRepo struct {
@@ -13,7 +14,7 @@ type networkRepo struct {
 	db *gorm.DB
 }
 
-func NewNetworkRepository(db *gorm.DB) domain.NetworkRepository {
+func NewNetworkRepository(db *gorm.DB) ports.NetworkRepository {
 	return &networkRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Network](db),

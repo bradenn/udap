@@ -5,6 +5,7 @@ package controller
 import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/core/services/attribute"
 	"udap/internal/core/services/device"
 	"udap/internal/core/services/entity"
@@ -16,17 +17,17 @@ import (
 )
 
 type Controller struct {
-	Attributes    domain.AttributeService
-	Devices       domain.DeviceService
-	Entities      domain.EntityService
-	Networks      domain.NetworkService
-	Logs          domain.LogService
-	Notifications domain.NotificationService
-	Users         domain.UserService
-	Zones         domain.ZoneService
-	Endpoints     domain.EndpointService
-	Modules       domain.ModuleService
-	Macros        domain.MacroService
+	Attributes    ports.AttributeService
+	Devices       ports.DeviceService
+	Entities      ports.EntityService
+	Networks      ports.NetworkService
+	Logs          ports.LogService
+	Notifications ports.NotificationService
+	Users         ports.UserService
+	Zones         ports.ZoneService
+	Endpoints     ports.EndpointService
+	Modules       ports.ModuleService
+	Macros        ports.MacroService
 }
 
 type CoreModule interface {

@@ -7,10 +7,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type userService struct {
-	repository domain.UserRepository
+	repository ports.UserRepository
 	generic.Watchable[domain.User]
 }
 
@@ -28,7 +29,7 @@ func (u *userService) EmitAll() error {
 	return nil
 }
 
-func NewService(repository domain.UserRepository) domain.UserService {
+func NewService(repository ports.UserRepository) ports.UserService {
 	return &userService{repository: repository}
 }
 

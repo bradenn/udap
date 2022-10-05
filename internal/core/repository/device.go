@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type deviceRepo struct {
@@ -13,7 +14,7 @@ type deviceRepo struct {
 	db *gorm.DB
 }
 
-func NewDeviceRepository(db *gorm.DB) domain.DeviceRepository {
+func NewDeviceRepository(db *gorm.DB) ports.DeviceRepository {
 	return &deviceRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Device](db),

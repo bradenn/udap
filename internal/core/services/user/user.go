@@ -4,11 +4,11 @@ package user
 
 import (
 	"gorm.io/gorm"
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/core/repository"
 )
 
-func New(db *gorm.DB) domain.UserService {
+func New(db *gorm.DB) ports.UserService {
 	repo := repository.NewUserRepository(db)
 	service := NewService(repo)
 	return service

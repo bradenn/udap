@@ -6,11 +6,12 @@ import (
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type attributeService struct {
-	repository domain.AttributeRepository
-	operator   domain.AttributeOperator
+	repository ports.AttributeRepository
+	operator   ports.AttributeOperator
 	generic.Watchable[domain.Attribute]
 }
 
@@ -32,7 +33,7 @@ func (a *attributeService) FindAllByEntity(entity string) (*[]domain.Attribute, 
 	return a.repository.FindAllByEntity(entity)
 }
 
-func NewService(repository domain.AttributeRepository, operator domain.AttributeOperator) domain.AttributeService {
+func NewService(repository ports.AttributeRepository, operator ports.AttributeOperator) ports.AttributeService {
 	return &attributeService{
 		repository: repository,
 		operator:   operator,

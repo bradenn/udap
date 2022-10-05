@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type entityRepo struct {
@@ -49,7 +50,7 @@ func (u entityRepo) Register(e *domain.Entity) error {
 	return nil
 }
 
-func NewEntityRepository(db *gorm.DB) domain.EntityRepository {
+func NewEntityRepository(db *gorm.DB) ports.EntityRepository {
 	return &entityRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Entity](db),

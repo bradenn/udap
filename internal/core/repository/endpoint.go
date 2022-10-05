@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type endpointRepo struct {
@@ -13,7 +14,7 @@ type endpointRepo struct {
 	db *gorm.DB
 }
 
-func NewEndpointRepository(db *gorm.DB) domain.EndpointRepository {
+func NewEndpointRepository(db *gorm.DB) ports.EndpointRepository {
 	return &endpointRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Endpoint](db),

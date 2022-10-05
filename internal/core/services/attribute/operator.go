@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type attributeOperator struct {
@@ -14,7 +15,7 @@ type attributeOperator struct {
 	mutex sync.RWMutex
 }
 
-func NewOperator() domain.AttributeOperator {
+func NewOperator() ports.AttributeOperator {
 	return &attributeOperator{
 		hooks: map[string]chan domain.Attribute{},
 		mutex: sync.RWMutex{},

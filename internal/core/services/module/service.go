@@ -12,6 +12,7 @@ import (
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 	"udap/internal/pulse"
 )
@@ -30,8 +31,8 @@ const (
 )
 
 type moduleService struct {
-	repository domain.ModuleRepository
-	operator   domain.ModuleOperator
+	repository ports.ModuleRepository
+	operator   ports.ModuleOperator
 	generic.Watchable[domain.Module]
 }
 
@@ -321,7 +322,7 @@ func (u *moduleService) LoadAll() error {
 	return nil
 }
 
-func NewService(repository domain.ModuleRepository, operator domain.ModuleOperator) domain.ModuleService {
+func NewService(repository ports.ModuleRepository, operator ports.ModuleOperator) ports.ModuleService {
 	return &moduleService{
 		repository: repository,
 		operator:   operator,

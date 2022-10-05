@@ -5,11 +5,12 @@ package entity
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 )
 
 type entityService struct {
-	repository domain.EntityRepository
+	repository ports.EntityRepository
 	generic.Watchable[domain.Entity]
 }
 
@@ -69,7 +70,7 @@ func (u *entityService) Register(entity *domain.Entity) error {
 	return nil
 }
 
-func NewService(repository domain.EntityRepository) domain.EntityService {
+func NewService(repository ports.EntityRepository) ports.EntityService {
 	return &entityService{
 		repository: repository}
 }

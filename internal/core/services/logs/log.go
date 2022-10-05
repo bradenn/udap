@@ -3,11 +3,11 @@
 package logs
 
 import (
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/core/repository"
 )
 
-func New() domain.LogService {
+func New() ports.LogService {
 	repo := repository.NewLogsRepository()
 	service := NewService(repo)
 	return service

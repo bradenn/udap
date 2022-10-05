@@ -6,10 +6,11 @@ import (
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type deviceService struct {
-	repository  domain.DeviceRepository
+	repository  ports.DeviceRepository
 	utilization map[string]domain.Utilization
 	generic.Watchable[domain.Device]
 }
@@ -83,7 +84,7 @@ func (u deviceService) Register(device *domain.Device) error {
 	return nil
 }
 
-func NewService(repository domain.DeviceRepository) domain.DeviceService {
+func NewService(repository ports.DeviceRepository) ports.DeviceService {
 	return &deviceService{repository: repository, utilization: map[string]domain.Utilization{}}
 }
 

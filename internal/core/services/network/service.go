@@ -5,10 +5,11 @@ package network
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type networkService struct {
-	repository domain.NetworkRepository
+	repository ports.NetworkRepository
 	generic.Watchable[domain.Network]
 }
 
@@ -30,7 +31,7 @@ func (u networkService) Register(network *domain.Network) error {
 	return u.repository.Register(network)
 }
 
-func NewService(repository domain.NetworkRepository) domain.NetworkService {
+func NewService(repository ports.NetworkRepository) ports.NetworkService {
 	return &networkService{repository: repository}
 }
 

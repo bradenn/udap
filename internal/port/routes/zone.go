@@ -9,17 +9,18 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type zoneRouter struct {
-	service domain.ZoneService
+	service ports.ZoneService
 }
 
 func (r zoneRouter) RouteExternal(_ chi.Router) {
 
 }
 
-func NewZoneRouter(service domain.ZoneService) Routable {
+func NewZoneRouter(service ports.ZoneService) Routable {
 	return zoneRouter{
 		service: service,
 	}

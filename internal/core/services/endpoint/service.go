@@ -6,11 +6,12 @@ import (
 	"github.com/gorilla/websocket"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type endpointService struct {
-	repository domain.EndpointRepository
-	operator   domain.EndpointOperator
+	repository ports.EndpointRepository
+	operator   ports.EndpointOperator
 	generic.Watchable[domain.Endpoint]
 }
 
@@ -76,7 +77,7 @@ func (u *endpointService) Unenroll(id string) error {
 	return nil
 }
 
-func NewService(repository domain.EndpointRepository, operator domain.EndpointOperator) domain.EndpointService {
+func NewService(repository ports.EndpointRepository, operator ports.EndpointOperator) ports.EndpointService {
 	return &endpointService{repository: repository, operator: operator}
 }
 

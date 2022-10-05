@@ -11,24 +11,3 @@ type Zone struct {
 	Pinned   bool     `json:"pinned"`
 	User     string   `json:"user"`
 }
-
-type ZoneRepository interface {
-	common.Persist[Zone]
-	FindByName(name string) (*Zone, error)
-}
-
-type ZoneService interface {
-	Observable
-	AddEntity(id string, entity string) error
-	RemoveEntity(id string, entity string) error
-	Pin(id string) error
-	Unpin(id string) error
-	FindAll() (*[]Zone, error)
-	FindById(id string) (*Zone, error)
-	FindByName(name string) (*Zone, error)
-	Create(*Zone) error
-	FindOrCreate(*Zone) error
-	Update(*Zone) error
-	Delete(id string) error
-	Restore(id string) error
-}

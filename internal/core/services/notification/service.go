@@ -5,10 +5,11 @@ package notification
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type notificationService struct {
-	repository domain.NotificationRepository
+	repository ports.NotificationRepository
 	generic.Watchable[domain.Notification]
 }
 
@@ -30,7 +31,7 @@ func (u notificationService) Register(notification *domain.Notification) error {
 	return nil
 }
 
-func NewService(repository domain.NotificationRepository) domain.NotificationService {
+func NewService(repository ports.NotificationRepository) ports.NotificationService {
 	return &notificationService{repository: repository}
 }
 

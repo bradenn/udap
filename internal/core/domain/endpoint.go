@@ -39,35 +39,3 @@ func NewEndpoint(name string, variant string) *Endpoint {
 		Key:        randomSequence(),
 	}
 }
-
-type EndpointRepository interface {
-	common.Persist[Endpoint]
-	FindByKey(key string) (*Endpoint, error)
-}
-
-type EndpointOperator interface {
-	Enroll(*Endpoint, *websocket.Conn) error
-	Unenroll(*Endpoint) error
-	Send(id string, operation string, payload any) error
-	SendAll(id string, operation string, payload any) error
-	CloseAll() error
-}
-
-type EndpointService interface {
-	FindAll() (*[]Endpoint, error)
-	FindById(id string) (*Endpoint, error)
-	FindByKey(key string) (*Endpoint, error)
-	Create(*Endpoint) error
-	CloseAll() error
-	Observable
-
-	Enroll(id string, conn *websocket.Conn) error
-
-	SendAll(target string, operation string, payload any) error
-	Send(id string, operation string, payload any) error
-	Unenroll(key string) error
-
-	FindOrCreate(*Endpoint) error
-	Update(*Endpoint) error
-	Delete(*Endpoint) error
-}

@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type zoneRepo struct {
@@ -13,7 +14,7 @@ type zoneRepo struct {
 	db *gorm.DB
 }
 
-func NewZoneRepository(db *gorm.DB) domain.ZoneRepository {
+func NewZoneRepository(db *gorm.DB) ports.ZoneRepository {
 	return &zoneRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Zone](db),

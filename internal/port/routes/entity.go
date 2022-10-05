@@ -6,14 +6,14 @@ import (
 	"bytes"
 	"github.com/go-chi/chi"
 	"net/http"
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type entityRouter struct {
-	service domain.EntityService
+	service ports.EntityService
 }
 
-func NewEntityRouter(service domain.EntityService) Routable {
+func NewEntityRouter(service ports.EntityService) Routable {
 	return &entityRouter{
 		service: service,
 	}

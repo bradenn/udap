@@ -13,6 +13,7 @@ import (
 	"udap/internal/controller"
 	"udap/internal/core"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/core/services/endpoint"
 	"udap/internal/core/services/macro"
 	"udap/internal/core/services/module"
@@ -31,8 +32,8 @@ type orchestrator struct {
 	maxTick time.Duration
 	done    chan bool
 
-	modules   domain.ModuleService
-	endpoints domain.EndpointService
+	modules   ports.ModuleService
+	endpoints ports.EndpointService
 
 	mutations chan domain.Mutation
 }

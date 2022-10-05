@@ -14,6 +14,7 @@ import (
 	"time"
 	"udap/internal/controller"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 	"udap/internal/plugin"
 )
@@ -29,7 +30,7 @@ func (m *moduleOperator) HandleEmit(mutation domain.Mutation) error {
 
 const PATH = "./modules"
 
-func NewOperator(ctrl *controller.Controller) domain.ModuleOperator {
+func NewOperator(ctrl *controller.Controller) ports.ModuleOperator {
 	return &moduleOperator{
 		ctrl:    ctrl,
 		runtime: map[string]plugin.ModuleInterface{},

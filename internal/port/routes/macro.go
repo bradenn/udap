@@ -5,14 +5,14 @@ package routes
 import (
 	"github.com/go-chi/chi"
 	"net/http"
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type macroRouter struct {
-	service domain.MacroService
+	service ports.MacroService
 }
 
-func NewMacroRouter(service domain.MacroService) Routable {
+func NewMacroRouter(service ports.MacroService) Routable {
 	return macroRouter{
 		service: service,
 	}

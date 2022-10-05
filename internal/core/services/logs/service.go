@@ -5,10 +5,11 @@ package logs
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type logService struct {
-	repository domain.LogRepository
+	repository ports.LogRepository
 	generic.Watchable[domain.Log]
 }
 
@@ -26,7 +27,7 @@ func (u *logService) EmitAll() error {
 	return nil
 }
 
-func NewService(repository domain.LogRepository) domain.LogService {
+func NewService(repository ports.LogRepository) ports.LogService {
 	return &logService{repository: repository}
 }
 

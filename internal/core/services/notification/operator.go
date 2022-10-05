@@ -4,12 +4,13 @@ package notification
 
 import (
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type notificationOperator struct {
 }
 
-func NewOperator() domain.NotificationOperator {
+func NewOperator() ports.NotificationOperator {
 	return &notificationOperator{}
 }
 

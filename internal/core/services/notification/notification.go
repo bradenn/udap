@@ -4,11 +4,11 @@ package notification
 
 import (
 	"gorm.io/gorm"
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/core/repository"
 )
 
-func New(db *gorm.DB) domain.NotificationService {
+func New(db *gorm.DB) ports.NotificationService {
 	repo := repository.NewNotificationRepository(db)
 	service := NewService(repo)
 	return service

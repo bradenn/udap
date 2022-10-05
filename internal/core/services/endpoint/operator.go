@@ -8,6 +8,7 @@ import (
 	"time"
 	"udap/internal/controller"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 )
 
@@ -46,7 +47,7 @@ type endpointOperator struct {
 	controller    *controller.Controller
 }
 
-func NewOperator(controller *controller.Controller) domain.EndpointOperator {
+func NewOperator(controller *controller.Controller) ports.EndpointOperator {
 
 	op := &endpointOperator{
 		controller:    controller,
