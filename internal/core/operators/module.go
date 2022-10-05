@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package module
+package operators
 
 import (
 	"context"
@@ -30,7 +30,7 @@ func (m *moduleOperator) HandleEmit(mutation domain.Mutation) error {
 
 const PATH = "./modules"
 
-func NewOperator(ctrl *controller.Controller) ports.ModuleOperator {
+func NewModuleOperator(ctrl *controller.Controller) ports.ModuleOperator {
 	return &moduleOperator{
 		ctrl:    ctrl,
 		runtime: map[string]plugin.ModuleInterface{},

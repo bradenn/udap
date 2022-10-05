@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package macro
+package operators
 
 import (
 	"udap/internal/controller"
@@ -12,7 +12,7 @@ type macroOperator struct {
 	ctrl *controller.Controller
 }
 
-func NewOperator(ctrl *controller.Controller) ports.MacroOperator {
+func NewMacroOperator(ctrl *controller.Controller) ports.MacroOperator {
 	return &macroOperator{
 		ctrl: ctrl,
 	}

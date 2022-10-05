@@ -4,13 +4,14 @@ package attribute
 
 import (
 	"gorm.io/gorm"
+	"udap/internal/core/operators"
 	"udap/internal/core/ports"
 	"udap/internal/core/repository"
 )
 
 func New(db *gorm.DB) ports.AttributeService {
 	repo := repository.NewAttributeRepository(db)
-	operators := NewOperator()
-	service := NewService(repo, operators)
+	op := operators.NewAttributeOperator()
+	service := NewService(repo, op)
 	return service
 }

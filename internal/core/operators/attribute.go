@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package attribute
+package operators
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type attributeOperator struct {
 	mutex sync.RWMutex
 }
 
-func NewOperator() ports.AttributeOperator {
+func NewAttributeOperator() ports.AttributeOperator {
 	return &attributeOperator{
 		hooks: map[string]chan domain.Attribute{},
 		mutex: sync.RWMutex{},

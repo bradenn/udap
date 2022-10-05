@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package endpoint
+package operators
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"time"
 	"udap/internal/controller"
 	"udap/internal/core/domain"
+	"udap/internal/core/domain/common"
 	"udap/internal/core/ports"
 	"udap/internal/log"
 )
@@ -47,7 +48,7 @@ type endpointOperator struct {
 	controller    *controller.Controller
 }
 
-func NewOperator(controller *controller.Controller) ports.EndpointOperator {
+func NewEndpointOperator(controller *controller.Controller) ports.EndpointOperator {
 
 	op := &endpointOperator{
 		controller:    controller,
@@ -218,7 +219,7 @@ func (m *endpointOperator) Send(id string, operation string, payload any) error 
 }
 
 type Metadata struct {
-	System System `json:"system"`
+	System common.System `json:"system"`
 }
 
 type Response struct {
@@ -230,7 +231,7 @@ type Response struct {
 }
 
 func (m *endpointOperator) sendMetadata(id string) error {
-	info, err := systemInfo()
+	info, err := common.SystemInfo()
 	if err != nil {
 		return err
 	}

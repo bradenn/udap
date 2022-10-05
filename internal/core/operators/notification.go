@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package notification
+package operators
 
 import (
 	"udap/internal/core/domain"
@@ -10,7 +10,7 @@ import (
 type notificationOperator struct {
 }
 
-func NewOperator() ports.NotificationOperator {
+func NewNotificationOperator() ports.NotificationOperator {
 	return &notificationOperator{}
 }
 

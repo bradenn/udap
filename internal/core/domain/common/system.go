@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package endpoint
+package common
 
 import (
 	"fmt"
@@ -60,9 +60,7 @@ type System struct {
 	Memory      float64   `json:"memory"`
 }
 
-var SystemInfo System
-
-func systemInfo() (System, error) {
+func SystemInfo() (System, error) {
 
 	ipv4Obj, err := GetOutboundIP()
 	if err != nil {
