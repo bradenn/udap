@@ -10,13 +10,13 @@ import (
 )
 
 type triggerRepo struct {
-	generic.Store[domain.User]
+	generic.Store[domain.Trigger]
 	db *gorm.DB
 }
 
-func NewTriggerRepository(db *gorm.DB) ports.UserRepository {
-	return &userRepo{
+func NewTriggerRepository(db *gorm.DB) ports.TriggerRepository {
+	return &triggerRepo{
 		db:    db,
-		Store: generic.NewStore[domain.User](db),
+		Store: generic.NewStore[domain.Trigger](db),
 	}
 }

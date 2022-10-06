@@ -8,15 +8,18 @@ import (
 )
 
 type TriggerRepository interface {
-	common.Persist[domain.User]
+	common.Persist[domain.Trigger]
+}
+
+type TriggerOperator interface {
+	Run(trigger domain.Trigger) error
 }
 
 type TriggerService interface {
 	domain.Observable
-	FindAll() (*[]domain.User, error)
-	FindById(id string) (*domain.User, error)
-	Create(*domain.User) error
-	FindOrCreate(*domain.User) error
-	Update(*domain.User) error
-	Delete(*domain.User) error
+	Trigger(id string) error
+	FindById(id string) (*domain.Trigger, error)
+	Create(*domain.Trigger) error
+	Update(*domain.Trigger) error
+	Delete(*domain.Trigger) error
 }

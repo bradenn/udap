@@ -1,15 +1,31 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
 <script lang="ts" setup>
-import {inject, onMounted, reactive, watchEffect} from "vue";
-import Weather from "@/components/widgets/Weather.vue";
+import {defineAsyncComponent, inject, onMounted, reactive, watchEffect} from "vue";
 import router from "@/router";
 import Widget from "@/components/widgets/Widget.vue";
 import App from "@/components/App.vue";
-import Spotify from "@/components/widgets/Spotify.vue";
 import Macros from "@/components/widgets/Macros.vue";
 import type {Attribute, Entity, Remote} from "@/types";
-import Calendar from "@/components/widgets/Calendar.vue";
+import Error from "@/components/Error.vue";
+
+const Spotify = defineAsyncComponent({
+  loader: () => import('@/components/widgets/Spotify.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+const Calendar = defineAsyncComponent({
+  loader: () => import('@/components/widgets/Calendar.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+
+const Weather = defineAsyncComponent({
+  loader: () => import('@/components/widgets/Weather.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+
 
 // Define the local reactive data for this view
 let state = reactive<{

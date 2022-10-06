@@ -96,6 +96,8 @@ func (o *orchestrator) Start() error {
 
 	o.controller.Attributes = services.NewAttributeService(o.db, operators.NewAttributeOperator())
 	o.controller.Macros = services.NewMacroService(o.db, operators.NewMacroOperator(o.controller))
+	o.controller.SubRoutines = services.NewSubRoutineService(o.db, operators.NewSubRoutineOperator(o.controller))
+	o.controller.Triggers = services.NewTriggerService(o.db, operators.NewTriggerOperator(o.controller))
 
 	o.controller.Endpoints = o.endpoints
 	o.controller.Modules = o.modules

@@ -1,10 +1,10 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import Clock from "@/components/Clock.vue"
+
 import router from '@/router'
-import {inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
+import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
 import "@/types";
-import IdTag from "@/components/IdTag.vue";
+
 import type {
   Attribute,
   Device,
@@ -27,14 +27,46 @@ import type {
 import {memorySizeOf} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
-import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
+
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import Sideapp from "@/views/terminal/Sideapp.vue";
-import Bubbles from "@/views/screensaver/Bubbles.vue";
-import Warp from "@/views/screensaver/Warp.vue";
-import Input from "@/views/Input.vue";
-import Glance from "@/views/terminal/Glance.vue";
+import Error from "@/components/Error.vue";
+
+const Clock = defineAsyncComponent({
+  loader: () => import('@/components/Clock.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+
+const Input = defineAsyncComponent({
+  loader: () => import('@/views/Input.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+
+const Glance = defineAsyncComponent({
+  loader: () => import('@/views/terminal/Glance.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+
+const Bubbles = defineAsyncComponent({
+  loader: () => import('@/views/screensaver/Bubbles.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+
+const Warp = defineAsyncComponent({
+  loader: () => import('@/views/screensaver/Warp.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
+
+const IdTag = defineAsyncComponent({
+  loader: () => import('@/components/IdTag.vue'),
+  errorComponent: Error,
+  timeout: 250
+})
 
 // -- Websockets --
 onMounted(() => {
@@ -377,17 +409,9 @@ provide('remote', remote)
 
       </div>
       <div class="route-view pt-1">
-        <div>
-          <Sideapp v-if="state.sideApp" :style="`transform: translateX(${-state.scrollX}px);`">
-            <CalculatorQuick v-if="state.sideApp"></CalculatorQuick>
-          </Sideapp>
-        </div>
-
         <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
           <component :is="Component"/>
         </router-view>
-
-
       </div>
       <div class="justify-content-center d-flex align-items-center align-content-center">
         <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">

@@ -10,18 +10,31 @@ import (
 	"udap/internal/core/repository"
 )
 
-func NewTriggerService(db *gorm.DB) ports.TriggerService {
+func NewTriggerService(db *gorm.DB, operator ports.TriggerOperator) ports.TriggerService {
 	repo := repository.NewTriggerRepository(db)
-	return &triggerService{repository: repo}
+	return &triggerService{repository: repo, operator: operator}
 }
 
 type triggerService struct {
-	repository ports.UserRepository
-	generic.Watchable[domain.User]
+	repository ports.TriggerRepository
+	operator   ports.TriggerOperator
+	generic.Watchable[domain.Trigger]
+}
+
+func (u *triggerService) Trigger(id string) error {
+	trigger, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	err = u.operator.Run(*trigger)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *triggerService) EmitAll() error {
-	all, err := u.FindAll()
+	all, err := u.repository.FindAll()
 	if err != nil {
 		return err
 	}
@@ -36,26 +49,18 @@ func (u *triggerService) EmitAll() error {
 
 // Repository Mapping
 
-func (u *triggerService) FindAll() (*[]domain.User, error) {
-	return u.repository.FindAll()
-}
-
-func (u *triggerService) FindById(id string) (*domain.User, error) {
+func (u *triggerService) FindById(id string) (*domain.Trigger, error) {
 	return u.repository.FindById(id)
 }
 
-func (u *triggerService) Create(user *domain.User) error {
-	return u.repository.Create(user)
+func (u *triggerService) Create(trigger *domain.Trigger) error {
+	return u.repository.Create(trigger)
 }
 
-func (u *triggerService) FindOrCreate(user *domain.User) error {
-	return u.repository.FindOrCreate(user)
+func (u *triggerService) Update(trigger *domain.Trigger) error {
+	return u.repository.Update(trigger)
 }
 
-func (u *triggerService) Update(user *domain.User) error {
-	return u.repository.Update(user)
-}
-
-func (u *triggerService) Delete(user *domain.User) error {
-	return u.repository.Delete(user)
+func (u *triggerService) Delete(trigger *domain.Trigger) error {
+	return u.repository.Delete(trigger)
 }

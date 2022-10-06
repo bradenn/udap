@@ -232,7 +232,6 @@ func (u *moduleService) UpdateAll() error {
 	ref := *modules
 	wg.Add(len(ref))
 	for _, module := range ref {
-
 		go func(mod domain.Module) {
 			defer wg.Done()
 			if !mod.Running || !mod.Enabled {
