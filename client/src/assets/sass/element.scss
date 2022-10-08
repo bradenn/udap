@@ -141,7 +141,7 @@ $themes: (
 
   @extend .bg-blur;
   position: relative;
-
+  background: linear-gradient(148.05deg, rgba(44, 44, 44, 0.1) 0%, rgba(44, 44, 44, 0) 100%);
   background-blend-mode: soft-light;
   //
   animation: loadIn 150ms forwards cubic-bezier(0, 1.05, .85, .96) !important;

@@ -12,6 +12,7 @@ import type {
   Entity,
   Identifiable,
   Log,
+  Macro,
   Metadata,
   Module,
   Network,
@@ -19,8 +20,10 @@ import type {
   Remote,
   RemoteRequest,
   Session,
+  SubRoutine,
   TerminalDiagnostics,
   Timing,
+  Trigger,
   User,
   Zone
 } from "@/types";
@@ -92,6 +95,9 @@ let remote = reactive<Remote>({
   timings: [] as Timing[],
   modules: [] as Module[],
   zones: [] as Zone[],
+  subroutines: [] as SubRoutine[],
+  macros: [] as Macro[],
+  triggers: [] as Trigger[],
   logs: [] as Log[],
   nexus: {} as Nexus,
   size: "" as string,
@@ -137,31 +143,40 @@ function handleMessage(target: Target, data: any) {
       }
       break
     case Target.Entity:
-      dx = createOrUpdate(remote.entities, data)
+      remote.entities = createOrUpdate(remote.entities, data)
+      break
+    case Target.Macro:
+      remote.macros = createOrUpdate(remote.macros, data)
+      break
+    case Target.SubRoutine:
+      remote.subroutines = createOrUpdate(remote.subroutines, data)
+      break
+    case Target.Trigger:
+      remote.triggers = createOrUpdate(remote.triggers, data)
       break
     case Target.Attribute:
-      dx = createOrUpdate(remote.attributes, data)
+      remote.attributes = createOrUpdate(remote.attributes, data)
       break
     case Target.User:
-      dx = createOrUpdate(remote.users, data)
+      remote.users = createOrUpdate(remote.users, data)
       break
     case Target.Device:
-      dx = createOrUpdate(remote.devices, data)
+      remote.devices = createOrUpdate(remote.devices, data)
       break
     case Target.Network:
-      dx = createOrUpdate(remote.networks, data)
+      remote.networks = createOrUpdate(remote.networks, data)
       break
     case Target.Endpoint:
-      dx = createOrUpdate(remote.endpoints, data)
+      remote.endpoints = createOrUpdate(remote.endpoints, data)
       break
     case Target.Module:
-      dx = createOrUpdate(remote.modules, data)
+      remote.modules = createOrUpdate(remote.modules, data)
       break
     case Target.Zone:
-      dx = createOrUpdate(remote.zones, data)
+      remote.zones = createOrUpdate(remote.zones, data)
       break
     case Target.Log:
-      dx = createOrUpdate(remote.entities, data)
+      remote.entities = createOrUpdate(remote.entities, data)
       break
   }
 
@@ -186,15 +201,13 @@ function handleMessage(target: Target, data: any) {
 
 }
 
-function createOrUpdate(target: any[], data: Identifiable): number {
+function createOrUpdate(target: any[], data: Identifiable): any[] {
   if (target.find((e: Identifiable) => e.id === data.id)) {
-    target = target.map((a: Identifiable) => a.id === data.id ? data : a)
-    return 0
+    return target.map((a: Identifiable) => a.id === data.id ? data : a)
   } else {
     target.push(data)
-    return 1
+    return target
   }
-
 }
 
 // -- Gesture Navigation --
@@ -395,6 +408,7 @@ provide('remote', remote)
         <div class="" v-on:click="(e) => state.locked = true">
           <Clock :small="!state.showClock"></Clock>
         </div>
+        <!--        <Toast></Toast>-->
 
         <div class="generic-slot-sm ">
           <div v-if="false" class="element p-2" style="width: 13rem !important;">

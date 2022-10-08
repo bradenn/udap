@@ -244,7 +244,7 @@ $fontColors: (
   padding: 2px 2px !important;
 
   backdrop-filter: blur(12px);
-  background-color: $element-bg;
+  background-color: $element-fg;
 
 }
 
@@ -252,7 +252,7 @@ $fontColors: (
   border-radius: 0.5rem;
   height: 6px;
   border: 2px solid transparent;
-  background-color: lighten($element-fg, 20%);
+  background-color: lighten($element-fg, 40%);
   opacity: 1;
   transition: width 100ms ease-in-out;
 }

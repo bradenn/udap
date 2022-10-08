@@ -189,8 +189,8 @@ function toggleMenu(): void {
 
 
 .light-on {
-  color: #b2b2b2;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  color: rgba(178, 178, 178, 0.76);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 .light-off {

@@ -4,6 +4,35 @@
 
 import type {Nexus} from "@/views/terminal/nexus";
 
+export interface Trigger {
+    created: string;
+    updated: string;
+    id: string;
+    name: string;
+    type: string;
+    description: string;
+    lastTrigger: string;
+}
+
+export interface SubRoutine {
+    created: string;
+    updated: string;
+    id: string;
+    triggerId: string;
+    macros: Macro[];
+    description: string;
+}
+
+export interface Macro {
+    created: string;
+    updated: string;
+    id: string;
+    name: string;
+    description: string;
+    zone: string;
+    type: string;
+    value: string;
+}
 
 export interface ApiRateLimit {
     remaining: number,
@@ -98,6 +127,9 @@ export interface Remote {
     connected: boolean,
     metadata: Metadata,
     entities: Entity[],
+    subroutines: SubRoutine[],
+    macros: Macro[],
+    triggers: Trigger[],
     attributes: Attribute[],
     users: User[],
     devices: Device[],
