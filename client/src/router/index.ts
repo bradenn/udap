@@ -55,6 +55,7 @@ import LayoutOverview from "@/views/terminal/layout/LayoutOverview.vue";
 import Aliens from "@/views/terminal/aliens/Aliens.vue";
 import Drake from "@/views/terminal/aliens/Drake.vue";
 import diagnostic from "@/views/terminal/diagnostic";
+import periodic from "@/views/terminal/periodic";
 
 const defaultRoute = {
     path: '/',
@@ -236,6 +237,7 @@ const terminalRoutes = {
         alienRoutes,
         defenseRoutes,
         layoutRoutes,
+        periodic
     ],
 }
 

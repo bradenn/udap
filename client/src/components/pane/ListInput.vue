@@ -53,7 +53,7 @@ function close() {
 
   <div class="d-flex justify-content-between align-items-center subplot subplot-inline px-2 py-1" @click="() => open()">
 
-    <div class="label-c1 label-w500 label-o5 lh-1 title">{{ props.name }}</div>
+    <div class="label-c1 label-w500 label-o4  title">{{ props.name }}</div>
     <div class="d-flex align-items-center">
       <div class="label-c3 label-w500 label-o3">{{ props.value }}</div>
       <div class="label-c1 label-o3 px-1">
@@ -79,5 +79,7 @@ function close() {
 }
 
 .title {
+  font-family: "SF Pro", sans-serif !important;
+  line-height: 1.2rem;
 }
 </style>

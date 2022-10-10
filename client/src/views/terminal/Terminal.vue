@@ -201,6 +201,16 @@ function handleMessage(target: Target, data: any) {
 
 }
 
+function mouseDown() {
+  // axios.post("http://10.0.1.60/pop", {
+  //   power: 0
+  // }).then(res => {
+  //
+  // }).catch(err => {
+  //   return
+  // })
+}
+
 function createOrUpdate(target: any[], data: Identifiable): any[] {
   if (target.find((e: Identifiable) => e.id === data.id)) {
     return target.map((a: Identifiable) => a.id === data.id ? data : a)
@@ -274,6 +284,7 @@ function timeout() {
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
+  mouseDown();
   dragStop(e)
   // Record the current user position
   let a = {x: e.screenX, y: e.screenY}

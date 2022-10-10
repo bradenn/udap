@@ -20,7 +20,22 @@ function createWindow() {
         removeMenu: true,
         frame: false,
     });
-
+    // win.webContents.session.webRequest.onBeforeSendHeaders(
+    //     (details, callback) => {
+    //         callback({requestHeaders: {Origin: '*', ...details.requestHeaders}});
+    //     },
+    // );
+    //
+    // win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    //     callback({
+    //         responseHeaders: {
+    //             'Access-Control-Allow-Origin': ['*'],
+    //             // We use this to bypass headers
+    //             'Access-Control-Allow-Headers': ['*'],
+    //             ...details.responseHeaders,
+    //         },
+    //     });
+    // });
 
     // attachTouchMode()
     // win.webContents.debugger.on('detach', (event, reason) => {

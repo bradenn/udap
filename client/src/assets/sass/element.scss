@@ -85,7 +85,7 @@ $themes: (
 
 .text-accent {
   color: $text-accent !important;
-  mix-blend-mode: multiply;
+  opacity: 0.7;
 }
 
 .subplot-primary-inline {
