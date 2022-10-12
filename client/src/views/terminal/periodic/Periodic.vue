@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
-<script setup>
+<script lang="ts" setup>
 
 import Atom from "@/views/terminal/periodic/Atom.vue";
 import {reactive} from "vue";
@@ -9,7 +9,7 @@ const state = reactive({
   atom: {
     protons: 12,
     neutrons: 12,
-    electrons: 64,
+    electrons: 200,
   }
 })
 

@@ -2,9 +2,10 @@
 
 <script lang="ts" setup></script>
 
+
 <template>
   <div>
-    <h4>Moon</h4>
+    <img src="/ven/preferences-system.svg"/>
   </div>
 
 </template>

@@ -4,7 +4,7 @@
 
 import {inject, reactive, watchEffect} from "vue";
 import type {Remote, RemoteRequest, TerminalDiagnostics, Timing} from "@/types";
-import {formatByteSize} from "@/types";
+import {formatByteSize, memorySizeOf} from "@/types";
 import PaneListItem from "@/components/pane/PaneListItem.vue";
 import PaneMenu from "@/components/pane/PaneMenu.vue";
 import LiveChart from "@/components/charts/LiveChart.vue";
@@ -134,9 +134,16 @@ function updateStats() {
       </div>
     </div>
     <PaneMenu :previous="false" alt="This terminal" title="Terminal">
-      <PaneListItem v-for="key in state.terminal.updates.keys()" :active="false"
-                    :subtext="`${state.terminal.updates.get(key)}`"
+
+      <PaneListItem v-for="key in Object.keys(remote)" :active="false"
+                    :subtext="`${formatByteSize(// @ts-ignore
+                    memorySizeOf(remote[key]))}`"
                     :title="key"></PaneListItem>
+    </PaneMenu>
+    <PaneMenu :previous="false" alt="This terminal" title="Terminal">
+      <PaneListItem v-for="attribute in remote.attributes" :active="false"
+                    :subtext="`${formatByteSize(memorySizeOf(attribute))}`"
+                    :title="attribute.key"></PaneListItem>
     </PaneMenu>
 
     <div>
@@ -149,6 +156,7 @@ function updateStats() {
                  :scale="2" :values="state.maxRSSHistory.map(h => Math.round(h/1024*100)/100)" :values-per-section="128"
                  color="rgba(48,209,88,0.8)" name="MaxRSS"
                  unit=' KB'></LiveChart>
+
       <!--      <LiveChart v-if="state.loaded" color="rgba(48,209,88,0.8)"-->
       <!--                 :marker="89" name="Burst Delay" :scale="2"-->
       <!--                 :values="state.avgIntervalHistory" unit=' MS'-->

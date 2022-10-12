@@ -67,7 +67,7 @@ function selectTrigger(id: string) {
     state.trigger.name = ""
   } else {
     state.trigger.id = id
-    state.trigger.name = remote.triggers.find(t => t.id === id)?.name
+    state.trigger.name = remote.triggers.find(t => t.id === id)?.name || ""
   }
 }
 

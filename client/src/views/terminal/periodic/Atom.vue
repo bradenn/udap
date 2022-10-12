@@ -55,6 +55,10 @@ function electronsPerRing(ring: number): number {
   return Math.pow(ring, 2) * 2
 }
 
+function mapIt(value: number, low1: number, high1: number, low2: number, high2: number): number {
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
 function drawAtom() {
   state.tick++;
   let ctx = state.ctx
@@ -63,14 +67,16 @@ function drawAtom() {
   ctx.font = "500 24px SF Pro"
   ctx.lineWidth = 4
   const rings = numRings()
-  const epr = Object.keys(Array(rings).fill(0)).map(i => electronsPerRing((i * 1) + 1))
+  const epr = Object.keys(Array(rings).fill(0)).map(i => electronsPerRing(parseInt(i) + 1))
   console.log(epr)
   let usedElectrons = 0;
 
   let ringRadius = Math.max(state.width / 2.5 / numRings(), 100)
   for (let i = 1; i <= rings; i++) {
+    let dtx = (state.width / 2 - state.width / 6) / rings
+    let rad = mapIt(i, 0, numRings(), state.width / 6, state.width / 2)
     ctx.beginPath()
-    ctx.ellipse(state.width / 2, state.height / 2, ringRadius * i, ringRadius * i, 0, 0, Math.PI * 2, false)
+    ctx.ellipse(state.width / 2, state.height / 2, rad, rad, 0, 0, Math.PI * 2, false)
     ctx.stroke();
     ctx.closePath()
 
@@ -78,14 +84,14 @@ function drawAtom() {
     usedElectrons += numElectrons
     let metrics = ctx.measureText(`${i}`)
     ctx.fillStyle = "rgba(255,255,255,0.7)"
-    ctx.fillText(`${i}`, state.width / 2 - metrics.width / 2 + ringRadius / 2 + ringRadius * i, state.height / 2)
+    ctx.fillText(`${i}`, state.width / 2 - metrics.width / 2 + rad + dtx / 2, state.height / 2)
     let div = 2 * Math.PI / numElectrons;
     let radius = 12 - Math.log(i * 8)
     let spin = (2 * Math.PI / 1000) * state.tick % 1000 / i * 2
     for (let j = 0; j <= numElectrons; j++) {
       ctx.fillStyle = "rgb(246,204,38)"
-      let x = Math.cos(j * div + spin) * ringRadius * i
-      let y = Math.sin(j * div + spin) * ringRadius * i
+      let x = Math.cos(j * div + spin) * rad
+      let y = Math.sin(j * div + spin) * rad
       ctx.beginPath()
       ctx.ellipse(state.width / 2 + x, state.height / 2 + y, radius, radius, 0, 0, Math.PI * 2, false)
       ctx.fill();
@@ -129,7 +135,8 @@ function setupCanvas() {
 
   state.width = chart.width
   state.height = chart.height
-  ctx.translate(0, 0)
+  // ctx.translate(0, 0)
+  // ctx.translate(0.5, 0.5);
   ctx.clearRect(0, 0, state.width, state.height)
 
   redraw()

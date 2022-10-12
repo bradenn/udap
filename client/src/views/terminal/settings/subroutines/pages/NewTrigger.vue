@@ -46,24 +46,6 @@ function goBack() {
   router.push("/terminal/settings/subroutines/create")
 }
 
-function selectTrigger(id: string) {
-  if (state.trigger === id) {
-    state.trigger = ""
-  } else {
-    state.trigger = id
-  }
-}
-
-function setName(name: string) {
-  state.trigger.name = name
-  state.ready = !isDisabled()
-}
-
-function setDescription(description: string) {
-  state.trigger.description = description
-  state.ready = !isDisabled()
-}
-
 function isDisabled(): boolean {
   let t = state.trigger
   return t.name == "" || t.description == "" || t.type == ""

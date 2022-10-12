@@ -33,42 +33,32 @@ import {Nexus, Target} from "@/views/terminal/nexus";
 
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import Error from "@/components/Error.vue";
 
 const Clock = defineAsyncComponent({
   loader: () => import('@/components/Clock.vue'),
-  errorComponent: Error,
-  timeout: 250
+
 })
 
 const Input = defineAsyncComponent({
   loader: () => import('@/views/Input.vue'),
-  errorComponent: Error,
-  timeout: 250
+
 })
 
 const Glance = defineAsyncComponent({
   loader: () => import('@/views/terminal/Glance.vue'),
-  errorComponent: Error,
-  timeout: 250
+
 })
 
 const Bubbles = defineAsyncComponent({
   loader: () => import('@/views/screensaver/Bubbles.vue'),
-  errorComponent: Error,
-  timeout: 250
 })
 
 const Warp = defineAsyncComponent({
   loader: () => import('@/views/screensaver/Warp.vue'),
-  errorComponent: Error,
-  timeout: 250
 })
 
 const IdTag = defineAsyncComponent({
   loader: () => import('@/components/IdTag.vue'),
-  errorComponent: Error,
-  timeout: 250
 })
 
 // -- Websockets --
@@ -77,6 +67,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (!remote.nexus.ws) return
   remote.nexus.ws.close()
   remote = {} as Remote
 })
@@ -126,7 +117,8 @@ function handleMessage(target: Target, data: any) {
   switch (target) {
     case Target.Close:
       remote.connected = false
-      break
+      return
+
     case Target.Metadata:
       system.udap.system = data.system as Metadata
       remote.metadata = data as Metadata
@@ -205,7 +197,7 @@ function mouseDown() {
   // axios.post("http://10.0.1.60/pop", {
   //   power: 0
   // }).then(res => {
-  //
+  //   return
   // }).catch(err => {
   //   return
   // })
@@ -284,7 +276,7 @@ function timeout() {
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
-  mouseDown();
+
   dragStop(e)
   // Record the current user position
   let a = {x: e.screenX, y: e.screenY}
@@ -296,8 +288,10 @@ function dragStart(e: MouseEvent) {
   state.dragA = a
   // Verify drag intent if the user is still dragging after 100ms
   setTimeout(timeout, 10)
+  mouseDown();
   // Otherwise, we consider the swipes
 }
+
 
 interface InputProps {
   name: string
@@ -366,6 +360,7 @@ function dragContinue(e: MouseEvent) {
       if (topPull > gestureThreshold) {
         screensaver.startScreensaver()
       }
+    } else {
     }
   }
 }

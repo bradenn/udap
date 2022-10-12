@@ -99,10 +99,10 @@ func (n *NOAA) pull() error {
 
 func (n *NOAA) Update() error {
 	if n.Ready() {
-		err := n.pull()
-		if err != nil {
-			n.Err(err)
-		}
+		// err := n.pull()
+		// if err != nil {
+		// 	n.Err(err)
+		// }
 	}
 	return nil
 }
@@ -133,6 +133,11 @@ func (n *NOAA) Run() error {
 	}
 
 	err = n.Attributes.Register(&geomagnetic)
+	if err != nil {
+		return err
+	}
+
+	err = n.Attributes.Update(n.geomagneticEntityId, "gauss", "{}", time.Now())
 	if err != nil {
 		return err
 	}
