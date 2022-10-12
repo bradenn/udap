@@ -4,21 +4,11 @@ import {createRouter, createWebHashHistory} from "vue-router";
 
 // Settings views
 import settings from "@/views/terminal/settings/index";
-
-import Settings from "@/views/terminal/settings/Settings.vue";
-import Preferences from "@/views/terminal/settings/Preferences.vue";
-import Connection from "@/views/terminal/settings/Connection.vue";
-import Modules from "@/views/terminal/settings/module/Modules.vue";
-
-import Endpoints from "@/views/terminal/settings/endpoint/Endpoints.vue";
-import Timings from "@/views/terminal/settings/Timings.vue";
-import Zones from "@/views/terminal/settings/zone/Zones.vue";
+import setup from "@/views/setup";
 
 
 // Setup view components
 import Setup from "@/views/setup/Setup.vue";
-import Welcome from "@/views/setup/Controller.vue";
-import Authentication from "@/views/setup/Authentication.vue";
 
 // Terminal Routes
 import Terminal from "../views/terminal/Terminal.vue";
@@ -29,6 +19,7 @@ import Energy from "../views/terminal/Energy.vue";
 // Exogeology Routes
 import Exogeology from "../views/terminal/exogeology/Exogeology.vue";
 import Earth from "../views/terminal/exogeology/Earth.vue";
+import Magnetosphere from "../views/terminal/exogeology/Magnetosphere.vue";
 import Moon from "../views/terminal/exogeology/Moon.vue";
 import Sol from "../views/terminal/exogeology/Sol.vue";
 
@@ -63,77 +54,12 @@ import LayoutOverview from "@/views/terminal/layout/LayoutOverview.vue";
 
 import Aliens from "@/views/terminal/aliens/Aliens.vue";
 import Drake from "@/views/terminal/aliens/Drake.vue";
+import diagnostic from "@/views/terminal/diagnostic";
+import periodic from "@/views/terminal/periodic";
 
 const defaultRoute = {
     path: '/',
     component: Setup,
-}
-
-const setupRoutes = {
-    path: '/setup',
-    name: 'Setup',
-    redirect: '/setup/controller',
-    component: Setup,
-    children: [
-        {
-            path: '/setup/authentication',
-            name: 'Authenticate',
-            component: Authentication
-        },
-        {
-            path: '/setup/controller',
-            name: 'Welcome',
-            component: Welcome
-        },
-
-    ]
-}
-
-const settingsRoutes = {
-    path: '/terminal/settings',
-    name: 'Settings',
-    redirect: '/terminal/settings/preferences',
-    component: Settings,
-    icon: 'fa-cog',
-    children: [
-        {
-            path: '/terminal/settings/preferences',
-            name: 'Preferences',
-            icon: 'bars-progress',
-            component: Preferences
-        },
-        {
-            path: '/terminal/settings/connection',
-            name: 'Connection',
-            icon: 'cloud',
-            component: Connection
-        },
-        {
-            path: '/terminal/settings/modules',
-            name: 'Modules',
-            icon: 'layer-group',
-            component: Modules
-        },
-        {
-            path: '/terminal/settings/endpoints',
-            name: 'Endpoints',
-            icon: 'expand',
-            component: Endpoints
-        },
-        {
-            path: '/terminal/settings/timings',
-            name: 'Timings',
-            icon: 'clock',
-            component: Timings
-        },
-
-        {
-            path: '/terminal/settings/zones',
-            name: 'Zones',
-            icon: 'map',
-            component: Zones
-        },
-    ]
 }
 
 const exogeologyRoutes = {
@@ -148,6 +74,11 @@ const exogeologyRoutes = {
             name: 'Earth',
             icon: 'earth-americas',
             component: Earth,
+        }, {
+            path: '/terminal/exogeology/magnetosphere',
+            name: 'Magnetosphere',
+            icon: 'earth-americas',
+            component: Magnetosphere,
         },
         {
             path: '/terminal/exogeology/moon',
@@ -294,9 +225,11 @@ const terminalRoutes = {
             component: Energy,
             icon: 'fa-bolt',
         },
+
         settings.routes,
         timingRoutes,
         exogeologyRoutes,
+        diagnostic,
         weather,
         whiteboardRoutes,
         calculatorRoute,
@@ -304,12 +237,13 @@ const terminalRoutes = {
         alienRoutes,
         defenseRoutes,
         layoutRoutes,
+        periodic
     ],
 }
 
 const routes = [
     defaultRoute,
-    setupRoutes,
+    setup,
     terminalRoutes,
     {path: '/:pathMatch(.*)*', redirect: "/"}
 ]

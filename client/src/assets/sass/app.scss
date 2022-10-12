@@ -12,6 +12,7 @@ html {
   font-size: 32px;
   user-select: none !important;
   height: 100%;
+
 }
 
 .cursor-blink {
@@ -243,7 +244,7 @@ $fontColors: (
   padding: 2px 2px !important;
 
   backdrop-filter: blur(12px);
-  background-color: $element-bg;
+  background-color: $element-fg;
 
 }
 
@@ -251,7 +252,7 @@ $fontColors: (
   border-radius: 0.5rem;
   height: 6px;
   border: 2px solid transparent;
-  background-color: lighten($element-fg, 20%);
+  background-color: lighten($element-fg, 40%);
   opacity: 1;
   transition: width 100ms ease-in-out;
 }
@@ -260,6 +261,7 @@ $fontColors: (
   @extend .element-secondary;
   display: flex;
   justify-content: space-between;
+
   align-items: center;
   padding: 0 0.375rem;
   //border-radius: 0.375rem !important;
@@ -839,6 +841,7 @@ hr {
   bottom: 0.5rem;
   border-radius: 0.25rem;
   left: calc(50% - 4rem);
+  transform: translate3d(0, 0, 0);
   height: 0.18rem;
   width: 8rem;
   box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.25);

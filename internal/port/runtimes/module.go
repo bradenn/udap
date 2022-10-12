@@ -3,11 +3,11 @@
 package runtimes
 
 import (
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 )
 
-func NewModuleRuntime(service domain.ModuleService) {
+func NewModuleRuntime(service ports.ModuleService) {
 	err := service.Discover()
 	if err != nil {
 		return

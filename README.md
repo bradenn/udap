@@ -39,14 +39,41 @@ resolving each attribute's status.
 
 ### Terminal Screenshots
 
+This is not an exhaustive list of UDAP's applications and configurations. There are more than sixty views in total.
+
 A screenshot of the terminal unlocked screen as of v2.15.1. (With the background blur setting enabled)
 ![HomeScreen](./docs/images/home_2.15.1.png)
+
+### Terminal Settings
+
+#### Module page
+
+This page allows an authenticated user to manage and monitor the runtime of UDAP's modules.
+![SettingsModules](./docs/images/settings_modules.png)
 
 #### Terminal App Examples
 
 The sentry app controls a ceiling-mounted laser used for entertaining cats. The interface provides realtime positioning
-on of the beam, and allows for manual targeting and attenuation.  
+on of the beam, and allows for manual targeting and attenuation.   (With BG blur setting disabled)
 ![SentryApp](./docs/images/app_sentry.png)
+
+#### Exogeology App
+
+The exogeology app uses data from NOAA to display near-live images of the Earth and the Sol (the sun).
+
+##### Earth Page
+
+![ExoGeoEarth](./docs/images/app_exogeo_earth.png)
+
+##### Sol Page
+
+![ExoGeoSol](./docs/images/app_exogeo_sol.png)
+
+#### Basic Utility Apps
+
+##### Calculator App
+
+![Calculator](./docs/images/app_calculator.png)
 
 ## Front-end elements
 

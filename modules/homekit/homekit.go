@@ -10,7 +10,7 @@ import (
 	"github.com/brutella/hc/service"
 	"os"
 	"time"
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 	"udap/internal/plugin"
 )
@@ -131,7 +131,7 @@ func (h *Homekit) Dispose() error {
 	return nil
 }
 
-func syncSwitch(p *service.Switch, a domain.AttributeService, id string) {
+func syncSwitch(p *service.Switch, a ports.AttributeService, id string) {
 	p.On.OnValueRemoteUpdate(func(b bool) {
 		str := "false"
 		if b {
@@ -164,7 +164,7 @@ type spectrumLight struct {
 	spectrum *spectrum
 }
 
-func (s *spectrumLight) syncAttributes(a domain.AttributeService, id string) error {
+func (s *spectrumLight) syncAttributes(a ports.AttributeService, id string) error {
 	s.spectrum.On.OnValueRemoteUpdate(func(b bool) {
 		str := "false"
 		if b {

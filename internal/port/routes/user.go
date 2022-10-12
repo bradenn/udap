@@ -8,13 +8,14 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type userRouter struct {
-	service domain.UserService
+	service ports.UserService
 }
 
-func NewUserRouter(service domain.UserService) Routable {
+func NewUserRouter(service ports.UserService) Routable {
 	return userRouter{
 		service: service,
 	}

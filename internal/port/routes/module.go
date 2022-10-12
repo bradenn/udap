@@ -5,15 +5,15 @@ package routes
 import (
 	"github.com/go-chi/chi"
 	"net/http"
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 )
 
 type moduleRouter struct {
-	service domain.ModuleService
+	service ports.ModuleService
 }
 
-func NewModuleRouter(service domain.ModuleService) Routable {
+func NewModuleRouter(service ports.ModuleService) Routable {
 	return &moduleRouter{
 		service: service,
 	}

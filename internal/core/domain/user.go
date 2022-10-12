@@ -13,19 +13,3 @@ type User struct {
 	Type     string `json:"type"`
 	Password string `json:"password"`
 }
-
-type UserRepository interface {
-	common.Persist[User]
-}
-
-type UserService interface {
-	Observable
-	Register(*User) error
-	Authenticate(*User) error
-	FindAll() (*[]User, error)
-	FindById(id string) (*User, error)
-	Create(*User) error
-	FindOrCreate(*User) error
-	Update(*User) error
-	Delete(*User) error
-}

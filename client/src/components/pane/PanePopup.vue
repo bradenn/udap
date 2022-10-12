@@ -6,6 +6,7 @@ interface Plot {
   alt?: string
   close?: () => void
   apply?: () => void
+
 }
 
 let props = defineProps<Plot>()

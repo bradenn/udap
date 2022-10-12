@@ -19,8 +19,6 @@ type Attribute struct {
 	Type      string         `json:"type"`
 	Order     int            `json:"order"`
 	Channel   chan Attribute `json:"-" gorm:"-"`
-	// put       FuncPut
-	// get       FuncGet
 }
 
 const (
@@ -97,32 +95,4 @@ func (a *Attribute) AsBool() bool {
 		return false
 	}
 	return parsed
-}
-
-type AttributeRepository interface {
-	common.Persist[Attribute]
-	FindAllByEntity(entity string) (*[]Attribute, error)
-	FindByComposite(entity string, key string) (*Attribute, error)
-	Register(*Attribute) error
-}
-
-type AttributeOperator interface {
-	Register(attribute *Attribute) error
-	Request(*Attribute, string) error
-	Set(*Attribute, string) error
-	Update(*Attribute, string, time.Time) error
-}
-
-type AttributeService interface {
-	Observable
-	FindAll() (*[]Attribute, error)
-	FindByComposite(entity string, key string) (*Attribute, error)
-	FindAllByEntity(entity string) (*[]Attribute, error)
-	FindById(id string) (*Attribute, error)
-	Create(*Attribute) error
-	Register(*Attribute) error
-	Request(entity string, key string, value string) error
-	Set(entity string, key string, value string) error
-	Update(entity string, key string, value string, stamp time.Time) error
-	Delete(*Attribute) error
 }

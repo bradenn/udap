@@ -49,7 +49,9 @@ func (m *Module) LogF(format string, args ...any) {
 	}
 }
 
+// WarnF prints a logf message to the system and UDAP network
 func (m *Module) WarnF(format string, args ...any) {
+	// Generate the structure template for a log message
 	out := domain.Log{
 		Group:   "module",
 		Level:   "warn",
@@ -57,14 +59,20 @@ func (m *Module) WarnF(format string, args ...any) {
 		Time:    time.Now(),
 		Message: fmt.Sprintf(format, args...),
 	}
+	// Log the message to the system log
 	log.Event("%s::%s %s", out.Group, out.Event, out.Message)
+	// Attempt to log with the database logs
 	err := m.Logs.Create(&out)
 	if err != nil {
+		// Forward error to log
+		log.Err(err)
 		return
 	}
 }
 
+// ErrF generates an error logf error message
 func (m *Module) ErrF(format string, args ...any) {
+	// Define the log struct
 	out := domain.Log{
 		Group:   "module",
 		Level:   "error",
@@ -72,9 +80,13 @@ func (m *Module) ErrF(format string, args ...any) {
 		Time:    time.Now(),
 		Message: fmt.Sprintf(format, args...),
 	}
+	// Log the event to the program log
 	log.Event("%s::%s %s", out.Group, out.Event, out.Message)
+	// Create a log entry in the database
 	err := m.Logs.Create(&out)
 	if err != nil {
+		// Log the error to console
+		log.Err(err)
 		return
 	}
 }
@@ -126,14 +138,17 @@ func (m *Module) OnEmit() error {
 	return nil
 }
 
+// InitConfig attempts to initialize a persistent storage key value pair
 func (m *Module) InitConfig(key string, value string) error {
 	return m.Modules.InitConfig(m.UUID, key, value)
 }
 
+// GetConfig retrieves a config value from the database
 func (m *Module) GetConfig(key string) (string, error) {
 	return m.Modules.GetConfig(m.UUID, key)
 }
 
+// SetConfig overwrites a previously defied variable
 func (m *Module) SetConfig(key string, value string) error {
 	return m.Modules.SetConfig(m.UUID, key, value)
 }

@@ -24,7 +24,7 @@ const routes = {
     children: [
         {
             path: '/terminal/settings/modules',
-            name: 'Module Overview',
+            name: 'Modules',
             icon: 'layer-group',
             component: Modules
         },

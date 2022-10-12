@@ -13,20 +13,3 @@ type Network struct {
 	Mask   string `json:"mask"`
 	Range  string `json:"range"`
 }
-
-type NetworkRepository interface {
-	common.Persist[Network]
-	FindByName(name string) (*Network, error)
-	Register(*Network) error
-}
-
-type NetworkService interface {
-	Observable
-	FindAll() (*[]Network, error)
-	FindById(id string) (*Network, error)
-	Create(*Network) error
-	FindOrCreate(*Network) error
-	Register(*Network) error
-	Update(*Network) error
-	Delete(*Network) error
-}

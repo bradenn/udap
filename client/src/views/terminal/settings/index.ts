@@ -12,6 +12,7 @@ import Devices from "@/views/terminal/settings/device/Device.vue";
 import DeviceOverview from "@/views/terminal/settings/device/DeviceOverview.vue";
 import DeviceMonitor from "@/views/terminal/settings/device/DeviceMonitor.vue";
 import RenameDevice from "@/views/terminal/settings/device/RenameDevice.vue";
+import subroutines from "@/views/terminal/settings/subroutines";
 
 export default {
     routes: {
@@ -41,12 +42,13 @@ export default {
                 component: Connection
             },
             module,
+            subroutines,
             {
                 path: '/terminal/settings/endpoints',
                 name: 'Endpoints',
                 icon: 'expand',
                 meta: {
-                    order: 3,
+                    order: 4,
                 },
                 component: Endpoints
             },
@@ -55,7 +57,7 @@ export default {
                 name: 'Entities',
                 icon: 'clone',
                 meta: {
-                    order: 4,
+                    order: 5,
                 },
                 component: Entities
             },
@@ -97,7 +99,6 @@ export default {
             //     },
             //     component: Timings
             // },
-
 
             {
                 path: '/terminal/settings/zones',

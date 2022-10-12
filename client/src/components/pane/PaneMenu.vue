@@ -13,7 +13,7 @@ let props = defineProps<Plot>()
 </script>
 
 <template>
-  <div class="element p-1" v-on:mousemove.stop>
+  <div class="element p-1  h-100" v-on:mousemove.stop>
 
     <div v-if="props.title" class="d-flex align-items-center justify-content-between">
       <div class="label-c1  label-o4 label-w500 px-1">{{ props.title }}</div>
@@ -30,6 +30,6 @@ let props = defineProps<Plot>()
 <style lang="scss" scoped>
 .pane-menu {
   overflow-y: auto;
-  height: 100%;
+  height: 96%;
 }
 </style>

@@ -82,7 +82,8 @@ function reload() {
             Braden Nicholson
           </div>
           <div class="label-c3 label-o2 label-r label-w500 lh-1"
-               style="font-family: 'Roboto Light', sans-serif;"><span v-if="state.connected">Connected</span><span
+               style="font-family: 'Roboto Light', sans-serif;"><span
+              v-if="state.connected">Connected</span><span
               v-else>Disconnected</span>
           </div>
         </div>
@@ -158,8 +159,7 @@ function reload() {
               ></i>&nbsp;&nbsp;DOWN
             </div>
             <div v-else class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-              <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"
-              ></i>&nbsp;&nbsp;OK
+              {{ remote.size }}
             </div>
 
           </div>

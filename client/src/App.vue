@@ -1,84 +1,46 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import {onMounted, provide, reactive, watch} from "vue";
+import {onMounted, provide, reactive} from "vue";
 import {version} from "../package.json";
-import type {Preferences} from "@/types";
+import {usePersistent} from "@/persistent";
 
-
-const preferenceDefaults: Preferences = {
-  ui: {
-    screensaver: {
-      enabled: true,
-      countdown: 60 * 10,
-      selection: "bubbles"
-    },
-    background: {
-      image: "milk",
-      blur: true
-    },
-    blur: 6,
-    mode: "cursor",
-    theme: "dark",
-    brightness: 100,
-    grid: true,
-    watermark: true,
-    night: false,
-    outlines: true,
-  }
-}
-
-let preferences = reactive<Preferences>(restore())
-
-function restore() {
-  let stored = localStorage.getItem("preferences")
-  if (stored) {
-    let parsed: Preferences = JSON.parse(stored)
-    save(parsed)
-    return parsed
-  } else {
-    save(preferenceDefaults)
-  }
-  return preferenceDefaults
-}
-
-watch(preferences, () => {
-  save(preferences)
-})
-
-function save(preferences: Preferences) {
-  localStorage.setItem("preferences", JSON.stringify(preferences))
-}
-
-provide('preferences', preferences)
-
-
-let state = reactive({
-  hideHome: false,
-  timeout: 0,
-  fps: 0,
-  countdown: 3,
-  context: false,
-  remote: {},
-  system: {
-    nexus: {
-      system: {
-        version: version
-      }
-    },
-    udap: {
-      system: {
-        version: '0.0.0'
-      }
+let system = reactive({
+  fps: {
+    fpsDaemon: 0,
+    frameDurations: [] as number[],
+    lastUpdate: 0,
+    fps: 0
+  },
+  nexus: {
+    system: {
+      version: version
+    }
+  },
+  udap: {
+    system: {
+      version: '0.0.0'
     }
   }
 })
 
-onMounted(() => {
-  resetCountdown()
+const preferences = usePersistent()
 
+onMounted(() => {
+
+  resetCountdown()
 
 })
 
+function doFPS() {
+  let now = new Date().valueOf()
+  if (system.fps.frameDurations.length >= 120) {
+    let len = system.fps.frameDurations.length
+    system.fps.frameDurations = system.fps.frameDurations.slice(1, len - 1)
+    system.fps.fps = Math.round(1000 / (system.fps.frameDurations.reduce((a, b) => a += b, 0) / len))
+  }
+  system.fps.frameDurations.push(now - system.fps.lastUpdate)
+  system.fps.lastUpdate = now
+}
 
 let screensaver = reactive({
   show: false,
@@ -117,8 +79,7 @@ function resetCountdown() {
 }
 
 
-provide('system', state.system)
-provide('preferences', preferences)
+provide('system', system)
 
 
 </script>
@@ -126,7 +87,7 @@ provide('preferences', preferences)
 <template>
 
   <div
-      :class="`${preferences.ui.night?'night-vision':''} theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness}`"
+      :class="`theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness}`"
       class="root" v-on:mousedown="(e) => resetCountdown()">
 
     <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
@@ -136,7 +97,7 @@ provide('preferences', preferences)
 
     <div v-if="preferences.ui.watermark" class="watermark">
       <div class="d-flex gap">
-        <div v-if="state.system.udap" class="label-r label-w600">{{ state.system.udap.system.version }}</div>
+        <div v-if="system.udap" class="label-r label-w600">{{ system.udap.system.version }}</div>
         <div v-if="screensaver.countdown <= 5" class="mx-1 label-r label-w500 screensaver-text">
           <div v-if="screensaver.countdown === 0">Starting screensaver...</div>
           <div v-else>Screen saver in {{ screensaver?.countdown }} second{{
@@ -151,8 +112,6 @@ provide('preferences', preferences)
 
     <div v-if="preferences.ui.grid" class="grid"></div>
 
-    <div v-if="state.context" class="context context-light"></div>
-
     <router-view/>
 
   </div>
@@ -160,18 +119,6 @@ provide('preferences', preferences)
 </template>
 
 <style lang="scss">
-
-
-.overlay-notification {
-  position: fixed;
-  z-index: 1;
-  height: 4.5rem;
-  width: 15rem;
-  padding: 1rem;
-  right: 0;
-  top: 0;
-}
-
 .screensaver-text {
   animation: screensaverTextLoadIn 500ms ease-in forwards;
 }
@@ -201,11 +148,13 @@ provide('preferences', preferences)
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  border-radius: 0.3rem 0.3rem 0.3rem 0.3rem !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  border-radius: 0.4rem 0.4rem 0.4rem 0.4rem !important;
+  //box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.125) !important;
+  background-color: rgba(22, 22, 22, 0.33);
 }
 
 .backdrop {
+
   position: absolute !important;
   z-index: -10 !important;
   top: 0;
@@ -225,7 +174,7 @@ provide('preferences', preferences)
 }
 
 .backdrop-blurred {
-  filter: blur(20px);
+  filter: blur(28px);
 }
 
 .backdrop:after {
@@ -297,25 +246,28 @@ $bg-color: rgba(0, 0, 0, 0);
 $dot-color: rgba(255, 255, 255, 0.1);
 
 // Dimensions
-$dot-size: 28px;
-$dot-space: 16px;
+$dot-size: 24px;
+$dot-space: 40px;
 
 
 .grid {
   position: absolute;
-  width: calc(100% - 0.5rem);
-  height: calc(100% - 0.5rem);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
-  margin: 0.25rem;
+  width: calc(100% - 2rem);
+  height: calc(100% - 8.125rem);
+  //box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  margin: 0;
+  top: 4.25rem;
+  margin-inline: 1rem;
 
   z-index: -1;
   background-color: $bg-color;
   opacity: 1;
-  border-radius: 0.2rem;
-  border: 1px solid $dot-color;
+  border-radius: 0.425rem;
+  outline: 2px solid $dot-color;
+  outline-offset: 5px;
   background-image: radial-gradient($dot-color 0.980000000000000px, $bg-color 0.980000000000000px), radial-gradient($dot-color 0.98px, $bg-color 0.980000000000000px);
   background-size: $dot-size $dot-size;
-  background-position: 0 0, calc($dot-size / 2) calc($dot-size / 2);
+  background-position: $dot-size $dot-size, calc($dot-size / 2) calc($dot-size / 2);
 }
 
 .mode-cursor > * {

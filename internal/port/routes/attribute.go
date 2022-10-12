@@ -6,12 +6,12 @@ import (
 	"bytes"
 	"github.com/go-chi/chi"
 	"net/http"
-	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 )
 
 type attributeRouter struct {
-	service domain.AttributeService
+	service ports.AttributeService
 }
 
 func (r *attributeRouter) RouteInternal(router chi.Router) {
@@ -22,7 +22,7 @@ func (r *attributeRouter) RouteExternal(_ chi.Router) {
 
 }
 
-func NewAttributeRouter(service domain.AttributeService) Routable {
+func NewAttributeRouter(service ports.AttributeService) Routable {
 	return &attributeRouter{
 		service: service,
 	}

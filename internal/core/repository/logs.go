@@ -6,13 +6,14 @@ import (
 	"math/rand"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 )
 
 type logsRepo struct {
 	logs map[string][]domain.Log
 }
 
-func NewLogsRepository() domain.LogRepository {
+func NewLogsRepository() ports.LogRepository {
 	return &logsRepo{
 		logs: map[string][]domain.Log{},
 	}

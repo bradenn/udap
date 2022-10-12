@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
 type notificationRepo struct {
@@ -13,7 +14,7 @@ type notificationRepo struct {
 	db *gorm.DB
 }
 
-func NewNotificationRepository(db *gorm.DB) domain.NotificationRepository {
+func NewNotificationRepository(db *gorm.DB) ports.NotificationRepository {
 	return &notificationRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Notification](db),

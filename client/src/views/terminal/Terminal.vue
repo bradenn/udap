@@ -1,10 +1,10 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import Clock from "@/components/Clock.vue"
+
 import router from '@/router'
-import {inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
+import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
 import "@/types";
-import IdTag from "@/components/IdTag.vue";
+
 import type {
   Attribute,
   Device,
@@ -12,34 +12,64 @@ import type {
   Entity,
   Identifiable,
   Log,
+  Macro,
   Metadata,
   Module,
   Network,
   Preferences,
   Remote,
+  RemoteRequest,
   Session,
+  SubRoutine,
+  TerminalDiagnostics,
   Timing,
+  Trigger,
   User,
   Zone
 } from "@/types";
+import {memorySizeOf} from "@/types";
 
 import {Nexus, Target} from "@/views/terminal/nexus";
-import CalculatorQuick from "@/views/terminal/calculator/CalculatorQuick.vue";
+
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import Sideapp from "@/views/terminal/Sideapp.vue";
-import Bubbles from "@/views/screensaver/Bubbles.vue";
-import Warp from "@/views/screensaver/Warp.vue";
-import Input from "@/views/Input.vue";
-import Glance from "@/views/terminal/Glance.vue";
+
+const Clock = defineAsyncComponent({
+  loader: () => import('@/components/Clock.vue'),
+
+})
+
+const Input = defineAsyncComponent({
+  loader: () => import('@/views/Input.vue'),
+
+})
+
+const Glance = defineAsyncComponent({
+  loader: () => import('@/views/terminal/Glance.vue'),
+
+})
+
+const Bubbles = defineAsyncComponent({
+  loader: () => import('@/views/screensaver/Bubbles.vue'),
+})
+
+const Warp = defineAsyncComponent({
+  loader: () => import('@/views/screensaver/Warp.vue'),
+})
+
+const IdTag = defineAsyncComponent({
+  loader: () => import('@/components/IdTag.vue'),
+})
 
 // -- Websockets --
-
-let audio: HTMLAudioElement;
 onMounted(() => {
-  audio = new Audio('/sound/selection.mp3');
-
   remote.nexus = new Nexus(handleMessage)
+})
+
+onUnmounted(() => {
+  if (!remote.nexus.ws) return
+  remote.nexus.ws.close()
+  remote = {} as Remote
 })
 
 
@@ -56,9 +86,23 @@ let remote = reactive<Remote>({
   timings: [] as Timing[],
   modules: [] as Module[],
   zones: [] as Zone[],
+  subroutines: [] as SubRoutine[],
+  macros: [] as Macro[],
+  triggers: [] as Trigger[],
   logs: [] as Log[],
-  nexus: {} as Nexus
+  nexus: {} as Nexus,
+  size: "" as string,
+  diagnostics: {
+    queue: [] as RemoteRequest[],
+    updates: new Map<string, number>(),
+    connected: false,
+    maxRSS: 0,
+    lastTarget: "",
+    lastUpdate: 0,
+    objects: 0
+  } as TerminalDiagnostics
 });
+
 
 let screensaver: any = inject("screensaver")
 let preferences = inject("preferences") as Preferences
@@ -66,90 +110,107 @@ let system: any = inject("system")
 
 // Handle and route incoming messages to the local cache
 function handleMessage(target: Target, data: any) {
+  remote.diagnostics.lastUpdate = new Date().valueOf()
   state.lastUpdate = new Date().valueOf()
   remote.connected = true
+  let dx = 0;
   switch (target) {
     case Target.Close:
       remote.connected = false
-      break
+      return
+
     case Target.Metadata:
       system.udap.system = data.system as Metadata
       remote.metadata = data as Metadata
-      break
-    case Target.Entity:
-      if (remote.entities.find((e: Identifiable) => e.id === data.id)) {
-        remote.entities = remote.entities.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.entities.push(data)
-      }
-      break
-    case Target.Attribute:
-      if (remote.attributes.find((e: Identifiable) => e.id === data.id)) {
-        remote.attributes = remote.attributes.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.attributes.push(data)
-      }
-      break
-    case Target.User:
-      if (remote.users.find((e: Identifiable) => e.id === data.id)) {
-        remote.users = remote.users.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.users.push(data)
-      }
-      break
-    case Target.Device:
-      if (remote.devices.find((e: Identifiable) => e.id === data.id)) {
-        remote.devices = remote.devices.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.devices.push(data)
-      }
-      break
-    case Target.Network:
-      if (remote.networks.find((e: Identifiable) => e.id === data.id)) {
-        remote.networks = remote.networks.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.networks.push(data)
-      }
-      break
-    case Target.Endpoint:
-      if (remote.endpoints.find((e: Identifiable) => e.id === data.id)) {
-        remote.endpoints = remote.endpoints.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.endpoints.push(data)
-      }
-      break
-
-    case Target.Module:
-      if (remote.modules.find((e: Identifiable) => e.id === data.id)) {
-        remote.modules = remote.modules.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.modules.push(data)
-      }
-      break
-    case Target.Zone:
-      if (remote.zones.find((e: Identifiable) => e.id === data.id)) {
-        remote.zones = remote.zones.map((a: Identifiable) => a.id === data.id ? data : a)
-      } else {
-        remote.zones.push(data)
-      }
+      dx = 1
       break
     case Target.Timing:
       if (remote.timings.find((e: Timing) => e.pointer === data.pointer)) {
         remote.timings = remote.timings.map((a: Timing) => a.pointer === data.pointer ? data : a)
+        dx = 0
       } else {
+
         remote.timings.push(data)
+        dx = 1
       }
+      break
+    case Target.Entity:
+      remote.entities = createOrUpdate(remote.entities, data)
+      break
+    case Target.Macro:
+      remote.macros = createOrUpdate(remote.macros, data)
+      break
+    case Target.SubRoutine:
+      remote.subroutines = createOrUpdate(remote.subroutines, data)
+      break
+    case Target.Trigger:
+      remote.triggers = createOrUpdate(remote.triggers, data)
+      break
+    case Target.Attribute:
+      remote.attributes = createOrUpdate(remote.attributes, data)
+      break
+    case Target.User:
+      remote.users = createOrUpdate(remote.users, data)
+      break
+    case Target.Device:
+      remote.devices = createOrUpdate(remote.devices, data)
+      break
+    case Target.Network:
+      remote.networks = createOrUpdate(remote.networks, data)
+      break
+    case Target.Endpoint:
+      remote.endpoints = createOrUpdate(remote.endpoints, data)
+      break
+    case Target.Module:
+      remote.modules = createOrUpdate(remote.modules, data)
+      break
+    case Target.Zone:
+      remote.zones = createOrUpdate(remote.zones, data)
       break
     case Target.Log:
-      if (remote.logs.find((e: Log) => e.id === data.id)) {
-        remote.logs = remote.logs.map((a: Log) => a.id === data.id ? data : a)
-      } else {
-        remote.logs.push(data)
-      }
+      remote.entities = createOrUpdate(remote.entities, data)
       break
   }
+
+  let prev = remote.diagnostics.updates.get(target) || 0
+  remote.diagnostics.updates.set(target, prev + dx);
+  let session = {
+    target: target,
+    time: new Date().valueOf(),
+    operation: "update",
+    payload: data,
+    id: (data as Identifiable).id
+  } as RemoteRequest
+  remote.diagnostics.queue.push(session)
+  remote.diagnostics.lastTarget = target
+  if (remote.diagnostics.queue.length >= 10) {
+    remote.diagnostics.queue = remote.diagnostics.queue.slice(0, remote.diagnostics.queue.length - 2)
+  }
+
+
+  remote.diagnostics.maxRSS = memorySizeOf(remote)
+
+
 }
 
+function mouseDown() {
+  // axios.post("http://10.0.1.60/pop", {
+  //   power: 0
+  // }).then(res => {
+  //   return
+  // }).catch(err => {
+  //   return
+  // })
+}
+
+function createOrUpdate(target: any[], data: Identifiable): any[] {
+  if (target.find((e: Identifiable) => e.id === data.id)) {
+    return target.map((a: Identifiable) => a.id === data.id ? data : a)
+  } else {
+    target.push(data)
+    return target
+  }
+}
 
 // -- Gesture Navigation --
 
@@ -215,6 +276,7 @@ function timeout() {
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
+
   dragStop(e)
   // Record the current user position
   let a = {x: e.screenX, y: e.screenY}
@@ -226,8 +288,10 @@ function dragStart(e: MouseEvent) {
   state.dragA = a
   // Verify drag intent if the user is still dragging after 100ms
   setTimeout(timeout, 10)
+  mouseDown();
   // Otherwise, we consider the swipes
 }
+
 
 interface InputProps {
   name: string
@@ -296,6 +360,7 @@ function dragContinue(e: MouseEvent) {
       if (topPull > gestureThreshold) {
         screensaver.startScreensaver()
       }
+    } else {
     }
   }
 }
@@ -346,9 +411,10 @@ provide('remote', remote)
     <Glance v-if="state.locked"></Glance>
     <div v-else class="d-inline">
       <div class="generic-container gap-2">
-        <div class="generic-slot-sm" v-on:click="(e) => state.locked = true">
+        <div class="" v-on:click="(e) => state.locked = true">
           <Clock :small="!state.showClock"></Clock>
         </div>
+        <!--        <Toast></Toast>-->
 
         <div class="generic-slot-sm ">
           <div v-if="false" class="element p-2" style="width: 13rem !important;">
@@ -363,17 +429,9 @@ provide('remote', remote)
 
       </div>
       <div class="route-view pt-1">
-        <div>
-          <Sideapp v-if="state.sideApp" :style="`transform: translateX(${-state.scrollX}px);`">
-            <CalculatorQuick v-if="state.sideApp"></CalculatorQuick>
-          </Sideapp>
-        </div>
-
         <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
           <component :is="Component"/>
         </router-view>
-
-
       </div>
       <div class="justify-content-center d-flex align-items-center align-content-center">
         <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">

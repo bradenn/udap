@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
-import {onMounted, reactive} from "vue";
+import {onMounted, onUnmounted, reactive} from "vue";
 import type {KeyboardOptions} from "simple-keyboard/build/interfaces";
 
 const props = defineProps<{
@@ -69,6 +69,12 @@ let state: KeyboardState = reactive({
 
 onMounted(() => {
   state.keyboard = new Keyboard(`.${props.keyboardClass}`, keyboardOptions)
+
+  window.addEventListener("keydown", typeManual)
+})
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", typeManual)
 })
 
 function onKeyPress(button: string) {
@@ -85,6 +91,7 @@ function onKeyPress(button: string) {
   }
 }
 
+
 function handleShift() {
 
   let currentLayout = state.keyboard.options.layoutName;
@@ -95,10 +102,23 @@ function handleShift() {
   });
 }
 
+function typeManual(e: any) {
+  let keyPress = e["key"] || ""
+  if (!keyPress) return
+  if (keyPress === "Backspace") {
+    onKeyPress("{bksp}")
+  } else if (keyPress === "Shift" || keyPress.length > 1) {
+    return
+  } else {
+    onKeyPress(keyPress)
+  }
+
+}
+
 </script>
 
 <template>
-  <div :class="props.keyboardClass" class="simple-keyboard"></div>
+  <div :class="props.keyboardClass" class="simple-keyboard element"></div>
 </template>
 
 
@@ -111,7 +131,7 @@ function handleShift() {
 
 
   z-index: 1000;
-  bottom: 18%;
+  bottom: 2%;
   left: calc(50% - 20rem);
 
 }

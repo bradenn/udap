@@ -9,15 +9,16 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"udap/internal/core/domain"
+	"udap/internal/core/ports"
 	"udap/internal/log"
 	"udap/platform/jwt"
 )
 
 type endpointRouter struct {
-	service domain.EndpointService
+	service ports.EndpointService
 }
 
-func NewEndpointRouter(service domain.EndpointService) Routable {
+func NewEndpointRouter(service ports.EndpointService) Routable {
 	return &endpointRouter{
 		service: service,
 	}

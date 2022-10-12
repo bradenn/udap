@@ -13,9 +13,10 @@ import (
 	"udap/internal/controller"
 	"udap/internal/core"
 	"udap/internal/core/domain"
-	"udap/internal/core/services/endpoint"
-	"udap/internal/core/services/module"
+	"udap/internal/core/ports"
+	"udap/internal/core/services"
 	"udap/internal/log"
+	"udap/internal/operators"
 	"udap/internal/port/routes"
 	"udap/internal/port/runtimes"
 	"udap/internal/pulse"
@@ -30,8 +31,8 @@ type orchestrator struct {
 	maxTick time.Duration
 	done    chan bool
 
-	modules   domain.ModuleService
-	endpoints domain.EndpointService
+	modules   ports.ModuleService
+	endpoints ports.EndpointService
 
 	mutations chan domain.Mutation
 }
@@ -63,7 +64,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second,
-		mutations:  make(chan domain.Mutation, 32),
+		mutations:  make(chan domain.Mutation, 16),
 	}, nil
 }
 
@@ -90,8 +91,13 @@ func (o *orchestrator) Start() error {
 		return err
 	}
 
-	o.modules = module.New(o.db, o.controller)
-	o.endpoints = endpoint.New(o.db, o.controller)
+	o.modules = services.NewModuleService(o.db, operators.NewModuleOperator(o.controller))
+	o.endpoints = services.NewEndpointService(o.db, operators.NewEndpointOperator(o.controller))
+
+	o.controller.Attributes = services.NewAttributeService(o.db, operators.NewAttributeOperator())
+	o.controller.Macros = services.NewMacroService(o.db, operators.NewMacroOperator(o.controller))
+	o.controller.SubRoutines = services.NewSubRoutineService(o.db, operators.NewSubRoutineOperator(o.controller))
+	o.controller.Triggers = services.NewTriggerService(o.db, operators.NewTriggerOperator(o.controller))
 
 	o.controller.Endpoints = o.endpoints
 	o.controller.Modules = o.modules
@@ -177,6 +183,9 @@ func (o *orchestrator) Run() error {
 		routes.NewZoneRouter(o.controller.Zones),
 		routes.NewDeviceRouter(o.controller.Devices),
 		routes.NewEntityRouter(o.controller.Entities),
+		routes.NewMacroRouter(o.controller.Macros),
+		routes.NewSubroutineRouter(o.controller.SubRoutines),
+		routes.NewTriggerRouter(o.controller.Triggers),
 		routes.NewModuleRouter(o.modules),
 		routes.NewEndpointRouter(o.endpoints),
 	)

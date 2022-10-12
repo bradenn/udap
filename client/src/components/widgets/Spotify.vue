@@ -95,18 +95,19 @@ function togglePlayback() {
               v-if="state.metadata.explicit" class="text-danger label-c3 px-1">E</span></div>
           <div class="label-c3 label-w400 label-o4 lh-1">{{ state.metadata.artists }}</div>
         </div>
-        <div>
-          <div class="d-flex flex-row justify-content-between label-c3 label-o3 label-w400">
-            <div>
+        <div class="" style="padding-right: 0.125rem">
+          <div class="grid-timeline label-c3 label-o3 label-w400">
+            <div class="d-flex justify-content-start">
               {{ moment(state.current).format("m:ss") }}
             </div>
-            <div class="label-c3 label-o3 label-w500 d-flex flex-row">
+
+            <div class="label-c3 label-o3 label-w500 d-flex flex-row justify-content-center">
               <div v-for="i in Array(Math.ceil((state.metadata.popularity || 50)/20.0)).keys()" :key="i">
                 •
               </div>
             </div>
 
-            <div>
+            <div class="d-flex justify-content-end">
               {{ moment(state.metadata.duration).format("m:ss") }}
             </div>
           </div>
@@ -136,6 +137,13 @@ function togglePlayback() {
 </template>
 
 <style lang="scss" scoped>
+.grid-timeline {
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  grid-template-rows: repeat(1, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+}
 
 .overflow-ellipsis {
   max-width: 9rem !important;

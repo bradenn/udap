@@ -1,7 +1,7 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 
-import {onMounted, reactive} from "vue";
+import {onMounted, onUpdated, reactive} from "vue";
 
 interface ChartValues {
 
@@ -17,6 +17,10 @@ interface ChartProps {
   marker: number
   scale: number
 }
+
+onUpdated(() => {
+  redraw()
+})
 
 let props = defineProps<ChartProps>()
 
@@ -61,8 +65,15 @@ function loadDom() {
   state.width = chart.width
   state.height = chart.height
   ctx.translate(0, 0)
-
   ctx.clearRect(0, 0, state.width, state.height)
+
+  redraw()
+
+}
+
+
+function redraw() {
+  state.ctx.clearRect(0, 0, state.width, state.height)
   calcMinMax()
   drawHorizontalLines()
   drawSections()
