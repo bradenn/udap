@@ -2,6 +2,11 @@
 
 Use an ALPS AFT14A903A with an ESP32 to introduce haptic feedback to touchscreens.
 
+### Electrical schematic
+
+![img.png](img.png)
+The AMS1117-3.3 is completely redundant when used with an ESP32, but I managed to smoke the built-in one.
+
 ### Endpoints
 
 ##### Request
