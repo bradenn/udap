@@ -5,7 +5,7 @@
 
 <template>
   <div>
-    <img src="/ven/preferences-system.svg"/>
+
   </div>
 
 </template>
