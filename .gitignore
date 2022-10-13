@@ -38,3 +38,4 @@ spotify.json
 /client/public/custom/*.jpg
 /client/public/custom/*.png
 
+/embeded/haptics/sdkconfig
