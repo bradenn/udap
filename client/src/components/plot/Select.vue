@@ -42,10 +42,11 @@ function dragScroll(e: DragEvent) {
       </div>
     </div>
   </div>
-  <div :class="state.active?'select-active':''" class="element select" v-on:click="state.active = !state.active">
-    <div class="subplot d-flex">
-      <div>
-        <div>{{ props.selected }}</div>
+  <div :class="state.active?'select-active':''" class="element p-0 select" v-on:click="state.active = !state.active">
+    <div class="subplot d-flex w-100">
+      <div class="d-flex justify-content-start align-items-center align-content-center h-100 gap-0">
+        <div class="label-c1 label-o4 px-1">􀟻</div>
+        <div class="label-c1 label-o4 label-r ">{{ props.selected }}</div>
       </div>
       <div class="p-1">􀆊</div>
     </div>

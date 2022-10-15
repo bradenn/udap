@@ -113,27 +113,36 @@ function toggleMenu(): void {
     </div>
   </div>
   <div v-else class="w-100 h-100">
-    <div v-if="!state.showMenu" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">
-      <div class="entity-header mb-2 ">
-        <div :class="state.powerAttribute.value === 'true'?'light-on':'light-off'" class="label-o5">
-          {{ (props.entity.icon || '􀛭') }}
-
-        </div>
-        <div class="label-c1 label-w400 label-o4 px-2">
-          {{ props.entity.name }}
-        </div>
-        <div class="fill"></div>
-
+    <div v-if="!state.showMenu" class="element d-flex justify-content-between align-items-center"
+         style="height: 2rem; margin-bottom: 0rem"
+         @click="toggleMenu">
+      <div class="d-flex justify-content-start align-items-center align-content-center h-100">
+        <div class="label-c1 label-o4 px-1 light-on">{{ (props.entity.icon || '􀛭') }}</div>
+        <div class="label-c1 label-o4 label-r px-1">{{ props.entity.name }}</div>
       </div>
-      <div v-if="state.powerAttribute" class="d-flex justify-content-between align-items-center w-100">
-
-        <div class="label-c1 label-o2 label-w500">{{ state.shortStatus }}</div>
-
-        <div v-if="state.apiAttribute" class="label-c2 float-end label-o1 label-w600 label-mono">
-          {{ state.rateLimit.remaining }}/{{ state.rateLimit.limit }}
-        </div>
-      </div>
+      <div class="label-c2 label-o3 label-w500 px-1">{{ state.shortStatus }}</div>
     </div>
+    <!--    <div v-if="false" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">-->
+    <!--      <div class="entity-header mb-2 ">-->
+    <!--        <div :class="state.powerAttribute.value === 'true'?'light-on':'light-off'" class="label-o5">-->
+
+
+    <!--        </div>-->
+    <!--        <div class="label-c1 label-w400 label-o4 px-2">-->
+    <!--          {{ props.entity.name }}-->
+    <!--        </div>-->
+    <!--        <div class="fill"></div>-->
+
+    <!--      </div>-->
+    <!--      <div v-if="state.powerAttribute" class="d-flex justify-content-between align-items-center w-100">-->
+
+    <!--        <div class="label-c1 label-o2 label-w500">{{ state.shortStatus }}</div>-->
+
+    <!--        <div v-if="state.apiAttribute" class="label-c2 float-end label-o1 label-w600 label-mono">-->
+    <!--          {{ state.rateLimit.remaining }}/{{ state.rateLimit.limit }}-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </div>-->
     <div v-else class="entity-small element quickedit" style="z-index: 99999!important;">
       <div class="entity-header mb-1 d-flex justify-content-between align-items-center w-100">
         <div class="d-flex">

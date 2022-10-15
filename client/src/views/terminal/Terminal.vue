@@ -33,6 +33,7 @@ import {Nexus, Target} from "@/views/terminal/nexus";
 
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
+import {HapticEngine} from "@/views/terminal/haptics";
 
 const Clock = defineAsyncComponent({
   loader: () => import('@/components/Clock.vue'),
@@ -61,14 +62,29 @@ const IdTag = defineAsyncComponent({
   loader: () => import('@/components/IdTag.vue'),
 })
 
+const haptic = reactive<{
+  haptics: HapticEngine
+}>({
+  haptics: {} as HapticEngine
+})
+
 // -- Websockets --
 onMounted(() => {
+  haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
   remote.nexus = new Nexus(handleMessage)
 })
+
+function tap(frequency: number, iterations: number, amplitude: number) {
+  haptic.haptics.tap(frequency, iterations, amplitude)
+}
+
+provide("haptic", tap)
 
 onUnmounted(() => {
   if (!remote.nexus.ws) return
   remote.nexus.ws.close()
+  if (!haptic.haptics) return
+  haptic.haptics.ws.close()
   remote = {} as Remote
 })
 
@@ -195,7 +211,7 @@ function handleMessage(target: Target, data: any) {
 
 function mouseDown() {
   // axios.post("http://10.0.1.60/pop", {
-  //   power: 0
+  //   power: 2
   // }).then(res => {
   //   return
   // }).catch(err => {
@@ -347,9 +363,10 @@ function dragContinue(e: MouseEvent) {
     let rightPull = state.dragA.x - dragB.x;
     let gestureThreshold = 24;
 
-
     if (isBottom) {
       if (bottomPull > gestureThreshold) {
+        state.verified = false
+        tap(1, 1, 50)
         state.locked = false
         router.push("/terminal/home")
       }
@@ -440,7 +457,7 @@ provide('remote', remote)
                   class="bottom-nav">
               <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
                        :name="route.name"
-                       :to="route.path"></Subplot>
+                       :to="route.path" @mousedown="() => tap(1, 1, 12)" @mouseup="() => tap(1, 1, 25)"></Subplot>
             </Plot>
           </div>
         </div>

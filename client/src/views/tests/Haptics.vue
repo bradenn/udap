@@ -2,17 +2,14 @@
 
 <script lang="ts" setup>
 
-import Slider from "@/components/Slider.vue";
 import Switch from "@/components/Switch.vue";
 import Button from "@/components/Button.vue";</script>
 <template>
-  <div class="d-flex flex-column justify-content-center align-items-center gap-2 w-100">
+  <div class="d-flex flex-column justify-content-center align-items-center w-100 gap-2">
     <h4>Haptic Controls</h4>
     <div style="width: 45rem">
       <div class="label-c1 label-w400 label-o4 px-2 mb-1">Range Sliders</div>
       <div class="d-flex gap-1">
-        <Slider :max="100" :min="0" :step="5" class="" name="Brightness" unit="%"></Slider>
-        <Slider :max="15" :min="0" :step="1" name="Current" unit=" Amps"></Slider>
       </div>
     </div>
     <div style="width: 45rem">
@@ -24,9 +21,8 @@ import Button from "@/components/Button.vue";</script>
     </div>
     <div style="width: 45rem">
       <div class="label-c1 label-w400 label-o4 px-2 mb-1">Buttons</div>
-      <div class="d-flex gap-1 element" style="width: 13rem">
-        <Button :active="true" style="flex-grow: 1;" text="ON"></Button>
-        <Button :active="false" style="flex-grow: 1;" text="OFF"></Button>
+      <div class="d-flex gap-1" style="width: 13rem">
+        <Button :active="true" text="Penis"></Button>
 
       </div>
     </div>

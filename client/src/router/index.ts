@@ -5,7 +5,7 @@ import {createRouter, createWebHashHistory} from "vue-router";
 // Settings views
 import settings from "@/views/terminal/settings/index";
 import setup from "@/views/setup";
-
+import haptics from "@/views/tests/Haptics.vue"
 
 // Setup view components
 import Setup from "@/views/setup/Setup.vue";
@@ -56,6 +56,7 @@ import Aliens from "@/views/terminal/aliens/Aliens.vue";
 import Drake from "@/views/terminal/aliens/Drake.vue";
 import diagnostic from "@/views/terminal/diagnostic";
 import periodic from "@/views/terminal/periodic";
+import remote from "@/views/terminal/remote";
 
 const defaultRoute = {
     path: '/',
@@ -231,6 +232,7 @@ const terminalRoutes = {
         exogeologyRoutes,
         diagnostic,
         weather,
+        remote,
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,
@@ -239,6 +241,13 @@ const terminalRoutes = {
         layoutRoutes,
         periodic
     ],
+}
+
+
+const testRoutes = {
+    path: '/test',
+    name: 'TESTRoute',
+    component: haptics,
 }
 
 const routes = [

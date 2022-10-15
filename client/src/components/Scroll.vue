@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import {reactive} from "vue";
+import {inject, reactive} from "vue";
 
 const props = defineProps<{
   horizontal?: boolean
@@ -12,6 +12,8 @@ let state = reactive({
   xDecelerate: 0,
   yStart: 0,
   xStart: 0,
+  xActual: 0,
+  lastTap: 0,
   xVelocity: 0,
   xLastPoll: 0,
   xLastPos: 0,
@@ -27,6 +29,8 @@ function dragStart(e: MouseEvent) {
   state.xStart = e.clientX
 }
 
+const haptics = inject("haptic") as (a: number, b: number, c: number) => void
+
 function drag(e: MouseEvent) {
 
   if (!state.dragging && Math.abs(state.yStart - e.clientY) > 5 || (props.horizontal && Math.abs(state.yStart - e.clientY) > 5)) {
@@ -37,22 +41,40 @@ function drag(e: MouseEvent) {
   let element = e.currentTarget as HTMLElement
   if (!element) return;
   state.target = element
+
+  // haptics(1, 1, 50)
+
   if (props.horizontal) {
     let poll = new Date().valueOf()
     let dt = state.xLastPoll - poll
     let dx = state.xLastPos - e.clientX
 
     element.scrollLeft += state.xStart - e.clientX
-
+    state.xActual = dx
     state.xStart = e.clientX
+    if (state.xStart - state.xLastPos) {
+      if (Date.now().valueOf() - state.lastTap >= 50)
+        mouseDown()
+      // element.style.position = "relative"
+    }
+    // if (Date.now().valueOf() - state.lastTap >= 50) {
+    //   mouseDown()
+    // }
     state.xVelocity = dx / dt
     state.xLastPos = e.clientX
     state.xLastPoll = poll
     //state.xStart - e.clientX
 
+    // if()
+
   }
   element.scrollTop += state.yStart - e.clientY
   state.yStart = e.clientY
+}
+
+function mouseDown() {
+  state.lastTap = Date.now().valueOf()
+  haptics(1, 1, 50)
 }
 
 function dragStop(e: MouseEvent) {
@@ -64,7 +86,8 @@ function dragStop(e: MouseEvent) {
   state.xDecelerate = setInterval(() => {
     state.xVelocity = state.xVelocity * 0.80
     element.scrollLeft -= state.xVelocity * 20
-    if (Math.abs(state.xVelocity) <= 0.01) {
+    state.xStart = state.xStart * 0.8
+    if (Math.abs(state.xVelocity) <= 0.01 && state.xStart <= 0.1) {
       state.xVelocity = 0
       clearInterval(state.xDecelerate)
     }
@@ -85,7 +108,9 @@ function click(e: MouseEvent) {
 
 </script>
 <template>
+
   <div v-on:click="click" v-on:mousedown="dragStart" v-on:mousemove="drag" v-on:mouseup="dragStop">
+    <!--    <div class="position-absolute top">{{ state.xStart }}</div>-->
     <slot></slot>
   </div>
 </template>
