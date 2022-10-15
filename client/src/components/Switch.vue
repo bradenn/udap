@@ -8,6 +8,7 @@ import {v4 as uuidv4} from "uuid";
 
 const props = defineProps<{
   active: boolean,
+  name?: string,
   unit?: string,
 }>()
 
@@ -33,7 +34,7 @@ function toggle(pos: boolean) {
 <template>
   <div class="element w-100 p-1">
     <div class="d-flex justify-content-between">
-      <div class="label-c1 label-o3 label-w500 p-1 px-1 pb-1 pt-0">Device 1</div>
+      <div class="label-c1 label-o3 label-w500 p-1 px-1 pb-1 pt-0">{{ props.name }}</div>
       <div class="label-c1 label-o3 label-w500 p-1 px-1 pb-1 pt-0">
         {{ state.active ? "ON" : "OFF" }}
       </div>

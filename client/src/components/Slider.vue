@@ -37,10 +37,10 @@ onMounted(() => {
 
   let r = document.getElementById(`track-${state.uuid}`) as HTMLElement
 
-  let w = r.getBoundingClientRect().width - 53
+  let w = r.getBoundingClientRect().width - 16 - 51
   // let np = ev.clientX - r.offsetLeft
   state.thumbWidth = (w / state.stops)
-  state.transform = (state.stops) * (state.thumbWidth)
+  state.transform = (state.stops) * (state.thumbWidth) + 16
 })
 
 watchEffect(() => {
@@ -49,8 +49,9 @@ watchEffect(() => {
   if (state.value % 5 != 0 && Date.now() - state.lastSend <= 40) return
   if (state.value == 0 || state.value == state.stops - 1) {
 
-    haptics(0, 1, 100)
-    haptics(1, 1, 100)
+    haptics(0, 1, 25)
+    haptics(1, 2, 25)
+    // haptics(1, 2, 100)
   } else {
     // haptics(1, 1, 10)
     haptics(1, 1, 25)
@@ -108,7 +109,7 @@ function stopDrag() {
         </div>
       </div>
       <Ticks v-if="state.transform > 0" :active="state.value" :min="props.min" :series="5" :step="props.step"
-             :style="`width: ${state.transform}px; left: 10px; position:relative; height:1.25rem;`"
+             :style="`width: ${state.transform}px; left: ${10}px; position:relative; height:1.25rem;`"
              :ticks="state.stops"></Ticks>
       <div class="shuttle-path subplot"></div>
       <div :style="`left: ${state.track}px;  position: relative; width: ${state.thumbWidth + 50}px;`"

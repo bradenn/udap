@@ -35,7 +35,7 @@ function drawTicks() {
   let ctx = state.ctx
   let series = props.series
   ctx.lineWidth = 2
-  let offset = 20;
+  let offset = 22;
   let dx = ctx.canvas.width / (props.ticks);
   let step = props.step ? props.step : 1
   for (let i = 0; i < props.ticks; i++) {
