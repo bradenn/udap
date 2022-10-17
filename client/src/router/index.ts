@@ -30,13 +30,6 @@ import Timer from "../views/terminal/timing/Timer.vue";
 
 // Weather
 import weather from "@/views/terminal/weather"
-
-// Whiteboard Routes
-import Whiteboard from "@/views/terminal/whiteboard/Whiteboard.vue";
-
-// Calculator Routes
-import Calculator from "@/views/terminal/calculator/Calculator.vue";
-
 // Atlas Routes
 import Atlas from "@/views/terminal/atlas/Atlas.vue";
 import AtlasSettings from "@/views/terminal/atlas/AtlasSettings.vue";
@@ -57,6 +50,12 @@ import Drake from "@/views/terminal/aliens/Drake.vue";
 import diagnostic from "@/views/terminal/diagnostic";
 import periodic from "@/views/terminal/periodic";
 import remote from "@/views/terminal/remote";
+
+
+const Whiteboard = () => import("@/views/terminal/whiteboard/Whiteboard.vue")
+
+// Calculator Routes
+const Calculator = () => import("@/views/terminal/calculator/Calculator.vue");
 
 const defaultRoute = {
     path: '/',

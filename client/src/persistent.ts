@@ -17,6 +17,7 @@ export function usePersistent() {
                 image: "nil",
                 blur: true
             },
+            accent: "255, 149, 0",
             blur: 6,
             mode: "cursor",
             theme: "dark",

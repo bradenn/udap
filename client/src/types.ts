@@ -86,6 +86,7 @@ export interface Preferences {
             image: string,
             blur: boolean
         }
+        accent: string
         theme: string
         mode: string
         blur: number

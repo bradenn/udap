@@ -7,6 +7,32 @@ interface HapticPulse {
     amplitude: number,
 }
 
+interface Haptics {
+    connect(url: string)
+
+    tap(frequency: number, iterations: number, amplitude: number): void
+}
+
+let hapticEngine: HapticEngine;
+
+function connect(url: string) {
+    hapticEngine = new HapticEngine(url)
+}
+
+function tap(frequency: number, iterations: number, amplitude: number): void {
+    return hapticEngine.tap(frequency, iterations, amplitude)
+}
+
+function close() {
+    hapticEngine.ws.close()
+}
+
+export default {
+    connect,
+    tap,
+    close
+}
+
 class HapticEngine {
     url: string
     ws: WebSocket
@@ -61,7 +87,7 @@ class HapticEngine {
     }
 }
 
-export {
-    HapticEngine
+export type {
+    HapticEngine, Haptics
 }
 

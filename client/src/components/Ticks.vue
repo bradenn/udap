@@ -2,8 +2,9 @@
 
 <script lang="ts" setup>
 
-import {onMounted, reactive, watchEffect} from "vue";
+import {inject, onMounted, reactive, watchEffect} from "vue";
 import {v4 as uuidv4} from "uuid";
+import {Preference} from "@/preferences";
 
 const props = defineProps<{
   active?: number,
@@ -11,6 +12,7 @@ const props = defineProps<{
   ticks: number,
   series: number,
   step?: number,
+  tags?: string[]
 }>()
 
 const state = reactive({
@@ -30,6 +32,7 @@ watchEffect(() => {
   drawTicks()
   redraw()
 })
+const preferences = inject("preferences") as Preference
 
 function drawTicks() {
   let ctx = state.ctx
@@ -42,16 +45,34 @@ function drawTicks() {
     ctx.fillStyle = "rgba(255,255,255, 0.25)"
     ctx.strokeStyle = "rgba(255,255,255, 0.25)"
     let height = ctx.canvas.height;
+    let text = `${props.min + i * step}`
+    if (props.tags) {
+      text = props.tags[i]
+    }
     if (props.active == i) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.5)"
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"
+      ctx.fillStyle = `rgba(${preferences.ui.accent}, 0.8)`
+      ctx.strokeStyle = `rgba(${preferences.ui.accent}, 0.4)`
       ctx.font = "400 40px SF Pro"
-      let ms = ctx.measureText(`${props.min + i * step}`)
-      ctx.fillText(`${props.min + (i) * step}`, offset + i * (dx) - ms.width / 2, height / 2 + (40 / 3))
+      let ms = ctx.measureText(text)
+      let infill = 0;
+      if (i == 0) {
+        if (ms.width / 2 > offset) {
+          infill = ms.width / 2 - offset
+        }
+      }
+
+
+      ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (40 / 3))
     } else {
       ctx.font = "400 24px SF Pro"
-      let ms = ctx.measureText(`${i * step}`)
-      ctx.fillText(`${props.min + (i) * step}`, offset + i * (dx) - ms.width / 2, height / 2 + (24 / 3))
+      let ms = ctx.measureText(`${text}`)
+      let infill = 0;
+      if (i == 0) {
+        if (ms.width / 2 > offset) {
+          infill = ms.width / 2 - offset
+        }
+      }
+      ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (24 / 3))
     }
 
 

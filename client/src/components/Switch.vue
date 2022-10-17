@@ -22,8 +22,8 @@ const haptics = inject("haptic") as (a: number, b: number, c: number) => void
 function toggle(pos: boolean) {
   if (pos != state.active) {
     state.active = !state.active
-    haptics(1, 1, 50)
-    haptics(1, 1, 75)
+    haptics(2, 1, 100)
+    // haptics(1, 1, 75)
 
   }
 }
@@ -57,13 +57,13 @@ function toggle(pos: boolean) {
 <style lang="scss" scoped>
 
 .switch-space-active {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(255, 149, 0, 0.7) !important;
 
   box-shadow: 0 0 20px 1px rgba(0, 0, 0, 0.1), inset 0 0 2px 1px rgba(255, 255, 255, 0.05);
 }
 
 .switch-right {
-  animation: switch-move-right 150ms forwards ease-out;
+  //animation: switch-move-right 150ms forwards ease-out;
 }
 
 @keyframes switch-move-right {
@@ -76,7 +76,7 @@ function toggle(pos: boolean) {
 }
 
 .switch-left {
-  animation: switch-move-left 150ms forwards ease;
+  //animation: switch-move-left 150ms forwards ease;
 }
 
 @keyframes switch-move-left {

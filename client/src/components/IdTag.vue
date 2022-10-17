@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import Loader from "@/components/Loader.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
 import type {Attribute, Entity, Preferences, Remote, Status} from "@/types";
+import Button from "@/components/Button.vue";
 
 let state = reactive({
   menu: false,
@@ -47,8 +47,14 @@ function update() {
 
 }
 
-function toggleMenu() {
+const haptics = inject("haptic") as (a: number, b: number, c: number) => void
 
+function open() {
+  haptics(2, 1, 100)
+  state.menu = !state.menu
+}
+
+function toggleMenu() {
   state.menu = !state.menu
 }
 
@@ -65,7 +71,7 @@ function reload() {
   </div>
 
   <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
-       @click="toggleMenu">
+       @mousedown="open">
     <div class="d-flex flex-column label-o4">
       <div class="d-flex gap-2 label-c2 align-items-center">
         <div class="user-container">
@@ -118,27 +124,15 @@ function reload() {
   </div>
 
   <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 py-1">
-    <Plot :cols="4" :rows="1">
-      <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
-        <div class="label-o4 label-c2"><i class="fa-solid fa-house fa-fw"></i></div>
-      </div>
-      <div class="subplot plot-centered" @click="$router.push('/terminal/home')">
-        <div class="label-o4 label-c2"><i class="fa-solid fa-shield fa-fw"></i></div>
-      </div>
-
-      <div class="subplot plot-centered" @click="reload">
-
-        <div class="label-o4 label-c2">
-          <div v-if="state.reloading">
-            <Loader size="sm"></Loader>
-          </div>
-
-          <i v-else class="fa-solid fa-rotate-right fa-fw"></i>
-        </div>
-      </div>
-      <div class="subplot plot-centered" @click="$router.push('/terminal/settings')">
-        <div class="label-o4 label-c2"><i class="fa-solid fa-cog fa-fw"></i></div>
-      </div>
+    <Plot :cols="4" :rows="1" @click="state.menu = false">
+      <Button :active="true" text="􀎟" @click="$router.push('/terminal/home')"></Button>
+      <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
+      <Button :active="true" text="􀅈" @click="reload"></Button>
+      <Button :active="true" text="􀍟" @click="$router.push('/terminal/settings')"></Button>
+    </Plot>
+    <Plot :cols="2" :rows="1">
+      <Button :active="true" text="Beta" @click="$router.push('/terminal/home')"></Button>
+      <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
     </Plot>
     <Plot :cols="2" :rows="1">
       <div class="subplot">
@@ -166,16 +160,7 @@ function reload() {
         </div>
       </div>
     </Plot>
-    <Plot :cols="1" :rows="1" title="Brightness">
-      <input v-model="preferences.ui.brightness"
-             :max=20
-             :min=4
-             :step=1
-             class="slider-small slider-dim"
-             type="range"
-             @mousemove.stop>
-    </Plot>
-    <Plot :cols="2" :rows="2" title="Quick Settings">
+    <Plot :cols="2" :rows="2">
       <Toggle :active="preferences.ui.grid" :fn="() => preferences.ui.grid = !preferences.ui.grid"
               title="Grid"></Toggle>
       <Toggle :active="preferences.ui.screensaver.enabled"
@@ -248,7 +233,7 @@ function reload() {
 }
 
 .tag-container:active {
-  animation: tagClick 100ms ease forwards !important;
+  //animation: tagClick 100ms ease forwards !important;
 }
 
 

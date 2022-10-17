@@ -33,7 +33,8 @@ import {Nexus, Target} from "@/views/terminal/nexus";
 
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import {HapticEngine} from "@/views/terminal/haptics";
+import type {Haptics} from "@/views/terminal/haptics";
+import haptics from "@/views/terminal/haptics";
 
 const Clock = defineAsyncComponent({
   loader: () => import('@/components/Clock.vue'),
@@ -62,29 +63,27 @@ const IdTag = defineAsyncComponent({
   loader: () => import('@/components/IdTag.vue'),
 })
 
-const haptic = reactive<{
-  haptics: HapticEngine
-}>({
-  haptics: {} as HapticEngine
-})
 
 // -- Websockets --
 onMounted(() => {
-  haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
+  haptics.connect("ws://10.0.1.60/ws")
+
+  // haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
   remote.nexus = new Nexus(handleMessage)
 })
 
-function tap(frequency: number, iterations: number, amplitude: number) {
-  haptic.haptics.tap(frequency, iterations, amplitude)
-}
+// function tap(frequency: number, iterations: number, amplitude: number) {
+//   haptic.haptics.tap(frequency, iterations, amplitude)
+// }
 
-provide("haptic", tap)
+provide("haptic", haptics.tap)
+provide("haptics", haptics as Haptics)
 
 onUnmounted(() => {
   if (!remote.nexus.ws) return
   remote.nexus.ws.close()
-  if (!haptic.haptics) return
-  haptic.haptics.ws.close()
+  if (!haptics) return
+  haptics.close()
   remote = {} as Remote
 })
 
@@ -366,7 +365,7 @@ function dragContinue(e: MouseEvent) {
     if (isBottom) {
       if (bottomPull > gestureThreshold) {
         state.verified = false
-        tap(1, 1, 50)
+        haptics.tap(2, 1, 50)
         state.locked = false
         router.push("/terminal/home")
       }
@@ -457,7 +456,7 @@ provide('remote', remote)
                   class="bottom-nav">
               <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
                        :name="route.name"
-                       :to="route.path" @mousedown="() => tap(1, 1, 12)" @mouseup="() => tap(1, 1, 25)"></Subplot>
+                       :to="route.path" @mousedown="() => haptics.tap(2, 1, 50)"></Subplot>
             </Plot>
           </div>
         </div>

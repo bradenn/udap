@@ -84,10 +84,18 @@ void Haptic::allocateGpio() {
 }
 
 void Haptic::sinPulse() {
-    int duration = 1875;
 
-    for (int j = 0; j < 2; j++) {
+    int steps = 20;
+    double dr = (M_PI * 2) / steps;
+    int dt = 1563 / steps;
+    for (int j = 0; j < steps; j++) {
+        double r = pow(cos((j * dr)), 2) * 4095.0;
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, floor(r));
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
+        usleep(dt);
     }
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, 0);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
 
 }
 
@@ -97,11 +105,13 @@ void Haptic::pulseCustom(int freq, int amp, int max) {
             pulseLow(amp);
             pulseLow(0);
         }
-    } else {
+    } else if (freq == 1) {
         for (int j = 0; j < max; j++) {
             pulseHigh(amp);
             pulseHigh(0);
         }
+    } else if (freq == 2) {
+        sinPulse();
     }
 }
 

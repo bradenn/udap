@@ -6,7 +6,7 @@ export default {
     path: '/terminal/remote',
     name: 'Remote',
     component: Remote,
-    icon: 'fa-joystick',
+    icon: 'fa-gamepad',
     meta: {
         status: 'wip'
     },

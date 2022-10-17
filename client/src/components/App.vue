@@ -2,6 +2,9 @@
 
 <script lang="ts" setup>
 
+import {inject} from "vue";
+import type {Haptics} from "@/views/terminal/haptics";
+
 interface App {
   name: string
   icon?: string
@@ -10,10 +13,17 @@ interface App {
 
 let props = defineProps<App>()
 
+const haptics = inject("haptics") as Haptics
+
+function click() {
+  haptics.tap(2, 2, 100)
+  // haptics.tap(0, 2, 100)
+}
+
 </script>
 
 <template>
-  <div class="app-container">
+  <div class="app-container" @mousedown="click">
     <div class="app-icon element">
       <div v-if="props.status === 'wip'" class="marker">•</div>
       <i v-if="props.icon" :class="props.icon" class="fa-solid fa-fw app-icon-char"></i>

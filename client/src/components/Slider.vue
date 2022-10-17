@@ -13,15 +13,21 @@ const props = defineProps<{
   step: number,
   unit?: string,
   name: string,
-
+  value: number,
+  tags?: string[],
+  change?: (a: number) => void
+  live?: boolean
+  confirm?: boolean
 }>()
 
 let state = reactive({
   value: 0,
   track: 0,
   dragging: false,
+  confirm: false,
   since: 0,
   target: 0,
+  change: 0,
   thumbWidth: 0,
   transform: 0,
   ready: false,
@@ -41,6 +47,26 @@ onMounted(() => {
   // let np = ev.clientX - r.offsetLeft
   state.thumbWidth = (w / state.stops)
   state.transform = (state.stops) * (state.thumbWidth) + 16
+  state.value = Math.floor(props.value / props.step)
+  state.track = Math.floor(state.value * state.thumbWidth) + (state.value !== 0 ? 10 : 0)
+  state.target = state.value
+  state.lastSend = Date.now()
+})
+
+watchEffect(() => {
+
+  // let ivid = setInterval(() => {
+  //
+  //   state.track = (state.change + state.track) / 2
+  //   console.log("RESOURCES")
+  //   if (Math.abs(state.track - state.change) <= 0.1) {
+  //     clearInterval(ivid)
+  //   }
+  // }, 16)
+
+  state.track = state.change
+
+  return state.change
 })
 
 watchEffect(() => {
@@ -49,15 +75,18 @@ watchEffect(() => {
   if (state.value % 5 != 0 && Date.now() - state.lastSend <= 40) return
   if (state.value == 0 || state.value == state.stops - 1) {
 
-    haptics(0, 1, 25)
-    haptics(1, 2, 25)
+    // haptics(0, 1, 25)
+    haptics(2, 1, 100)
+    haptics(0, 1, 100)
+    haptics(1, 1, 100)
     // haptics(1, 2, 100)
   } else {
     // haptics(1, 1, 10)
-    haptics(1, 1, 25)
+    haptics(1, 2, 25)
 
   }
   state.target = state.value
+
   state.lastSend = Date.now()
   // tick(1, 2)
   return state.value
@@ -66,7 +95,7 @@ watchEffect(() => {
 function handleDrag(ev: MouseEvent) {
   state.since = Date.now()
   if (!state.dragging) return
-  let r = ev.currentTarget as HTMLElement
+  let r = document.getElementById(`track-${state.uuid}`) as HTMLElement
 
   let w = r.getBoundingClientRect().width - 16 - 51
   let np = ev.clientX - r.offsetLeft - 25
@@ -82,7 +111,10 @@ function handleDrag(ev: MouseEvent) {
     // tick(0, 2, 4095)
   } else {
     state.value = Math.floor(np / dx)
-    state.track = Math.floor(np / dx) * dx
+    state.change = Math.floor(np / dx) * dx
+  }
+  if (props.live) {
+    props.change(state.value * props.step)
   }
 }
 
@@ -92,7 +124,14 @@ function mouseDown() {
 }
 
 function stopDrag() {
-  state.dragging = false
+  if (state.dragging) {
+    if (!props.confirm) {
+      props.change(state.value * props.step)
+    } else {
+      state.confirm = true
+    }
+    state.dragging = false
+  }
 }
 
 </script>
@@ -101,16 +140,19 @@ function stopDrag() {
   <div class="d-flex justify-content-center w-100">
     <div :id="`track-${state.uuid}`" class="element p-0" style="width: 100%"
          @mousedown="mouseDown" @mousemove="handleDrag"
-         @mouseup="stopDrag">
-      <div class="d-flex justify-content-between">
+         @mouseleave="stopDrag" @mouseup="stopDrag">
+      <div class="d-flex justify-content-between lh-1 " style="padding-top:4px">
         <div class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">{{ props.name }}</div>
-        <div class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
+        <div v-if="props?.tags" class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
+          {{ props.tags[state.value] }}
+        </div>
+        <div v-else class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
           {{ props.min + state.value * props.step }}{{ props.unit }}
         </div>
       </div>
       <Ticks v-if="state.transform > 0" :active="state.value" :min="props.min" :series="5" :step="props.step"
-             :style="`width: ${state.transform}px; left: ${10}px; position:relative; height:1.25rem;`"
-             :ticks="state.stops"></Ticks>
+             :style="`width: ${state.transform}px; top: 0px;left: ${10}px; position:relative; height:1.25rem;`"
+             :tags="tags" :ticks="state.stops"></Ticks>
       <div class="shuttle-path subplot"></div>
       <div :style="`left: ${state.track}px;  position: relative; width: ${state.thumbWidth + 50}px;`"
            class="shuttle-cock subplot m-1 mt-1">
