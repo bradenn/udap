@@ -79,13 +79,13 @@ function selectZone(id: string) {
 
 function update(value: string) {
   if (value === "{bksp}") {
-    state.name = state.name.substring(0, state.name.length - 1)
+    state.name.value = state.name.value.substring(0, state.name.value.length - 1)
   } else if (value === "{enter}") {
     state.field++;
   } else if (value === "{space}") {
-    state.name += " "
+    state.name.value += " "
   } else {
-    state.name += value
+    state.name.value += value
   }
 }
 

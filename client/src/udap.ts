@@ -23,6 +23,7 @@ function connect(url: string): boolean {
     ws.onclose = onClose
     ws.onmessage = onMessage
     ws.onerror = onError
+    return false
 }
 
 function onOpen(event: Event) {
