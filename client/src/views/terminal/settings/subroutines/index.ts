@@ -6,6 +6,7 @@ import SubroutineView from "@/views/terminal/settings/subroutines/SubroutineView
 import Subroutines from "@/views/terminal/settings/subroutines/Subroutines.vue";
 import Create from "@/views/terminal/settings/subroutines/pages/Create.vue";
 import Trigger from "@/views/terminal/settings/subroutines/pages/NewTrigger.vue";
+import Macro from "@/views/terminal/settings/subroutines/pages/NewMacro.vue";
 
 const routes = {
     path: '/terminal/settings/subroutines',
@@ -26,6 +27,11 @@ const routes = {
             name: 'Create A Subroutine',
             icon: 'timeline',
             component: Create
+        }, {
+            path: '/terminal/settings/subroutines/macro',
+            name: 'Create A Macro',
+            icon: 'timeline',
+            component: Macro
         },
         {
             path: '/terminal/settings/subroutines/trigger',

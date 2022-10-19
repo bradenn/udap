@@ -4,7 +4,7 @@
 
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import {v4 as uuidv4} from "uuid";
-import {Preference} from "@/preferences";
+import type {Preferences} from "@/types";
 
 const props = defineProps<{
   active?: number,
@@ -32,7 +32,7 @@ watchEffect(() => {
   drawTicks()
   redraw()
 })
-const preferences = inject("preferences") as Preference
+const preferences = inject("preferences") as Preferences
 
 function drawTicks() {
   let ctx = state.ctx

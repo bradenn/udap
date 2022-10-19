@@ -47,6 +47,7 @@ function createSubroutine() {
     <div class="d-flex">
       <div class="element d-flex mb-1" style="height: 2rem">
         <Subplot name="Create" to="/terminal/settings/subroutines/create"></Subplot>
+        <Subplot name="Create Macro" to="/terminal/settings/subroutines/macro"></Subplot>
 
       </div>
     </div>
@@ -57,6 +58,7 @@ function createSubroutine() {
         </div>
         <div class="label-c2 label-o4 label-w700 lh-1">{{ sr.description }}</div>
         <div class="label-c3 label-o3 label-w400">{{ sr?.macros?.length || 0 }}
+
           macro{{ sr?.macros?.length !== 1 ? 's' : '' }}
         </div>
       </div>

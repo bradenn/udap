@@ -20,6 +20,7 @@ func NewSubRoutineOperator(ctrl *controller.Controller) ports.SubRoutineOperator
 
 func (m *subRoutineOperator) Run(subRoutine domain.SubRoutine) error {
 	for _, macro := range subRoutine.Macros {
+		// Good
 		err := m.ctrl.Macros.Run(macro.Id)
 		if err != nil {
 			return err

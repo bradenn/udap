@@ -113,9 +113,6 @@ function handleDrag(ev: MouseEvent) {
     state.value = Math.floor(np / dx)
     state.change = Math.floor(np / dx) * dx
   }
-  if (props.live) {
-    props.change(state.value * props.step)
-  }
 }
 
 function mouseDown() {
@@ -125,7 +122,7 @@ function mouseDown() {
 
 function stopDrag() {
   if (state.dragging) {
-    if (!props.confirm) {
+    if (!props.confirm && props.change) {
       props.change(state.value * props.step)
     } else {
       state.confirm = true

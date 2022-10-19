@@ -11,7 +11,8 @@ const weatherRoutes = {
     component: WeatherApp,
     icon: 'fa-cloud-sun',
     meta: {
-        status: "wip"
+        status: "wip",
+        icon: "/ven/weather.svg"
     },
     children: [
         {

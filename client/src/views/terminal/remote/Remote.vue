@@ -43,7 +43,9 @@ function updateData() {
 
 function selectEntity(id: string) {
   state.selected = id
-  state.target = state.entities.find(e => e.id === id)
+  let entities = state.entities.find(e => e.id === id)
+  if (!entities) return
+  state.target = entities
   state.attributes = remote.attributes.filter(a => a.entity === id).sort((a, b) => a.order - b.order)
 }
 

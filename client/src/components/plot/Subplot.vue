@@ -23,6 +23,13 @@ function click() {
   // haptics.tap(0, 2, 100)
 }
 
+function runFn() {
+  click()
+  if (props.fn) {
+    props.fn()
+  }
+}
+
 </script>
 
 <template>
@@ -41,7 +48,7 @@ function click() {
   <div v-else-if="props.fn"
        :class="`${props.active||false?'':'subplot-inline'} ${props.theme?`theme-${props.theme}`:''}`"
        class="subplot p-1"
-       @mousedown="() => {props.fn(); click();}">
+       @mousedown="runFn">
     <div :class="`${props.alt?'justify-content-between w-100':'justify-content-center w-100'}`"
          class="d-flex ">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>

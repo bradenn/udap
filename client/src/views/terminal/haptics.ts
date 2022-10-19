@@ -8,14 +8,14 @@ interface HapticPulse {
 }
 
 interface Haptics {
-    connect(url: string)
+    connect(url: string): void
 
     tap(frequency: number, iterations: number, amplitude: number): void
 }
 
 let hapticEngine: HapticEngine;
 
-function connect(url: string) {
+function connect(url: string): void {
     hapticEngine = new HapticEngine(url)
 }
 

@@ -21,6 +21,9 @@ export default {
         redirect: '/terminal/settings/preferences',
         component: Settings,
         icon: 'fa-cog',
+        meta: {
+            icon: "/applications-system.svg"
+        },
         children: [
             {
                 path: '/terminal/settings/preferences',

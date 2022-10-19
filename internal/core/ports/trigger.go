@@ -9,6 +9,8 @@ import (
 
 type TriggerRepository interface {
 	common.Persist[domain.Trigger]
+	FindByName(name string) (*domain.Trigger, error)
+	Register(*domain.Trigger) error
 }
 
 type TriggerOperator interface {
@@ -17,7 +19,8 @@ type TriggerOperator interface {
 
 type TriggerService interface {
 	domain.Observable
-	Trigger(id string) error
+	Trigger(name string) error
+	Register(*domain.Trigger) error
 	FindById(id string) (*domain.Trigger, error)
 	Create(*domain.Trigger) error
 	Update(*domain.Trigger) error

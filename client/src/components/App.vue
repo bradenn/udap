@@ -9,6 +9,7 @@ interface App {
   name: string
   icon?: string
   status?: string
+  img?: string
 }
 
 let props = defineProps<App>()
@@ -24,6 +25,7 @@ function click() {
 
 <template>
   <div class="app-container" @mousedown="click">
+    <!--    <img v-if="props.img" :src="`ven/${props.img}`" class="app-icon" alt=""/>-->
     <div class="app-icon element">
       <div v-if="props.status === 'wip'" class="marker">•</div>
       <i v-if="props.icon" :class="props.icon" class="fa-solid fa-fw app-icon-char"></i>

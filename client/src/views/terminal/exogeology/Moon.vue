@@ -1,8 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
 <script lang="ts" setup>
-
-import Slider from "@/components/Slider.vue";
 import Switch from "@/components/Switch.vue";
 import Button from "@/components/Button.vue";</script>
 <template>
@@ -11,8 +9,6 @@ import Button from "@/components/Button.vue";</script>
     <div style="width: 45rem">
       <div class="label-c1 label-w400 label-o4 px-2 mb-1">Range Sliders</div>
       <div class="d-flex gap-1">
-        <Slider :max="100" :min="0" :step="5" class="" name="Brightness" unit="%"></Slider>
-        <Slider :max="15" :min="0" :step="1" name="Current" unit=" Amps"></Slider>
       </div>
     </div>
     <div style="width: 45rem">

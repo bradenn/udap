@@ -99,6 +99,9 @@ const timingRoutes = {
     name: 'Timing',
     redirect: '/terminal/timing/stopwatch',
     icon: 'fa-stopwatch',
+    meta: {
+        icon: "/preferences-system-time.svg"
+    },
     component: Timing,
     children: [
         {
@@ -188,6 +191,9 @@ const whiteboardRoutes = {
     path: '/terminal/whiteboard',
     name: 'Whiteboard',
     component: Whiteboard,
+    meta: {
+        icon: "/gnome-paint.svg"
+    },
     icon: 'fa-highlighter',
 }
 
@@ -196,7 +202,8 @@ const calculatorRoute = {
     name: 'Calculator',
     component: Calculator,
     meta: {
-        status: ''
+        status: '',
+        icon: "/calc.svg"
     },
     icon: 'fa-calculator',
 }

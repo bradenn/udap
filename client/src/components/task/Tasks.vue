@@ -1,5 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
+
 interface Tasks {
   title: string
 }
@@ -11,14 +12,16 @@ let props = defineProps<Tasks>()
 <template>
   <div class="">
     <div class="label-lg label-w700 label-o5 px-1 lh-1 mb-2">{{ props.title }}</div>
-    <div class="d-flex flex-column gap-1">
+    <div class="d-flex flex-column gap-1 ">
       <slot></slot>
     </div>
+
   </div>
 </template>
 
 
 <style lang="scss" scoped>
+
 .label-shimmer {
   mix-blend-mode: lighten;
 }

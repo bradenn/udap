@@ -159,7 +159,7 @@ func (u *zoneService) FindAll() (*[]domain.Zone, error) {
 }
 
 func (u *zoneService) FindById(id string) (*domain.Zone, error) {
-	return u.repository.FindById(id)
+	return u.repository.FindByIdPopulate(id)
 }
 
 func (u *zoneService) Create(zone *domain.Zone) error {

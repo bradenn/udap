@@ -10,6 +10,7 @@ import (
 type ZoneRepository interface {
 	common.Persist[domain.Zone]
 	FindByName(name string) (*domain.Zone, error)
+	FindByIdPopulate(id string) (*domain.Zone, error)
 }
 
 type ZoneService interface {
