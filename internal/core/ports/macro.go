@@ -21,5 +21,6 @@ type MacroService interface {
 	Run(id string) error
 	FindById(id string) (*domain.Macro, error)
 	Create(*domain.Macro) error
+	Update(*domain.Macro) error
 	Delete(id string) error
 }

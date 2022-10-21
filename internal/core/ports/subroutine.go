@@ -23,5 +23,5 @@ type SubRoutineService interface {
 	FindById(id string) (*domain.SubRoutine, error)
 	Create(*domain.SubRoutine) error
 	Update(*domain.SubRoutine) error
-	Delete(*domain.SubRoutine) error
+	Delete(id string) error
 }
