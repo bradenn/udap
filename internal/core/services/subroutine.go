@@ -82,6 +82,7 @@ func (u *subRoutineService) Delete(id string) error {
 	if err != nil {
 		return err
 	}
+
 	err = u.repository.Delete(byId)
 	if err != nil {
 		return err

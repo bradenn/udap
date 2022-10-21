@@ -1,0 +1,85 @@
+<!-- Copyright (c) 2022 Braden Nicholson -->
+
+<script lang="ts" setup>
+
+import type {SubRoutine} from "@/types";
+import {inject, reactive} from "vue";
+import Button from "@/components/Button.vue";
+import subroutineService from "@/services/subroutineService";
+
+interface SubRoutineProps {
+  subroutine: SubRoutine
+}
+
+const state = reactive({
+  toggle: false
+})
+
+const props = defineProps<SubRoutineProps>()
+
+
+const notifications = inject("notifications")
+
+function deleteSubRoutine() {
+  subroutineService.deleteSubroutine(props.subroutine.id).then(res => {
+    notifications.show("Subroutine", `Subroutine '${props.subroutine.description}' deleted.`, 0, 1000 * 4)
+    console.log(err)
+  }).catch(err => {
+    notifications.show("Subroutine", `Subroutine '${props.subroutine.description}' cannot be deleted.`, 2, 1000 * 5)
+    console.log(err)
+  })
+}
+
+</script>
+
+<template>
+  <div>
+    <div class="element p-2" @click="state.toggle = !state.toggle">
+
+      <div class="d-flex justify-content-between">
+        <div class="label-xs label-o4 label-w500 pb-2">􁏀</div>
+      </div>
+      <div class="label-c2 label-o4 label-w700 lh-1">{{ props.subroutine.description }}</div>
+      <div class="label-c3 label-o3 label-w400">{{ props.subroutine.macros.length }}
+
+        macro{{ props.subroutine.macros.length !== 1 ? 's' : '' }}
+      </div>
+
+    </div>
+    <div v-if="state.toggle" class="element element-menu">
+      <div class="grid-element">
+        <Button active text="􀈑" @click="deleteSubRoutine"></Button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.element-menu {
+  position: absolute;
+  width: 10rem;
+
+  z-index: 1000;
+  margin-top: 0.25rem;
+
+  /*left: calc(-100% - 0.25rem);*/
+  /*top: calc(100% + 0.25rem);*/
+}
+
+.grid-fill {
+  position: relative;
+  grid-column: 3 / 5;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-element {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  grid-template-rows: repeat(1, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+}
+</style>

@@ -3,6 +3,8 @@
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Remote, SubRoutine} from "@/types";
 import Subplot from "@/components/plot/Subplot.vue";
+import Macro from "@/views/terminal/settings/subroutines/Macro.vue";
+import Subroutine from "@/views/terminal/settings/subroutines/Subroutine.vue";
 
 let remote = inject('remote') as Remote
 
@@ -16,7 +18,9 @@ onMounted(() => {
   handleUpdates(remote)
 })
 
-watchEffect(() => handleUpdates(remote))
+watchEffect(() => {
+  return handleUpdates(remote)
+})
 
 function handleUpdates(remote: Remote) {
   state.loading = false
@@ -46,22 +50,16 @@ function createSubroutine() {
   <div>
     <div class="d-flex">
       <div class="element d-flex mb-1" style="height: 2rem">
-        <Subplot name="Create" to="/terminal/settings/subroutines/create"></Subplot>
+        <Subplot name="Create Subroutine" to="/terminal/settings/subroutines/create"></Subplot>
         <Subplot name="Create Macro" to="/terminal/settings/subroutines/macro"></Subplot>
 
       </div>
     </div>
     <div class="page-grid">
-      <div v-for="sr in state.subroutines" class="element p-2">
-        <div class="d-flex justify-content-between">
-          <div class="label-xs label-o4 label-w500 pb-2">􁏀</div>
-        </div>
-        <div class="label-c2 label-o4 label-w700 lh-1">{{ sr.description }}</div>
-        <div class="label-c3 label-o3 label-w400">{{ sr?.macros?.length || 0 }}
-
-          macro{{ sr?.macros?.length !== 1 ? 's' : '' }}
-        </div>
-      </div>
+      <Subroutine v-for="sr in state.subroutines" :key="sr.id" :subroutine="sr"></Subroutine>
+    </div>
+    <div class="page-grid">
+      <Macro v-for="sr in remote.macros" :key="sr.id" :macro="sr"></Macro>
 
     </div>
   </div>
@@ -75,6 +73,6 @@ function createSubroutine() {
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
   grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 </style>

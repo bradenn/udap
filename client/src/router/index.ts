@@ -258,6 +258,7 @@ const testRoutes = {
 
 const routes = [
     defaultRoute,
+    testRoutes,
     setup,
     terminalRoutes,
     {path: '/:pathMatch(.*)*', redirect: "/"}

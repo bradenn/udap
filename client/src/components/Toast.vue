@@ -1,20 +1,46 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+
+
+import {reactive, watchEffect} from "vue";
+import moment from "moment";
+
+interface ToastProps {
+  title: string
+  message: string
+  severity: number
+  time: number
+}
+
+const props = defineProps<ToastProps>()
+
+
+const state = reactive({
+  time: ""
+})
+
+watchEffect(() => {
+  state.time = moment(props.time).fromNow()
+})
+
+
+</script>
 
 <template>
-  <div class="element p-1 toast" style="width: 16rem;">
+  <div class="element p-1 toast" style="width: 18rem; height: 2.5rem">
     <div class="d-flex">
-      <div :style="`background-color: rgba(25, 135, 84, 0.53);`"
-           class="status-marker"></div>
+      <div
+          :style="`background-color: rgba(${props.severity === 0?'25, 135, 84':props.severity === 1?'255, 149, 0':'255,69,58'}, 0.53);`"
+          class="status-marker"></div>
       <div class="w-100 d-flex flex-column justify-content-center">
-        <div class="d-flex justify-content-between lh-1">
+        <div class="d-flex justify-content-between">
           <div class="label-c2 label-o5 label-w600  d-flex">
-            WorldSpace
+            {{ props.title }}
           </div>
-          <div class="label-c2 label-o2 label-w500 px-1">2 min ago</div>
+          <div class="label-c2 label-o2 label-w500 px-1">{{ props.time / 1000 }}s</div>
         </div>
-        <div class="label-c2 label-o3 label-w500 lh-1">Matthew has arrived.</div>
+        <div class="label-c2 label-o3 label-w500 lh-1">{{ props.message }}</div>
       </div>
     </div>
 

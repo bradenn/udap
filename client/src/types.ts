@@ -14,6 +14,30 @@ export interface Trigger {
     lastTrigger: string;
 }
 
+
+export enum TaskType {
+    String,
+    Number,
+    Object,
+    List,
+    Radio,
+}
+
+export interface TaskOption {
+    title: string
+    description: string
+    value: any
+}
+
+export interface Task {
+    title: string
+    description: string
+    type: TaskType
+    options?: TaskOption[]
+    preview: string
+    value: any
+}
+
 export interface SubRoutine {
     created: string;
     updated: string;
@@ -281,6 +305,7 @@ export interface Log {
 
 export interface Identifiable {
     id: string
+    deleted: boolean
 }
 
 export function memorySizeOf(obj: any) {

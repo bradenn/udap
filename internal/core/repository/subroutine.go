@@ -21,6 +21,19 @@ func NewSubRoutineRepository(db *gorm.DB) ports.SubRoutineRepository {
 	}
 }
 
+func (s *subRoutineRepo) Delete(e *domain.SubRoutine) error {
+
+	err := s.db.Model(e).Association("Macros").Clear()
+	if err != nil {
+		return err
+	}
+
+	if err = s.db.Delete(e).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *subRoutineRepo) FindById(id string) (*domain.SubRoutine, error) {
 	target := domain.SubRoutine{}
 	err := s.db.Model(&domain.SubRoutine{}).Preload("Macros").Where("id = ?", id).Find(&target).Error

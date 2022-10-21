@@ -41,7 +41,7 @@ func (r macroRouter) delete(w http.ResponseWriter, req *http.Request) {
 
 	err := r.service.Delete(key)
 	if err != nil {
-		http.Error(w, "could not delete macro", 500)
+		http.Error(w, err.Error(), 500)
 		return
 	}
 

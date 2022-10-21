@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 
 import router from '@/router'
-import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
+import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch, watchEffect} from "vue";
 import "@/types";
 
 import type {
@@ -35,6 +35,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 import type {Haptics} from "@/views/terminal/haptics";
 import haptics from "@/views/terminal/haptics";
+import Toast from "@/components/Toast.vue";
 
 const Clock = defineAsyncComponent({
   loader: () => import('@/components/Clock.vue'),
@@ -220,11 +221,18 @@ function mouseDown() {
 
 function createOrUpdate(target: any[], data: Identifiable): any[] {
   if (target.find((e: Identifiable) => e.id === data.id)) {
-    return target.map((a: Identifiable) => a.id === data.id ? data : a)
+    if (data.deleted) {
+      return target.filter((a: Identifiable) => a.id !== data.id)
+    } else {
+      return target.map((a: Identifiable) => a.id === data.id ? data : a)
+    }
   } else {
-    target.push(data)
-    return target
+    if (!data.deleted) {
+      target.push(data)
+      return target
+    }
   }
+  return target
 }
 
 // -- Gesture Navigation --
@@ -412,6 +420,53 @@ function dragStop(e: MouseEvent) {
 
 }
 
+interface ToastObject {
+  name: string,
+  message: string,
+  severity: number,
+  duration: number
+}
+
+const toasts = reactive({
+  queue: [] as ToastObject[],
+  active: false,
+  interval: 0,
+  current: {} as ToastObject
+})
+
+watchEffect(() => {
+  if (toasts.queue.length > 0 && !toasts.active) {
+    toasts.active = true
+    toasts.current = toasts.queue[0]
+    toasts.queue = toasts.queue.filter(q => q !== toasts.current)
+    toasts.interval = setInterval(() => {
+      if (toasts.active) {
+        toasts.current.duration -= 1000
+        if (toasts.current.duration <= 0) {
+          toasts.active = false
+          toasts.current = {} as ToastObject
+          clearInterval(toasts.interval)
+        }
+      }
+    }, 1000)
+  }
+  return toasts.queue
+})
+
+
+const notifications = {
+  show: (name: string, message: string, severity: number, duration: number) => {
+    toasts.queue.push({
+      name: name,
+      message: message,
+      severity: severity,
+      duration: duration
+    })
+  },
+}
+
+provide('notifications', notifications)
+
 // Provide the remote component for child components
 provide('terminal', state)
 provide('remote', remote)
@@ -430,7 +485,9 @@ provide('remote', remote)
         <div class="" v-on:click="(e) => state.locked = true">
           <Clock :small="!state.showClock"></Clock>
         </div>
-        <!--        <Toast></Toast>-->
+
+        <Toast v-if="toasts.active" :message="toasts.current.message" :severity="toasts.current.severity"
+               :time="toasts.current.duration" :title="toasts.current.name"></Toast>
 
         <div class="generic-slot-sm ">
           <div v-if="false" class="element p-2" style="width: 13rem !important;">

@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
-import {onMounted, onUnmounted, reactive} from "vue";
+import {inject, onMounted, onUnmounted, reactive} from "vue";
 import type {KeyboardOptions} from "simple-keyboard/build/interfaces";
+import type {Haptics} from "@/views/terminal/haptics";
 
 const props = defineProps<{
   keyboardClass: string
@@ -66,6 +67,7 @@ let state: KeyboardState = reactive({
   keyboard: {} as Keyboard,
   shift: false
 })
+const haptics = inject("haptics") as Haptics
 
 onMounted(() => {
   state.keyboard = new Keyboard(`.${props.keyboardClass}`, keyboardOptions)
@@ -78,6 +80,9 @@ onUnmounted(() => {
 })
 
 function onKeyPress(button: string) {
+  if (haptics) {
+    haptics.tap(1, 1, 100)
+  }
   if (button === "{shift}" || button === "{lock}") {
     state.shift = !state.shift;
     handleShift();
@@ -102,15 +107,15 @@ function handleShift() {
   });
 }
 
-function typeManual(e: any) {
-  let keyPress = e["key"] || ""
-  if (!keyPress) return
-  if (keyPress === "Backspace") {
+function typeManual(e: KeyboardEvent) {
+  let key: string = e.key
+  if (!key) return
+  if (key === "Enter") {
+    onKeyPress("{enter}")
+  } else if (key === "Backspace") {
     onKeyPress("{bksp}")
-  } else if (keyPress === "Shift" || keyPress.length > 1) {
-    return
-  } else {
-    onKeyPress(keyPress)
+  } else if (key.length === 1) {
+    onKeyPress(key)
   }
 
 }
@@ -118,21 +123,32 @@ function typeManual(e: any) {
 </script>
 
 <template>
-  <div :class="props.keyboardClass" class="simple-keyboard element"></div>
+  <div class="keyboard-frame element">
+    <div :class="props.keyboardClass" class=" simple-keyboard"></div>
+  </div>
 </template>
 
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
+.keyboard-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute !important;
+  bottom: 3.6rem;
+  left: 0;
+  height: 13.5rem;
+  width: 100%;
+  padding: 0.5rem;
+}
 
 .simple-keyboard {
   position: absolute !important;
-  width: 40rem;
+  width: 40rem !important;
+  /*outline: 1px solid white;*/
+  padding: 1rem;
 
-
-  z-index: 1000;
-  bottom: 2%;
-  left: calc(50% - 20rem);
-
+  z-index: 99000 !important;
 }
 </style>
