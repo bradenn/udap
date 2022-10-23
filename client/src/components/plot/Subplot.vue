@@ -36,7 +36,7 @@ function runFn() {
   <div v-if="props.to"
        :class="`${props.to===$router.currentRoute.value.fullPath?'':'subplot-inline'} ${props.theme?`theme-${props.theme}`:''}`"
        class="subplot p-1"
-       @mousedown="click" @mouseover="$router.replace(props.to || '/')">
+       @click="$router.replace(props.to || '/')" @mousedown="click">
     <div class="d-flex justify-content-start px-1">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
       </div>

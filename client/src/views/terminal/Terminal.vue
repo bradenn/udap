@@ -361,7 +361,7 @@ function dragContinue(e: MouseEvent) {
     let thresholdOffset = 80;
 
     let isBottom = e.screenY > height - thresholdOffset;
-    let isTop = e.screenY > thresholdOffset;
+    let isTop = e.screenY <= thresholdOffset;
 
     let isRight = state.dragA.x > width - thresholdOffset;
 
@@ -507,13 +507,13 @@ provide('remote', remote)
         </router-view>
       </div>
       <div class="justify-content-center d-flex align-items-center align-content-center">
-        <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">
+        <div v-if="$route.matched.length > 1" @click.prevent="state.scrollY!==0">
           <div v-if="$route.matched[1].children.length > 1">
             <Plot :cols="$route.matched[1].children.length" :rows="1"
                   class="bottom-nav">
               <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
                        :name="route.name"
-                       :to="route.path" @mousedown="() => haptics.tap(2, 1, 50)"></Subplot>
+                       :to="route.path" @click="() => haptics.tap(2, 1, 50)"></Subplot>
             </Plot>
           </div>
         </div>

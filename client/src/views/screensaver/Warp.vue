@@ -49,7 +49,7 @@ let depth = 1500
 
 function initCamera() {
   // Initialize Camera
-  camera = new THREE.PerspectiveCamera(75, width / height, 1, depth * 1.5)
+  camera = new THREE.PerspectiveCamera(90, width / height, 1, depth * 2)
 
   camera.position.set(0, 0, 1);
   camera.lookAt(0, 0, 0)
@@ -94,7 +94,7 @@ function initGraphics() {
   // Set up the scene
   initScene()
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 2, 0.8, 0.3);
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1, 0.1, 0.05);
   const renderTargetParameters = {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
@@ -113,7 +113,7 @@ function initGraphics() {
 // blend pass
   const blendPass = new ShaderPass(BlendShader, "tDiffuse1");
   blendPass.uniforms["tDiffuse2"].value = savePass.renderTarget.texture;
-  blendPass.uniforms["mixRatio"].value = 0.2;
+  blendPass.uniforms["mixRatio"].value = 0.1;
 
 // output pass
   const outputPass = new ShaderPass(CopyShader);
@@ -186,7 +186,7 @@ function generateStars(): THREE.Object3D {
   let scaleArray = new Float32Array(particleCount);
   let particleGeometry = new THREE.BufferGeometry();
 
-  let mean = 2747.5 + 100
+  let mean = 2747.5 + 500
   let sd = 1509.878
 
   for (let i = 0, i3 = 0, l = particleCount; i < l; i++, i3 += 3) {

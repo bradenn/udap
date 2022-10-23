@@ -115,11 +115,11 @@ function dragStop(e: MouseEvent) {
   <div class="d-flex flex-row align-content-start align-items-start gap h-100">
     <div class="flex-grow-1 h-100">
       <router-view v-slot="{ Component }" class="h-100">
+        <component :is="Component"/>
 
-        <transition :name="state.transitionName"
-                    mode="out-in">
-          <component :is="Component"/>
-        </transition>
+        <!--        <transition :name="state.transitionName"-->
+        <!--                    mode="out-in">-->
+        <!--        </transition>-->
       </router-view>
     </div>
   </div>

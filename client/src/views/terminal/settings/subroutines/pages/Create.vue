@@ -109,7 +109,11 @@ function createSubroutine() {
 </script>
 
 <template>
+  <div class="d-flex align-items-start label-o4 gap-1 pb-2">
+    <div class="label-w500 label-c1 text-accent" @click="goBack">􀆉 Back</div>
+  </div>
   <div class="generic-grid">
+
     <TaskManager :on-complete="finish" :tasks="state.tasks" :title="`Macro`"></TaskManager>
   </div>
 </template>

@@ -2,10 +2,11 @@
 <script lang="ts" setup>
 import type {Task} from "@/types";
 import {TaskType} from "@/types";
-import {reactive, watchEffect} from "vue";
+import {inject, reactive, watchEffect} from "vue";
 import PaneMenuToggle from "@/components/pane/PaneMenuToggle.vue";
 import Keyboard from "@/components/Keyboard.vue";
 import Scroll from "@/components/Scroll.vue";
+import type {Haptics} from "@/views/terminal/haptics";
 
 interface Tasks {
   title: string,
@@ -32,6 +33,8 @@ watchEffect(() => {
 
 let props = defineProps<Tasks>()
 
+const haptics = inject("haptics") as Haptics
+
 function selectRadio(value: any, preview: string) {
   state.current.value = value
   state.current.preview = preview
@@ -54,12 +57,19 @@ function selectList(value: any) {
 }
 
 function nextTask() {
+
   let current = state.tasks.indexOf(state.current)
   if (current + 1 >= state.tasks.length) {
     props.onComplete(state.tasks)
     return
   }
   state.current = state.tasks[current + 1]
+
+}
+
+function selectTask(task: Task) {
+  state.current = task
+  haptics.tap(1, 1, 50)
 }
 
 function enterKey(key: string) {
@@ -89,7 +99,7 @@ function enterKey(key: string) {
           <div :class="`${task.title === state.current.title?'':'subplot-inline'}`"
                class="subplot d-flex justify-content-center gap-1"
                style="height: 1.4rem; border-radius: 0.5rem !important;"
-               @click="() => state.current = task">
+               @click="selectTask(task)">
             <div :class="`${task.title === state.current.title?'text-accent':''}`"
                  class="label-c2 label-w500 label-o4 px-1 lh-1 d-flex align-items-center gap-1">
               {{ task.title }}

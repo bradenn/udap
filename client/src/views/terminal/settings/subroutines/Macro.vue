@@ -8,7 +8,8 @@ import Button from "@/components/Button.vue";
 import macroService from "@/services/macroService";
 
 interface MacroProps {
-  macro: Macro
+  macro: Macro,
+  subplot?: boolean
 }
 
 const state = reactive({
@@ -40,12 +41,13 @@ function deleteMacro() {
 </script>
 
 <template>
-  <div class="element p-1 position-relative" @click="state.toggle = !state.toggle">
+  <div :class="`${props.subplot?'subplot':'element'}`" class=" p-1 position-relative"
+       @click="state.toggle = !state.toggle">
     <div class="d-flex align-items-start flex-row p-1">
-      <div class="d-flex align-items-center">
-        <div class="label-c2 label-o4 label-w500 lh-1">􁇵</div>
+      <div class="d-flex align-items-center" style="width: 0.8rem;">
+        <div class="label-c2 label-o4 label-w500 ">􀉣</div>
       </div>
-      <div>
+      <div class="px-1">
         <div class="label-c2 label-o4 label-w700 lh-1">{{ props.macro.name }}</div>
         <div class="label-c3 label-o3 label-w400">{{ props.macro.description }}</div>
       </div>

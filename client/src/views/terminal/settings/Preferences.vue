@@ -5,6 +5,7 @@ import type {Preferences} from "@/types";
 import Plot from "@/components/plot/Plot.vue";
 import axios from "axios";
 import Subplot from "@/components/plot/Subplot.vue";
+import Scroll from "@/components/Scroll.vue";
 
 let state = reactive({
   loading: true,
@@ -88,6 +89,16 @@ const defaults = {
       name: "Light",
       identifier: "light",
     },
+  ],
+  blurModes: [
+    {
+      name: "Blurred",
+      identifier: true,
+    },
+    {
+      name: "Default",
+      identifier: false,
+    },
   ]
 }
 
@@ -119,30 +130,44 @@ function changeScreensaver(screensaver: string): any {
   preferences.ui.screensaver.selection = screensaver
 }
 
+function changeBlur(blurred: boolean) {
+  preferences.ui.background.blur = blurred
+}
+
+
 </script>
 
 <template>
   <div class="h-100">
 
     <div class="">
-      <div>
-        <Plot :cols="5" :rows="2" title="Background">
-          <div v-for="background in defaults.backgrounds" @click="changeBackground(background.identifier)">
-            <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
-              <div :class="`${preferences.ui.background.image === background.identifier?'active':''}`"
-                   :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
-                   class="background-preview ">
-                <div class="label-xxs label-w500 label-o5 pb-1">
-                  {{ background.name }}
+      <div class="element">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="label-c1  label-o4 label-w500 px-1 pb-1">Background</div>
+
+        </div>
+        <Scroll :horizontal="true" style="max-width: calc(100vw - 2.5rem); overflow-x: scroll;">
+          <div class="d-flex gap-1" style="">
+            <div v-for="background in defaults.backgrounds" class=" w-100" style="min-width: 8rem;"
+                 @click="changeBackground(background.identifier)">
+              <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
+                <div :class="`${preferences.ui.background.image === background.identifier?'active':''}`"
+                     :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
+                     class="background-preview ">
+                  <div class="label-xxs label-w500 label-o5 pb-1">
+                    {{ background.name }}
+                  </div>
                 </div>
+
               </div>
 
             </div>
-
           </div>
-        </Plot>
+        </Scroll>
+
 
       </div>
+
       <div class="d-flex w-100 gap justify-content-between mt-2">
 
         <Plot :cols="2" :rows="1" class="flex-grow-1" title="Themes">
@@ -166,7 +191,12 @@ function changeScreensaver(screensaver: string): any {
                    :name="screensaver.name" @click="">
           </Subplot>
         </Plot>
-
+        <Plot :cols="2" :rows="1" class="flex-grow-1" title="Themes">
+          <Subplot v-for="theme in defaults.blurModes" :active="preferences.ui.background.blur === theme.identifier"
+                   :fn="() => changeBlur(theme.identifier)"
+                   :name="theme.name" @click="">
+          </Subplot>
+        </Plot>
       </div>
     </div>
   </div>

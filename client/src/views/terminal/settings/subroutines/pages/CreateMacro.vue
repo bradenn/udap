@@ -36,20 +36,6 @@ function setOptions() {
 
   state.tasks = [
     {
-      title: "Name",
-      description: "The name of the Macro",
-      type: TaskType.String,
-      value: "",
-      preview: ""
-    },
-    {
-      title: "Description",
-      description: "A brief description of the macro's function.",
-      type: TaskType.String,
-      value: "",
-      preview: ""
-    },
-    {
       title: "Zone",
       description: "What devices should this macro interact with?",
       type: TaskType.Radio,
@@ -58,7 +44,7 @@ function setOptions() {
       preview: "unset"
     },
     {
-      title: "Attribute Target",
+      title: "Attribute",
       description: "Which attributes should be targeted within the zone?",
       type: TaskType.Radio,
       options: [{
@@ -87,10 +73,25 @@ function setOptions() {
       type: TaskType.String,
       value: "",
       preview: ""
-    }
+    },
+    {
+      title: "Name",
+      description: "The name of the Macro",
+      type: TaskType.String,
+      value: "",
+      preview: ""
+    },
+    {
+      title: "Description",
+      description: "A brief description of the macro's function.",
+      type: TaskType.String,
+      value: "",
+      preview: ""
+    },
   ]
   state.loaded = true
 }
+
 
 function goBack() {
   router.push("/terminal/settings/subroutines")
@@ -106,7 +107,7 @@ function finish(tasks: Task[]) {
   const zone = tasks.find(t => t.title === "Zone");
   if (!zone) return;
 
-  const attributeTarget = tasks.find(t => t.title === "Attribute Target");
+  const attributeTarget = tasks.find(t => t.title === "Attribute");
   if (!attributeTarget) return;
 
   const value = tasks.find(t => t.title === "Value");
@@ -136,7 +137,11 @@ function createSubroutine() {
 </script>
 
 <template>
+  <div class="d-flex align-items-start label-o4 gap-1 pb-2">
+    <div class="label-w500 label-c1 text-accent" @click="goBack">􀆉 Back</div>
+  </div>
   <div class="generic-grid">
+
     <TaskManager :on-complete="finish" :tasks="state.tasks" :title="`Macro`"></TaskManager>
   </div>
 </template>

@@ -5,7 +5,7 @@
 import type {SubRoutine} from "@/types";
 import {inject, reactive} from "vue";
 import Button from "@/components/Button.vue";
-import subroutineService from "@/services/subroutineService";
+import {useRouter} from "vue-router";
 
 interface SubRoutineProps {
   subroutine: SubRoutine
@@ -15,26 +15,19 @@ const state = reactive({
   toggle: false
 })
 
+const router = useRouter()
+
 const props = defineProps<SubRoutineProps>()
 
 
 const notifications = inject("notifications")
 
-function deleteSubRoutine() {
-  subroutineService.deleteSubroutine(props.subroutine.id).then(res => {
-    notifications.show("Subroutine", `Subroutine '${props.subroutine.description}' deleted.`, 0, 1000 * 4)
-    console.log(err)
-  }).catch(err => {
-    notifications.show("Subroutine", `Subroutine '${props.subroutine.description}' cannot be deleted.`, 2, 1000 * 5)
-    console.log(err)
-  })
-}
 
 </script>
 
 <template>
   <div>
-    <div class="element p-2" @click="state.toggle = !state.toggle">
+    <div class="element p-2 h-100" @click="router.push(`/terminal/settings/subroutines/${props.subroutine.id}/edit`)">
 
       <div class="d-flex justify-content-between">
         <div class="label-xs label-o4 label-w500 pb-2">􁏀</div>

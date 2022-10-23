@@ -5,6 +5,7 @@ import SubroutineView from "@/views/terminal/settings/subroutines/SubroutineView
 // Overview
 import Subroutines from "@/views/terminal/settings/subroutines/Subroutines.vue";
 import Create from "@/views/terminal/settings/subroutines/pages/Create.vue";
+import EditSubroutine from "@/views/terminal/settings/subroutines/pages/EditSubroutine.vue";
 import Trigger from "@/views/terminal/settings/subroutines/pages/NewTrigger.vue";
 import Macro from "@/views/terminal/settings/subroutines/pages/CreateMacro.vue";
 
@@ -38,6 +39,12 @@ const routes = {
             name: 'Create A Trigger',
             icon: 'switch',
             component: Trigger
+        },
+        {
+            path: '/terminal/settings/subroutines/:subroutine/edit',
+            name: 'Edit Subroutine',
+            icon: 'switch',
+            component: EditSubroutine
         }
     ],
     component: SubroutineView

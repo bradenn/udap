@@ -3,25 +3,30 @@
 <script lang="ts" setup>
 
 import {inject, reactive} from "vue";
+import {useRouter} from "vue-router";
 
 
 const props = defineProps<{
   active: boolean,
   text: string,
+  to?: string,
 }>()
 
 let state = reactive({})
+let router = useRouter()
 
 const haptics = inject("haptic") as (a: number, b: number, c: number) => void
 
 function push(_: Event) {
   haptics(2, 1, 75)
-
+  if (props.to) {
+    router.push(props.to)
+  }
 }
 
 function release(_: Event) {
   // haptics(1, 1, 75)
-  haptics(1, 1, 5)
+  // haptics(1, 1, 5)
 }
 
 
