@@ -49,8 +49,8 @@ function dragStart(e: MouseEvent) {
 const haptics = inject("haptic") as (a: number, b: number, c: number) => void
 
 function drag(e: MouseEvent) {
-
-  if (!state.dragging && Math.abs(state.yStart - e.clientY) > 5 || (props.horizontal && Math.abs(state.yStart - e.clientY) > 5)) {
+  e.preventDefault()
+  if (!state.dragging && Math.abs(state.yStart - e.clientY) > 5 || (props.horizontal && Math.abs(state.yStart - e.clientY) > 10)) {
     state.dragging = true
   }
 
@@ -70,11 +70,11 @@ function drag(e: MouseEvent) {
     element.scrollLeft += state.xStart - e.clientX
     state.xActual = dx
     state.xStart = e.clientX
-    if (state.xStart - state.xLastPos) {
-      if (Date.now().valueOf() - state.lastTap >= 50)
-        mouseDown()
-      // element.style.position = "relative"
-    }
+    // if (state.xStart - state.xLastPos) {
+    //   if (Date.now().valueOf() - state.lastTap >= 50)
+    //     mouseDown()
+    //   // element.style.position = "relative"
+    // }
     // if (Date.now().valueOf() - state.lastTap >= 50) {
     //   mouseDown()
     // }
@@ -116,7 +116,9 @@ function mouseDown() {
 function dragStop(e: MouseEvent) {
   state.yStart = 0
   state.xStart = 0
-  click(e)
+  e.preventDefault()
+  e.stopPropagation()
+  e.stopImmediatePropagation()
   let element = e.currentTarget as HTMLElement
   if (!element) return;
 
@@ -148,23 +150,21 @@ function dragStop(e: MouseEvent) {
 
   setTimeout(() => {
     state.dragging = false
-  }, 250)
+  }, 500)
 
 }
 
 function click(e: MouseEvent) {
   if (state.dragging) {
     e.preventDefault()
-    e.stopPropagation()
-    e.stopImmediatePropagation()
   }
 }
 
 </script>
 <template>
 
-  <div v-on:click="click" v-on:mousedown="dragStart" v-on:mousemove="drag" v-on:mouseup="dragStop"
-  >
+  <div v-on:click="click" v-on:mousedown="dragStart" v-on:mousemove="drag"
+       v-on:mouseup="dragStop">
     <!--    <div class="position-absolute top">{{ state.xStart }}</div>-->
     <slot></slot>
   </div>
