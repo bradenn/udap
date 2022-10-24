@@ -21,8 +21,16 @@ type triggerService struct {
 	generic.Watchable[domain.Trigger]
 }
 
-func (u *triggerService) Trigger(id string) error {
-	trigger, err := u.repository.FindById(id)
+func (u *triggerService) Register(trigger *domain.Trigger) error {
+	err := u.repository.Register(trigger)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *triggerService) Trigger(name string) error {
+	trigger, err := u.repository.FindByName(name)
 	if err != nil {
 		return err
 	}

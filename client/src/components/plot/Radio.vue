@@ -37,7 +37,9 @@ function handle(e: MouseEvent) {
 
 }
 
+
 function up() {
+
   state.holding = false
   if (state.interval != 0) clearInterval(state.interval)
   state.interval = 0;

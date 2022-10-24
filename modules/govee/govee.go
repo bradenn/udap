@@ -100,11 +100,12 @@ func (g *Govee) listen() {
 	for {
 		select {
 		case attribute := <-g.mutable:
-			err := g.setState(attribute)
-			if err != nil {
-				g.Err(err)
-				continue
-			}
+			go func() {
+				err := g.setState(attribute)
+				if err != nil {
+					g.Err(err)
+				}
+			}()
 		case attribute := <-g.immutable:
 			g.WarnF("Attribute '%s' is immutable", attribute.Key)
 		case <-g.done:

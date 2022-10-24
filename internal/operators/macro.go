@@ -19,11 +19,10 @@ func NewMacroOperator(ctrl *controller.Controller) ports.MacroOperator {
 }
 
 func (m *macroOperator) Run(macro domain.Macro) error {
-	zone, err := m.ctrl.Zones.FindById(macro.Id)
+	zone, err := m.ctrl.Zones.FindById(macro.ZoneId)
 	if err != nil {
 		return err
 	}
-
 	for _, entity := range zone.Entities {
 		err = m.ctrl.Attributes.Request(entity.Id, macro.Type, macro.Value)
 		if err != nil {

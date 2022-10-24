@@ -112,21 +112,31 @@ function dragStop(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="d-flex flex-row align-content-start align-items-start gap h-100"
-  >
+  <div class="d-flex flex-row align-content-start align-items-start gap h-100">
     <div class="flex-grow-1 h-100">
       <router-view v-slot="{ Component }" class="h-100">
+        <component :is="Component"/>
 
-        <transition :name="state.transitionName"
-                    mode="out-in">
-          <component :is="Component"/>
-        </transition>
+        <!--        <transition :name="state.transitionName"-->
+        <!--                    mode="out-in">-->
+        <!--        </transition>-->
       </router-view>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+
+.bg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  background-color: rgba(12, 12, 13, 1) !important;
+}
+
 .slide-right-enter-active {
   position: relative;
   animation: animateSlideRightIn 75ms ease;

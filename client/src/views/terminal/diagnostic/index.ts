@@ -4,6 +4,7 @@
 import Diagnostic from "./Diagnostic.vue";
 import Overview from "./pages/Overview.vue";
 import Tree from "./pages/Tree.vue";
+import Routes from "./pages/Routes.vue";
 
 export default {
     path: '/terminal/diagnostics',
@@ -32,6 +33,15 @@ export default {
                 title: "Tree"
             },
             component: Tree,
+        },
+        {
+            path: '/terminal/diagnostics/routes',
+            name: 'Routes',
+            icon: 'tools',
+            meta: {
+                title: "Routes"
+            },
+            component: Routes,
         },
     ]
 }

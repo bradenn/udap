@@ -13,5 +13,9 @@ export default {
     async createSubroutine(subroutine: SubRoutine): Promise<void> {
         const url = `/subroutines/create`
         return await request.post(url, subroutine)
+    },
+    async deleteSubroutine(id: string): Promise<void> {
+        const url = `/subroutines/${id}/delete`
+        return await request.post(url)
     }
 }

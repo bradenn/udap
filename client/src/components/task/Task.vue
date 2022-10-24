@@ -1,5 +1,7 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
+import Scroll from "@/components/scroll/Scroll.vue";
+
 interface Tasks {
   index: number
   title: string
@@ -37,17 +39,23 @@ function directIndex() {
 </script>
 
 <template>
+
   <div v-if="props.active" class="element">
+
     <div class="label-md label-w700 label-o5 px-2 lh-1 my-1">{{ props.title }}</div>
-    <div class="">
-      <slot></slot>
-    </div>
+    <Scroll class="task-container">
+      <div class="">
+        <slot></slot>
+      </div>
+    </Scroll>
     <div class="d-flex align-items-center align-content-center justify-content-between">
       <div class="label-c2 label-o3 label-w400 px-2">{{ props.description }}</div>
       <div class="subplot" style="height:1.5rem" @click="() => callNext()">
         <div class="label-c2 label-w500 label-o3 px-1 lh-1 text-accent">Next 􀯻</div>
       </div>
     </div>
+
+
   </div>
   <div v-else class="element p-2 flex-fill d-flex justify-content-between align-items-center"
        @click="() => directIndex()">
@@ -64,6 +72,11 @@ function directIndex() {
 
 
 <style lang="scss" scoped>
+.task-container {
+  overflow-y: scroll;
+  max-height: 10rem;
+}
+
 .label-shimmer {
   mix-blend-mode: lighten;
 }

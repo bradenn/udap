@@ -77,6 +77,20 @@ func (u *subRoutineService) Update(subRoutine *domain.SubRoutine) error {
 	return u.repository.Update(subRoutine)
 }
 
-func (u *subRoutineService) Delete(subRoutine *domain.SubRoutine) error {
-	return u.repository.Delete(subRoutine)
+func (u *subRoutineService) Delete(id string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	err = u.repository.Delete(byId)
+	if err != nil {
+		return err
+	}
+	byId.Deleted = true
+	err = u.Emit(*byId)
+	if err != nil {
+		return err
+	}
+	return err
 }

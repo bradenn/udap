@@ -82,10 +82,32 @@ func (u *macroService) Create(macro *domain.Macro) error {
 	return nil
 }
 
+func (u *macroService) Update(macro *domain.Macro) error {
+	err := u.repository.Update(macro)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*macro)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *macroService) Delete(id string) error {
 	byId, err := u.repository.FindById(id)
 	if err != nil {
 		return err
 	}
-	return u.repository.Delete(byId)
+	err = u.repository.Delete(byId)
+	if err != nil {
+		return err
+	}
+
+	byId.Deleted = true
+	err = u.Emit(*byId)
+	if err != nil {
+		return err
+	}
+	return err
 }

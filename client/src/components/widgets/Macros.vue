@@ -8,8 +8,8 @@ import type {Attribute, Entity, Remote, Zone} from "@/types";
 import Light from "@/components/widgets/Light.vue";
 import Widget from "@/components/widgets/Widget.vue";
 import Select from "@/components/plot/Select.vue";
-import Subplot from "@/components/plot/Subplot.vue";
 import attributeService from "@/services/attributeService";
+import Button from "@/components/Button.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -119,6 +119,7 @@ function changeGlobalCCT() {
 </script>
 
 <template>
+
   <div v-if="state.colorMenu" class="context context-light" @click="(e) => closeMenu()"></div>
   <div v-if="!state.loading" class="d-flex flex-column gap-1" style="width: 11rem;">
     <div>
@@ -147,11 +148,11 @@ function changeGlobalCCT() {
     <Widget v-if="!state.loading" :cols="4" :rows="1" class="d-flex flex-column" size="sm">
 
       <Plot :cols="5" :rows="1" style="width: 100%">
-        <Subplot :active="false" :fn="() => setAttributes('on', 'false')" name="OFF"></Subplot>
-        <Subplot :active="false" :fn="() => setAttributes('on', 'true')" name="ON"></Subplot>
-        <Subplot :active="false" :fn="() => setAttributes('dim', '20')" name="􀆫"></Subplot>
-        <Subplot :active="false" :fn="() => setAttributes('dim', '60')" name="􀆮"></Subplot>
-        <Subplot :active="!state.colorMenu" :fn="() => openMenu()" name="􀎘"></Subplot>
+        <Button :active="false" text="OFF" @click="() => setAttributes('on', 'false')"></Button>
+        <Button :active="false" text="ON" @click="() => setAttributes('on', 'true')"></Button>
+        <Button :active="false" text="􀆫" @click="() => setAttributes('dim', '20')"></Button>
+        <Button :active="false" text="􀆮" @click="() => setAttributes('dim', '60')"></Button>
+        <Button :active="!state.colorMenu" text="􀎘" @click="() => openMenu()"></Button>
       </Plot>
     </Widget>
 
@@ -187,11 +188,15 @@ function changeGlobalCCT() {
           type="range"
           v-on:mouseup="(e) => changeGlobalCCT()">
     </div>
+
+    <!--    <Slider name="Brightness" :min="0" :max="100" :step="5" unit="%" style="z-index: 4000 !important;"></Slider>-->
+    <!--    <Slider name="Hue" :min="0" :max="360" :step="36" unit="%" style="z-index: 4000 !important;"></Slider>-->
     <div class="element" style="width: 40%;">
       <div class="d-flex justify-content-between align-items-end">
         <div class="label-xs label-w500 label-o5 px-1">Brightness</div>
         <div class="label-c1 label-w500 label-o3 px-1">{{ state.globalDim }}%</div>
       </div>
+
       <input
           v-model="state.globalDim"
           :class="`slider-dim`"

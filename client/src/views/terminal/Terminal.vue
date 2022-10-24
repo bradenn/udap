@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 
 import router from '@/router'
-import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch} from "vue";
+import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch, watchEffect} from "vue";
 import "@/types";
 
 import type {
@@ -33,6 +33,9 @@ import {Nexus, Target} from "@/views/terminal/nexus";
 
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
+import type {Haptics} from "@/views/terminal/haptics";
+import haptics from "@/views/terminal/haptics";
+import Toast from "@/components/Toast.vue";
 
 const Clock = defineAsyncComponent({
   loader: () => import('@/components/Clock.vue'),
@@ -61,14 +64,27 @@ const IdTag = defineAsyncComponent({
   loader: () => import('@/components/IdTag.vue'),
 })
 
+
 // -- Websockets --
 onMounted(() => {
+  haptics.connect("ws://10.0.1.60/ws")
+
+  // haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
   remote.nexus = new Nexus(handleMessage)
 })
+
+// function tap(frequency: number, iterations: number, amplitude: number) {
+//   haptic.haptics.tap(frequency, iterations, amplitude)
+// }
+
+provide("haptic", haptics.tap)
+provide("haptics", haptics as Haptics)
 
 onUnmounted(() => {
   if (!remote.nexus.ws) return
   remote.nexus.ws.close()
+  if (!haptics) return
+  haptics.close()
   remote = {} as Remote
 })
 
@@ -195,7 +211,7 @@ function handleMessage(target: Target, data: any) {
 
 function mouseDown() {
   // axios.post("http://10.0.1.60/pop", {
-  //   power: 0
+  //   power: 2
   // }).then(res => {
   //   return
   // }).catch(err => {
@@ -205,11 +221,18 @@ function mouseDown() {
 
 function createOrUpdate(target: any[], data: Identifiable): any[] {
   if (target.find((e: Identifiable) => e.id === data.id)) {
-    return target.map((a: Identifiable) => a.id === data.id ? data : a)
+    if (data.deleted) {
+      return target.filter((a: Identifiable) => a.id !== data.id)
+    } else {
+      return target.map((a: Identifiable) => a.id === data.id ? data : a)
+    }
   } else {
-    target.push(data)
-    return target
+    if (!data.deleted) {
+      target.push(data)
+      return target
+    }
   }
+  return target
 }
 
 // -- Gesture Navigation --
@@ -338,7 +361,7 @@ function dragContinue(e: MouseEvent) {
     let thresholdOffset = 80;
 
     let isBottom = e.screenY > height - thresholdOffset;
-    let isTop = e.screenY > thresholdOffset;
+    let isTop = e.screenY <= thresholdOffset;
 
     let isRight = state.dragA.x > width - thresholdOffset;
 
@@ -347,9 +370,10 @@ function dragContinue(e: MouseEvent) {
     let rightPull = state.dragA.x - dragB.x;
     let gestureThreshold = 24;
 
-
     if (isBottom) {
       if (bottomPull > gestureThreshold) {
+        state.verified = false
+        haptics.tap(2, 1, 50)
         state.locked = false
         router.push("/terminal/home")
       }
@@ -396,6 +420,53 @@ function dragStop(e: MouseEvent) {
 
 }
 
+interface ToastObject {
+  name: string,
+  message: string,
+  severity: number,
+  duration: number
+}
+
+const toasts = reactive({
+  queue: [] as ToastObject[],
+  active: false,
+  interval: 0,
+  current: {} as ToastObject
+})
+
+watchEffect(() => {
+  if (toasts.queue.length > 0 && !toasts.active) {
+    toasts.active = true
+    toasts.current = toasts.queue[0]
+    toasts.queue = toasts.queue.filter(q => q !== toasts.current)
+    toasts.interval = setInterval(() => {
+      if (toasts.active) {
+        toasts.current.duration -= 1000
+        if (toasts.current.duration <= 0) {
+          toasts.active = false
+          toasts.current = {} as ToastObject
+          clearInterval(toasts.interval)
+        }
+      }
+    }, 1000)
+  }
+  return toasts.queue
+})
+
+
+const notifications = {
+  show: (name: string, message: string, severity: number, duration: number) => {
+    toasts.queue.push({
+      name: name,
+      message: message,
+      severity: severity,
+      duration: duration
+    })
+  },
+}
+
+provide('notifications', notifications)
+
 // Provide the remote component for child components
 provide('terminal', state)
 provide('remote', remote)
@@ -414,7 +485,9 @@ provide('remote', remote)
         <div class="" v-on:click="(e) => state.locked = true">
           <Clock :small="!state.showClock"></Clock>
         </div>
-        <!--        <Toast></Toast>-->
+
+        <Toast v-if="toasts.active" :message="toasts.current.message" :severity="toasts.current.severity"
+               :time="toasts.current.duration" :title="toasts.current.name"></Toast>
 
         <div class="generic-slot-sm ">
           <div v-if="false" class="element p-2" style="width: 13rem !important;">
@@ -434,7 +507,7 @@ provide('remote', remote)
         </router-view>
       </div>
       <div class="justify-content-center d-flex align-items-center align-content-center">
-        <div v-if="$route.matched.length > 1" @mouseover.prevent="state.scrollY!==0">
+        <div v-if="$route.matched.length > 1" @click.prevent="state.scrollY!==0">
           <div v-if="$route.matched[1].children.length > 1">
             <Plot :cols="$route.matched[1].children.length" :rows="1"
                   class="bottom-nav">

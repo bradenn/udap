@@ -5,7 +5,7 @@ import {createRouter, createWebHashHistory} from "vue-router";
 // Settings views
 import settings from "@/views/terminal/settings/index";
 import setup from "@/views/setup";
-
+import haptics from "@/views/tests/Haptics.vue"
 
 // Setup view components
 import Setup from "@/views/setup/Setup.vue";
@@ -30,13 +30,6 @@ import Timer from "../views/terminal/timing/Timer.vue";
 
 // Weather
 import weather from "@/views/terminal/weather"
-
-// Whiteboard Routes
-import Whiteboard from "@/views/terminal/whiteboard/Whiteboard.vue";
-
-// Calculator Routes
-import Calculator from "@/views/terminal/calculator/Calculator.vue";
-
 // Atlas Routes
 import Atlas from "@/views/terminal/atlas/Atlas.vue";
 import AtlasSettings from "@/views/terminal/atlas/AtlasSettings.vue";
@@ -56,6 +49,13 @@ import Aliens from "@/views/terminal/aliens/Aliens.vue";
 import Drake from "@/views/terminal/aliens/Drake.vue";
 import diagnostic from "@/views/terminal/diagnostic";
 import periodic from "@/views/terminal/periodic";
+import remote from "@/views/terminal/remote";
+
+
+const Whiteboard = () => import("@/views/terminal/whiteboard/Whiteboard.vue")
+
+// Calculator Routes
+const Calculator = () => import("@/views/terminal/calculator/Calculator.vue");
 
 const defaultRoute = {
     path: '/',
@@ -99,6 +99,9 @@ const timingRoutes = {
     name: 'Timing',
     redirect: '/terminal/timing/stopwatch',
     icon: 'fa-stopwatch',
+    meta: {
+        icon: "/preferences-system-time.svg"
+    },
     component: Timing,
     children: [
         {
@@ -188,6 +191,9 @@ const whiteboardRoutes = {
     path: '/terminal/whiteboard',
     name: 'Whiteboard',
     component: Whiteboard,
+    meta: {
+        icon: "/gnome-paint.svg"
+    },
     icon: 'fa-highlighter',
 }
 
@@ -196,7 +202,8 @@ const calculatorRoute = {
     name: 'Calculator',
     component: Calculator,
     meta: {
-        status: ''
+        status: '',
+        icon: "/calc.svg"
     },
     icon: 'fa-calculator',
 }
@@ -231,6 +238,7 @@ const terminalRoutes = {
         exogeologyRoutes,
         diagnostic,
         weather,
+        remote,
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,
@@ -241,8 +249,16 @@ const terminalRoutes = {
     ],
 }
 
+
+const testRoutes = {
+    path: '/test',
+    name: 'TESTRoute',
+    component: haptics,
+}
+
 const routes = [
     defaultRoute,
+    testRoutes,
     setup,
     terminalRoutes,
     {path: '/:pathMatch(.*)*', redirect: "/"}

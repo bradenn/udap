@@ -20,3 +20,17 @@ func NewTriggerRepository(db *gorm.DB) ports.TriggerRepository {
 		Store: generic.NewStore[domain.Trigger](db),
 	}
 }
+
+func (t *triggerRepo) Register(trigger *domain.Trigger) error {
+	err := t.db.Model(&domain.Trigger{}).Where("name = ?", trigger.Name).FirstOrCreate(trigger).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *triggerRepo) FindByName(name string) (*domain.Trigger, error) {
+	trigger := domain.Trigger{}
+	err := t.db.Model(domain.Trigger{}).Where("name = ?", name).First(&trigger).Error
+	return &trigger, err
+}

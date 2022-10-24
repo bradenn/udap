@@ -9,7 +9,7 @@ import type {CurrentWeather, Weather} from "@/weather";
 import {getWeatherIcon, getWeatherState} from "@/weather"
 import PaneList from "@/components/pane/PaneList.vue";
 import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
-import Scroll from "@/components/Scroll.vue";
+import Scroll from "@/components/scroll/Scroll.vue";
 import HorizontalChart from "@/components/charts/HorizontalChart.vue";
 
 interface WeatherProps {

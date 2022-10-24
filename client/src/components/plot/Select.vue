@@ -3,7 +3,7 @@
 
 import {reactive} from "vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import Scroll from "@/components/Scroll.vue";
+import Scroll from "@/components/scroll/Scroll.vue";
 
 interface Props {
   selected: string
@@ -42,10 +42,12 @@ function dragScroll(e: DragEvent) {
       </div>
     </div>
   </div>
-  <div :class="state.active?'select-active':''" class="element select" v-on:click="state.active = !state.active">
-    <div class="subplot d-flex">
-      <div>
-        <div>{{ props.selected }}</div>
+  <div :class="state.active?'select-active':''" class="element p-0 "
+       v-on:click="state.active = !state.active">
+    <div class="subplot d-flex w-100" style="height: 1.8rem">
+      <div class="d-flex justify-content-start align-items-center align-content-center h-100 gap-0">
+        <div class="label-c1 label-o4 px-1">􀟻</div>
+        <div class="label-c1 label-o4 label-r ">{{ props.selected }}</div>
       </div>
       <div class="p-1">􀆊</div>
     </div>

@@ -7,16 +7,16 @@ import (
 	"udap/internal/core/domain"
 )
 
-type persistent interface {
+type PersistentType interface {
 	domain.User | domain.Module | domain.Entity | domain.Device | domain.Attribute | domain.Endpoint | domain.
 		Network | domain.Zone | domain.Notification | domain.Macro | domain.Trigger | domain.SubRoutine | Mock
 }
 
-type Store[T persistent] struct {
+type Store[T PersistentType] struct {
 	db *gorm.DB
 }
 
-func NewStore[T persistent](db *gorm.DB) Store[T] {
+func NewStore[T PersistentType](db *gorm.DB) Store[T] {
 	return Store[T]{
 		db: db,
 	}

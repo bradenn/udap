@@ -17,6 +17,7 @@ type subroutineRouter struct {
 
 func (r *subroutineRouter) RouteInternal(router chi.Router) {
 	router.Post("/subroutines/create", r.create)
+	router.Post("/subroutines/{id}/delete", r.delete)
 }
 
 func (r *subroutineRouter) RouteExternal(_ chi.Router) {
@@ -27,6 +28,22 @@ func NewSubroutineRouter(service ports.SubRoutineService) Routable {
 	return &subroutineRouter{
 		service: service,
 	}
+}
+
+func (r *subroutineRouter) delete(w http.ResponseWriter, req *http.Request) {
+	key := chi.URLParam(req, "id")
+	if key == "" {
+		http.Error(w, "access key not provided", 401)
+		return
+	}
+
+	err := r.service.Delete(key)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.WriteHeader(200)
 }
 
 func (r *subroutineRouter) create(w http.ResponseWriter, req *http.Request) {

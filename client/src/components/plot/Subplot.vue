@@ -1,6 +1,9 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 
+import {inject} from "vue";
+import type {Haptics} from "@/views/terminal/haptics";
+
 interface Props {
   icon?: string,
   sf?: string,
@@ -13,7 +16,19 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const haptics = inject("haptics") as Haptics
 
+function click() {
+  haptics.tap(2, 2, 100)
+  // haptics.tap(0, 2, 100)
+}
+
+function runFn() {
+  click()
+  if (props.fn) {
+    props.fn()
+  }
+}
 
 </script>
 
@@ -21,7 +36,7 @@ const props = defineProps<Props>()
   <div v-if="props.to"
        :class="`${props.to===$router.currentRoute.value.fullPath?'':'subplot-inline'} ${props.theme?`theme-${props.theme}`:''}`"
        class="subplot p-1"
-       @mouseover="$router.replace(props.to || '/')">
+       @click="$router.replace(props.to || '/')" @mousedown="click">
     <div class="d-flex justify-content-start px-1">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
       </div>
@@ -33,7 +48,7 @@ const props = defineProps<Props>()
   <div v-else-if="props.fn"
        :class="`${props.active||false?'':'subplot-inline'} ${props.theme?`theme-${props.theme}`:''}`"
        class="subplot p-1"
-       @mousedown="props.fn">
+       @mousedown="runFn">
     <div :class="`${props.alt?'justify-content-between w-100':'justify-content-center w-100'}`"
          class="d-flex ">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>
@@ -47,7 +62,7 @@ const props = defineProps<Props>()
 
     <slot></slot>
   </div>
-  <div v-else class="subplot subplot-inline">
+  <div v-else class="subplot subplot-inline" @mousedown="click">
 
     <div class="sidebar-item d-flex justify-content-start px-1">
       <div v-if="props.icon" class="label-w500 label-o3 label-c1"><i :class="`fa-solid fa-${props.icon} fa-fw`"></i>

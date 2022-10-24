@@ -14,9 +14,10 @@ export function usePersistent() {
                 selection: "bubbles"
             },
             background: {
-                image: "swirl",
+                image: "nil",
                 blur: true
             },
+            accent: "255, 149, 0",
             blur: 6,
             mode: "cursor",
             theme: "dark",
@@ -24,7 +25,7 @@ export function usePersistent() {
             grid: false,
             watermark: false,
             night: false,
-            outlines: true,
+            outlines: false,
         }
     }
 

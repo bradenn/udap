@@ -238,7 +238,7 @@ func (s *Squid) registerDevices() error {
 
 // Setup is called once at the launch of the module
 func (s *Squid) Setup() (plugin.Config, error) {
-	err := s.UpdateInterval(1000)
+	err := s.UpdateInterval(2000)
 	if err != nil {
 		return plugin.Config{}, err
 	}

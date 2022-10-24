@@ -249,8 +249,15 @@ $dot-color: rgba(255, 255, 255, 0.1);
 $dot-size: 24px;
 $dot-space: 40px;
 
-
 .grid {
+  position: absolute;
+  width: calc(100%);
+  height: calc(100%);
+  background-color: rgba(20, 20, 22, 1);
+  z-index: -1;
+}
+
+.gridr {
   position: absolute;
   width: calc(100% - 2rem);
   height: calc(100% - 8.125rem);
