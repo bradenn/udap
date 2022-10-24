@@ -3,7 +3,7 @@
 
 import {reactive} from "vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import Scroll from "@/components/Scroll.vue";
+import Scroll from "@/components/scroll/Scroll.vue";
 
 interface Props {
   selected: string

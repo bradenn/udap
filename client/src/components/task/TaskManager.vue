@@ -5,7 +5,7 @@ import {TaskType} from "@/types";
 import {inject, reactive, watchEffect} from "vue";
 import PaneMenuToggle from "@/components/pane/PaneMenuToggle.vue";
 import Keyboard from "@/components/Keyboard.vue";
-import Scroll from "@/components/Scroll.vue";
+import Scroll from "@/components/scroll/Scroll.vue";
 import type {Haptics} from "@/views/terminal/haptics";
 
 interface Tasks {

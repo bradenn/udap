@@ -1,6 +1,6 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import Scroll from "@/components/Scroll.vue";
+import Scroll from "@/components/scroll/Scroll.vue";
 
 interface Plot {
   title?: string
