@@ -3,8 +3,7 @@
 <script lang="ts" setup>
 
 import type {SubRoutine} from "@/types";
-import {inject, reactive} from "vue";
-import Button from "@/components/Button.vue";
+import {reactive} from "vue";
 import {useRouter} from "vue-router";
 
 interface SubRoutineProps {
@@ -18,9 +17,6 @@ const state = reactive({
 const router = useRouter()
 
 const props = defineProps<SubRoutineProps>()
-
-
-const notifications = inject("notifications")
 
 
 </script>
@@ -41,7 +37,7 @@ const notifications = inject("notifications")
     </div>
     <div v-if="state.toggle" class="element element-menu">
       <div class="grid-element">
-        <Button active text="􀈑" @click="deleteSubRoutine"></Button>
+        <!--        <Button active text="􀈑" @click="deleteSubRoutine"></Button>-->
       </div>
     </div>
   </div>

@@ -3,9 +3,11 @@
 import {inject, reactive} from "vue";
 import type {Preferences} from "@/types";
 import Plot from "@/components/plot/Plot.vue";
-import axios from "axios";
 import Subplot from "@/components/plot/Subplot.vue";
-import Scroll from "@/components/Scroll.vue";
+import FixedScroll from "@/components/scroll/FixedScroll.vue";
+import core from "@/core";
+
+const haptics = core.haptics()
 
 let state = reactive({
   loading: true,
@@ -105,14 +107,15 @@ const defaults = {
 
 function loadImage(image: string) {
 
-  axios.get(`/custom/${image}@2x.png`).then(res => {
-    state.loading = false
-  }).catch(err => {
-
-  })
+  // axios.get(`/custom/${image}@2x.png`).then(res => {
+  //   state.loading = false
+  // }).catch(err => {
+  //
+  // })
 }
 
 function changeBackground(name: string): any {
+  haptics.tap(1, 1, 50)
   state.loading = true
   loadImage(name);
   preferences.ui.background.image = name
@@ -146,24 +149,24 @@ function changeBlur(blurred: boolean) {
           <div class="label-c1  label-o4 label-w500 px-1 pb-1">Background</div>
 
         </div>
-        <Scroll :horizontal="true" style="max-width: calc(100vw - 2.5rem); overflow-x: scroll;">
-          <div class="d-flex gap-1" style="">
-            <div v-for="background in defaults.backgrounds" class=" w-100" style="min-width: 8rem;"
-                 @click="changeBackground(background.identifier)">
-              <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
-                <div :class="`${preferences.ui.background.image === background.identifier?'active':''}`"
-                     :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
-                     class="background-preview ">
-                  <div class="label-xxs label-w500 label-o5 pb-1">
-                    {{ background.name }}
-                  </div>
-                </div>
 
+        <FixedScroll :horizontal="true" class="d-flex gap-1"
+                     style="max-width: calc(100vw - 2.5rem); overflow-x: scroll;">
+          <div v-for="background in defaults.backgrounds" class=" w-100" style="min-width: 8rem;"
+               @click="changeBackground(background.identifier)">
+            <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
+              <div :class="`${preferences.ui.background.image === background.identifier?'active':''}`"
+                   :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
+                   class="background-preview ">
+                <div class="label-xxs label-w500 label-o5 pb-1">
+                  {{ background.name }}
+                </div>
               </div>
 
             </div>
+
           </div>
-        </Scroll>
+        </FixedScroll>
 
 
       </div>

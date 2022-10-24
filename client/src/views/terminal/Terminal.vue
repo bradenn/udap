@@ -513,7 +513,7 @@ provide('remote', remote)
                   class="bottom-nav">
               <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
                        :name="route.name"
-                       :to="route.path" @click="() => haptics.tap(2, 1, 50)"></Subplot>
+                       :to="route.path"></Subplot>
             </Plot>
           </div>
         </div>

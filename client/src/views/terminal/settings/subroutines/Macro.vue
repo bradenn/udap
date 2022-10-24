@@ -26,15 +26,13 @@ function runMacro() {
   })
 }
 
-const notifications = inject("notifications")
+const notifications = inject("notifications") as any
 
 function deleteMacro() {
   macroService.deleteMacro(props.macro.id).then(res => {
     notifications.show("Macro", `Macro '${props.macro.name}' deleted.`, 0, 1000 * 4)
-    console.log(err)
   }).catch(err => {
     notifications.show("Macro", "Macro cannot be deleted.", 2, 1000 * 10)
-    console.log(err)
   })
 }
 

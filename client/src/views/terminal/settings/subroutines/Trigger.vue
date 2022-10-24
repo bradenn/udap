@@ -4,7 +4,6 @@
 
 import type {Trigger} from "@/types";
 import {inject, reactive} from "vue";
-import triggerService from "@/services/triggerService";
 
 interface TriggerProps {
   trigger: Trigger
@@ -16,25 +15,7 @@ const state = reactive({
 
 const props = defineProps<TriggerProps>()
 
-function runTrigger() {
-  triggerService.runTrigger(props.trigger.id).then(res => {
-    state.toggle = false
-  }).catch(err => {
-    console.log(err)
-  })
-}
-
 const notifications = inject("notifications")
-
-function deleteTrigger() {
-  triggerService.deleteTrigger(props.trigger.id).then(res => {
-    notifications.show("Trigger", `Trigger '${props.trigger.name}' deleted.`, 0, 1000 * 4)
-    console.log(err)
-  }).catch(err => {
-    notifications.show("Trigger", "Trigger cannot be deleted.", 2, 1000 * 10)
-    console.log(err)
-  })
-}
 
 </script>
 

@@ -2,11 +2,11 @@
 
 <script lang="ts" setup>
 
-import {onMounted, reactive, watchEffect} from "vue";
-import type {SubRoutine} from "@/types";
+import {inject, onMounted, reactive, watchEffect} from "vue";
+import type {Macro, SubRoutine, Trigger} from "@/types";
 import Subroutine from "@/views/terminal/settings/subroutines/Subroutine.vue";
-import Macro from "@/views/terminal/settings/subroutines/Macro.vue";
-import Trigger from "@/views/terminal/settings/subroutines/Trigger.vue";
+
+import TriggerDom from "@/views/terminal/settings/subroutines/Trigger.vue";
 import Button from "@/components/Button.vue";
 import subroutineService from "@/services/subroutineService";
 import core from "@/core";
@@ -16,7 +16,7 @@ const remote = core.remote()
 
 const state = reactive({
   subroutine: {
-    macros: []
+    macros: [] as Macro[]
   } as SubRoutine,
   trigger: {} as Trigger,
   loaded: false,
@@ -48,11 +48,13 @@ function goBack() {
   router.push("/terminal/settings/subroutines")
 }
 
+const notifications = inject("notifications") as any
+
 function deleteSubRoutine() {
-  subroutineService.deleteSubroutine(props.subroutine.id).then(res => {
-    notifications.show("Subroutine", `Subroutine '${props.subroutine.description}' deleted.`, 0, 1000 * 3)
+  subroutineService.deleteSubroutine(state.subroutine.id).then(res => {
+    notifications.show("Subroutine", `Subroutine '${state.subroutine.description}' deleted.`, 0, 1000 * 3)
   }).catch(err => {
-    notifications.show("Subroutine", `Subroutine '${props.subroutine.description}' cannot be deleted.`, 2, 1000 * 3)
+    notifications.show("Subroutine", `Subroutine '${state.subroutine.description}' cannot be deleted.`, 2, 1000 * 3)
   })
 }
 
@@ -89,7 +91,7 @@ function deleteSubRoutine() {
           </div>
         </div>
 
-        <Trigger :trigger="state.trigger"></Trigger>
+        <TriggerDom :trigger="state.trigger"></TriggerDom>
         <div class="d-flex align-items-center py-1 pb-1  px-1">
           <div class="label-c2 label-w500 label-o3">Run {{ state.subroutine.macros.length }}
             macro{{ (state.subroutine.macros.length !== 1) ? 's' : '' }}:
