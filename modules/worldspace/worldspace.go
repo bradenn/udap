@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi"
 	"net/http"
 	"time"
@@ -193,37 +194,55 @@ func (w *Worldspace) handleMotion(writer http.ResponseWriter, request *http.Requ
 
 }
 
-func (w *Worldspace) Run() error {
-	w.server = http.Server{}
-	w.server.Addr = "0.0.0.0:5058"
-	router := chi.NewRouter()
-	err := w.Triggers.Register(&domain.Trigger{
-		Name:        "motion",
-		Type:        "module",
-		Description: "When motion is detected",
+func (w *Worldspace) endpointTrigger(router chi.Router, name string) error {
+	router.Post(fmt.Sprintf("/%s", name), func(writer http.ResponseWriter, request *http.Request) {
+		// zone := chi.URLParam(request, "zone")
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(request.Body)
+		if err != nil {
+			return
+		}
+		defer request.Body.Close()
+
+		err = w.Triggers.Trigger(fmt.Sprintf("ws-%s", name))
+		if err != nil {
+			return
+		}
+		_, err = writer.Write([]byte("OK"))
+		if err != nil {
+			return
+		}
 	})
-	if err != nil {
-		return err
-	}
-	router.Post("/motion/{zone}", w.handleMotion)
-	err = w.Triggers.Register(&domain.Trigger{
-		Name:        "homekit-arrival",
+	err := w.Triggers.Register(&domain.Trigger{
+		Name:        fmt.Sprintf("ws-%s", name),
 		Type:        "module",
 		Description: "When someone arrives",
 	})
 	if err != nil {
 		return err
 	}
-	router.Post("/arrive/{id}", w.handleArrival)
-	err = w.Triggers.Register(&domain.Trigger{
-		Name:        "homekit-departure",
-		Type:        "module",
-		Description: "When someone departs",
-	})
+	return nil
+}
+
+func (w *Worldspace) Run() error {
+	w.server = http.Server{}
+	w.server.Addr = "0.0.0.0:5058"
+	router := chi.NewRouter()
+	err := w.endpointTrigger(router, "motion")
 	if err != nil {
 		return err
 	}
-	router.Post("/depart/{id}", w.handleDeparture)
+
+	err = w.endpointTrigger(router, "depart")
+	if err != nil {
+		return err
+	}
+
+	err = w.endpointTrigger(router, "arrive")
+	if err != nil {
+		return err
+	}
+
 	w.server.Handler = router
 	entity := domain.Entity{
 		Name:   "faces",

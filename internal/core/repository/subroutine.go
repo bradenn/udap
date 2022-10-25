@@ -21,6 +21,32 @@ func NewSubRoutineRepository(db *gorm.DB) ports.SubRoutineRepository {
 	}
 }
 
+func (s *subRoutineRepo) AddMacro(subroutine *domain.SubRoutine, id string) error {
+	target := domain.Macro{}
+	err := s.db.Model(&domain.Macro{}).Where("id = ?", id).Find(&target).Error
+	if err != nil {
+		return err
+	}
+	err = s.db.Model(subroutine).Association("Macros").Append(&target)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *subRoutineRepo) RemoveMacro(subroutine *domain.SubRoutine, id string) error {
+	target := domain.Macro{}
+	err := s.db.Model(&domain.Macro{}).Where("id = ?", id).Find(&target).Error
+	if err != nil {
+		return err
+	}
+	err = s.db.Model(&subroutine).Association("Macros").Delete(&target)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *subRoutineRepo) Delete(e *domain.SubRoutine) error {
 
 	err := s.db.Model(e).Association("Macros").Clear()

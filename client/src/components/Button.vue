@@ -33,9 +33,10 @@ function release(_: Event) {
 </script>
 
 <template>
-  <div :class="`${props.active?'':'subplot-inline'}`" class="switch-space subplot switch-space-active" @mousedown="push"
+  <div :class="`${props.active?'':'subplot-inline'}`" class="switch-space subplot switch-space-active"
+       @mousedown="push"
        @mouseup="release">
-    {{ props.text }}
+    <span :class="`${props.active?'':''}`">{{ props.text }}</span>
   </div>
 </template>
 

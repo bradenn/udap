@@ -6,8 +6,16 @@ import request from "@/services/request";
 
 
 export default {
-    async triggerManual(subroutine: SubRoutine): Promise<void> {
-        const url = `/subroutines/${subroutine.id}/run`
+    async triggerManual(id: string): Promise<void> {
+        const url = `/subroutines/${id}/run`
+        return await request.post(url)
+    },
+    async addMacro(id: string, macroId: string): Promise<void> {
+        const url = `/subroutines/${id}/macros/${macroId}/add`
+        return await request.post(url)
+    },
+    async removeMacro(id: string, macroId: string): Promise<void> {
+        const url = `/subroutines/${id}/macros/${macroId}/remove`
         return await request.post(url)
     },
     async createSubroutine(subroutine: SubRoutine): Promise<void> {

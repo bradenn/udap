@@ -12,6 +12,7 @@ let remote = inject('remote') as Remote
 
 let state = reactive({
   subroutines: [] as SubRoutine[],
+  selected: {} as SubRoutine,
   loading: true,
 })
 
@@ -21,8 +22,13 @@ onMounted(() => {
 })
 
 watchEffect(() => {
-  return handleUpdates(remote)
+  handleUpdates(remote)
+  return remote.subroutines
 })
+
+function selectSR(sr: SubRoutine) {
+  state.selected = sr
+}
 
 function handleUpdates(remote: Remote) {
   state.loading = false
@@ -35,9 +41,9 @@ function handleUpdates(remote: Remote) {
   <div class="layout-grid">
     <div class="layout-sidebar">
       <div class="d-flex mb-1 gap-1 p-0" style="height: 1.5rem;">
-        <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
-                text="􀅼 Macro" to="/terminal/settings/subroutines/create"></Button>
-        <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
+        <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
+                text="􀅼 Macro" to="/terminal/settings/subroutines/macro"></Button>
+        <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
                 text="􀅼 Subroutine" to="/terminal/settings/subroutines/create"></Button>
       </div>
       <Menu alt="" style="height: calc(100% - 1.625rem) !important;" title="">
@@ -61,11 +67,17 @@ function handleUpdates(remote: Remote) {
         <div class="d-flex align-items-center py-1 pb-1">
           <div class="label-sm label-w200 label-o6 px-1">􀏧</div>
           <div class="label-sm label-w700 label-o6">All Subroutines</div>
+          <div class="px-2 d-flex gap-1">
+            <Button :active="true" class="element flex-grow-1 px-3 " style="height: 1.5rem"
+                    text="Edit" to="/terminal/settings/subroutines/create"></Button>
+            <Button :active="false" class="element flex-grow-1 px-3" style="height: 1.5rem"
+                    text="Delete" to="/terminal/settings/subroutines/create"></Button>
+          </div>
         </div>
         <div class="d-flex gap-1">
-          <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
+          <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
                   text="􀈙 Create Group" to="/terminal/settings/subroutines/create"></Button>
-          <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
+          <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
                   text="􀈊 Edit Group" to="/terminal/settings/subroutines/create"></Button>
         </div>
 

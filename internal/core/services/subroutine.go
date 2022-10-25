@@ -21,6 +21,30 @@ type subRoutineService struct {
 	generic.Watchable[domain.SubRoutine]
 }
 
+func (u *subRoutineService) AddMacro(id string, macroId string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	err = u.repository.AddMacro(byId, macroId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *subRoutineService) RemoveMacro(id string, macroId string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	err = u.repository.RemoveMacro(byId, macroId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *subRoutineService) TriggerById(id string) error {
 	routines, err := u.repository.FindByTriggerId(id)
 	if err != nil {
@@ -38,7 +62,7 @@ func (u *subRoutineService) TriggerById(id string) error {
 }
 
 func (u *subRoutineService) Run(id string) error {
-	subroutine, err := u.repository.FindById(id)
+	subroutine, err := u.FindById(id)
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Macro, SubRoutine, Trigger} from "@/types";
 import Subroutine from "@/views/terminal/settings/subroutines/Subroutine.vue";
+import MacroDom from "@/views/terminal/settings/subroutines/Macro.vue";
 
 import TriggerDom from "@/views/terminal/settings/subroutines/Trigger.vue";
 import Button from "@/components/Button.vue";
@@ -50,9 +51,18 @@ function goBack() {
 
 const notifications = inject("notifications") as any
 
+function triggerSubroutine() {
+  subroutineService.triggerManual(state.subroutine.id).then(res => {
+    notifications.show("Subroutine", `Subroutine '${state.subroutine.description}' triggered.`, 0, 1000 * 3)
+  }).catch(err => {
+    notifications.show("Subroutine", `Subroutine '${state.subroutine.description}' cannot be triggered.`, 2, 1000 * 3)
+  })
+}
+
 function deleteSubRoutine() {
   subroutineService.deleteSubroutine(state.subroutine.id).then(res => {
     notifications.show("Subroutine", `Subroutine '${state.subroutine.description}' deleted.`, 0, 1000 * 3)
+    goBack();
   }).catch(err => {
     notifications.show("Subroutine", `Subroutine '${state.subroutine.description}' cannot be deleted.`, 2, 1000 * 3)
   })
@@ -75,7 +85,7 @@ function deleteSubRoutine() {
       <Subroutine :subroutine="state.subroutine"></Subroutine>
       <div class="d-flex gap-1">
         <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
-                text="􀋥 Trigger" to="/terminal/settings/subroutines/create"></Button>
+                text="􀋥 Trigger" @click="triggerSubroutine"></Button>
         <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
                 text="􀈑 Delete" @click="deleteSubRoutine"></Button>
       </div>
@@ -91,13 +101,15 @@ function deleteSubRoutine() {
           </div>
         </div>
 
-        <TriggerDom :trigger="state.trigger"></TriggerDom>
+        <trigger-dom :trigger="state.trigger"></trigger-dom>
         <div class="d-flex align-items-center py-1 pb-1  px-1">
           <div class="label-c2 label-w500 label-o3">Run {{ state.subroutine.macros.length }}
             macro{{ (state.subroutine.macros.length !== 1) ? 's' : '' }}:
           </div>
         </div>
-        <Macro v-for="macro in state.subroutine.macros" :macro="macro" subplot></Macro>
+        <div class="d-flex gap-1 flex-column">
+          <MacroDom v-for="macro in state.subroutine.macros" :macro="macro" subplot></MacroDom>
+        </div>
       </div>
     </div>
   </div>

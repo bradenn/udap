@@ -28,13 +28,11 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="element p-1 toast" style="width: 18rem; height: 2.5rem">
-    <div class="d-flex">
-      <div
-          :style="`background-color: rgba(${props.severity === 0?'25, 135, 84':props.severity === 1?'255, 149, 0':'255,69,58'}, 0.53);`"
-          class="status-marker"></div>
+  <div :style="``" class="element p-2 px-1 pt-1 toast"
+       style="width: 18rem; height: 2.5rem">
+    <div class="d-flex align-items-start px-1">
       <div class="w-100 d-flex flex-column justify-content-center">
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between lh-1 pt-1 ">
           <div class="label-c2 label-o5 label-w600  d-flex">
             {{ props.title }}
           </div>
@@ -52,14 +50,27 @@ watchEffect(() => {
 .status-marker {
   width: 4px !important;
   border-radius: 4px;
-  height: 28px;
+  height: 42px;
 
   margin: 8px 14px 8px 8px;
 
   background-color: rgba(25, 135, 84, 0.53);
 }
 
+@keyframes pulse {
+  0% {
+    outline: 10px solid white;
+  }
+  50% {
+    outline: 80px solid white;
+  }
+  100% {
+    outline: 10px solid white;
+  }
+}
+
 .module-icon {
+
   align-items: center;
   display: flex;
   justify-content: center;
@@ -77,5 +88,6 @@ watchEffect(() => {
 .toast {
   position: absolute;
   left: calc(50% - 8rem);
+  animation: pulse 400ms ease-out infinite;
 }
 </style>

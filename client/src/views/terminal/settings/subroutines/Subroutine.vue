@@ -7,7 +7,8 @@ import {reactive} from "vue";
 import {useRouter} from "vue-router";
 
 interface SubRoutineProps {
-  subroutine: SubRoutine
+  subroutine: SubRoutine,
+  selected?: boolean
 }
 
 const state = reactive({
@@ -23,10 +24,12 @@ const props = defineProps<SubRoutineProps>()
 
 <template>
   <div>
-    <div class="element p-2 h-100" @click="router.push(`/terminal/settings/subroutines/${props.subroutine.id}/edit`)">
+    <div :class="props.selected?'accent-selected':''" class="element p-2 h-100"
+         @click="router.push(`/terminal/settings/subroutines/${props.subroutine.id}/edit`)">
 
       <div class="d-flex justify-content-between">
         <div class="label-xs label-o4 label-w500 pb-2">􁏀</div>
+        <div v-if="props.selected" class="label-c2 label-o4 label-w500 text-accent">􀷙</div>
       </div>
       <div class="label-c2 label-o4 label-w700 lh-1">{{ props.subroutine.description }}</div>
       <div class="label-c3 label-o3 label-w400">{{ props.subroutine.macros.length }}
@@ -44,6 +47,11 @@ const props = defineProps<SubRoutineProps>()
 </template>
 
 <style scoped>
+
+.accent-selected {
+  border: 2px solid rgba(255, 149, 0, 0.5);
+}
+
 .element-menu {
   position: absolute;
   width: 10rem;

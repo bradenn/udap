@@ -40,7 +40,7 @@ function deleteMacro() {
 
 <template>
   <div :class="`${props.subplot?'subplot':'element'}`" class=" p-1 position-relative"
-       @click="state.toggle = !state.toggle">
+  >
     <div class="d-flex align-items-start flex-row p-1">
       <div class="d-flex align-items-center" style="width: 0.8rem;">
         <div class="label-c2 label-o4 label-w500 ">􀉣</div>
