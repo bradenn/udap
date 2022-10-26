@@ -1,0 +1,89 @@
+menu "Sentry Configuration"
+
+    config ESP_WIFI_SSID
+        string "WiFi SSID"
+        default "ssid"
+        help
+            SSID (network name) for the example to connect to.
+
+    config ESP_WIFI_PASSWORD
+        string "WiFi Password"
+        default "password"
+        help
+            WiFi password (WPA or WPA2) for the example to use.
+
+    config ESP_MAXIMUM_RETRY
+        int "Maximum retry"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    config SENTRY_AUTH
+            boolean "Use authentication"
+            default true
+            help
+                Select whether the sentry should be secured or not (required regardless for 5mw+ optical beam output)
+
+    config SENTRY_AUTH_USER
+            string "remote auth username"
+            default "sentry"
+            help
+                Sentry auth username
+
+    config SENTRY_AUTH_PASS
+            string "remote auth password"
+            default "password"
+            help
+                Sentry auth password
+
+    choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
+        prompt "WiFi Scan auth mode threshold"
+        default ESP_WIFI_AUTH_WPA_WPA2_PSK
+        help
+            The weakest authmode to accept in the scan mode.
+
+        config ESP_WIFI_AUTH_OPEN
+            bool "OPEN"
+        config ESP_WIFI_AUTH_WEP
+            bool "WEP"
+        config ESP_WIFI_AUTH_WPA_PSK
+            bool "WPA PSK"
+        config ESP_WIFI_AUTH_WPA2_PSK
+            bool "WPA2 PSK"
+        config ESP_WIFI_AUTH_WPA_WPA2_PSK
+            bool "WPA/WPA2 PSK"
+        config ESP_WIFI_AUTH_WPA3_PSK
+            bool "WPA3 PSK"
+        config ESP_WIFI_AUTH_WPA2_WPA3_PSK
+            bool "WPA2/WPA3 PSK"
+        config ESP_WIFI_AUTH_WAPI_PSK
+            bool "WAPI PSK"
+    endchoice
+
+
+    config GPIO_INDICATOR_RED
+        int "GPIO number for the red indicator"
+        default 13
+    config GPIO_INDICATOR_GREEN
+        int "GPIO number for the green indicator"
+        default 12
+    config GPIO_INDICATOR_BLUE
+        int "GPIO number for the blue indicator"
+        default 14
+
+    config SENTRY_PAN_SERVO_GPIOq
+            int "GPIO pin assignment for PAN servo"
+            default 26
+    config SENTRY_TILT_SERVO_GPIO
+            int "GPIO pin assignment for TILT servo"
+            default 27
+
+    config SENTRY_BEAM_PRIMARY_GPIO
+        int "GPIO pin assignment for primary beam"
+        default 32
+    config SENTRY_BEAM_SECONDARY_GPIO
+        int "GPIO pin assignment for secondary beam"
+        default 33
+
+
+endmenu
