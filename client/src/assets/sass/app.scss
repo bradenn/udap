@@ -843,6 +843,14 @@ hr {
   align-items: end;
 }
 
+.button-sep {
+  @extend .element;
+  border-radius: 0.25rem;
+  padding: 0;
+  height: 32px;
+  width: 2px;
+}
+
 .home-bar {
   position: absolute;
   bottom: 0.5rem;

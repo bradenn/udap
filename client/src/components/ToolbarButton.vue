@@ -7,9 +7,10 @@ import {useRouter} from "vue-router";
 
 
 const props = defineProps<{
-  active: boolean,
   text: string,
   to?: string,
+  disabled?: boolean,
+  active?: boolean,
   accent?: boolean,
 }>()
 
@@ -19,6 +20,7 @@ let router = useRouter()
 const haptics = inject("haptic") as (a: number, b: number, c: number) => void
 
 function push(_: Event) {
+  if (props.disabled) return
   haptics(2, 1, 75)
   if (props.to) {
     router.push(props.to)
@@ -34,18 +36,23 @@ function release(_: Event) {
 </script>
 
 <template>
-  <div :class="`${props.active?props.accent?'text-accent':'':'subplot-inline'}`"
+  <div :class="`${props.active?'':'subplot-inline'}`"
        class="switch-space subplot switch-space-active"
        @mousedown="push"
        @mouseup="release">
-    <span :class="`${props.active?'':''}`">{{ props.text }}</span>
+    <span :class="`${props.active?'':''} ${props.accent?'switch-accent':''} ${props.disabled?'label-o1':''}`">{{
+        props.text
+      }}</span>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.switch-accent {
+  color: rgba(255, 149, 0, 0.8) !important;
+}
 
 .switch-space-active {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
 
   box-shadow: 0 0 20px 1px rgba(0, 0, 0, 0.1), inset 0 0 2px 1px rgba(255, 255, 255, 0.05);
 }
@@ -61,11 +68,12 @@ function release(_: Event) {
 .switch-space {
   display: flex;
   justify-content: center;
-  font-weight: 600;
+  font-family: "SF Pro Display", serif !important;
+  font-weight: 500;
   align-items: center;
-  font-size: 0.65rem;
+  font-size: 21px;
   line-height: 0.7rem;
   height: 1.8rem;
-  color: rgba(255, 255, 255, 0.4);
+
 }
 </style>

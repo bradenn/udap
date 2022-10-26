@@ -39,3 +39,5 @@ spotify.json
 /client/public/custom/*.png
 
 /embeded/haptics/sdkconfig
+/embeded/sentry/sdkconfig
+/embeded/sentry/sdkconfig.old

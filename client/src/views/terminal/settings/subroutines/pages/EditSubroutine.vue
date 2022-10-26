@@ -11,6 +11,7 @@ import TriggerDom from "@/views/terminal/settings/subroutines/Trigger.vue";
 import Button from "@/components/Button.vue";
 import subroutineService from "@/services/subroutineService";
 import core from "@/core";
+import ToolbarButton from "@/components/ToolbarButton.vue";
 
 const router = core.router()
 const remote = core.remote()
@@ -96,19 +97,37 @@ function deleteSubRoutine() {
         <div class="label-sm label-w700 label-o6">Workflow</div>
       </div>
       <div v-if="state.loaded" class="element px-1 pt-0">
-        <div class="d-flex align-items-center py-1 pb-1 px-1">
+        <div class="d-flex align-items-center justify-content-between py-1 pb-1 px-1">
           <div class="label-c2 label-w500 label-o3">When triggered by:
+          </div>
+          <div class="label-c2 label-w500 label-o3">Edit
           </div>
         </div>
 
         <trigger-dom :trigger="state.trigger"></trigger-dom>
-        <div class="d-flex align-items-center py-1 pb-1  px-1">
+        <div class="d-flex align-items-center py-1 pb-1  px-1 justify-content-between">
           <div class="label-c2 label-w500 label-o3">Run {{ state.subroutine.macros.length }}
             macro{{ (state.subroutine.macros.length !== 1) ? 's' : '' }}:
           </div>
+          <div class="label-c2 label-w500 label-o3">Edit
+          </div>
         </div>
-        <div class="d-flex gap-1 flex-column">
-          <MacroDom v-for="macro in state.subroutine.macros" :macro="macro" subplot></MacroDom>
+
+        <div class="d-flex gap-1 flex-column w-100">
+          <MacroDom v-for="macro in state.subroutine.macros" :macro="macro" class="" subplot></MacroDom>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex gap-1">
+              <ToolbarButton :accent="false" :active="true" class=" px-3" style="height: 1.4rem"
+                             text="Edit" @click="() => {}"></ToolbarButton>
+              <ToolbarButton :accent="false" :active="true" class=" px-3" style="height: 1.4rem"
+                             text="Run" @click="() => {}"></ToolbarButton>
+            </div>
+            <ToolbarButton :accent="false" :active="true" class=" px-3" style="height: 1.4rem"
+                           text="Remove" @click="() => {}"></ToolbarButton>
+          </div>
+        </div>
+        <div class="d-flex gap-1 pt-1">
+
         </div>
       </div>
     </div>

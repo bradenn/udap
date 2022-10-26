@@ -39,8 +39,7 @@ function deleteMacro() {
 </script>
 
 <template>
-  <div :class="`${props.subplot?'subplot':'element'}`" class=" p-1 position-relative"
-  >
+  <div :class="`${props.subplot?'subplot':'element'}`" class=" p-1 position-relative">
     <div class="d-flex align-items-start flex-row p-1">
       <div class="d-flex align-items-center" style="width: 0.8rem;">
         <div class="label-c2 label-o4 label-w500 ">􀉣</div>
@@ -49,7 +48,9 @@ function deleteMacro() {
         <div class="label-c2 label-o4 label-w700 lh-1">{{ props.macro.name }}</div>
         <div class="label-c3 label-o3 label-w400">{{ props.macro.description }}</div>
       </div>
+
     </div>
+
   </div>
   <div v-if="state.toggle" class="element element-menu">
     <div class="grid-element">

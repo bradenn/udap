@@ -25,7 +25,7 @@ const props = defineProps<SubRoutineProps>()
 <template>
   <div>
     <div :class="props.selected?'accent-selected':''" class="element p-2 h-100"
-         @click="router.push(`/terminal/settings/subroutines/${props.subroutine.id}/edit`)">
+    >
 
       <div class="d-flex justify-content-between">
         <div class="label-xs label-o4 label-w500 pb-2">􁏀</div>
@@ -40,7 +40,7 @@ const props = defineProps<SubRoutineProps>()
     </div>
     <div v-if="state.toggle" class="element element-menu">
       <div class="grid-element">
-        <!--        <Button active text="􀈑" @click="deleteSubRoutine"></Button>-->
+        <!--         <Button active text="􀈑" @click="deleteSubRoutine"></Button>-->
       </div>
     </div>
   </div>
@@ -49,7 +49,11 @@ const props = defineProps<SubRoutineProps>()
 <style scoped>
 
 .accent-selected {
-  border: 2px solid rgba(255, 149, 0, 0.5);
+  outline: 2px solid rgba(255, 149, 0, 0.4) !important;
+}
+
+.element {
+  /*border: 2px solid rgba(255, 149, 0, 0);*/
 }
 
 .element-menu {

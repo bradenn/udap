@@ -7,12 +7,14 @@ import Button from "@/components/Button.vue";
 import MenuItem from "@/components/menu/MenuItem.vue";
 import Menu from "@/components/menu/Menu.vue";
 import MenuSection from "@/components/menu/MenuSection.vue";
+import ToolbarButton from "@/components/ToolbarButton.vue";
 
 let remote = inject('remote') as Remote
 
 let state = reactive({
   subroutines: [] as SubRoutine[],
-  selected: {} as SubRoutine,
+  selected: [] as string[],
+  select: false,
   loading: true,
 })
 
@@ -23,11 +25,20 @@ onMounted(() => {
 
 watchEffect(() => {
   handleUpdates(remote)
-  return remote.subroutines
+  return state.subroutines
 })
 
 function selectSR(sr: SubRoutine) {
-  state.selected = sr
+  if (!state.select) return
+  if (state.selected.includes(sr.id)) {
+    state.selected = state.selected.filter(s => s !== sr.id)
+  } else {
+    state.selected.push(sr.id)
+  }
+}
+
+function unselectSR(sr: SubRoutine) {
+  state.selected = state.selected.filter(s => s !== sr.id)
 }
 
 function handleUpdates(remote: Remote) {
@@ -35,6 +46,22 @@ function handleUpdates(remote: Remote) {
   state.subroutines = remote.subroutines
   return remote
 }
+
+function selectStop() {
+  state.select = false
+  state.selected = []
+
+}
+
+function selectStart() {
+  state.select = true
+
+}
+
+function select(id: string) {
+
+}
+
 </script>
 
 <template>
@@ -63,28 +90,34 @@ function handleUpdates(remote: Remote) {
       </Menu>
     </div>
     <div class="layout-body">
-      <div class="d-flex mb-1 justify-content-between align-items-center flex-row" style="height: 1.5rem;">
-        <div class="d-flex align-items-center py-1 pb-1">
-          <div class="label-sm label-w200 label-o6 px-1">􀏧</div>
-          <div class="label-sm label-w700 label-o6">All Subroutines</div>
-          <div class="px-2 d-flex gap-1">
-            <Button :active="true" class="element flex-grow-1 px-3 " style="height: 1.5rem"
-                    text="Edit" to="/terminal/settings/subroutines/create"></Button>
-            <Button :active="false" class="element flex-grow-1 px-3" style="height: 1.5rem"
-                    text="Delete" to="/terminal/settings/subroutines/create"></Button>
-          </div>
-        </div>
-        <div class="d-flex gap-1">
-          <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
-                  text="􀈙 Create Group" to="/terminal/settings/subroutines/create"></Button>
-          <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
-                  text="􀈊 Edit Group" to="/terminal/settings/subroutines/create"></Button>
+      <div class="d-flex mb-1 justify-content-between align-items-center flex-row">
+        <div class="px-2 d-flex gap-1 align-items-center element w-100 lh-2" style="height: 1.8rem;">
+          <div class="label-xs label-w200 label-o3 px-1">􀏧</div>
+          <div class="label-xs label-w700 label-o5">All Subroutines</div>
+
+          <!--          <div class="button-sep"></div>-->
+          <ToolbarButton :active="false" :disabled="state.select" class=" px-3"
+                         style="height: 1.4rem"
+                         text="Select"
+                         @click="() => state.select?selectStop():selectStart()"></ToolbarButton>
+          <div class="button-sep"></div>
+          <ToolbarButton :active="false" :disabled="state.selected.length === 0" class=" px-3" style="height: 1.5rem"
+                         text="Trigger" to="/terminal/settings/subroutines/create"></ToolbarButton>
+          <ToolbarButton :active="false" :disabled="state.selected.length === 0" class="  px-3" style="height: 1.5rem"
+                         text="Delete" to="/terminal/settings/subroutines/create"></ToolbarButton>
+          <ToolbarButton v-if="state.select" :accent="true" :active="false" :text="state.select?'Done':'Select'"
+                         class=" px-3"
+                         style="height: 1.4rem"
+                         @click="() => selectStop()"></ToolbarButton>
         </div>
 
 
       </div>
       <div class="page-grid">
-        <Subroutine v-for="sr in state.subroutines" :key="sr.id" :subroutine="sr"></Subroutine>
+        <Subroutine v-for="sr in state.subroutines" :key="sr.id" :selected="state.selected.includes(sr.id)"
+                    :subroutine="sr"
+                    @click="state.select?selectSR(sr):$router.push(`/terminal/settings/subroutines/${sr.id}/edit`)"
+                    v-on:click.stop></Subroutine>
       </div>
 
     </div>
@@ -93,6 +126,11 @@ function handleUpdates(remote: Remote) {
 
 <style lang="scss" scoped>
 
+.button-sep {
+  width: 3px;
+  height: 32px;
+  background-color: rgba(255, 255, 255, 0.3);
+}
 
 .layout-grid {
   width: 100%;
