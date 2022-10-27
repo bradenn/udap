@@ -3,16 +3,13 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewNetworkService(db *gorm.DB) ports.NetworkService {
-	repo := repository.NewNetworkRepository(db)
-	return &networkService{repository: repo}
+func NewNetworkService(repository ports.NetworkRepository) ports.NetworkService {
+	return &networkService{repository: repository}
 }
 
 type networkService struct {

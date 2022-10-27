@@ -3,18 +3,15 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 	"udap/internal/log"
 )
 
-func NewEntityService(db *gorm.DB) ports.EntityService {
-	repo := repository.NewEntityRepository(db)
+func NewEntityService(repository ports.EntityRepository) ports.EntityService {
 	return &entityService{
-		repository: repo}
+		repository: repository}
 }
 
 type entityService struct {

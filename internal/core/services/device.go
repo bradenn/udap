@@ -3,17 +3,14 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewDeviceService(db *gorm.DB) ports.DeviceService {
-	repo := repository.NewDeviceRepository(db)
-	return &deviceService{repository: repo, utilization: map[string]domain.Utilization{}}
+func NewDeviceService(repository ports.DeviceRepository) ports.DeviceService {
+	return &deviceService{repository: repository, utilization: map[string]domain.Utilization{}}
 }
 
 type deviceService struct {

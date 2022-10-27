@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-package orchestrator
+package srv
 
 import (
 	"github.com/go-chi/chi"
@@ -30,6 +30,14 @@ func NewServer() Server {
 	}
 
 	return srv
+}
+
+func (s *Server) AddRoute(route routes.Routable) {
+	s.router.Group(func(internal chi.Router) {
+		internal.Use(jwt.Authenticator)
+		route.RouteInternal(internal)
+	})
+	route.RouteExternal(s.router)
 }
 
 func (s *Server) AddRoutes(routable ...routes.Routable) {

@@ -92,8 +92,8 @@ function select(id: string) {
     <div class="layout-body">
       <div class="d-flex mb-1 justify-content-between align-items-center flex-row">
         <div class="px-2 d-flex gap-1 align-items-center element w-100 lh-2" style="height: 1.8rem;">
-          <div class="label-xs label-w200 label-o3 px-1">􀏧</div>
-          <div class="label-xs label-w700 label-o5">All Subroutines</div>
+          <div class="label-xs label-w200 label-o3 px-0">􀐘</div>
+          <div class="label-xs label-w700 label-o5">Subroutines</div>
 
           <!--          <div class="button-sep"></div>-->
           <ToolbarButton :active="false" :disabled="state.select" class=" px-3"
@@ -113,12 +113,14 @@ function select(id: string) {
 
 
       </div>
-      <div class="page-grid">
-        <Subroutine v-for="sr in state.subroutines" :key="sr.id" :selected="state.selected.includes(sr.id)"
-                    :subroutine="sr"
-                    @click="state.select?selectSR(sr):$router.push(`/terminal/settings/subroutines/${sr.id}/edit`)"
-                    v-on:click.stop></Subroutine>
-      </div>
+      <MenuSection style="flex-direction: row;" title="All Subroutines">
+        <div class="page-grid">
+          <Subroutine v-for="sr in state.subroutines" :key="sr.id" :selected="state.selected.includes(sr.id)"
+                      :subroutine="sr"
+                      @click="state.select?selectSR(sr):$router.push(`/terminal/settings/subroutines/${sr.id}/edit`)"
+                      v-on:click.stop></Subroutine>
+        </div>
+      </MenuSection>
 
     </div>
   </div>

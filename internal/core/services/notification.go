@@ -3,16 +3,13 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewNotificationService(db *gorm.DB) ports.NotificationService {
-	repo := repository.NewNotificationRepository(db)
-	return &notificationService{repository: repo}
+func NewNotificationService(repository ports.NotificationRepository) ports.NotificationService {
+	return &notificationService{repository: repository}
 }
 
 type notificationService struct {

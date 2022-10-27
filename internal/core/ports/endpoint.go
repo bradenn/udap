@@ -37,5 +37,5 @@ type EndpointService interface {
 
 	FindOrCreate(*domain.Endpoint) error
 	Update(*domain.Endpoint) error
-	Delete(*domain.Endpoint) error
+	Delete(id string) error
 }

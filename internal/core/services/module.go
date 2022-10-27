@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -14,17 +13,14 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 	"udap/internal/log"
 	"udap/internal/pulse"
 )
 
-func NewModuleService(db *gorm.DB, runtime ports.ModuleOperator) ports.ModuleService {
-	repo := repository.NewModuleRepository(db)
-	operator := runtime
+func NewModuleService(repository ports.ModuleRepository, runtime ports.ModuleOperator) ports.ModuleService {
 	return &moduleService{
-		repository: repo,
-		operator:   operator,
+		repository: repository,
+		operator:   runtime,
 	}
 }
 

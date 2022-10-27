@@ -137,11 +137,11 @@ function currentPageName() {
 }
 
 .page-title {
-  font-size: 1.9rem;
+  font-size: 1.6rem;
   line-height: 2rem;
   font-weight: 600;
   font-family: "SF Pro Display", sans-serif;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(220, 220, 220, 0.9);
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
   transition: font-size 50ms ease-in;
 }

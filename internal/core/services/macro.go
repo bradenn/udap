@@ -3,17 +3,13 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewMacroService(db *gorm.DB, operator ports.MacroOperator) ports.MacroService {
-	repo := repository.NewMacroRepository(db)
-
-	return &macroService{repository: repo, operator: operator}
+func NewMacroService(repository ports.MacroRepository, operator ports.MacroOperator) ports.MacroService {
+	return &macroService{repository: repository, operator: operator}
 }
 
 type macroService struct {

@@ -3,16 +3,13 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewTriggerService(db *gorm.DB, operator ports.TriggerOperator) ports.TriggerService {
-	repo := repository.NewTriggerRepository(db)
-	return &triggerService{repository: repo, operator: operator}
+func NewTriggerService(repository ports.TriggerRepository, operator ports.TriggerOperator) ports.TriggerService {
+	return &triggerService{repository: repository, operator: operator}
 }
 
 type triggerService struct {

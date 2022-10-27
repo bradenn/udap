@@ -51,7 +51,6 @@ func (w *Watchable[T]) Emit(element T) error {
 
 }
 
-func (w *Watchable[T]) Watch(ref chan<- domain.Mutation) error {
+func (w *Watchable[T]) Watch(ref chan<- domain.Mutation) {
 	w.channel = ref
-	return nil
 }

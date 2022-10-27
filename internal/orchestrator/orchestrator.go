@@ -14,12 +14,10 @@ import (
 	"udap/internal/core"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
-	"udap/internal/core/services"
 	"udap/internal/log"
-	"udap/internal/operators"
-	"udap/internal/port/routes"
-	"udap/internal/port/runtimes"
+	"udap/internal/modules"
 	"udap/internal/pulse"
+	"udap/internal/srv"
 	"udap/platform/database"
 )
 
@@ -27,13 +25,13 @@ type orchestrator struct {
 	db         *gorm.DB
 	controller *controller.Controller
 
-	server  Server
+	server  srv.Server
 	maxTick time.Duration
 	done    chan bool
 
 	modules   ports.ModuleService
 	endpoints ports.EndpointService
-
+	sys       srv.System
 	mutations chan domain.Mutation
 }
 
@@ -56,7 +54,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		return nil, err
 	}
 	// Initialize Server
-	server := NewServer()
+	server := srv.NewServer()
 	// Initialize Orchestrator
 	return &orchestrator{
 		db:         db,
@@ -81,32 +79,49 @@ func (o *orchestrator) Start() error {
 		}
 	}()
 
+	go func() {
+		err := o.handleMutations()
+		if err != nil {
+			log.Err(err)
+			return
+		}
+	}()
+
 	err := core.MigrateModels(o.db)
 	if err != nil {
 		return err
 	}
 
-	o.controller, err = controller.NewController(o.db)
+	o.controller, err = controller.NewController(o.mutations)
 	if err != nil {
 		return err
 	}
 
-	o.modules = services.NewModuleService(o.db, operators.NewModuleOperator(o.controller))
-	o.endpoints = services.NewEndpointService(o.db, operators.NewEndpointOperator(o.controller))
+	o.sys = srv.NewRtx(&o.server, o.controller, o.db)
 
-	o.controller.Attributes = services.NewAttributeService(o.db, operators.NewAttributeOperator())
-	o.controller.Macros = services.NewMacroService(o.db, operators.NewMacroOperator(o.controller))
-	o.controller.SubRoutines = services.NewSubRoutineService(o.db, operators.NewSubRoutineOperator(o.controller))
-	o.controller.Triggers = services.NewTriggerService(o.db, operators.NewTriggerOperator(o.controller))
-
-	o.controller.Endpoints = o.endpoints
-	o.controller.Modules = o.modules
+	o.sys.UseModules(modules.NewEndpoint)
+	o.sys.UseModules(modules.NewModule)
+	o.sys.UseModules(
+		modules.NewMacro,
+		modules.NewSubroutine,
+		modules.NewTrigger,
+		modules.NewAttribute,
+		modules.NewZone,
+		modules.NewUser,
+		modules.NewEntity,
+		modules.NewNetwork,
+		modules.NewDevice,
+		modules.NewNotifications,
+		modules.NewLog,
+	)
 
 	return nil
 }
 
 func (o *orchestrator) Update() error {
-
+	if o.modules == nil {
+		return nil
+	}
 	err := o.modules.UpdateAll()
 	if err != nil {
 		return err
@@ -131,7 +146,10 @@ func (o *orchestrator) broadcastTimings() error {
 func (o *orchestrator) handleMutations() error {
 	for response := range o.mutations {
 		// o.modules.HandleEmits(response)
-		err := o.endpoints.SendAll(response.Id, response.Operation, response.Body)
+		if o.controller.Endpoints == nil {
+			continue
+		}
+		err := o.controller.Endpoints.SendAll(response.Id, response.Operation, response.Body)
 		if err != nil {
 			log.Err(err)
 			continue
@@ -161,47 +179,9 @@ func (o *orchestrator) tick() <-chan error {
 
 func (o *orchestrator) Run() error {
 
-	o.controller.WatchAll(o.mutations)
-
 	wg := sync.WaitGroup{}
 
-	wg.Add(3)
-	go func() {
-		defer wg.Done()
-		err := o.handleMutations()
-		if err != nil {
-			log.Err(err)
-			return
-		}
-	}()
-
-	// Initialize and route applicable domains
-	o.server.AddRoutes(
-		routes.NewEndpointRouter(o.controller.Endpoints),
-		routes.NewAttributeRouter(o.controller.Attributes),
-		routes.NewUserRouter(o.controller.Users),
-		routes.NewZoneRouter(o.controller.Zones),
-		routes.NewDeviceRouter(o.controller.Devices),
-		routes.NewEntityRouter(o.controller.Entities),
-		routes.NewMacroRouter(o.controller.Macros),
-		routes.NewSubroutineRouter(o.controller.SubRoutines),
-		routes.NewTriggerRouter(o.controller.Triggers),
-		routes.NewModuleRouter(o.modules),
-		routes.NewEndpointRouter(o.endpoints),
-	)
-
-	// o.router.Group(func(r chi.Router) {
-	//
-	// 	routes.NewUserRouter(o.controller.Users).RouteInternal(r)
-	// 	routes.NewAttributeRouter(o.controller.Attributes).RouteInternal(r)
-	// 	routes.NewZoneRouter(o.controller.Zones).RouteInternal(r)
-	// 	routes.NewDeviceRouter(o.controller.Devices).RouteInternal(r)
-	// 	routes.NewEntityRouter(o.controller.Entities).RouteInternal(r)
-	// 	routes.NewModuleRouter(o.modules).RouteInternal(r)
-	// 	routes.NewEndpointRouter(o.endpoints).RouteInternal(r)
-	// })
-	// routes.NewEndpointRouter(o.endpoints).RouteExternal(o.router)
-	runtimes.NewModuleRuntime(o.modules)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
@@ -211,6 +191,8 @@ func (o *orchestrator) Run() error {
 			return
 		}
 	}()
+
+	o.sys.Loaded()
 
 	t := time.NewTimer(o.maxTick + time.Millisecond*100)
 

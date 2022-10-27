@@ -501,7 +501,7 @@ provide('remote', remote)
         </div>
 
       </div>
-      <div class="route-view pt-1">
+      <div class="route-view ">
         <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
           <component :is="Component"/>
         </router-view>
