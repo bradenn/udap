@@ -11,6 +11,12 @@ import Task from "@/components/task/Task.vue";
 import Keyboard from "@/components/Keyboard.vue";
 import macroService from "@/services/macroService";
 
+interface NewMacro {
+  macroId?: string
+}
+
+const props = defineProps<NewMacro>()
+
 const router = useRouter()
 
 const remote = inject("remote") as Remote
@@ -70,6 +76,16 @@ function sortZones(a: Zone, b: Zone): number {
 function updateRemote() {
   let zones = remote.zones.filter(z => !z.deleted).sort(sortZones);
   if (!zones) return;
+  if (props.macroId) {
+    const macro = remote.macros.find(m => m.id === props.macroId)
+    if (!macro) return
+    state.zone.value = macro.zone
+    state.zone.preview = macro.name
+    state.name.value = macro.name
+    state.key.value = macro.type
+    state.key.preview = macro.type
+    state.key.preview = macro.type
+  }
   state.zone.zones = zones
 }
 
@@ -106,10 +122,13 @@ function next(value: number) {
   state.field = value
 }
 
+
 </script>
 
 <template>
   <div class="generic-grid">
+
+
     <Tasks title="New Subroutine">
       <Task :active="state.field === 0"
             :index="0"

@@ -29,8 +29,14 @@ const routes = {
             icon: 'timeline',
             component: Create
         }, {
-            path: '/terminal/settings/subroutines/macro',
+            path: '/terminal/settings/subroutines/macros/create',
             name: 'Create A Macro',
+            icon: 'timeline',
+            component: Macro
+        },
+        {
+            path: '/terminal/settings/subroutines/macros/:macroId/edit',
+            name: 'Edit A Macro',
             icon: 'timeline',
             component: Macro
         },

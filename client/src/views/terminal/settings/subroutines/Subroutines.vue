@@ -69,7 +69,7 @@ function select(id: string) {
     <div class="layout-sidebar">
       <div class="d-flex mb-1 gap-1 p-0" style="height: 1.5rem;">
         <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
-                text="􀅼 Macro" to="/terminal/settings/subroutines/macro"></Button>
+                text="􀅼 Macro" to="/terminal/settings/subroutines/macros/create"></Button>
         <Button :active="false" class="element flex-grow-1" style="height: 1.5rem"
                 text="􀅼 Subroutine" to="/terminal/settings/subroutines/create"></Button>
       </div>
@@ -121,6 +121,7 @@ function select(id: string) {
                       v-on:click.stop></Subroutine>
         </div>
       </MenuSection>
+
 
     </div>
   </div>

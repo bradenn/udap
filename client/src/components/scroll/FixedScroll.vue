@@ -98,7 +98,7 @@ function drag(e: MouseEvent) {
     state.yLastPos = e.clientY
     state.yLastPoll = poll
     if (element.scrollTop <= 0 && !state.ySilence) {
-      haptics(1, 1, 100)
+      // haptics(1, 1, 100)
       state.ySilence = true
     } else if (element.scrollTop > 0) {
       state.ySilence = false
@@ -130,10 +130,13 @@ function dragStop(e: MouseEvent) {
   }, 16)
 
   state.yDecelerate = setInterval(() => {
-    state.yVelocity = state.yVelocity * 0.95
-    element.scrollTop -= state.yVelocity * 20
+
+    state.yVelocity = state.yVelocity * 0.90
+    element.scrollTop -= state.yVelocity * 10
     state.yStart = state.yStart * 0.8
     if (element.scrollTop <= 0 && !state.ySilence) {
+      state.yStart = 0
+      element.scrollTop = 0
       haptics(1, 1, 100)
       state.ySilence = true
     }
@@ -141,7 +144,7 @@ function dragStop(e: MouseEvent) {
       state.yVelocity = 0
       clearInterval(state.yDecelerate)
     }
-  }, 16)
+  }, 10)
 
 
   setTimeout(() => {

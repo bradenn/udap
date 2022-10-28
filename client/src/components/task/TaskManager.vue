@@ -97,7 +97,7 @@ function enterKey(key: string) {
       <div class="element d-flex flex-row justify-content-around gap-1 p-0">
         <div v-for="task in state.tasks" class=" w-100 ">
           <div :class="`${task.title === state.current.title?'':'subplot-inline'}`"
-               class="subplot d-flex justify-content-center gap-1"
+               class="subplot d-flex justify-content-center gap-1 p-2"
                style="height: 1.4rem; border-radius: 0.5rem !important;"
                @click="selectTask(task)">
             <div :class="`${task.title === state.current.title?'text-accent':''}`"
@@ -110,15 +110,15 @@ function enterKey(key: string) {
       <div class="element">
         <div v-if="state.loaded" class="d-flex justify-content-between align-items-center">
           <div class="label-md label-w700 label-o5 px-1 lh-1 mb-2 mt-1">{{ state.current.title }}</div>
-          <div class="label-c2 label-w400 label-o3 px-1 lh-1 mb-2 mt-1">{{ state.current.preview }}</div>
+          <div class="label-c2 label-w400 label-o3 px-2 lh-1 mb-2 mt-1">{{ state.current.preview }}</div>
         </div>
         <Scroll class="" style="max-height: 12rem; overflow-y: scroll;">
           <div>
             <div v-if="state.current.type === TaskType.String">
-              <div class="d-flex mb-1">
-                <div class="subplot p-1 px-2 mt-0 label-c2 w-100">
-                  <div class="text-input w-100">
-                    <div class="label-xs" style="white-space: pre;" v-text="state.current.value"></div>
+              <div class="d-flex mb-1 align-items-center justify-content-center">
+                <div class="subplot p-1 px-2 mt-0 label-c2 flex-grow-1">
+                  <div class="text-input">
+                    <div class="label-xxs label-o3" style="white-space: pre;" v-text="state.current.value"></div>
                     <div class="cursor-blink"></div>
                     <div class="flex-fill"></div>
                   </div>
@@ -149,8 +149,8 @@ function enterKey(key: string) {
             </div>
           </div>
         </Scroll>
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="label-c2 label-w400 label-o3 px-1 lh-1 ">{{ state.current.description }}</div>
+        <div class="d-flex justify-content-between align-items-center mt-1">
+          <div class="label-c2 label-w400 label-o3 px-2 lh-1 ">{{ state.current.description }}</div>
           <div class="subplot  d-flex justify-content-center" style="height:1.5rem; min-width:3.5rem;"
                @click="() => nextTask()">
             <div v-if="state.tasks.indexOf(state.current) < state.tasks.length-1"

@@ -138,8 +138,8 @@ function currentPageName() {
 
 .page-title {
   font-size: 1.6rem;
-  line-height: 2rem;
-  font-weight: 600;
+  line-height: 1.6rem;
+  font-weight: 700;
   font-family: "SF Pro Display", sans-serif;
   color: rgba(220, 220, 220, 0.9);
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
@@ -165,9 +165,9 @@ $dist: 2px;
   font-weight: 500;
 
   color: rgba(255, 255, 255, 0.4);
-  font-family: "SF Pro Display", sans-serif;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-  mix-blend-mode: screen;
+  font-family: "SF Pro Display", sans-serif !important;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+
 }
 
 .time-sm {
@@ -176,7 +176,7 @@ $dist: 2px;
   font-weight: 500;
 
   color: rgba(255, 255, 255, 0.5);
-  font-family: "SF Pro Rounded", sans-serif;
+  font-family: "SF Pro Display", sans-serif;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -185,7 +185,7 @@ $dist: 2px;
   line-height: 0.75rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.5);
-  font-family: "SF Pro Rounded", sans-serif;
+  font-family: "SF Pro Display", sans-serif;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 </style>

@@ -481,7 +481,7 @@ provide('remote', remote)
        v-on:mousemove="dragContinue" v-on:mouseup="dragStop">
     <Glance v-if="state.locked"></Glance>
     <div v-else class="d-inline">
-      <div class="generic-container gap-2">
+      <div class="generic-container gap-2" style="height: 2.75rem">
         <div class="" v-on:click="(e) => state.locked = true">
           <Clock :small="!state.showClock"></Clock>
         </div>
@@ -613,6 +613,7 @@ provide('remote', remote)
 }
 
 .terminal {
+  //box-shadow: inset 0 0 36px 6px rgba(255,12,255,0.8);
   padding: 1em;
   height: 100%;
   flex-direction: column;

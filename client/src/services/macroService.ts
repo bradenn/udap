@@ -17,5 +17,9 @@ export default {
     async deleteMacro(id: string): Promise<void> {
         const url = `/macros/${id}/delete`
         return await request.post(url)
-    }
+    },
+    async updateMacro(macro: Macro): Promise<void> {
+        const url = `/macros/${macro.id}/update`
+        return await request.post(url, macro)
+    },
 }

@@ -10,6 +10,7 @@ const props = defineProps<{
   active: boolean,
   text: string,
   to?: string,
+  icon?: string,
   accent?: boolean,
 }>()
 
@@ -38,6 +39,7 @@ function release(_: Event) {
        class="switch-space subplot switch-space-active"
        @mousedown="push"
        @mouseup="release">
+    <div v-if="props.icon" class="label-o2" style="padding-right: 0.125rem">{{ props.icon }}</div>
     <span :class="`${props.active?'':''}`">{{ props.text }}</span>
   </div>
 </template>

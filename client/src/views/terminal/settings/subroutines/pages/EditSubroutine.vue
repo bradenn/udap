@@ -11,7 +11,7 @@ import TriggerDom from "@/views/terminal/settings/subroutines/Trigger.vue";
 import Button from "@/components/Button.vue";
 import subroutineService from "@/services/subroutineService";
 import core from "@/core";
-import ToolbarButton from "@/components/ToolbarButton.vue";
+import EditMacro from "@/views/terminal/settings/subroutines/pages/EditMacro.vue";
 
 const router = core.router()
 const remote = core.remote()
@@ -21,8 +21,11 @@ const state = reactive({
     macros: [] as Macro[]
   } as SubRoutine,
   trigger: {} as Trigger,
+  editMacro: false,
+  macro: {},
   loaded: false,
 })
+
 onMounted(() => {
   load()
 })
@@ -46,6 +49,15 @@ watchEffect(() => {
   return remote
 })
 
+watchEffect(() => {
+  state.subroutine.macros = remote.macros.filter(m => state.subroutine.macros.map(i => i.id).includes(m.id))
+  return remote.macros
+})
+
+function reloadMacros() {
+
+}
+
 function goBack() {
   router.push("/terminal/settings/subroutines")
 }
@@ -67,6 +79,11 @@ function deleteSubRoutine() {
   }).catch(err => {
     notifications.show("Subroutine", `Subroutine '${state.subroutine.description}' cannot be deleted.`, 2, 1000 * 3)
   })
+}
+
+function doneEditing() {
+  state.editMacro = false
+  state.macro = {}
 }
 
 </script>
@@ -114,24 +131,23 @@ function deleteSubRoutine() {
         </div>
 
         <div class="d-flex gap-1 flex-column w-100">
-          <MacroDom v-for="macro in state.subroutine.macros" :macro="macro" class="" subplot></MacroDom>
-          <div class="d-flex justify-content-between">
-            <div class="d-flex gap-1">
-              <ToolbarButton :accent="false" :active="true" class=" px-3" style="height: 1.4rem"
-                             text="Edit" @click="() => {}"></ToolbarButton>
-              <ToolbarButton :accent="false" :active="true" class=" px-3" style="height: 1.4rem"
-                             text="Run" @click="() => {}"></ToolbarButton>
+          <div v-for="macro in state.subroutine.macros">
+            <div @click="() => {state.macro = macro; state.editMacro = true; }">
+              <MacroDom :macro="macro" subplot
+              ></MacroDom>
             </div>
-            <ToolbarButton :accent="false" :active="true" class=" px-3" style="height: 1.4rem"
-                           text="Remove" @click="() => {}"></ToolbarButton>
           </div>
-        </div>
-        <div class="d-flex gap-1 pt-1">
 
+        </div>
+        <div class=" position-relative">
         </div>
       </div>
     </div>
+    <EditMacro v-if="state.editMacro" :done="doneEditing"
+               :macro="state.macro"
+               @click="() => {state.editMacro = false;}"></EditMacro>
   </div>
+
 </template>
 
 <style scoped>

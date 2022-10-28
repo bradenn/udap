@@ -55,6 +55,15 @@ onMounted(() => {
 
 watchEffect(() => handleUpdates(remote))
 
+function sortLights(a: Entity, b: Entity): number {
+  if (a.type < b.type) {
+    return -1
+  } else {
+    return 1
+  }
+  return 0
+}
+
 function sortZones(a: Zone, b: Zone): number {
   if (a.pinned && !b.pinned) {
     return -1;
@@ -69,7 +78,7 @@ function sortZones(a: Zone, b: Zone): number {
 }
 
 function handleUpdates(remote: Remote) {
-  state.lights = remote.entities.filter((entity: Entity) => state.targets.includes(entity.id))
+  state.lights = remote.entities.filter((entity: Entity) => state.targets.includes(entity.id)).sort(sortLights)
   state.zones = remote.zones.filter((zone: Zone) => !zone.deleted).sort(sortZones)
   state.loading = false
 
@@ -121,7 +130,7 @@ function changeGlobalCCT() {
 <template>
 
   <div v-if="state.colorMenu" class="context context-light" @click="(e) => closeMenu()"></div>
-  <div v-if="!state.loading" class="d-flex flex-column gap-1" style="width: 11rem;">
+  <div v-if="!state.loading" class="d-flex flex-column gap-1" style="width: 12rem;">
     <div>
       <Select :selected="`${state.zone.name?.charAt(0).toUpperCase()}${state.zone.name?.substring(1)}`">
         <div v-for="zone in state.zones" :class="state.zone.name !== zone.name?'subplot-inline':''" class="subplot"
@@ -140,21 +149,18 @@ function changeGlobalCCT() {
         </div>
       </Select>
     </div>
-    <Widget v-if="!state.loading" :cols="4" :rows="5" class="d-flex flex-column" size="sm">
+    <Widget v-if="!state.loading" :cols="4" :rows="6" class="macro-grid gap-1" size="sm">
       <Light v-for="light in state.lights.slice(0, 5)"
              :key="light.id"
              :entity="light"></Light>
     </Widget>
-    <Widget v-if="!state.loading" :cols="4" :rows="1" class="d-flex flex-column" size="sm">
-
-      <Plot :cols="5" :rows="1" style="width: 100%">
-        <Button :active="false" text="OFF" @click="() => setAttributes('on', 'false')"></Button>
-        <Button :active="false" text="ON" @click="() => setAttributes('on', 'true')"></Button>
-        <Button :active="false" text="􀆫" @click="() => setAttributes('dim', '20')"></Button>
-        <Button :active="false" text="􀆮" @click="() => setAttributes('dim', '60')"></Button>
-        <Button :active="!state.colorMenu" text="􀎘" @click="() => openMenu()"></Button>
-      </Plot>
-    </Widget>
+    <Plot :cols="5" :rows="1" style="width: 100%;">
+      <Button :active="false" text="OFF" @click="() => setAttributes('on', 'false')"></Button>
+      <Button :active="false" text="ON" @click="() => setAttributes('on', 'true')"></Button>
+      <Button :active="false" text="􀆫" @click="() => setAttributes('dim', '20')"></Button>
+      <Button :active="false" text="􀆮" @click="() => setAttributes('dim', '60')"></Button>
+      <Button :active="!state.colorMenu" text="􀎘" @click="() => openMenu()"></Button>
+    </Plot>
 
   </div>
   <div v-if="state.colorMenu" class="context-container d-flex flex-column justify-content-start gap-1">
@@ -212,6 +218,16 @@ function changeGlobalCCT() {
 
 
 <style lang="scss" scoped>
+.macro-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-column-gap: 0.125rem;
+  grid-row-gap: 0.125rem;
+  //grid-template-rows: repeat(5, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .context-container {
   position: absolute;
   top: 0;

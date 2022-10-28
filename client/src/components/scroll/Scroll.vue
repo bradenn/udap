@@ -50,7 +50,7 @@ const haptics = inject("haptic") as (a: number, b: number, c: number) => void
 
 function drag(e: MouseEvent) {
   e.preventDefault()
-  if (!state.dragging && Math.abs(state.yStart - e.clientY) > 5 || (props.horizontal && Math.abs(state.yStart - e.clientY) > 10)) {
+  if (!state.dragging && Math.abs(state.yStart - e.clientY) > 5 || (props.horizontal && Math.abs(state.xStart - e.clientX) > 5)) {
     state.dragging = true
   }
 

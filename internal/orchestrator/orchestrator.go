@@ -25,10 +25,10 @@ type orchestrator struct {
 	db         *gorm.DB
 	controller *controller.Controller
 
-	server  srv.Server
-	maxTick time.Duration
-	done    chan bool
-
+	server    srv.Server
+	maxTick   time.Duration
+	done      chan bool
+	ready     bool
 	modules   ports.ModuleService
 	endpoints ports.EndpointService
 	sys       srv.System
@@ -96,33 +96,38 @@ func (o *orchestrator) Start() error {
 	if err != nil {
 		return err
 	}
-
+	o.ready = false
 	o.sys = srv.NewRtx(&o.server, o.controller, o.db)
 
-	o.sys.UseModules(modules.NewEndpoint)
-	o.sys.UseModules(modules.NewModule)
+	o.sys.UseModules(
+		modules.NewModule,
+		modules.NewEndpoint)
+
+	o.sys.UseModules(
+		modules.NewEntity,
+		modules.NewAttribute,
+		modules.NewZone)
+
 	o.sys.UseModules(
 		modules.NewMacro,
 		modules.NewSubroutine,
 		modules.NewTrigger,
-		modules.NewAttribute,
-		modules.NewZone,
 		modules.NewUser,
-		modules.NewEntity,
 		modules.NewNetwork,
 		modules.NewDevice,
 		modules.NewNotifications,
 		modules.NewLog,
 	)
-
+	o.sys.Loaded()
+	o.ready = true
 	return nil
 }
 
 func (o *orchestrator) Update() error {
-	if o.modules == nil {
+	if !o.ready {
 		return nil
 	}
-	err := o.modules.UpdateAll()
+	err := o.controller.Modules.UpdateAll()
 	if err != nil {
 		return err
 	}
@@ -146,7 +151,7 @@ func (o *orchestrator) broadcastTimings() error {
 func (o *orchestrator) handleMutations() error {
 	for response := range o.mutations {
 		// o.modules.HandleEmits(response)
-		if o.controller.Endpoints == nil {
+		if !o.ready {
 			continue
 		}
 		err := o.controller.Endpoints.SendAll(response.Id, response.Operation, response.Body)
@@ -192,12 +197,11 @@ func (o *orchestrator) Run() error {
 		}
 	}()
 
-	o.sys.Loaded()
-
 	t := time.NewTimer(o.maxTick + time.Millisecond*100)
 
 	go func() {
 		defer wg.Done()
+
 		for {
 			pulse.Begin("update")
 			t.Reset(o.maxTick + time.Millisecond*100)

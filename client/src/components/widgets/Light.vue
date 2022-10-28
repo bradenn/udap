@@ -3,6 +3,7 @@
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import AttributeComponent from "@/components/entity/Attribute.vue"
 import type {ApiRateLimit, Attribute, Entity, Remote} from "@/types"
+import moment from "moment";
 // Establish a local reactive state
 let state = reactive<{
   loading: boolean,
@@ -53,11 +54,43 @@ onMounted(() => {
 })
 
 // Ripple any attribute changes down to the local reactive state
-watchEffect(() => updateLight(remote.attributes))
+watchEffect(() => {
+  updateLight(remote.attributes)
+  findMode()
+})
+
 
 // Compare the defined order to sort the lights
 function compareOrder(a: any, b: any): number {
   return a.order - b.order
+}
+
+function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
+function cctToRgb(cct: number) {
+  return [map_range(cct, 2000, 8000, 255, 227),
+    map_range(cct, 2000, 8000, 138, 233),
+    map_range(cct, 2000, 8000, 18, 255)]
+}
+
+function findMode() {
+  let hue = state.attributes.find((a: Attribute) => a.key === 'hue')
+  let cct = state.attributes.find((a: Attribute) => a.key === 'cct')
+  let dim = state.attributes.find((a: Attribute) => a.key === 'dim')
+  if (hue && cct && dim) {
+
+    console.log(moment(hue.requested).isAfter(cct.requested))
+    if (moment(hue.requested).isAfter(cct.requested)) {
+      state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim?.value) / 100.0 * 50}%, 0.5)`
+    } else {
+      console.log("CCT")
+      state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`
+    }
+  } else {
+    state.activeColor = 'rgba(255,255,255,0.5)'
+  }
 }
 
 // Update the reactive model for the light
@@ -67,13 +100,17 @@ function updateLight(attributes: Attribute[]): Attribute[] {
   // Get the current power state of the light
   let on = state.attributes.find((a: Attribute) => a.key === 'on')
   let dim = state.attributes.find((a: Attribute) => a.key === 'dim')
+
   // Assign the power state to a local attribute
   if (!on) return []
   state.powerAttribute = on as Attribute
+  state.active = on.value === "true" || on.request === "true"
   if (dim) {
+    if (!state.active) {
+      state.active = moment(dim.requested).isAfter(on.requested)
+    }
     state.levelAttribute = dim as Attribute
   }
-  state.active = on.value === "true" || on.request === "true"
   generateState()
   state.loading = false
   let api = state.attributes.find((a: Attribute) => a.key === 'api')
@@ -113,14 +150,20 @@ function toggleMenu(): void {
     </div>
   </div>
   <div v-else class="w-100 h-100">
-    <div v-if="!state.showMenu" class="element d-flex justify-content-between align-items-center"
-         style="height: 2rem; margin-bottom: 0rem"
+    <div v-if="!state.showMenu" class="element d-flex justify-content-start align-items-center "
+         style="height: 2.125em !important; margin-bottom: 0rem"
          @click="toggleMenu">
-      <div class="d-flex justify-content-start align-items-center align-content-center h-100">
-        <div class="label-c1 label-o4 px-1 light-on">{{ (props.entity.icon || '􀛭') }}</div>
-        <div class="label-c1 label-o4 label-r px-1">{{ props.entity.name }}</div>
+      <div class="d-flex justify-content-start align-items-center align-content-center ">
+        <div
+            :style="`width: 0.8rem; margin-left:0.25rem; color:${state.activeColor}; height: 100%;border-radius: 0.25rem; `"
+            class="label-c2 light-on d-flex align-items-center label-w700 justify-content-center">
+          {{ (props.entity.icon || '􀛭') }}
+        </div>
+        <div class="d-flex flex-column">
+          <div class="label-c2 label-o3 label-w500 px-1 lh-1">{{ props.entity.name }}</div>
+          <div class="label-c3 label-o2  label-w500 px-1 lh-1">{{ state.shortStatus }}</div>
+        </div>
       </div>
-      <div class="label-c2 label-o3 label-w500 px-1">{{ state.shortStatus }}</div>
     </div>
     <!--    <div v-if="false" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">-->
     <!--      <div class="entity-header mb-2 ">-->
@@ -196,10 +239,15 @@ function toggleMenu(): void {
 
 <style lang="scss" scoped>
 
+.macro-grid {
+
+}
+
 
 .light-on {
-  color: rgba(178, 178, 178, 0.76);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  //color: rgba(178, 178, 178, 0.76);
+  background-blend-mode: luminosity;
+  //text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
 }
 
 .light-off {

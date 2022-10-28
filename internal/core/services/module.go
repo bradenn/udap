@@ -152,6 +152,7 @@ func (u *moduleService) Load(id string) error {
 	module.Description = config.Description
 	module.Type = config.Type
 	module.Author = config.Author
+	module.Running = false
 	err = u.repository.Update(module)
 	if err != nil {
 		return err
