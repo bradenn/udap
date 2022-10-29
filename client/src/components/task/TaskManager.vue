@@ -7,6 +7,8 @@ import PaneMenuToggle from "@/components/pane/PaneMenuToggle.vue";
 import Keyboard from "@/components/Keyboard.vue";
 import Scroll from "@/components/scroll/Scroll.vue";
 import type {Haptics} from "@/views/terminal/haptics";
+import Menu from "@/components/menu/Menu.vue";
+import MenuLink from "@/components/menu/MenuLink.vue";
 
 interface Tasks {
   title: string,
@@ -17,6 +19,7 @@ interface Tasks {
 const state = reactive({
   tasks: [] as Task[],
   current: {} as Task,
+  textbox: false,
   loaded: false,
 })
 
@@ -92,20 +95,17 @@ function enterKey(key: string) {
 </script>
 
 <template>
-  <div style="width: 18rem">
-    <div class="d-flex flex-column gap-1">
+  <div class="d-flex gap-1" style="height:100%">
+    <div>
+
+      <Menu class="mt-1" style="width: 15rem">
+        <div class="label-lg label-w700 label-o5 lh-1 p-1 px-2 ">Macro</div>
+        <MenuLink v-for="task in state.tasks" :active="task.title === state.current.title"
+                  :subtext="task.preview" :title="task.title" @click="selectTask(task)"></MenuLink>
+      </Menu>
+    </div>
+    <div class="d-flex flex-column gap-1 w-100">
       <div class="element d-flex flex-row justify-content-around gap-1 p-0">
-        <div v-for="task in state.tasks" class=" w-100 ">
-          <div :class="`${task.title === state.current.title?'':'subplot-inline'}`"
-               class="subplot d-flex justify-content-center gap-1 p-2"
-               style="height: 1.4rem; border-radius: 0.5rem !important;"
-               @click="selectTask(task)">
-            <div :class="`${task.title === state.current.title?'text-accent':''}`"
-                 class="label-c2 label-w500 label-o4 px-1 lh-1 d-flex align-items-center gap-1">
-              {{ task.title }}
-            </div>
-          </div>
-        </div>
       </div>
       <div class="element">
         <div v-if="state.loaded" class="d-flex justify-content-between align-items-center">
@@ -116,7 +116,9 @@ function enterKey(key: string) {
           <div>
             <div v-if="state.current.type === TaskType.String">
               <div class="d-flex mb-1 align-items-center justify-content-center">
-                <div class="subplot p-1 px-2 mt-0 label-c2 flex-grow-1">
+                <div :class="`${state.textbox?'border border-accent':''}`"
+                     class="subplot p-1 px-2 mt-0 label-c2 flex-grow-1"
+                     @click="() => state.textbox = !state.textbox">
                   <div class="text-input">
                     <div class="label-xxs label-o3" style="white-space: pre;" v-text="state.current.value"></div>
                     <div class="cursor-blink"></div>
@@ -163,7 +165,7 @@ function enterKey(key: string) {
 
     </div>
   </div>
-  <Keyboard v-if="state.current.type === TaskType.String" :input="enterKey" keySet="d"
+  <Keyboard v-if="state.current.type === TaskType.String && state.textbox" :input="enterKey" keySet="d"
             keyboardClass="simple-keyboard"></Keyboard>
 
 </template>

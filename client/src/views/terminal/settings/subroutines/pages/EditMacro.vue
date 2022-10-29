@@ -52,6 +52,13 @@ function setOptions() {
       preview: props.macro.name
     },
     {
+      title: "Description",
+      description: "Briefly describe the macro's function",
+      type: TaskType.String,
+      value: props.macro.description,
+      preview: props.macro.description.length + " chars"
+    },
+    {
       title: "Zone",
       description: "What zone should this macro target",
       type: TaskType.Radio,
@@ -108,6 +115,9 @@ function finish(tasks: Task[]) {
   const name = tasks.find(t => t.title === "Name");
   if (!name) return;
 
+  const desc = tasks.find(t => t.title === "Description");
+  if (!desc) return;
+
   const zone = tasks.find(t => t.title === "Zone");
   if (!zone) return;
 
@@ -121,7 +131,7 @@ function finish(tasks: Task[]) {
     name: name.value as string,
     zone: zone.value,
     type: key.value,
-    description: props.macro.description,
+    description: desc.value,
     id: props.macro.id,
     value: value.value,
   } as Macro).then(res => {
@@ -133,6 +143,10 @@ function finish(tasks: Task[]) {
   })
 }
 
+function save() {
+  finish(state.tasks)
+}
+
 
 </script>
 
@@ -140,6 +154,19 @@ function finish(tasks: Task[]) {
   <div class="ctx ">
     <div class="context-grid">
       <div v-if="state.loaded" class="context-pane  d-flex flex-column" style="" @click.stop>
+        <div class="nav-grid gap-1 pb-1 w-100 px-2">
+          <div class="d-flex justify-content-start">
+            <div class="label-w500 label-c1 text-accent" @click="() => {if(props.done) props.done()}">􀆉 Back</div>
+
+          </div>
+          <div class="d-flex justify-content-center">
+            <div class="label-w500 label-c1 label-w600 align-self-center">Edit Macro</div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <div class="label-w500 label-c1 text-accent" @click="save">Save</div>
+          </div>
+        </div>
+
         <TaskManager :on-complete="finish" :tasks="state.tasks" :title="`Edit`"></TaskManager>
       </div>
     </div>
@@ -148,8 +175,17 @@ function finish(tasks: Task[]) {
 
 <style scoped>
 .context-pane {
-  grid-column: 2 / span 1;
-  grid-row: 2 / span 3;
+  grid-column: 3 / span 6;
+  grid-row: 2 / span 5;
+}
+
+.nav-grid {
+  width: 100%;
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  grid-template-rows: repeat(1, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .context-grid {
@@ -158,8 +194,8 @@ function finish(tasks: Task[]) {
   display: grid;
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
-  grid-template-rows: repeat(6, 1fr);
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(10, 1fr);
 }
 
 .ctx {
@@ -168,6 +204,7 @@ function finish(tasks: Task[]) {
   left: 0;
   width: 100%;
   height: 100%;
+  z-index: 2;
   /*background-color: rgba(0, 0, 0, 0.1);*/
   backdrop-filter: blur(18px) brightness(90%);
 }

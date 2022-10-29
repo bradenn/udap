@@ -12,6 +12,7 @@ import Button from "@/components/Button.vue";
 import subroutineService from "@/services/subroutineService";
 import core from "@/core";
 import EditMacro from "@/views/terminal/settings/subroutines/pages/EditMacro.vue";
+import moment from "moment";
 
 const router = core.router()
 const remote = core.remote()
@@ -86,6 +87,10 @@ function doneEditing() {
   state.macro = {}
 }
 
+function timeSince(time: string): string {
+  return moment(time).fromNow()
+}
+
 </script>
 
 <template>
@@ -107,6 +112,16 @@ function doneEditing() {
         <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
                 text="􀈑 Delete" @click="deleteSubRoutine"></Button>
       </div>
+      <div class="element d-flex flex-column gap-1 p-2">
+        <div class="d-flex justify-content-between">
+          <div class="label-c2 label-w500 label-o4">Created</div>
+          <div class="label-c2 label-w500 label-o4">{{ timeSince(state.subroutine.created) }}</div>
+        </div>
+        <div class="d-flex justify-content-between">
+          <div class="label-c2 label-w500 label-o4">Last Edited</div>
+          <div class="label-c2 label-w500 label-o4">{{ timeSince(state.subroutine.updated) }}</div>
+        </div>
+      </div>
     </div>
     <div class="d-flex flex-column gap-1">
       <div class="d-flex align-items-center pb-1">
@@ -117,8 +132,7 @@ function doneEditing() {
         <div class="d-flex align-items-center justify-content-between py-1 pb-1 px-1">
           <div class="label-c2 label-w500 label-o3">When triggered by:
           </div>
-          <div class="label-c2 label-w500 label-o3">Edit
-          </div>
+
         </div>
 
         <trigger-dom :trigger="state.trigger"></trigger-dom>
@@ -126,8 +140,7 @@ function doneEditing() {
           <div class="label-c2 label-w500 label-o3">Run {{ state.subroutine.macros.length }}
             macro{{ (state.subroutine.macros.length !== 1) ? 's' : '' }}:
           </div>
-          <div class="label-c2 label-w500 label-o3">Edit
-          </div>
+
         </div>
 
         <div class="d-flex gap-1 flex-column w-100">

@@ -16,26 +16,30 @@ func NewModule(sys srv.System) {
 	service := services.NewModuleService(
 		repository.NewModuleRepository(sys.DB()),
 		operators.NewModuleOperator(sys.Ctrl()))
+	// Publish the service
 	sys.Ctrl().Modules = service
+	// Discover local modules
 	err := service.Discover()
 	if err != nil {
 		log.Err(err)
 		return
 	}
+	// Build local modules
 	err = service.BuildAll()
 	if err != nil {
 		log.Err(err)
 		return
 	}
+	// Load all modules
 	err = service.LoadAll()
 	if err != nil {
 		return
 	}
-
-	// Start Runtime
+	// Assign mutation channel
 	sys.WithWatch(service)
+	// Assign routes
 	sys.WithRoute(routes.NewModuleRouter(service))
-	// Enroll routes
+	// Start all modules
 	sys.WhenLoaded(func() {
 		err = service.RunAll()
 		if err != nil {

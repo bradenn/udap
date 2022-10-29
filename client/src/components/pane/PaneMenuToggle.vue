@@ -1,5 +1,7 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
+import core from "@/core";
+
 interface Plot {
   title: string
   subtext: string
@@ -10,11 +12,21 @@ interface Plot {
 }
 
 let props = defineProps<Plot>()
+
+
+const haptics = core.haptics()
+
+
+function click() {
+  haptics.tap(1, 1, 50)
+  props.fn ? props.fn() : {}
+}
+
 </script>
 
 <template>
   <div :class="`${props.active?'subplot':'subplot subplot-inline'}`"
-       class="d-flex justify-content-between align-items-center" @click="(e) => props.fn?props.fn():{}">
+       class="d-flex justify-content-between align-items-center" @click="(e) => click()">
     <div class="d-flex align-items-start">
                 <span class="label-c4 label-o2 lh-1 pt-1"
                       style="width: 0.4rem; margin-top: 6px;"><span

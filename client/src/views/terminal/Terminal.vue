@@ -572,6 +572,7 @@ provide('remote', remote)
   display: inline-block;
   position: relative;
   bottom: 2.5rem;
+  z-index: 0 !important;
   animation: dock-in 125ms ease-in forwards;
 }
 

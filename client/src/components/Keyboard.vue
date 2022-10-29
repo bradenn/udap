@@ -124,7 +124,7 @@ function typeManual(e: KeyboardEvent) {
 
 <template>
   <div class="keyboard-frame element">
-    <div :class="props.keyboardClass" class=" simple-keyboard"></div>
+    <div :class="props.keyboardClass" class="simple-keyboard"></div>
   </div>
 </template>
 
@@ -133,17 +133,19 @@ function typeManual(e: KeyboardEvent) {
 <style>
 .keyboard-frame {
   display: flex;
+  /*outline: 1px solid white;*/
   justify-content: center;
   align-items: center;
   position: absolute !important;
-  bottom: 3.6rem;
-  left: 0;
+  bottom: 4.5rem;
+  left: calc(50% - 20.35rem);
   height: 13.5rem;
-  width: 100%;
-  padding: 0.5rem;
+  width: 40.68rem;
+
 }
 
 .simple-keyboard {
+  /*outline: 1px solid white;*/
   position: absolute !important;
   width: 40rem !important;
   /*outline: 1px solid white;*/

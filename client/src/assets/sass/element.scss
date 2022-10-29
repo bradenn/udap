@@ -2,8 +2,8 @@
 
 // Static
 $text-accent: rgba(255, 149, 0, 1);
-$element-bg: rgba(28, 28, 30, 0.6);
-$element-fg: rgba(255, 255, 255, 0.035);
+$element-bg: rgba(28, 28, 28, 0.5);
+$element-fg: rgba(255, 255, 255, 0.025);
 $element-bg-active: lighten($element-bg, 10%);
 $element-shadow: rgba(0, 0, 0, 0.2);
 
@@ -30,7 +30,7 @@ $loadInDistance: 0.98;
   overflow: hidden;
 
   border-radius: inherit;
-  backdrop-filter: blur(14px) saturate(120%) brightness(120%);
+  backdrop-filter: blur(22px) saturate(200%) brightness(100%);
 }
 
 
