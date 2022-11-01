@@ -21,6 +21,7 @@ export enum TaskType {
     Object,
     List,
     Radio,
+    Icon,
 }
 
 export interface TaskOption {
@@ -42,6 +43,9 @@ export interface SubRoutine {
     created: string;
     updated: string;
     id: string;
+    revertAfter: number;
+    icon: string;
+    lastRun: string;
     triggerId: string;
     macros: Macro[];
     description: string;

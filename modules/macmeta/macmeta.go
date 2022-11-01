@@ -70,7 +70,7 @@ func (v *MacMeta) createDisplaySwitch() error {
 
 	newSwitch := &domain.Entity{
 		Name:   "terminal",
-		Type:   "switch",
+		Type:   "spectrum",
 		Module: "macmeta",
 	}
 	err := v.Entities.Register(newSwitch)
@@ -79,33 +79,80 @@ func (v *MacMeta) createDisplaySwitch() error {
 	}
 
 	v.terminalId = newSwitch.Id
-	on := &domain.Attribute{
+	on := domain.Attribute{
 		Key:     "on",
 		Value:   "true",
 		Request: "true",
 		Type:    "toggle",
 		Channel: make(chan domain.Attribute),
 		Order:   0,
-		Entity:  newSwitch.Id,
+		Entity:  v.terminalId,
+	}
+
+	hue := domain.Attribute{
+		Key:     "hue",
+		Value:   "-1",
+		Request: "0",
+		Type:    "range",
+		Channel: make(chan domain.Attribute),
+		Order:   2,
+		Entity:  v.terminalId,
+	}
+
+	dim := domain.Attribute{
+		Key:     "dim",
+		Value:   "-1",
+		Request: "0",
+		Type:    "range",
+		Channel: make(chan domain.Attribute),
+		Order:   1,
+		Entity:  v.terminalId,
 	}
 
 	go func() {
-		for attribute := range on.Channel {
-			if attribute.Request == "true" {
-				err = v.displayOn()
-				if err != nil {
-					continue
+		for {
+			select {
+			case attribute := <-on.Channel:
+				if attribute.Request == "true" {
+					err = v.displayOn()
+					if err != nil {
+						break
+					}
+				} else {
+					err = v.displayOff()
+					if err != nil {
+						break
+					}
 				}
-			} else {
-				err = v.displayOff()
+				err = v.Attributes.Set(v.terminalId, "on", attribute.Request)
 				if err != nil {
-					continue
+					break
+				}
+			case attribute := <-dim.Channel:
+				err = v.Attributes.Set(v.terminalId, "dim", attribute.Request)
+				if err != nil {
+					break
+				}
+			case attribute := <-hue.Channel:
+				err = v.Attributes.Set(v.terminalId, "hue", attribute.Request)
+				if err != nil {
+					break
 				}
 			}
 		}
 	}()
 
-	err = v.Attributes.Register(on)
+	err = v.Attributes.Register(&on)
+	if err != nil {
+		return err
+	}
+
+	err = v.Attributes.Register(&dim)
+	if err != nil {
+		return err
+	}
+
+	err = v.Attributes.Register(&hue)
 	if err != nil {
 		return err
 	}
@@ -173,6 +220,7 @@ func (v *MacMeta) Dispose() error {
 }
 
 func (v *MacMeta) Run() error {
+
 	err := v.displayOn()
 	if err != nil {
 		return err

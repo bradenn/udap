@@ -48,7 +48,6 @@ func (u *subRoutineService) TriggerById(id string) error {
 	if err != nil {
 		return err
 	}
-
 	for _, routine := range routines {
 		err = u.operator.Run(*routine)
 		if err != nil {
@@ -104,7 +103,15 @@ func (u *subRoutineService) Create(subRoutine *domain.SubRoutine) error {
 }
 
 func (u *subRoutineService) Update(subRoutine *domain.SubRoutine) error {
-	return u.repository.Update(subRoutine)
+	err := u.repository.Update(subRoutine)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*subRoutine)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *subRoutineService) Delete(id string) error {

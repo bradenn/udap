@@ -7,6 +7,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Radio from "@/components/plot/Radio.vue";
 import CreateZone from "@/views/terminal/settings/zone/CreateZone.vue";
 import axios from "axios";
+import FixedScroll from "@/components/scroll/FixedScroll.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -221,35 +222,38 @@ function toggleEntity(entity: Entity) {
                      @click="(e) => setListMode('view')">Done</div>
               </div>
             </div>
-            <div v-if="state.selectedZone" class="zones scroll-element mx-1">
+            <div v-if="state.selectedZone" class="">
+              <FixedScroll class="zones  mx-1">
+                <div v-for="entity in state.selectedZone.entities" v-if="state.listMode === 'view'"
+                     class="subplot p-2 ">
+                  <div class="d-flex gap-1">
+                    <div>
+                      {{ entity.icon }}
+                    </div>
+                    <div class="text-capitalize">
+                      {{ entity.name }}
+                    </div>
+                  </div>
+                  <span class="label-o3">{{ entity.module }}</span>
+                </div>
+                <div
+                    v-for="entity in state.entities"
+                    v-if="state.listMode === 'modify'"
+                    :class="state.selectedZone.entities.find(en => en.id === entity.id)?'':'subplot-inline'"
+                    class="subplot p-2"
+                    @click="(e) => toggleEntity(entity)">
+                  <div class="d-flex gap-1">
+                    <div>
+                      {{ entity.icon }}
+                    </div>
+                    <div class="text-capitalize">
+                      {{ entity.name }}
+                    </div>
+                  </div>
+                  <span class="label-o3">{{ entity.module }}</span>
+                </div>
+              </FixedScroll>
 
-              <div v-for="entity in state.selectedZone.entities" v-if="state.listMode === 'view'" class="subplot p-2 ">
-                <div class="d-flex gap-1">
-                  <div>
-                    {{ entity.icon }}
-                  </div>
-                  <div class="text-capitalize">
-                    {{ entity.name }}
-                  </div>
-                </div>
-                <span class="label-o3">{{ entity.module }}</span>
-              </div>
-              <div
-                  v-for="entity in state.entities"
-                  v-if="state.listMode === 'modify'"
-                  :class="state.selectedZone.entities.find(en => en.id === entity.id)?'':'subplot-inline'"
-                  class="subplot p-2"
-                  @click="(e) => toggleEntity(entity)">
-                <div class="d-flex gap-1">
-                  <div>
-                    {{ entity.icon }}
-                  </div>
-                  <div class="text-capitalize">
-                    {{ entity.name }}
-                  </div>
-                </div>
-                <span class="label-o3">{{ entity.module }}</span>
-              </div>
             </div>
           </div>
 

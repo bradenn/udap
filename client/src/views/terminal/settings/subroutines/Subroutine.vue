@@ -28,7 +28,7 @@ const props = defineProps<SubRoutineProps>()
     >
 
       <div class="d-flex justify-content-between">
-        <div class="label-xs label-o4 label-w500 pb-2">􁏀</div>
+        <div class="label-xs label-o4 label-w500 pb-2">{{ props.subroutine.icon }}</div>
         <div v-if="props.selected" class="label-c2 label-o4 label-w500 text-accent">􀷙</div>
       </div>
       <div class="label-c2 label-o4 label-w700 lh-1">{{ props.subroutine.description }}</div>

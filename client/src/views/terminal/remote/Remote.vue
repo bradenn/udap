@@ -38,7 +38,7 @@ watchEffect(() => {
 })
 
 function updateData() {
-  state.entities = remote.entities.filter(e => e.type === 'spectrum' || e.type === 'dimmer').sort(sortByModule)
+  state.entities = remote.entities.filter(e => e.type === 'spectrum' || e.type === 'dimmer' || e.type === 'media').sort(sortByModule)
 }
 
 function selectEntity(id: string) {

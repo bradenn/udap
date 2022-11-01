@@ -71,6 +71,7 @@ onMounted(() => {
 
   // haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
   remote.nexus = new Nexus(handleMessage)
+  pollMeta(remote as Remote)
 })
 
 // function tap(frequency: number, iterations: number, amplitude: number) {
@@ -85,12 +86,12 @@ onUnmounted(() => {
   remote.nexus.ws.close()
   if (!haptics) return
   haptics.close()
-  remote = {} as Remote
+
 })
 
 
 // Define the reactive components for the remote data
-let remote = reactive<Remote>({
+const remote = reactive<Remote>({
   connected: false,
   metadata: {} as Metadata,
   entities: [] as Entity[],
@@ -205,8 +206,7 @@ function handleMessage(target: Target, data: any) {
 
 
   remote.diagnostics.maxRSS = memorySizeOf(remote)
-
-
+  pollMeta(remote as Remote)
 }
 
 function mouseDown() {
@@ -330,6 +330,32 @@ function openInput(props: InputProps, cb: (a: string) => void) {
     state.input.meta = props
     state.input.cb = cb
   }
+}
+
+let meta = reactive({
+  hue: 0,
+  dim: {}
+})
+
+
+watchEffect(() => {
+  pollMeta(remote as Remote)
+  return remote as Remote
+})
+
+function pollMeta(rm: Remote) {
+  let e = rm.entities.find(a => a.name === "terminal") || {} as Entity
+  if (!e) return
+  let attrs = rm.attributes.filter(a => a.entity === e.id)
+  let hue = attrs.find(a => a.key === "hue")
+  if (!hue) return;
+  meta.hue = parseInt(hue.value)
+
+  let dim = attrs.find(a => a.key === "dim")
+  if (!dim) return;
+  meta.dim = dim.value
+
+  return meta
 }
 
 function applyInput(a: string) {
@@ -477,8 +503,11 @@ provide('remote', remote)
 
   <div v-if="!screensaver.hideTerminal"
        class="terminal"
+
        v-on:mousedown="dragStart"
        v-on:mousemove="dragContinue" v-on:mouseup="dragStop">
+
+
     <Glance v-if="state.locked"></Glance>
     <div v-else class="d-inline">
       <div class="generic-container gap-2" style="height: 2.75rem">
@@ -520,6 +549,9 @@ provide('remote', remote)
       </div>
     </div>
     <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
+    <div
+        :style="`box-shadow: inset 0 0 4px 6px hsla(${meta.hue},75%,50%,${0.70*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
+        class="neon" @mousedown.passive></div>
   </div>
 
   <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"
@@ -531,6 +563,16 @@ provide('remote', remote)
 </template>
 
 <style lang="scss" scoped>
+
+.neon {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+
+  z-index: -1 !important;
+}
 
 
 .focus-enter-active {

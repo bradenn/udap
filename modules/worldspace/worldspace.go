@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi"
 	"net/http"
+	"strconv"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/plugin"
@@ -194,7 +195,7 @@ func (w *Worldspace) handleMotion(writer http.ResponseWriter, request *http.Requ
 
 }
 
-func (w *Worldspace) endpointTrigger(router chi.Router, name string) error {
+func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string) error {
 	router.Post(fmt.Sprintf("/%s", name), func(writer http.ResponseWriter, request *http.Request) {
 		// zone := chi.URLParam(request, "zone")
 		var buf bytes.Buffer
@@ -213,10 +214,11 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string) error {
 			return
 		}
 	})
+	w.LogF("Endpoint Trigger: %s", name)
 	err := w.Triggers.Register(&domain.Trigger{
 		Name:        fmt.Sprintf("ws-%s", name),
 		Type:        "module",
-		Description: "When someone arrives",
+		Description: desc,
 	})
 	if err != nil {
 		return err
@@ -228,17 +230,27 @@ func (w *Worldspace) Run() error {
 	w.server = http.Server{}
 	w.server.Addr = "0.0.0.0:5058"
 	router := chi.NewRouter()
-	err := w.endpointTrigger(router, "motion")
+	err := w.endpointTrigger(router, "motion", "dummy motion")
 	if err != nil {
 		return err
 	}
 
-	err = w.endpointTrigger(router, "depart")
+	err = w.endpointTrigger(router, "depart", "homekit depart")
 	if err != nil {
 		return err
 	}
 
-	err = w.endpointTrigger(router, "arrive")
+	err = w.endpointTrigger(router, "arrive", "homekit arrive")
+	if err != nil {
+		return err
+	}
+
+	err = w.endpointTrigger(router, "motion-1", "ws-motion-1")
+	if err != nil {
+		return err
+	}
+
+	err = w.endpointTrigger(router, "motion-2", "ws-motion-2")
 	if err != nil {
 		return err
 	}
@@ -271,6 +283,56 @@ func (w *Worldspace) Run() error {
 		return err
 	}
 
+	wsE := domain.Entity{
+		Name:   "worldspace-1",
+		Type:   "media",
+		Module: "worldspace",
+	}
+
+	err = w.Entities.Register(&wsE)
+	if err != nil {
+		return err
+	}
+	path := make(chan domain.Attribute)
+	dim := &domain.Attribute{
+		Key:     "dim",
+		Value:   "0",
+		Request: "0",
+		Type:    "range",
+		Order:   0,
+		Entity:  wsE.Id,
+		Channel: path,
+	}
+
+	go func() {
+		for attribute := range path {
+			parseInt, err := strconv.Atoi(attribute.Request)
+			if err != nil {
+				w.Err(err)
+				continue
+			}
+
+			cli := http.Client{
+				Timeout: 500 * time.Millisecond,
+			}
+			post, err := cli.Post("http://10.0.1.85/dim", "application/json", bytes.NewReader([]byte(fmt.Sprintf("{ \"dim\": %d }", parseInt))))
+			if err != nil {
+				w.Err(err)
+				continue
+			}
+			post.Body.Close()
+			err = w.Attributes.Set(wsE.Id, "dim", attribute.Request)
+			if err != nil {
+				w.Err(err)
+				continue
+			}
+		}
+	}()
+
+	err = w.Attributes.Register(dim)
+	if err != nil {
+		return err
+	}
 	go func() {
 		err = w.server.ListenAndServe()
 		if err != nil {

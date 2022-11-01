@@ -2,13 +2,11 @@
 <script lang="ts" setup>
 import type {Task} from "@/types";
 import {TaskType} from "@/types";
-import {inject, reactive, watchEffect} from "vue";
-import PaneMenuToggle from "@/components/pane/PaneMenuToggle.vue";
+import {inject, onMounted, reactive, watchEffect} from "vue";
 import Keyboard from "@/components/Keyboard.vue";
-import Scroll from "@/components/scroll/Scroll.vue";
 import type {Haptics} from "@/views/terminal/haptics";
-import Menu from "@/components/menu/Menu.vue";
-import MenuLink from "@/components/menu/MenuLink.vue";
+import FixedScroll from "@/components/scroll/FixedScroll.vue";
+import core from "@/core";
 
 interface Tasks {
   title: string,
@@ -24,21 +22,28 @@ const state = reactive({
 })
 
 watchEffect(() => {
+
+  return props.tasks
+})
+
+onMounted(() => {
   if (props.tasks.length > 0) {
     state.tasks = props.tasks
-    if (state.tasks.length > 0) {
+    if (state.current.value == null) {
       state.current = state.tasks[0]
       state.loaded = true
     }
   }
-  return props.tasks
 })
+
+const remote = core.remote()
 
 let props = defineProps<Tasks>()
 
 const haptics = inject("haptics") as Haptics
 
 function selectRadio(value: any, preview: string) {
+  haptics.tap(2, 3, 100)
   state.current.value = value
   state.current.preview = preview
 }
@@ -49,11 +54,16 @@ function isListSelected(value: any): boolean {
 }
 
 function selectList(value: any) {
+
   let list = state.current.value as any[]
   if (list.includes(value)) {
     list = list.filter(l => l != value)
+    haptics.tap(2, 1, 100)
+    haptics.tap(1, 2, 50)
   } else {
     list.push(value)
+
+    haptics.tap(2, 3, 100)
   }
   state.current.value = list
   state.current.preview = `${list.length} item${list.length == 1 ? '' : 's'}`
@@ -67,12 +77,26 @@ function nextTask() {
     return
   }
   state.current = state.tasks[current + 1]
+  updateLocal()
+}
 
+function updateLocal() {
+  state.tasks = state.tasks.map(t => t.title === state.current.title ? state.current : t)
 }
 
 function selectTask(task: Task) {
+  updateLocal()
   state.current = task
   haptics.tap(1, 1, 50)
+}
+
+function calcDuration(min: number) {
+  return `${Math.floor(min / 60)}h ${min % 60}m `
+}
+
+function selectDuration(min: number) {
+  state.current.value = Math.max(state.current.value + min, 0)
+  state.current.preview = calcDuration(state.current.value)
 }
 
 function enterKey(key: string) {
@@ -87,32 +111,56 @@ function enterKey(key: string) {
     def += key
   }
 
+  updateLocal()
   state.current.value = def;
+  state.current.preview = def;
 
+}
+
+function selectIcon(icon: string) {
+  haptics.tap(2, 3, 100)
+  state.current.value = icon
+  state.current.preview = icon
+}
+
+function isIconSelected(icon: string) {
+  return state.current.value === icon
+}
+
+function mouseDown(m: MouseEvent) {
+  let elem = m.target as HTMLElement
+  elem.className = "subplot-down subplot"
 }
 
 
 </script>
 
 <template>
-  <div class="d-flex gap-1" style="height:100%">
-    <div>
+  <div class="d-flex gap-1 w-100" style="height:100%">
 
-      <Menu class="mt-1" style="width: 15rem">
-        <div class="label-lg label-w700 label-o5 lh-1 p-1 px-2 ">Macro</div>
-        <MenuLink v-for="task in state.tasks" :active="task.title === state.current.title"
-                  :subtext="task.preview" :title="task.title" @click="selectTask(task)"></MenuLink>
-      </Menu>
-    </div>
     <div class="d-flex flex-column gap-1 w-100">
       <div class="element d-flex flex-row justify-content-around gap-1 p-0">
+        <div v-for="task in state.tasks" :id="task.title" class=" w-100 ">
+          <div :class="`${task.title === state.current.title?'':'subplot-inline'}`"
+               class="subplot d-flex justify-content-center gap-1"
+               style="height: 2rem; border-radius: 0.5rem !important;"
+               @click="selectTask(task)">
+            <div
+                class="px-1 lh-1 d-flex flex-column align-items-center gap-0">
+              <div :class="`${task.title === state.current.title?'text-accent':''}`"
+                   class="label-c2 label-o4 label-w500 lh-1">{{ task.title }}
+              </div>
+              <div class="label-c3 label-o3 label-w500 lh-1">{{ task.preview }}</div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="element">
         <div v-if="state.loaded" class="d-flex justify-content-between align-items-center">
           <div class="label-md label-w700 label-o5 px-1 lh-1 mb-2 mt-1">{{ state.current.title }}</div>
           <div class="label-c2 label-w400 label-o3 px-2 lh-1 mb-2 mt-1">{{ state.current.preview }}</div>
         </div>
-        <Scroll class="" style="max-height: 12rem; overflow-y: scroll;">
+        <FixedScroll class="" style="max-height: 12rem; overflow-y: scroll;">
           <div>
             <div v-if="state.current.type === TaskType.String">
               <div class="d-flex mb-1 align-items-center justify-content-center">
@@ -128,29 +176,76 @@ function enterKey(key: string) {
               </div>
 
             </div>
-            <div v-if="state.current.type === TaskType.Number">
-              Number
+            <div v-else-if="state.current.type === TaskType.Number" class=" d-flex gap-1 w-100 justify-content-center">
+              <div class="d-flex gap-1">
+                <div class="subplot p-1 px-2" @click="() => selectDuration(-30)">- 30m</div>
+                <div class="subplot p-1 px-2" @click="() => selectDuration(-15)">- 15m</div>
+                <div class="subplot p-1 px-2" @click="() => selectDuration(-1)">- 1m</div>
+              </div>
+              <div class="subplot p-1 px-3">{{ calcDuration(state.current.value) }}</div>
+              <div class="d-flex gap-1">
+                <div class="subplot p-1 px-2" @click="()=> selectDuration(1)">+ 1m</div>
+                <div class="subplot p-1 px-2" @click="()=> selectDuration(15)">+ 15m</div>
+                <div class="subplot p-1 px-2" @click="()=> selectDuration(30)">+ 30m</div>
+              </div>
+
             </div>
             <div v-else-if="state.current.type === TaskType.Radio">
-
-              <PaneMenuToggle v-for="option in state.current.options" :active="state.current.value === option.value"
-                              :fn="() => selectRadio(option.value, option.title)"
-                              :subtext="option.description"
-                              :title="option.title">
-
-              </PaneMenuToggle>
-
+              <div class="selection-grid px-1 pt-1">
+                <div v-for="option in state.current.options"
+                     :key="option.title"
+                     :class="`${option.value === state.current.value?'accent-selected':''}`"
+                     class="subplot p-1 d-flex flex-row align-items-start gap-0"
+                     @click="() => selectRadio(option.value, option.title)">
+                  <div class="d-flex flex-column p-1">
+                    <div class="lh-1 label-c2 label-o4">{{ option.title }}</div>
+                    <div class="lh-1 label-c3 label-o3">{{ option.description }}</div>
+                  </div>
+                  <div v-if="option.value === state.current.value"
+                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙</div>
+                  <div v-else
+                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞</div>
+                </div>
+              </div>
             </div>
-            <div v-if="state.current.type === TaskType.List">
-              <PaneMenuToggle v-for="option in state.current.options" :active="isListSelected(option.value)"
-                              :fn="() => selectList(option.value)"
-                              :subtext="option.description"
-                              :title="option.title">
+            <div v-else-if="state.current.type === TaskType.List">
+              <div class="selection-grid px-1 pt-1 pb-2">
+                <div v-for="option in state.current.options"
+                     :key="option.title"
+                     :class="`${isListSelected(option.value)?'accent-selected':''}`"
+                     class="subplot p-1 d-flex flex-row align-items-start gap-0 tactile-button"
+                     @click="() => selectList(option.value)">
+                  <div class="d-flex flex-column p-1">
+                    <div class="lh-1 label-c2 label-o4">{{ option.title }}</div>
+                    <div class="lh-1 label-c3 label-o3">{{ option.description }}</div>
+                  </div>
+                  <div v-if="isListSelected(option.value)"
+                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙</div>
+                  <div v-else
+                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞</div>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="state.current.type === TaskType.Icon">
+              <div class="selection-grid-xs px-1 pt-1">
+                <div v-for="option in state.current.options"
+                     :key="option.title"
+                     :class="`${isIconSelected(option.value)?'accent-selected':''}`"
+                     class="subplot p-1 d-flex flex-row align-items-start gap-0"
+                     @click="() => selectIcon(option.value)">
+                  <div class="d-flex flex-column p-1">
+                    <div class="lh-1 label-c1 label-o4">{{ option.title }}</div>
 
-              </PaneMenuToggle>
+                  </div>
+                  <div v-if="isIconSelected(option.value)"
+                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙</div>
+                  <div v-else
+                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞</div>
+                </div>
+              </div>
             </div>
           </div>
-        </Scroll>
+        </FixedScroll>
         <div class="d-flex justify-content-between align-items-center mt-1">
           <div class="label-c2 label-w400 label-o3 px-2 lh-1 ">{{ state.current.description }}</div>
           <div class="subplot  d-flex justify-content-center" style="height:1.5rem; min-width:3.5rem;"
@@ -171,7 +266,24 @@ function enterKey(key: string) {
 </template>
 
 
-<style lang="scss" scoped>
+<style lang="scss">
+
+.accent-selected {
+  outline: 2px solid rgba(255, 149, 0, 0.4) !important;
+}
+
+.tactile-button:active {
+  animation: accent-animation 10ms forwards linear;
+}
+
+@keyframes accent-animation {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+  100% {
+    transform: scale3d(0.99, 0.99, 0.99);
+  }
+}
 
 .label-shimmer {
   mix-blend-mode: lighten;
@@ -184,6 +296,24 @@ function enterKey(key: string) {
   width: 100%;
   grid-template-rows: repeat(1, 1fr);
   grid-template-columns: repeat(3, 1fr);
+}
+
+.selection-grid {
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  width: 100%;
+  grid-template-rows: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.selection-grid-xs {
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  width: 100%;
+  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(6, 1fr);
 }
 
 //.nav-bar > div {

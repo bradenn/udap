@@ -24,7 +24,7 @@ const state = reactive({
 
 watchEffect(() => {
   setOptions()
-  return remote
+
 })
 
 function setOptions() {
@@ -36,12 +36,26 @@ function setOptions() {
 
   state.tasks = [
     {
+      title: "Name",
+      description: "The name of the Macro",
+      type: TaskType.String,
+      value: "",
+      preview: ""
+    },
+    {
+      title: "Description",
+      description: "A brief description of the macro's function.",
+      type: TaskType.String,
+      value: "",
+      preview: ""
+    },
+    {
       title: "Zone",
       description: "What devices should this macro interact with?",
       type: TaskType.Radio,
       options: zones,
-      value: "",
-      preview: "unset"
+      value: zones[0].value,
+      preview: zones[0].title
     },
     {
       title: "Attribute",
@@ -64,8 +78,8 @@ function setOptions() {
         description: "Change the power state of a device",
         value: "on"
       }],
-      value: "",
-      preview: ""
+      value: "dim",
+      preview: "Brightness"
     },
     {
       title: "Value",
@@ -74,20 +88,7 @@ function setOptions() {
       value: "",
       preview: ""
     },
-    {
-      title: "Name",
-      description: "The name of the Macro",
-      type: TaskType.String,
-      value: "",
-      preview: ""
-    },
-    {
-      title: "Description",
-      description: "A brief description of the macro's function.",
-      type: TaskType.String,
-      value: "",
-      preview: ""
-    },
+
   ]
   state.loaded = true
 }
@@ -137,12 +138,16 @@ function createSubroutine() {
 </script>
 
 <template>
-  <div class="d-flex align-items-start label-o4 gap-1 pb-2">
-    <div class="label-w500 label-c1 text-accent" @click="goBack">􀆉 Back</div>
-  </div>
-  <div class="generic-grid">
+  <div class="">
+    <div class="d-flex align-items-start label-o4 gap-1 pb-2">
+      <div class="label-w500 label-c1 text-accent" @click="goBack">􀆉 Back</div>
+    </div>
+    <div class="d-flex justify-content-center">
+      <div class="generic-grid ">
 
-    <TaskManager :on-complete="finish" :tasks="state.tasks" :title="`Macro`"></TaskManager>
+        <TaskManager :on-complete="finish" :tasks="state.tasks" :title="`Macro`"></TaskManager>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -156,5 +161,6 @@ function createSubroutine() {
   display: flex;
   justify-content: center;
   grid-column-gap: 0.25rem;
+  width: max(60%, 0%);
 }
 </style>

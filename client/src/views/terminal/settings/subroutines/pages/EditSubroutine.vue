@@ -13,6 +13,7 @@ import subroutineService from "@/services/subroutineService";
 import core from "@/core";
 import EditMacro from "@/views/terminal/settings/subroutines/pages/EditMacro.vue";
 import moment from "moment";
+import ShowMacros from "@/views/terminal/settings/subroutines/pages/ShowMacros.vue";
 
 const router = core.router()
 const remote = core.remote()
@@ -23,6 +24,7 @@ const state = reactive({
   } as SubRoutine,
   trigger: {} as Trigger,
   editMacro: false,
+  showMacros: false,
   macro: {},
   loaded: false,
 })
@@ -91,6 +93,28 @@ function timeSince(time: string): string {
   return moment(time).fromNow()
 }
 
+function addMacro(id: string) {
+  subroutineService.addMacro(state.subroutine.id, id)
+}
+
+function showMacros() {
+  state.showMacros = true
+}
+
+function removeMacro(id: string) {
+  subroutineService.removeMacro(state.subroutine.id, id)
+}
+
+function calcDuration(min: number) {
+  return `${Math.floor(min / 60)}h ${min % 60}m `
+}
+
+function parseDate(dt: string) {
+
+
+  return moment().from(dt).toString()
+}
+
 </script>
 
 <template>
@@ -106,11 +130,15 @@ function timeSince(time: string): string {
         <div class="label-sm label-w700 label-o6">Subroutine</div>
       </div>
       <Subroutine :subroutine="state.subroutine"></Subroutine>
+      <div>
+        <Button :active="true" class="element flex-grow-1" icon="􀍟"
+                style="height: 1.8rem" text="Manage" @click="showMacros"></Button>
+      </div>
       <div class="d-flex gap-1">
-        <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
-                text="􀋥 Trigger" @click="triggerSubroutine"></Button>
-        <Button :active="true" class="element flex-grow-1" style="height: 1.5rem"
-                text="􀈑 Delete" @click="deleteSubRoutine"></Button>
+        <Button :active="true" class="element flex-grow-1" icon="􀋥"
+                style="height: 1.8rem" text="Trigger" @click="triggerSubroutine"></Button>
+        <Button :active="true" class="element flex-grow-1" icon="􀈑"
+                style="height: 1.8rem" text="Delete" @click="deleteSubRoutine"></Button>
       </div>
       <div class="element d-flex flex-column gap-1 p-2">
         <div class="d-flex justify-content-between">
@@ -123,6 +151,8 @@ function timeSince(time: string): string {
         </div>
       </div>
     </div>
+
+
     <div class="d-flex flex-column gap-1">
       <div class="d-flex align-items-center pb-1">
         <div class="label-sm label-w200 label-o6 px-1">􀐠</div>
@@ -144,21 +174,42 @@ function timeSince(time: string): string {
         </div>
 
         <div class="d-flex gap-1 flex-column w-100">
-          <div v-for="macro in state.subroutine.macros">
-            <div @click="() => {state.macro = macro; state.editMacro = true; }">
-              <MacroDom :macro="macro" subplot
+          <div v-for="macro in state.subroutine.macros" class="d-flex gap-1 align-items-center">
+            <div class="w-100" @click="() => {state.macro = macro; state.editMacro = true; }">
+              <MacroDom :macro="macro" class="flex-grow-1 w-100" subplot
               ></MacroDom>
             </div>
+            <div class="subplot h-100 px-2" style=" text-shadow:none;height: 2.35rem !important;"
+                 @click="() => removeMacro(macro.id)">􀭲</div>
           </div>
 
+
         </div>
+        <div class="d-flex flex-column gap-1 pt-1">
+          <div class="label-c2 label-w500 label-o3 px-1">Revert after:
+          </div>
+          <div class="subplot w-100 p-2 px-2">
+
+            {{ calcDuration(state.subroutine.revertAfter) }}
+          </div>
+        </div>
+
         <div class=" position-relative">
         </div>
       </div>
+      <div class="d-flex gap-1">
+
+
+      </div>
+
     </div>
+
     <EditMacro v-if="state.editMacro" :done="doneEditing"
                :macro="state.macro"
                @click="() => {state.editMacro = false;}"></EditMacro>
+    <ShowMacros v-if="state.showMacros" :done="() => {state.showMacros = false;}"
+                :subroutine="state.subroutine"></ShowMacros>
+
   </div>
 
 </template>

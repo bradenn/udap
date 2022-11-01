@@ -9,6 +9,7 @@ import {useRouter} from "vue-router";
 export default {
     router: () => useRouter(),
     remote: () => inject("remote") as Remote,
-    haptics: () => inject("haptics") as Haptics
+    haptics: () => inject("haptics") as Haptics,
+    notifications: () => inject("notifications") as any,
 }
 

@@ -4,6 +4,7 @@
 
 import type {Trigger} from "@/types";
 import {inject, reactive} from "vue";
+import moment from "moment";
 
 interface TriggerProps {
   trigger: Trigger
@@ -17,6 +18,10 @@ const props = defineProps<TriggerProps>()
 
 const notifications = inject("notifications")
 
+function timeSince(time: string) {
+  return moment(time).utc().fromNow()
+}
+
 </script>
 
 <template>
@@ -29,6 +34,9 @@ const notifications = inject("notifications")
         <div class="label-c2 label-o4 label-w700 lh-1 text-capitalize">{{ props.trigger.name }}</div>
         <div class="label-c3 label-o3 label-w400">{{ props.trigger.description }}</div>
         <div class="label-c3 label-o3 label-w400">Called by <b>{{ props.trigger.type }}</b></div>
+        <div class="label-c3 label-o3 label-w400">Called <b>{{ timeSince(props.trigger.lastTrigger) }}</b>
+        </div>
+
       </div>
     </div>
   </div>

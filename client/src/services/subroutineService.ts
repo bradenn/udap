@@ -25,5 +25,9 @@ export default {
     async deleteSubroutine(id: string): Promise<void> {
         const url = `/subroutines/${id}/delete`
         return await request.post(url)
+    },
+    async updateSubroutine(param: SubRoutine) {
+        const url = `/subroutines/${param.id}/update`
+        return await request.post(url, param)
     }
 }

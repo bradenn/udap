@@ -3,6 +3,7 @@
 package services
 
 import (
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
@@ -32,6 +33,15 @@ func (u *triggerService) Trigger(name string) error {
 		return err
 	}
 	err = u.operator.Run(*trigger)
+	if err != nil {
+		return err
+	}
+	trigger.LastTrigger = time.Now()
+	err = u.Update(trigger)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*trigger)
 	if err != nil {
 		return err
 	}

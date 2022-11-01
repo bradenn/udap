@@ -2,6 +2,7 @@
 
 
 import request from "@/services/request";
+import type {Zone} from "@/types";
 
 function getEndpoint(id: string, path: string): string {
     return `/zones/${id}${path}`
@@ -23,5 +24,8 @@ export default {
     async removeEntity(id: string, entity: number): Promise<void> {
         const url = getEndpoint(id, `/entity/${entity}/remove`)
         return await request.post(url)
-    }
+    },
+    async createZone(zone: Zone): Promise<void> {
+        return await request.post('/zones/create', zone)
+    },
 }

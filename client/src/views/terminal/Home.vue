@@ -3,7 +3,6 @@
 <script lang="ts" setup>
 import {defineAsyncComponent, inject, onMounted, reactive, watchEffect} from "vue";
 import router from "@/router";
-import Widget from "@/components/widgets/Widget.vue";
 import App from "@/components/App.vue";
 import Macros from "@/components/widgets/Macros.vue";
 import type {Attribute, Entity, Remote} from "@/types";
@@ -102,40 +101,35 @@ function getRoutes() {
 
 <template>
 
-  <div :class="``" class="d-flex justify-content-between terminal-home gap-3 mt-1 pb-4 h-100 w-100">
+  <div :class="``" class="h-100 w-100">
+    <div class="home-grid w-100">
+      <div style="grid-column: span 4">
+        <Macros></Macros>
+      </div>
 
-    <div class="widget-grid" style="max-width: 13rem">
-
-      <Macros></Macros>
-
-      <!--      <Widget :cols="3" :rows="1" size="sm">-->
-      <!--        <Shortcut v-for="i in state.shortcuts" :icon="i.icon || 'fa-square'" :name="i.name"></Shortcut>-->
-      <!--      </Widget>-->
-
-    </div>
-    <div class="widget-grid d-flex justify-content-center mt-4">
-      <Calendar></Calendar>
-    </div>
-    <div :class="``" class="widget-grid-vertical" style="max-width: 13rem">
-      <Widget :cols="1" :rows="1" size="sm">
-        <Spotify></Spotify>
-      </Widget>
-      <Widget :cols="1" :rows="2" size="sm">
-        <Weather></Weather>
-      </Widget>
-      <Widget :cols="1" :rows="4" class="" size="sm"
-              style="">
-        <div class="widget-apps">
-          <div v-for="i in state.apps">
-            <App :key="i.name" :icon="i.icon || 'fa-square'" :img="i?.meta?.icon" :name="i.name"
-                 :status="i?.meta?.status"
-                 @click="router.push(i.path)"></App>
+      <div></div>
+      <div style="grid-column: span 5; grid-row: span 2;">
+        <Calendar></Calendar>
+      </div>
+      <div></div>
+      <div style="grid-column: span 4; grid-row: span 3;">
+        <div style="grid-column: span 3; display: flex; flex-direction:column;">
+          <div class="p-2 pb-0 d-flex flex-column gap-2">
+            <Spotify></Spotify>
+            <Weather></Weather>
+            <div class="app-grid">
+              <App v-for="i in state.apps" :key="i.name" :icon="i.icon || 'fa-square'" :img="i?.meta?.icon"
+                   :name="i.name" :status="i?.meta?.status"
+                   style="grid-column: span 1"
+                   @click="router.push(i.path)"></App>
+            </div>
           </div>
 
         </div>
-      </Widget>
+      </div>
 
     </div>
+
   </div>
 </template>
 
@@ -156,6 +150,32 @@ $macro-height: 2rem;
   //outline: 1px solid white;
 }
 
+.app-grid {
+
+  padding: 0;
+  margin: 0;
+  display: grid;
+  align-items: start;
+  align-content: start;
+  grid-row-gap: 0.6rem;
+  grid-column-gap: 1.25rem;
+  grid-template-rows: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.home-grid {
+  padding-top: 0.25rem;
+  display: grid;
+  align-items: start;
+  align-content: start;
+  grid-gap: 0.5rem;
+  grid-template-rows: repeat(12, minmax(4rem, 1fr));
+  grid-template-columns: repeat(15, minmax(3rem, 1fr));
+}
+
+.home-grid > div {
+  //outline: 1px solid white;
+}
 
 .widget-macro > div {
   font-size: 0.7rem;

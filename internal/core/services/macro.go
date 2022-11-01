@@ -3,6 +3,7 @@
 package services
 
 import (
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
@@ -24,6 +25,18 @@ func (u *macroService) Run(id string) error {
 		return err
 	}
 	err = u.operator.Run(*byId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *macroService) RunAndRevert(id string, revert time.Duration) error {
+	byId, err := u.FindById(id)
+	if err != nil {
+		return err
+	}
+	err = u.operator.RunAndRevert(*byId, domain.Macro{}, revert)
 	if err != nil {
 		return err
 	}
