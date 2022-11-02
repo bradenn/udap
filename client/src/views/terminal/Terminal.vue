@@ -37,10 +37,8 @@ import type {Haptics} from "@/views/terminal/haptics";
 import haptics from "@/views/terminal/haptics";
 import Toast from "@/components/Toast.vue";
 
-const Clock = defineAsyncComponent({
-  loader: () => import('@/components/Clock.vue'),
-
-})
+import Clock from '@/components/Clock.vue'
+import IdTag from '@/components/IdTag.vue'
 
 const Input = defineAsyncComponent({
   loader: () => import('@/views/Input.vue'),
@@ -59,11 +57,6 @@ const Bubbles = defineAsyncComponent({
 const Warp = defineAsyncComponent({
   loader: () => import('@/views/screensaver/Warp.vue'),
 })
-
-const IdTag = defineAsyncComponent({
-  loader: () => import('@/components/IdTag.vue'),
-})
-
 
 // -- Websockets --
 onMounted(() => {
@@ -550,7 +543,7 @@ provide('remote', remote)
     </div>
     <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
     <div
-        :style="`box-shadow: inset 0 0 4px 6px hsla(${meta.hue},75%,50%,${0.70*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
+        :style="`box-shadow: inset 0 0 4px 7px hsla(${meta.hue},75%,50%,${0.8*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
         class="neon" @mousedown.passive></div>
   </div>
 
@@ -565,12 +558,13 @@ provide('remote', remote)
 <style lang="scss" scoped>
 
 .neon {
+
   position: absolute;
   width: 100%;
   height: 100%;
   top: 0;
   left: 0;
-
+  border-radius: 0.5rem;
   z-index: -1 !important;
 }
 
@@ -661,7 +655,7 @@ provide('remote', remote)
   height: 100%;
   flex-direction: column;
   justify-content: start;
-  transition: all 500ms;
+
 }
 
 </style>

@@ -13,12 +13,12 @@ function createWindow() {
         showCursor: false,
         title: "UDAP Endpoint",
         backgroundColor: '#000000',
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         show: true,
         kiosk: false,
         fullscreen: true,
-        removeMenu: true,
-        frame: false,
+        // removeMenu: true,
+        frame: true,
     });
     // win.webContents.session.webRequest.onBeforeSendHeaders(
     //     (details, callback) => {

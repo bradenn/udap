@@ -108,20 +108,23 @@ function getRoutes() {
       </div>
 
       <div></div>
-      <div style="grid-column: span 5; grid-row: span 2;">
+      <div style="grid-column: span 4; grid-row: span 2;">
         <Calendar></Calendar>
       </div>
+      <div></div>
       <div></div>
       <div style="grid-column: span 4; grid-row: span 3;">
         <div style="grid-column: span 3; display: flex; flex-direction:column;">
           <div class="p-2 pb-0 d-flex flex-column gap-2">
             <Spotify></Spotify>
             <Weather></Weather>
-            <div class="app-grid">
-              <App v-for="i in state.apps" :key="i.name" :icon="i.icon || 'fa-square'" :img="i?.meta?.icon"
-                   :name="i.name" :status="i?.meta?.status"
-                   style="grid-column: span 1"
-                   @click="router.push(i.path)"></App>
+            <div>
+              <div class="app-grid ">
+                <App v-for="i in state.apps" :key="i.name" :icon="i.icon || 'fa-square'" :img="i?.meta?.icon"
+                     :name="i.name" :status="i?.meta?.status"
+                     style="grid-column: span 1"
+                     @click="router.push(i.path)"></App>
+              </div>
             </div>
           </div>
 
@@ -157,8 +160,8 @@ $macro-height: 2rem;
   display: grid;
   align-items: start;
   align-content: start;
-  grid-row-gap: 0.6rem;
-  grid-column-gap: 1.25rem;
+  grid-row-gap: 0.5rem;
+  grid-column-gap: 0.75rem;
   grid-template-rows: repeat(5, 1fr);
   grid-template-columns: repeat(4, 1fr);
 }

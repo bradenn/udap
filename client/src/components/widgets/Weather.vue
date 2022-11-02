@@ -268,7 +268,7 @@ function toggleMenu() {
                class="label-c4 label-o3 label-w500">
             &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[new Date().getHours() + v]) }}°
           </div>
-          <div v-else class="label-c4 label-o3 label-w500 rain">{{
+          <div v-else class="label-c4 label-o3 label-w500" style="color: rgba(92,177,246,0.6)">{{
               state.weather.hourly.precipitation[new Date().getHours() + v]
             }}"
           </div>

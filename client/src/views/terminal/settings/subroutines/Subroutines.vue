@@ -3,12 +3,11 @@
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Remote, SubRoutine, Trigger} from "@/types";
 import Subroutine from "@/views/terminal/settings/subroutines/Subroutine.vue";
-import MenuItem from "@/components/menu/MenuItem.vue";
-import Menu from "@/components/menu/Menu.vue";
 import MenuSection from "@/components/menu/MenuSection.vue";
 import ToolbarButton from "@/components/ToolbarButton.vue";
 import Create from "@/views/terminal/settings/subroutines/pages/Create.vue";
 import moment from "moment";
+import FixedScroll from "@/components/scroll/FixedScroll.vue";
 
 let remote = inject('remote') as Remote
 
@@ -94,7 +93,8 @@ function select(id: string) {
 }
 
 function formatTimeSince(id: string) {
-  return moment(id).fromNow()
+  let h = moment(id).fromNow()
+  return `${h}`
 }
 
 function createSubroutine() {
@@ -140,7 +140,7 @@ function createSubroutine() {
 
       </div>
 
-      <MenuSection style="flex-direction: row;" title="All Subroutines">
+      <MenuSection style="flex-direction: row; flex-col: span 3;" title="All Subroutines">
         <div class="page-grid">
           <Subroutine v-for="sr in state.subroutines" :key="sr.id" :selected="state.selected.includes(sr.id)"
                       :subroutine="sr"
@@ -148,34 +148,56 @@ function createSubroutine() {
                       v-on:click.stop></Subroutine>
         </div>
       </MenuSection>
+      <FixedScroll style="max-height: 10rem; overflow-y: scroll">
+        <div class="macro-grid">
+          <div v-for="macro in remote.macros.slice(0, 6)"
+               class="element label-c3 label-o3 label-w500 d-flex align-items-center justify-content-center"
+               style="height: 2.25rem">
+            <div class="label-c3 label-w700 label-r label-o4 ">{{ macro.name }}</div>
 
+          </div>
+        </div>
+      </FixedScroll>
       <Create v-if="state.createSubroutine" :done="() => state.createSubroutine = false"></Create>
 
     </div>
     <div class="layout-sidebar">
 
-      <Menu alt="" title="">
-        <MenuSection class="gap-2" title="Triggers">
-          <div v-for="trigger in state.triggers" class="d-flex gap-0 flex-column mb-3">
-            <MenuItem
-                :subtext="formatTimeSince(trigger.lastTrigger)" :title="trigger.name"
-                active class="mb-2" icon="􀋦"></MenuItem>
-            <div class="d-flex justify-content-between flex-column gap-2">
-              <div v-for="sr in state.subroutines.filter(s => s.triggerId === trigger.id)"
-                   class="d-flex gap-1 align-items-center justify-content-between flex-row px-3">
-                <div class="d-flex gap-1 align-items-center">
-                  <div class="label-w500 label-c1 label-o2 lh-1">{{ sr.icon }}</div>
-                  <div class="label-w400 label-c2 label-o4 lh-1">{{ sr.description }}</div>
+      <MenuSection class="gap-2 " title="Triggers">
+        <div v-for="trigger in state.triggers" class="d-flex gap-0 flex-column mb-3">
+          <div class="element">
+            <div class="d-flex justify-content-between">
+              <div class="d-flex gap-1  align-items-center p-1">
+                <div class="label-c3 label-w600 label-o3 lh-1" style="font-size: 18px;">
+                  􀋦
                 </div>
-                <div class="label-w200 label-c2 label-o4  lh-1 text-accent">􀁢</div>
+                <div class="label-c2 label-w500 label-o4 lh-1" style="font-size: 21px;">
+                  {{ trigger.name }}
+                </div>
+              </div>
+              <div class="label-w400 label-c2 label-o3  lh-1 p-1">{{ formatTimeSince(trigger.lastTrigger) }}</div>
+            </div>
+            <div class="d-flex justify-content-between flex-column  gap-1">
+              <div v-for="sr in state.subroutines.filter(s => s.triggerId === trigger.id)"
+                   class=" py-2 d-flex gap-1 align-items-center justify-content-between flex-row px-3">
+                <div class="d-flex gap-1 align-items-center">
+                  <div class="label-w400 label-c2 label-o2 opacity-50 lh-1 text-accent">􀄵</div>
+                  <div class="label-w400 label-c1 label-o3 lh-1">{{ sr.icon }}</div>
+                  <div class="label-w500 label-c2 label-o4 lh-1">{{ sr.description }}</div>
+                </div>
+                <div class="label-w200 label-c2 label-o4  lh-1 text-accent">􀄔</div>
               </div>
 
             </div>
           </div>
 
-        </MenuSection>
-      </Menu>
+        </div>
+
+      </MenuSection>
+
     </div>
+
+
   </div>
 </template>
 
@@ -187,21 +209,34 @@ function createSubroutine() {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
+.macro-grid > .element {
+  width: 100% !important;
+}
+
+.macro-grid {
+
+  display: grid;
+
+  grid-gap: 0.5rem;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
 .layout-grid {
   width: 100%;
   display: grid;
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(12, 1fr);
   grid-template-rows: repeat(1, 1fr);
 }
 
 .layout-sidebar {
-  grid-column: 5 / span 1;
+  grid-column: 10 / span 3;
 }
 
 .layout-body {
-  grid-column: 1 / span 4;
+  grid-column: 1 / span 9;
 }
 
 .page-grid > div {

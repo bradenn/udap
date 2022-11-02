@@ -56,7 +56,7 @@ const livingRoomSet = {
   offsets: {
     x: 0,
     y: 0,
-    z: -1.200125,
+    z: 0,
   },
   floor: {
     diffuse: "/custom/textures/woodfloor-color.jpg",
@@ -164,7 +164,7 @@ function drawWall(points: THREE.Vector2[], def: RoomDefinition): THREE.Object3D 
 
 
   const wallGeometry = new THREE.ExtrudeBufferGeometry([wall1], {
-    depth: 1.2, bevelEnabled: false
+    depth: 0, bevelEnabled: false
   });
 
 
@@ -399,7 +399,10 @@ function drawScene(def: RoomDefinition): THREE.Object3D {
   }
   obj.add(drawFloor(def))
 
-  obj.add(drawWalls(def))
+  // obj.add(drawWalls(def))
+  var camera = new THREE.PerspectiveCamera(110, 1 / 1, 0.1, 200);
+  var helper = new THREE.CameraHelper(camera);
+  obj.add(helper)
 
   // 23 29 36
   return obj
@@ -445,7 +448,7 @@ function loadThree() {
   combo.translateY(-s * 4)
 
   // drawScene(pointsd)
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 2.25))
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcccccc, 2))
   scene.add(combo)
 
 
