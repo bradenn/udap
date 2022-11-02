@@ -496,10 +496,8 @@ provide('remote', remote)
 
   <div v-if="!screensaver.hideTerminal"
        class="terminal"
-
        v-on:mousedown="dragStart"
        v-on:mousemove="dragContinue" v-on:mouseup="dragStop">
-
 
     <Glance v-if="state.locked"></Glance>
     <div v-else class="d-inline">
@@ -542,9 +540,7 @@ provide('remote', remote)
       </div>
     </div>
     <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
-    <div
-        :style="`box-shadow: inset 0 0 4px 7px hsla(${meta.hue},75%,50%,${0.8*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
-        class="neon" @mousedown.passive></div>
+
   </div>
 
   <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"
@@ -553,6 +549,9 @@ provide('remote', remote)
         class="screensaver-overlay"></Warp>
   <Input v-if="state.input.open" :apply="applyInput" :close="closeInput" :description="state.input.meta.description"
          :name="state.input.meta.name" :value="state.input.meta.value"></Input>
+  <div
+      :style="`box-shadow: inset 0 0 4px 7px hsla(${meta.hue},75%,50%,${0.8*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
+      class="neon" @mousedown.passive></div>
 </template>
 
 <style lang="scss" scoped>
