@@ -513,7 +513,7 @@ $fontColors: (
 /* Handle */
 ::-webkit-scrollbar-thumb {
   @extend .element-secondary;
-  border: solid 2px transparent;
+  margin-left: 11px;
   background-clip: content-box;
   border-radius: 0.2rem;
 

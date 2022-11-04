@@ -232,10 +232,11 @@ function toggleMenu() {
     </div>
 
   </div>
-  <div v-else class="element clear gap w-100 h-100 p-2 weather-widget" @click="toggleMenu">
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="label-xl label-o6 label-w500 lh-1 ">{{ Math.round(state.current.temperature) }}°</div>
-      <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-end" style="gap: 0.125rem">
+  <div v-else class="element clear gap w-100 h-100 p-1 px-2 weather-widget" @click="toggleMenu">
+    <div class="d-flex justify-content-start align-items-center">
+      <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-start "
+           style="gap: 0.125rem; width: 4rem">
+        <div class="label-lg label-o5 label-w500 pt-1 pb-0 lh-1">{{ Math.round(state.current.temperature) }}°</div>
         <div v-if="state.current">
           <div v-if="getWeatherState(state.current.weathercode || 0).toLowerCase().includes('rain')">
             Tut, Tut; Looks like {{ getWeatherState(state.current.weathercode) }}
@@ -244,46 +245,49 @@ function toggleMenu() {
             {{ getWeatherState(state.current.weathercode) }}
           </div>
         </div>
-        <div class="label-c3 label-o2">H: {{ Math.round(state.ranges.temp.max) }}° L:
+        <div class="label-c3 label-o2 label-w500">H: {{ Math.round(state.ranges.temp.max) }}° L:
           {{ Math.round(state.ranges.temp.min) }}°
         </div>
       </div>
-    </div>
-
-    <h6 class="mb-0 mt-1">Today</h6>
-    <div class=" d-flex flex-row justify-content-between px-1">
-      <div class="d-flex flex-row justify-content-between align-items-end w-100">
-        <div v-for="v in Array(7).keys()"
-             class="d-flex flex-column justify-content-center align-items-center">
-          <div class="label-c4 label-w400 label-o4">{{
-              moment(new Date()).add(v, "hour").format("hA")
-            }}
-          </div>
+      <div class=" flex-grow-1">
+        <div class=" d-flex flex-row justify-content-between px-1">
+          <div class="d-flex flex-row justify-content-between align-items-end w-100">
+            <div v-for="v in Array(6).keys()"
+                 class="d-flex flex-column justify-content-center align-items-center">
+              <div class="label-c4 label-w400 label-o4">{{
+                  moment(new Date()).add(v, "hour").format("hA")
+                }}
+              </div>
 
 
-          <div class="label-c2 label-o4">
-            {{ getWeatherIcon(state.weather.hourly.weathercode[new Date().getHours() + v], v) }}
-          </div>
-          <div v-if="state.weather.hourly.precipitation[new Date().getHours()+v] <= 0.0001"
-               class="label-c4 label-o3 label-w500">
-            &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[new Date().getHours() + v]) }}°
-          </div>
-          <div v-else class="label-c4 label-o3 label-w500" style="color: rgba(92,177,246,0.6)">{{
-              state.weather.hourly.precipitation[new Date().getHours() + v]
-            }}"
-          </div>
+              <div class="label-c2 label-o4">
+                {{ getWeatherIcon(state.weather.hourly.weathercode[new Date().getHours() + v], v) }}
+              </div>
+              <div v-if="state.weather.hourly.precipitation[new Date().getHours()+v] <= 0.0001"
+                   class="label-c4 label-o3 label-w500">
+                &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[new Date().getHours() + v]) }}°
+              </div>
+              <div v-else class="label-c4 label-o3 label-w500" style="color: rgba(92,177,246,0.6)">{{
+                  state.weather.hourly.precipitation[new Date().getHours() + v]
+                }}"
+              </div>
 
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
-    <div v-show="false">
+
+    <div v-if="false">
       <div class="h-sep my-1"></div>
       <h6 class="mb-1 mt-2">Rain</h6>
       <div class=" d-flex flex-row justify-content-between px-1">
         <div class="d-flex flex-row justify-content-between align-items-end w-100">
           <div v-for="p in state.weather.hourly.precipitation.slice(0, 24)">
-            <div :style="`height: ${(p - state.ranges.rain.min)/(state.ranges.rain.max - state.ranges.rain.min)}rem;`"
-                 class="temp-bar"></div>
+            <div
+                :style="`height: ${(p - state.ranges.rain.min)/(state.ranges.rain.max - state.ranges.rain.min)}rem;`"
+                class="temp-bar"></div>
           </div>
         </div>
         <div class="d-flex flex-column justify-content-start align-items-end px-1">
@@ -294,12 +298,12 @@ function toggleMenu() {
     </div>
     <div class="label-c2 label-o3 py-1 pb-0">
     </div>
-    <div class="h-sep my-0"></div>
     <div class="label-c2 label-w400 label-o2 lh-lg">
-      <div>Winds at {{ state.current.windspeed }} mph going {{
-          degToCompass(state.current.winddirection)
-        }}
-      </div>
+      <!--      <div>Winds at {{ state.current.windspeed }} mph going {{-->
+      <!--    <div class="h-sep my-0"></div>-->
+      <!--          degToCompass(state.current.winddirection)-->
+      <!--        }}-->
+      <!--      </div>-->
     </div>
 
   </div>

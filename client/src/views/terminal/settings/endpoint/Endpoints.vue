@@ -2,13 +2,11 @@
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Device, Endpoint, Remote} from "@/types";
-import Plot from "@/components/plot/Plot.vue";
-import Radio from "@/components/plot/Radio.vue";
 import Loader from "@/components/Loader.vue";
-import PaneList from "@/components/pane/PaneList.vue";
-import ListInput from "@/components/pane/ListInput.vue";
-import PaneMenuItem from "@/components/pane/PaneMenuItem.vue";
 import endpointService from "@/services/endpointService";
+import Toolbar from "@/components/toolbar/Toolbar.vue";
+import ToolbarButton from "@/components/ToolbarButton.vue";
+import CreateEndpoint from "@/views/terminal/settings/endpoint/CreateEndpoint.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -54,38 +52,45 @@ function createEndpoint() {
 
 <template>
   <div v-if="!state.loading">
-    <Plot :cols="1" :rows="1" class="mb-1" small style="width: 6rem;">
-      <Radio :active="false" :fn="() => setMode(state.mode === 'create'?'list':'create')"
-             :title="state.mode !== 'list'?'Cancel':'New Endpoint'"></Radio>
-    </Plot>
+
+    <Toolbar class="mb-1" icon="􀏞" title="Endpoints">
+      <div class="w-100"></div>
+      <ToolbarButton :active="false" icon="􀅼" style="height: 1.5rem"
+                     text="Zone" @click="(e) => setMode(state.mode === 'create'?'list':'create')"></ToolbarButton>
+    </Toolbar>
+
     <div v-if="state.mode === 'list'">
 
       <div class="endpoint-container w-100">
         <div v-for="endpoint in state.endpoints"
-             :key="endpoint.id" class="">
-          <Plot :alt="endpoint.key" :cols="3" :rows="1" :title="endpoint.name">
-            <div></div>
-          </Plot>
+             class="">
+          <div class="element">
+            <div :key="endpoint.id" class="d-flex gap-1 align-items-center justify-content-between">
+              <div class="d-flex gap-1 align-items-center p-1 py-0">
+                <div class="label-xs label-o3">􀏃</div>
+                <div class="label-xxs label-o5">{{ endpoint.name }}</div>
+              </div>
+              <div v-if="endpoint.connected"
+                   class="label-xxs label-o5 text-accent subplot p-1 px-2 d-flex align-items-center gap-1">
+                <div class="label-c2 lh-1">Live</div>
+              </div>
+
+
+            </div>
+
+          </div>
 
         </div>
 
       </div>
     </div>
     <div v-else-if="state.mode === 'create'">
-
-      <PaneList style="width: 15rem;" title="Configuration">
-        <ListInput :change="(s: string) => state.toCreate.name = s"
-                   :value="state.toCreate.name"
-                   description="The name of the endpoint"
-                   name="Endpoint Name" type="text"></ListInput>
-        <PaneMenuItem :active="false" :fn="createEndpoint" subtext="" title="Create"></PaneMenuItem>
-      </PaneList>
-
+      <CreateEndpoint :done="() => {state.mode = 'list'}"></CreateEndpoint>
     </div>
   </div>
 
   <div v-else>
-    <div class="d-flex justify-content-start py-2 px-1">
+    <div class="d-flex justify-content-start ali py-2 px-1">
       <div class="label-w500 label-o4 label-xxl"><i :class="`fa-solid fa-expand fa-fw`"></i></div>
       <div class="label-w500 opacity-100 label-xxl px-2">Endpoints</div>
       <div class="flex-fill"></div>
@@ -109,7 +114,7 @@ function createEndpoint() {
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
   grid-template-rows: repeat(2, 1fr);
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 
 </style>

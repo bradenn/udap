@@ -104,13 +104,14 @@ function parsePosition(pos: string) {
 
 <template>
   <div>
-    <div v-if="!state.loading" class="entity-grid">
+    <div v-if="!state.loading" class="entity-grid ">
 
       <PaneMenu
           :alt="`${Object.keys(state.modules).length} ${Object.keys(state.modules).length === 1?'module':'modules'}`"
           title="Module">
 
-        <PaneMenuItem v-for="(entities, module) in state.modules" :active="state.selectedModule === `${module}`"
+        <PaneMenuItem v-for="(entities, module) in state.modules"
+                      :active="state.selectedModule === `${module}`"
                       :fn="() => selectModule(`${module}`)"
                       :subtext="`${entities.length} ${entities.length === 1?'entity':'entities'}`"
                       :title="`${module}`"></PaneMenuItem>

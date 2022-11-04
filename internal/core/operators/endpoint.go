@@ -150,15 +150,22 @@ func (m *endpointOperator) enrollEndpoint(endpoint *domain.Endpoint) error {
 	if err := <-errChan; err != nil {
 		return err
 	}
-	err := m.sendMetadata(endpoint.Id)
+	operation.endpoint.Connected = true
+	err := m.controller.Endpoints.Update(operation.endpoint)
 	if err != nil {
 		return err
 	}
+	err = m.sendMetadata(endpoint.Id)
+	if err != nil {
+		return err
+	}
+
 	err = m.controller.EmitAll()
 	if err != nil {
 		log.Err(err)
 		return nil
 	}
+
 	log.Event("Endpoint '%s' enrolled.", endpoint.Name)
 	return nil
 }

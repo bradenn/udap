@@ -5,8 +5,8 @@
 import core from "@/core";
 
 interface Page {
-  done: () => {},
-  save: () => {},
+  done: () => void,
+  save: () => void,
   title: string
 }
 

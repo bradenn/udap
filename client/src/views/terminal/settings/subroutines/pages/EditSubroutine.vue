@@ -25,7 +25,10 @@ const state = reactive({
   trigger: {} as Trigger,
   editMacro: false,
   showMacros: false,
-  macro: {},
+  macro: {
+    name: "",
+    id: "",
+  } as Macro,
   loaded: false,
 })
 
@@ -86,7 +89,7 @@ function deleteSubRoutine() {
 
 function doneEditing() {
   state.editMacro = false
-  state.macro = {}
+  state.macro = {} as Macro
 }
 
 function timeSince(time: string): string {

@@ -8,6 +8,7 @@ import ToolbarButton from "@/components/ToolbarButton.vue";
 import Create from "@/views/terminal/settings/subroutines/pages/Create.vue";
 import moment from "moment";
 import FixedScroll from "@/components/scroll/FixedScroll.vue";
+import Toolbar from "@/components/toolbar/Toolbar.vue";
 
 let remote = inject('remote') as Remote
 
@@ -107,38 +108,30 @@ function createSubroutine() {
   <div class="layout-grid">
 
     <div class="layout-body">
-      <div class="d-flex mb-1 justify-content-between align-items-center flex-row">
-        <div class="px-2 d-flex gap-1 align-items-center element w-100 lh-2" style="height: 1.8rem;">
-          <div class="label-xs label-w200 label-o3 px-0">􀐘</div>
-          <div class="label-xs label-w700 label-o5">Subroutines</div>
+      <Toolbar class="mb-1" icon="􀐘" title="Subroutines">
+        <ToolbarButton :active="false" :disabled="state.select" class=" px-3"
+                       style="height: 1.4rem"
+                       text="Select"
+                       @click="() => state.select?selectStop():selectStart()"></ToolbarButton>
+        <div class="button-sep"></div>
+        <ToolbarButton :active="false" :disabled="state.selected.length === 0" class=" px-3" style="height: 1.5rem"
+                       text="Trigger" to="/terminal/settings/subroutines/create"></ToolbarButton>
+        <ToolbarButton :active="false" :disabled="state.selected.length === 0" class="  px-3" style="height: 1.5rem"
+                       text="Delete" to="/terminal/settings/subroutines/create"></ToolbarButton>
+        <div class="flex-grow-1"></div>
+        <ToolbarButton v-if="state.select" :accent="true" :active="false" :text="state.select?'Done':'Select'"
+                       class=" px-3"
+                       style="height: 1.4rem"
+                       @click="() => selectStop()"></ToolbarButton>
+        <div class="button-sep"></div>
+        <ToolbarButton :active="false" icon="􀅼" style="height: 1.5rem"
+                       text="Macro" to="/terminal/settings/subroutines/macros/create"></ToolbarButton>
 
-          <!--          <div class="button-sep"></div>-->
-          <ToolbarButton :active="false" :disabled="state.select" class=" px-3"
-                         style="height: 1.4rem"
-                         text="Select"
-                         @click="() => state.select?selectStop():selectStart()"></ToolbarButton>
-          <div class="button-sep"></div>
-          <ToolbarButton :active="false" :disabled="state.selected.length === 0" class=" px-3" style="height: 1.5rem"
-                         text="Trigger" to="/terminal/settings/subroutines/create"></ToolbarButton>
-          <ToolbarButton :active="false" :disabled="state.selected.length === 0" class="  px-3" style="height: 1.5rem"
-                         text="Delete" to="/terminal/settings/subroutines/create"></ToolbarButton>
-          <div class="flex-grow-1"></div>
-          <ToolbarButton v-if="state.select" :accent="true" :active="false" :text="state.select?'Done':'Select'"
-                         class=" px-3"
-                         style="height: 1.4rem"
-                         @click="() => selectStop()"></ToolbarButton>
-          <div class="button-sep"></div>
-          <ToolbarButton :active="false" icon="􀅼" style="height: 1.5rem"
-                         text="Macro" to="/terminal/settings/subroutines/macros/create"></ToolbarButton>
-
-          <ToolbarButton :active="false" icon="􀅼" style="height: 1.5rem"
-                         text="Subroutine" @click="() => createSubroutine()"></ToolbarButton>
-          <ToolbarButton :active="false" icon="􀅼" style="height: 1.5rem"
-                         text="Zone" to="/terminal/settings/subroutines/zones/create"></ToolbarButton>
-        </div>
-
-
-      </div>
+        <ToolbarButton :active="false" icon="􀅼" style="height: 1.5rem"
+                       text="Subroutine" @click="() => createSubroutine()"></ToolbarButton>
+        <ToolbarButton :active="false" icon="􀅼" style="height: 1.5rem"
+                       text="Zone" to="/terminal/settings/subroutines/zones/create"></ToolbarButton>
+      </Toolbar>
 
       <MenuSection style="flex-direction: row; flex-col: span 3;" title="All Subroutines">
         <div class="page-grid">

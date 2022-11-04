@@ -327,7 +327,7 @@ function openInput(props: InputProps, cb: (a: string) => void) {
 
 let meta = reactive({
   hue: 0,
-  dim: {}
+  dim: 0
 })
 
 
@@ -346,7 +346,7 @@ function pollMeta(rm: Remote) {
 
   let dim = attrs.find(a => a.key === "dim")
   if (!dim) return;
-  meta.dim = dim.value
+  meta.dim = parseInt(dim.value)
 
   return meta
 }
@@ -510,11 +510,7 @@ provide('remote', remote)
                :time="toasts.current.duration" :title="toasts.current.name"></Toast>
 
         <div class="generic-slot-sm ">
-          <div v-if="false" class="element p-2" style="width: 13rem !important;">
-            {{ remote.logs.find(l => ((new Date().valueOf() - new Date(l.time).valueOf()) >= 60000)) }}
-            <div class="label-c2 label-w500 label-o5 lh-1">Worldspace</div>
-            <div class="label-c3 label-w400 label-o3 lh-1">Matthew has arrived</div>
-          </div>
+
         </div>
         <div class="generic-slot-sm ">
           <IdTag></IdTag>
@@ -540,7 +536,7 @@ provide('remote', remote)
       </div>
     </div>
     <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
-
+    <!--    <DiagnosticMode></DiagnosticMode>-->
   </div>
 
   <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"

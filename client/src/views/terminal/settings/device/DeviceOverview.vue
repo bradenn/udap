@@ -7,6 +7,7 @@ import Radio from "@/components/plot/Radio.vue";
 import Loader from "@/components/Loader.vue";
 import axios from "axios";
 import router from "@/router";
+import Toolbar from "@/components/toolbar/Toolbar.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -83,6 +84,10 @@ function goTo(target: string) {
 <template>
 
   <div v-if="!state.loading">
+
+    <Toolbar class="mb-1" icon="􀉣" title="Devices">
+      <div class="w-100"></div>
+    </Toolbar>
     <div v-if="state.mode === 'list'">
 
       <div class="device-container">

@@ -8,6 +8,7 @@ import Radio from "@/components/plot/Radio.vue";
 import Confirm from "@/components/plot/Confirm.vue";
 import {useRouter} from "vue-router";
 import moduleService from "@/services/moduleService";
+import Toolbar from "@/components/toolbar/Toolbar.vue";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -63,6 +64,10 @@ function editModule(id: string) {
 
 <template>
   <div class="h-100">
+
+    <Toolbar class="mb-1" icon="􀐟" title="Modules">
+      <div class="w-100"></div>
+    </Toolbar>
     <div v-if="!state.loading" class="d-flex flex-column gap-1">
 
 

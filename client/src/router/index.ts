@@ -5,7 +5,7 @@ import {createRouter, createWebHashHistory} from "vue-router";
 // Settings views
 import settings from "@/views/terminal/settings/index";
 import setup from "@/views/setup";
-import haptics from "@/views/tests/Haptics.vue"
+import haptics from "@/views/tests/UIKit.vue"
 
 // Setup view components
 import Setup from "@/views/setup/Setup.vue";
@@ -50,6 +50,7 @@ import Drake from "@/views/terminal/aliens/Drake.vue";
 import diagnostic from "@/views/terminal/diagnostic";
 import periodic from "@/views/terminal/periodic";
 import remote from "@/views/terminal/remote";
+import wikiRoutes from "@/views/terminal/wiki";
 
 
 const Whiteboard = () => import("@/views/terminal/whiteboard/Whiteboard.vue")
@@ -239,6 +240,7 @@ const terminalRoutes = {
         diagnostic,
         weather,
         remote,
+        wikiRoutes,
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,

@@ -7,6 +7,7 @@ import Keyboard from "@/components/Keyboard.vue";
 import type {Haptics} from "@/views/terminal/haptics";
 import FixedScroll from "@/components/scroll/FixedScroll.vue";
 import core from "@/core";
+import Item from "@/components/element/Item.vue";
 
 interface Tasks {
   title: string,
@@ -210,20 +211,13 @@ function mouseDown(m: MouseEvent) {
             </div>
             <div v-else-if="state.current.type === TaskType.List">
               <div class="selection-grid px-1 pt-1 pb-2">
-                <div v-for="option in state.current.options"
-                     :key="option.title"
-                     :class="`${isListSelected(option.value)?'accent-selected':''}`"
-                     class="subplot p-1 d-flex flex-row align-items-start gap-0 tactile-button"
-                     @click="() => selectList(option.value)">
-                  <div class="d-flex flex-column p-1">
-                    <div class="lh-1 label-c2 label-o4">{{ option.title }}</div>
-                    <div class="lh-1 label-c3 label-o3">{{ option.description }}</div>
-                  </div>
-                  <div v-if="isListSelected(option.value)"
-                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙</div>
-                  <div v-else
-                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞</div>
-                </div>
+                <Item v-for="option in state.current.options"
+                      :class="`${isListSelected(option.value)?'accent-selected':''}`"
+                      :description="option.description" :selected="isListSelected(option.value)"
+                      :title="`${option.title}`"
+                      :toggle="true"
+                      @click="() => selectList(option.value)"></Item>
+
               </div>
             </div>
             <div v-else-if="state.current.type === TaskType.Icon">
