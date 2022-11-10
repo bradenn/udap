@@ -7,6 +7,7 @@ import App from "@/components/App.vue";
 import Macros from "@/components/widgets/Macros.vue";
 import type {Attribute, Entity, Remote} from "@/types";
 import Error from "@/components/Error.vue";
+import Camera from "@/components/widgets/Camera.vue";
 
 const Spotify = defineAsyncComponent({
   loader: () => import('@/components/widgets/Spotify.vue'),
@@ -102,18 +103,18 @@ function getRoutes() {
 <template>
 
   <div :class="``" class="h-100 w-100">
-    <div class="home-grid w-100">
-      <div style="grid-column: span 4">
+    <div class="home-grid w-100 h-100">
+
+      <div style="grid-column: 1/span 4; grid-row: 1/span 6;">
         <Macros></Macros>
       </div>
 
-      <div></div>
-      <div style="grid-column: span 4; grid-row: span 2;">
+      <div class="d-flex justify-content-center flex-column align-items-center gap-1"
+           style=" grid-column: 6/span 5; grid-row: 1/span 8;">
         <Calendar></Calendar>
+        <Camera></Camera>
       </div>
-      <div></div>
-      <div></div>
-      <div style="grid-column: span 4; grid-row: span 3;">
+      <div style="grid-column: 12 / span 4; grid-row: 1 / span 8;">
         <div style="grid-column: span 3; display: flex; flex-direction:column;">
           <div class="p-2 pb-0 d-flex flex-column gap-2">
             <Spotify></Spotify>
@@ -155,25 +156,21 @@ $macro-height: 2rem;
 
 .app-grid {
 
-  padding: 0;
-  margin: 0;
   display: grid;
-  align-items: start;
-  align-content: start;
-  grid-row-gap: 0.5rem;
-  grid-column-gap: 0.75rem;
-  grid-template-rows: repeat(5, 1fr);
+  padding: 0.75rem 0.5rem 0.5rem;
+  flex-grow: 1;
+  grid-gap: 0.75rem;
+  grid-template-rows: repeat(8, 1fr);
   grid-template-columns: repeat(4, 1fr);
 }
 
 .home-grid {
   padding-top: 0.25rem;
   display: grid;
-  align-items: start;
-  align-content: start;
-  grid-gap: 0.5rem;
-  grid-template-rows: repeat(12, minmax(4rem, 1fr));
-  grid-template-columns: repeat(15, minmax(3rem, 1fr));
+  flex-grow: 1;
+  grid-gap: 0.25rem;
+  grid-template-rows: repeat(12, 1fr);
+  grid-template-columns: repeat(15, 1fr);
 }
 
 .home-grid > div {

@@ -3,7 +3,7 @@ services:
   postgres:
     image: 'postgres:latest'
     volumes:
-      - ./db-data/:/var/lib/postgresql/data/
+      - ./local/db/:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
     environment:
@@ -16,7 +16,7 @@ services:
       context: ./
       dockerfile: ./Dockerfile
     volumes:
-      - persistant:/local
+      - persistant:/local/db
     networks:
       - default
     env_file:
