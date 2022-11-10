@@ -26,7 +26,7 @@ func init() {
 		Name:        "macmeta",
 		Type:        "module",
 		Description: "MacOS meta interface for udap",
-		Version:     "0.0.1",
+		Version:     "0.0.2",
 		Author:      "Braden Nicholson",
 	}
 	Module.request = make(chan bool)
@@ -38,8 +38,8 @@ func (v *MacMeta) requestState(state bool) {
 	select {
 	case v.request <- state:
 		return
-	case <-time.After(time.Millisecond * 200):
-		v.ErrF("failed to update terminal state (200ms timeout)")
+	case <-time.After(time.Millisecond * 500):
+		v.ErrF("failed to update terminal state (500ms timeout)")
 		return
 	}
 }

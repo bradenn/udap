@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 	"udap/internal/controller"
 	"udap/internal/core/domain"
@@ -19,16 +20,13 @@ import (
 	"udap/internal/plugin"
 )
 
+const PATH = "./modules"
+
 type moduleRuntime struct {
 	ctrl    *controller.Controller
 	runtime map[string]plugin.ModuleInterface
+	mutex   sync.Mutex
 }
-
-func (m *moduleRuntime) HandleEmit(mutation domain.Mutation) error {
-	return nil
-}
-
-const PATH = "./modules"
 
 func NewModuleOperator(ctrl *controller.Controller) ports.ModuleOperator {
 	return &moduleRuntime{
@@ -37,11 +35,16 @@ func NewModuleOperator(ctrl *controller.Controller) ports.ModuleOperator {
 	}
 }
 
+func (m *moduleRuntime) HandleEmit(mutation domain.Mutation) error {
+	return nil
+}
+
 func (m *moduleRuntime) getModule(id string) (plugin.ModuleInterface, error) {
-	if m.runtime[id] == nil {
+	iface := m.runtime[id]
+	if iface == nil {
 		return nil, fmt.Errorf("module not found")
 	}
-	return m.runtime[id], nil
+	return iface, nil
 }
 
 func (m *moduleRuntime) setModule(id string, moduleInterface plugin.ModuleInterface) error {
@@ -50,6 +53,9 @@ func (m *moduleRuntime) setModule(id string, moduleInterface plugin.ModuleInterf
 }
 
 func (m *moduleRuntime) removeModule(id string) error {
+	if m.runtime[id] == nil {
+		return fmt.Errorf("module not found")
+	}
 	delete(m.runtime, id)
 	return nil
 }
@@ -126,7 +132,9 @@ func (m *moduleRuntime) Load(module string, uuid string) (domain.ModuleConfig, e
 		return domain.ModuleConfig{}, fmt.Errorf("cannot read module")
 	}
 	// Connect the module to the UDAP runtime
+
 	err = mod.Connect(m.ctrl, uuid)
+
 	if err != nil {
 		return domain.ModuleConfig{}, err
 	}
@@ -216,5 +224,6 @@ func (m *moduleRuntime) Update(uuid string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

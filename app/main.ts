@@ -13,63 +13,18 @@ function createWindow() {
         showCursor: false,
         title: "UDAP Endpoint",
         backgroundColor: '#000000',
-        autoHideMenuBar: false,
+        autoHideMenuBar: true,
         show: true,
-        kiosk: false,
         fullscreen: true,
-        // removeMenu: true,
-        frame: true,
+        skipTaskbar: true,
+        hiddenInset: true
     });
-    // win.webContents.session.webRequest.onBeforeSendHeaders(
-    //     (details, callback) => {
-    //         callback({requestHeaders: {Origin: '*', ...details.requestHeaders}});
-    //     },
-    // );
-    //
-    // win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    //     callback({
-    //         responseHeaders: {
-    //             'Access-Control-Allow-Origin': ['*'],
-    //             // We use this to bypass headers
-    //             'Access-Control-Allow-Headers': ['*'],
-    //             ...details.responseHeaders,
-    //         },
-    //     });
-    // });
 
-    // attachTouchMode()
-    // win.webContents.debugger.on('detach', (event, reason) => {
-    //     console.log('Debugger detached due to: ', reason)
-    // })
-    // attachTouchMode()
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     win.webContents.setZoomFactor(1)
     win.loadURL('http://localhost:5002')
-
 }
 
-function attachTouchMode() {
-
-    try {
-        // works with 1.1 too
-        win.webContents.debugger.attach('1.2')
-    } catch (err) {
-        console.log('Debugger attach failed: ', err)
-    }
-
-    const isDebuggerAttached = win.webContents.debugger.isAttached()
-    console.log('debugger attached? ', isDebuggerAttached)
-
-    win.webContents.debugger.on('detach', (event, reason) => {
-        console.log('Debugger detached due to: ', reason)
-    });
-
-    win.webContents.debugger.sendCommand('Emulation.setEmitTouchEventsForMouse', {enabled: true});
-    win.webContents.debugger.sendCommand('Emulation.setTouchEmulationEnabled', {
-        enabled: true,
-        configuration: 'desktop',
-    });
-}
 
 app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
     // On certificate error we disable default behaviour (stop loading the page)

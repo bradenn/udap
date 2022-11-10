@@ -153,6 +153,7 @@ function toggleMenu(): void {
       <div class="d-flex justify-content-start align-items-center align-content-center ">
         <div
             :style="`width: 0.8rem; margin-left:0.25rem; color:${state.activeColor}; height: 100%;border-radius: 0.25rem; `"
+
             class="label-c2 light-on d-flex align-items-center label-w700 justify-content-center">
           {{ (props.entity.icon || '􀛭') }}
         </div>
@@ -162,27 +163,6 @@ function toggleMenu(): void {
         </div>
       </div>
     </div>
-    <!--    <div v-if="false" :class="state.active?'active':''" class="entity-small element" @click="toggleMenu">-->
-    <!--      <div class="entity-header mb-2 ">-->
-    <!--        <div :class="state.powerAttribute.value === 'true'?'light-on':'light-off'" class="label-o5">-->
-
-
-    <!--        </div>-->
-    <!--        <div class="label-c1 label-w400 label-o4 px-2">-->
-    <!--          {{ props.entity.name }}-->
-    <!--        </div>-->
-    <!--        <div class="fill"></div>-->
-
-    <!--      </div>-->
-    <!--      <div v-if="state.powerAttribute" class="d-flex justify-content-between align-items-center w-100">-->
-
-    <!--        <div class="label-c1 label-o2 label-w500">{{ state.shortStatus }}</div>-->
-
-    <!--        <div v-if="state.apiAttribute" class="label-c2 float-end label-o1 label-w600 label-mono">-->
-    <!--          {{ state.rateLimit.remaining }}/{{ state.rateLimit.limit }}-->
-    <!--        </div>-->
-    <!--      </div>-->
-    <!--    </div>-->
     <div v-else class="entity-small element quickedit" style="z-index: 99999!important;">
       <div class="entity-header mb-1 d-flex justify-content-between align-items-center w-100">
         <div class="d-flex">

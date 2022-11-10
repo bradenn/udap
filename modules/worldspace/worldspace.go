@@ -214,7 +214,7 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string
 			return
 		}
 	})
-	w.LogF("Endpoint Trigger: %s", name)
+
 	err := w.Triggers.Register(&domain.Trigger{
 		Name:        fmt.Sprintf("ws-%s", name),
 		Type:        "module",
@@ -245,12 +245,12 @@ func (w *Worldspace) Run() error {
 		return err
 	}
 
-	err = w.endpointTrigger(router, "motion-1", "ws-motion-1")
+	err = w.endpointTrigger(router, "motion-1", "Living Room Motion 1")
 	if err != nil {
 		return err
 	}
 
-	err = w.endpointTrigger(router, "motion-2", "ws-motion-2")
+	err = w.endpointTrigger(router, "motion-2", "Living Room Motion 2")
 	if err != nil {
 		return err
 	}

@@ -214,7 +214,7 @@ func (o *orchestrator) Run() error {
 				close(o.mutations)
 				return
 			case <-t.C:
-				log.Event("Orchestrator event loop timed out")
+				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*100).String())
 				pulse.End("update")
 				continue
 			case err := <-o.tick():

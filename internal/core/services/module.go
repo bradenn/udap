@@ -65,18 +65,23 @@ func (u *moduleService) EmitAll() error {
 	return nil
 }
 
+// Update all the running modules
 func (u *moduleService) Update(id string) error {
+	// Find the local module from the repository
 	module, err := u.repository.FindById(id)
 	if err != nil {
 		return err
 	}
+	// Make sure the module is valid
 	if !module.Enabled || !module.Running {
 		return fmt.Errorf("module must be enabled and running to update")
 	}
+	// Catch any panics that may occur when running the update function
 	defer func() {
+		// Attempt to recover from a panic
 		if r := recover(); r != nil {
 			log.Recovered("Module '%s' panicked; module entering safe-mode", module.Name)
-			err := u.Dispose(module.Id)
+			err = u.Dispose(module.Id)
 			if err != nil {
 				log.Err(fmt.Errorf("module disposal failed, runtime must be flushed to resume operation: %s",
 					err.Error()))
@@ -84,17 +89,16 @@ func (u *moduleService) Update(id string) error {
 			}
 		}
 	}()
+	// Mark the time that the update begins
 	pulse.Begin(module.Id)
 	// End the pulse when the update concludes or errors out
-	defer func() {
-		pulse.End(module.Id)
-	}()
-
+	defer pulse.End(module.Id)
+	// Attempt to update the modules
 	err = u.operator.Update(module.UUID)
 	if err != nil {
 		return err
 	}
-
+	// Return normally
 	return nil
 }
 
@@ -141,7 +145,6 @@ func (u *moduleService) Load(id string) error {
 	if err != nil {
 		return err
 	}
-	module.Running = false
 	// Attempt to load the module
 	config, err := u.operator.Load(module.Name, module.UUID)
 	if err != nil {
@@ -227,13 +230,13 @@ func (u *moduleService) UpdateAll() error {
 	}
 	wg := sync.WaitGroup{}
 	ref := *modules
-	wg.Add(len(ref))
 	for _, module := range ref {
+		if !module.Running || !module.Enabled {
+			continue
+		}
+		wg.Add(1)
 		go func(mod domain.Module) {
 			defer wg.Done()
-			if !mod.Running || !mod.Enabled {
-				return
-			}
 			err = u.Update(mod.Id)
 			if err != nil {
 				log.Err(err)

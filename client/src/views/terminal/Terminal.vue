@@ -39,6 +39,7 @@ import Toast from "@/components/Toast.vue";
 
 import Clock from '@/components/Clock.vue'
 import IdTag from '@/components/IdTag.vue'
+import ContextBar from "@/components/ContextBar.vue";
 
 const Input = defineAsyncComponent({
   loader: () => import('@/views/Input.vue'),
@@ -494,29 +495,21 @@ provide('remote', remote)
 
 <template>
 
+
   <div v-if="!screensaver.hideTerminal"
-       class="terminal"
+       class="terminal pt-2"
        v-on:mousedown="dragStart"
        v-on:mousemove="dragContinue" v-on:mouseup="dragStop">
-
     <Glance v-if="state.locked"></Glance>
     <div v-else class="d-inline">
-      <div class="generic-container gap-2" style="height: 2.75rem">
-        <div class="" v-on:click="(e) => state.locked = true">
-          <Clock :small="!state.showClock"></Clock>
-        </div>
-
+      <ContextBar class="mb-1">
+        <Clock :small="!state.showClock"></Clock>
+        <!--        <div style="width: 20rem; height: 1.25rem; background-color:black; position: absolute; top:0; left: calc(50vw - 10rem); border-radius: 0 0 1rem 1rem; box-shadow: 0 0 4px 2px rgba(0,0,0,0.25);"></div>-->
         <Toast v-if="toasts.active" :message="toasts.current.message" :severity="toasts.current.severity"
                :time="toasts.current.duration" :title="toasts.current.name"></Toast>
+        <IdTag></IdTag>
+      </ContextBar>
 
-        <div class="generic-slot-sm ">
-
-        </div>
-        <div class="generic-slot-sm ">
-          <IdTag></IdTag>
-        </div>
-
-      </div>
       <div class="route-view ">
         <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
           <component :is="Component"/>

@@ -46,10 +46,10 @@ function startClock() {
 }
 
 function updateTime() {
-  state.time = moment().format("hh:mm:ss");
+  state.time = moment().format("h:mm:ss");
   let m = moment();
   m.year(m.year() + 10000)
-  state.date = m.format("dddd, MMMM Do, YYYY");
+  state.date = m.format("ddd, MMM Do, YYYY");
 }
 
 
@@ -80,13 +80,10 @@ function currentPageName() {
     <div class="date" v-html="state.date"></div>
   </div>
   <div v-else>
-    <div :class="`time${props.small?'-sm':''} d-flex align-content-center`" class=""
-         @click="$router.push('/terminal/home')">
+    <div class="d-flex label-md label-w600 label-o5 align-items-center lh-1"
+         style="font-family: 'SF Compact Rounded', sans-serif; ">
       {{ state.time }}
-    </div>
-    <div v-if="props.small">
-      <div class="page-title"> {{ state.page }}</div>
-      <div class="label-w500 label-c1 label-o3">{{ state.parent }}</div>
+
     </div>
     <div v-if="!props.small" class="date" v-html="state.date"></div>
   </div>
@@ -160,12 +157,13 @@ $dist: 2px;
 }
 
 .date {
-  font-size: 0.7rem;
-  line-height: 0.7rem;
+  font-size: 0.65rem;
+  line-height: 0.65rem;
   font-weight: 500;
 
+
   color: rgba(255, 255, 255, 0.4);
-  font-family: "SF Pro Display", sans-serif !important;
+  font-family: "SF Compact Rounded", sans-serif !important;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
 
 }

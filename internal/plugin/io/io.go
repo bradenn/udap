@@ -5,6 +5,7 @@ package io
 import (
 	"net/http"
 	"time"
+	"udap/internal/core/ports"
 )
 
 type Config interface {
@@ -60,7 +61,19 @@ func (p *Pilot) Push(r *http.Request) chan<- *http.Response {
 	return <-p.reqQueue
 }
 
-type IO interface {
+type Services struct {
+	Attributes ports.AttributeService
+	Entities   ports.EntityService
+	Triggers   ports.TriggerService
+	Devices    ports.DeviceService
+	Networks   ports.NetworkService
+	Logs       ports.LogService
+	Modules    ports.ModuleService
+	Zones      ports.ZoneService
+}
+
+type IO struct {
+	Services
 	Request
 	Config
 }

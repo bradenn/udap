@@ -69,109 +69,92 @@ function reload() {
 <template>
   <div v-if="state.menu" class="context context-id" @click="state.menu = false">
   </div>
+  <div class="d-flex flex-column">
+    <div
+        class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1 px-2 h-100"
+        style="width: 11.25rem; height: 1.25rem" @mousedown="open">
+      <div class="id-icon">
 
-  <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
-       @mousedown="open">
-    <div class="d-flex flex-column label-o4">
-      <div class="d-flex gap-2 label-c2 align-items-center">
-        <div class="user-container">
+        <span v-if="state.connected">􀙇</span>
+        <span v-else>􀙈</span>
 
-          <div v-for="p in state.status.predictions" class="subplot user">
-            {{ p.name.charAt(0).toUpperCase() }}
-          </div>
+      </div>
+      <div class="id-icon">
+        <span v-if="state.connected">􀌌</span>
+        <span v-else>􀌐</span>
 
-        </div>
+      </div>
+      <div>
 
-
-        <div>
-          <div class="label-c2 label-o5 lh-1 label-r">
-            Braden Nicholson
-          </div>
-          <div class="label-c3 label-o2 label-r label-w500 lh-1"
-               style="font-family: 'Roboto Light', sans-serif;"><span
-              v-if="state.connected">Connected</span><span
-              v-else>Disconnected</span>
-          </div>
-        </div>
       </div>
 
-    </div>
-    <div class="id-icon px-2">
+      <div class="flex-grow-1"></div>
 
-      <span v-if="state.connected">􀙇</span>
-      <span v-else>􀙈</span>
-    </div>
-    <div class="id-icon">
-      <span v-if="state.connected">􀌌</span>
-      <span v-else>􀌐</span>
-
-    </div>
-    <div class="flex-grow-1"></div>
-
-    <div v-if="remote?.nexus.state > 1" class="d-flex flex-column gap-0 justify-content-end align-items-end ">
-      <div class="label-c3 label-o2 px-1">
-        <span class="label-c3 label-w300">&nbsp;DOWN</span>
-      </div>
-    </div>
-    <div class="label-c2 label-o2 px-2">
-      <div v-if="state.menu">
-        <i class="fa-solid fa-caret-down "></i>
-      </div>
-      <div v-else>
-        <i class="fa-solid fa-caret-left px-1"></i>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 py-1">
-    <Plot :cols="4" :rows="1" @click="state.menu = false">
-      <Button :active="true" text="􀎟" @click="$router.push('/terminal/home')"></Button>
-      <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
-      <Button :active="true" text="􀅈" @click="reload"></Button>
-      <Button :active="true" text="􀍟" @click="$router.push('/terminal/settings')"></Button>
-    </Plot>
-    <Plot :cols="2" :rows="1">
-      <Button :active="true" text="Beta" @click="$router.push('/terminal/home')"></Button>
-      <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
-    </Plot>
-    <Plot :cols="2" :rows="1">
-      <div class="subplot">
-        <div class="label-c3">Wi-Fi</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center">
-          <div class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-            <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
-          </div>
-
+      <div v-if="remote?.nexus.state > 1" class="d-flex flex-column gap-0 justify-content-end align-items-end lh-1">
+        <div class="label-c3 label-o2 px-1">
+          <span class="label-c3 label-w300">&nbsp;DOWN</span>
         </div>
       </div>
-      <div class="subplot">
-        <div class="label-c3">NEXUS</div>
-        <div class="d-flex justify-content-center align-items-center align-content-center">
-          <div class="d-flex align-items-center lh-1">
-            <div v-if="remote.nexus.state > 1" class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-              <i class="fa-solid fa-circle text-danger" style="font-size: 8px; line-height: 1.2rem;"
-              ></i>&nbsp;&nbsp;DOWN
-            </div>
-            <div v-else class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-              {{ remote.size }}
+      <div class="label-c2 label-o2 px-0">
+        <div v-if="state.menu">
+          <i class="fa-solid fa-caret-down "></i>
+        </div>
+        <div v-else>
+          <i class="fa-solid fa-caret-left px-1"></i>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 py-1">
+      <Plot :cols="4" :rows="1" @click="state.menu = false">
+        <Button :active="true" text="􀎟" @click="$router.push('/terminal/home')"></Button>
+        <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
+        <Button :active="true" text="􀅈" @click="reload"></Button>
+        <Button :active="true" text="􀍟" @click="$router.push('/terminal/settings')"></Button>
+      </Plot>
+      <Plot :cols="2" :rows="1">
+        <Button :active="true" text="Beta" @click="$router.push('/terminal/home')"></Button>
+        <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
+      </Plot>
+      <Plot :cols="2" :rows="1">
+        <div class="subplot">
+          <div class="label-c3">Wi-Fi</div>
+          <div class="d-flex justify-content-center align-items-center align-content-center">
+            <div class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+              <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
             </div>
 
           </div>
         </div>
-      </div>
-    </Plot>
-    <Plot :cols="2" :rows="2">
-      <Toggle :active="preferences.ui.grid" :fn="() => preferences.ui.grid = !preferences.ui.grid"
-              title="Grid"></Toggle>
-      <Toggle :active="preferences.ui.screensaver.enabled"
-              :fn="() => preferences.ui.screensaver.enabled = !preferences.ui.screensaver.enabled"
-              title="Screensaver"></Toggle>
-      <Toggle :active="preferences.ui.watermark" :fn="() => preferences.ui.watermark = !preferences.ui.watermark"
-              title="Watermark"></Toggle>
-      <Toggle :active="preferences.ui.background.blur"
-              :fn="() => preferences.ui.background.blur = !preferences.ui.background.blur" title="Bg Blur"></Toggle>
-    </Plot>
+        <div class="subplot">
+          <div class="label-c3">NEXUS</div>
+          <div class="d-flex justify-content-center align-items-center align-content-center">
+            <div class="d-flex align-items-center lh-1">
+              <div v-if="remote.nexus.state > 1" class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+                <i class="fa-solid fa-circle text-danger" style="font-size: 8px; line-height: 1.2rem;"
+                ></i>&nbsp;&nbsp;DOWN
+              </div>
+              <div v-else class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+                {{ remote.size }}
+              </div>
 
+            </div>
+          </div>
+        </div>
+      </Plot>
+      <Plot :cols="2" :rows="2">
+        <Toggle :active="preferences.ui.grid" :fn="() => preferences.ui.grid = !preferences.ui.grid"
+                title="Grid"></Toggle>
+        <Toggle :active="preferences.ui.screensaver.enabled"
+                :fn="() => preferences.ui.screensaver.enabled = !preferences.ui.screensaver.enabled"
+                title="Screensaver"></Toggle>
+        <Toggle :active="preferences.ui.watermark" :fn="() => preferences.ui.watermark = !preferences.ui.watermark"
+                title="Watermark"></Toggle>
+        <Toggle :active="preferences.ui.background.blur"
+                :fn="() => preferences.ui.background.blur = !preferences.ui.background.blur" title="Bg Blur"></Toggle>
+      </Plot>
+
+    </div>
   </div>
 
 </template>
@@ -180,7 +163,7 @@ function reload() {
 .id-icon {
   font-size: 0.60rem;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.45);
   mix-blend-mode: overlay;
 }
 
@@ -215,9 +198,9 @@ function reload() {
 }
 
 .tag-container {
-  height: 2.25rem;
+
+  height: 1.5rem;
   z-index: 22;
-  border-radius: 2rem !important;
 }
 
 .tag-summary {

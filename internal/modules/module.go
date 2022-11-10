@@ -18,6 +18,8 @@ func NewModule(sys srv.System) {
 		operators.NewModuleOperator(sys.Ctrl()))
 	// Publish the service
 	sys.Ctrl().Modules = service
+	// Assign mutation channel
+	sys.WithWatch(service)
 	// Discover local modules
 	err := service.Discover()
 	if err != nil {
@@ -35,8 +37,6 @@ func NewModule(sys srv.System) {
 	if err != nil {
 		return
 	}
-	// Assign mutation channel
-	sys.WithWatch(service)
 	// Assign routes
 	sys.WithRoute(routes.NewModuleRouter(service))
 	// Start all modules

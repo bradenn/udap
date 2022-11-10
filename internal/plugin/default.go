@@ -30,6 +30,7 @@ type Module struct {
 	LastUpdate time.Time
 	Frequency  time.Duration
 	UUID       string
+
 	*controller.Controller
 }
 
