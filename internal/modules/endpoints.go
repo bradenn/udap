@@ -17,6 +17,6 @@ func NewEndpoint(sys srv.System) {
 		operators.NewEndpointOperator(sys.Ctrl()))
 	// Enroll routes
 	sys.Ctrl().Endpoints = service
-	sys.WithWatch(service)
 	sys.WithRoute(routes.NewEndpointRouter(service))
+	sys.WithWatch(service)
 }

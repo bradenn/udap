@@ -55,7 +55,7 @@ func NewEndpointOperator(controller *controller.Controller) ports.EndpointOperat
 		local:         map[string]*domain.Endpoint{},
 		done:          make(chan bool),
 		localChannel:  make(chan endpointOperation),
-		localTransmit: make(chan Response, 32),
+		localTransmit: make(chan Response, 8),
 	}
 
 	go func() {
@@ -139,6 +139,7 @@ func (m *endpointOperator) listen() error {
 			}
 		case <-m.done:
 			m.handleShutdown()
+			log.Event("Shutting Down Endpoint Operator!")
 			return nil
 		}
 	}
@@ -150,12 +151,8 @@ func (m *endpointOperator) enrollEndpoint(endpoint *domain.Endpoint) error {
 	if err := <-errChan; err != nil {
 		return err
 	}
-	operation.endpoint.Connected = true
-	err := m.controller.Endpoints.Update(operation.endpoint)
-	if err != nil {
-		return err
-	}
-	err = m.sendMetadata(endpoint.Id)
+
+	err := m.sendMetadata(endpoint.Id)
 	if err != nil {
 		return err
 	}
@@ -257,11 +254,11 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 		return fmt.Errorf("connection already exists")
 	}
 	endpoint.Connection = conn
-	endpoint.Connected = true
 	err := m.enrollEndpoint(endpoint)
 	if err != nil {
 		return err
 	}
+	endpoint.Connected = true
 	return nil
 
 }

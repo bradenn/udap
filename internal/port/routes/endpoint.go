@@ -30,7 +30,7 @@ func (r *endpointRouter) RouteExternal(router chi.Router) {
 }
 
 func (r *endpointRouter) RouteInternal(router chi.Router) {
-	router.Post("/endpoints/create", r.create)
+	router.Post("/endpoints/create/", r.create)
 }
 
 func (r *endpointRouter) create(w http.ResponseWriter, req *http.Request) {

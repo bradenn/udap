@@ -13,7 +13,6 @@ import (
 	"udap/internal/controller"
 	"udap/internal/core"
 	"udap/internal/core/domain"
-	"udap/internal/core/ports"
 	"udap/internal/log"
 	"udap/internal/modules"
 	"udap/internal/pulse"
@@ -29,8 +28,6 @@ type orchestrator struct {
 	maxTick   time.Duration
 	done      chan bool
 	ready     bool
-	modules   ports.ModuleService
-	endpoints ports.EndpointService
 	sys       srv.System
 	mutations chan domain.Mutation
 }
@@ -40,9 +37,9 @@ type Orchestrator interface {
 	Run() error
 }
 
-func (o *orchestrator) Terminate(reason string) {
-	_ = o.modules.DisposeAll()
-	_ = o.endpoints.CloseAll()
+func (o *orchestrator) Terminate() {
+	_ = o.controller.Modules.DisposeAll()
+	_ = o.controller.Endpoints.CloseAll()
 	fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
 	os.Exit(0)
 }
@@ -62,7 +59,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second,
-		mutations:  make(chan domain.Mutation, 16),
+		mutations:  make(chan domain.Mutation, 8),
 	}, nil
 }
 
@@ -96,17 +93,21 @@ func (o *orchestrator) Start() error {
 	if err != nil {
 		return err
 	}
+
 	o.ready = false
+
 	o.sys = srv.NewRtx(&o.server, o.controller, o.db)
 
 	o.sys.UseModules(
-		modules.NewModule,
-		modules.NewEndpoint)
+		modules.NewModule)
 
 	o.sys.UseModules(
 		modules.NewEntity,
 		modules.NewAttribute,
 		modules.NewZone)
+
+	o.sys.UseModules(
+		modules.NewEndpoint)
 
 	o.sys.UseModules(
 		modules.NewMacro,
@@ -118,6 +119,7 @@ func (o *orchestrator) Start() error {
 		modules.NewNotifications,
 		modules.NewLog,
 	)
+
 	o.sys.Loaded()
 	o.ready = true
 	return nil
@@ -131,7 +133,6 @@ func (o *orchestrator) Update() error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -154,6 +155,7 @@ func (o *orchestrator) handleMutations() error {
 		if !o.ready {
 			continue
 		}
+
 		err := o.controller.Endpoints.SendAll(response.Id, response.Operation, response.Body)
 		if err != nil {
 			log.Err(err)
@@ -192,7 +194,7 @@ func (o *orchestrator) Run() error {
 		defer wg.Done()
 		err := o.server.Run()
 		if err != nil {
-			// log.Err(err)
+			log.Err(err)
 			return
 		}
 	}()
@@ -208,7 +210,7 @@ func (o *orchestrator) Run() error {
 			select {
 			case <-o.done:
 				log.Event("Event loop exiting...")
-				o.Terminate("Terminated")
+				o.Terminate()
 				close(o.mutations)
 				return
 			case <-t.C:

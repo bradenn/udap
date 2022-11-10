@@ -66,12 +66,8 @@ func (u *endpointService) Enroll(id string, conn *websocket.Conn) error {
 	if err != nil {
 		return err
 	}
-	endpoint, err = u.FindById(id)
-	if err != nil {
-		return err
-	}
 	endpoint.Connected = true
-	err = u.Emit(*endpoint)
+	err = u.repository.Update(endpoint)
 	if err != nil {
 		return err
 	}
@@ -83,13 +79,12 @@ func (u *endpointService) Unenroll(id string) error {
 	if err != nil {
 		return err
 	}
-
 	err = u.operator.Unenroll(endpoint)
 	if err != nil {
 		return err
 	}
 	endpoint.Connected = false
-	err = u.Emit(*endpoint)
+	err = u.repository.Update(endpoint)
 	if err != nil {
 		return err
 	}
