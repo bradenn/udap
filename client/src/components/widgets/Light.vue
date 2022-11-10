@@ -80,12 +80,9 @@ function findMode() {
   let cct = state.attributes.find((a: Attribute) => a.key === 'cct')
   let dim = state.attributes.find((a: Attribute) => a.key === 'dim')
   if (hue && cct && dim) {
-
-    console.log(moment(hue.requested).isAfter(cct.requested))
     if (moment(hue.requested).isAfter(cct.requested)) {
       state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim?.value) / 100.0 * 50}%, 0.5)`
     } else {
-      console.log("CCT")
       state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`
     }
   } else {
@@ -227,7 +224,7 @@ function toggleMenu(): void {
           </div>
           <div class="h-sep"></div>
           <div
-              v-for="attribute in state.attributes.filter((attribute: Attribute) => attribute.key !== 'on')">
+              v-for="attribute in state.attributes.filter((a: Attribute) => a.key !== 'on')">
             <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id" primitive
                                 small></AttributeComponent>
           </div>

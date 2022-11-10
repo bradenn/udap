@@ -15,8 +15,21 @@ let props = defineProps<Page>()
 const haptics = core.haptics()
 
 function click() {
-  haptics.tap(2, 2, 100)
+  haptics.tap(2, 1, 50)
+}
 
+function done() {
+  if (props.done) {
+    click()
+    props.done()
+  }
+}
+
+function save() {
+  if (props.save) {
+    props.save()
+    done()
+  }
 }
 
 </script>
@@ -24,14 +37,14 @@ function click() {
 <template>
   <div class="nav-grid gap-1 pb-1 w-100">
     <div class="d-flex justify-content-start">
-      <div class="label-w500 label-c1 text-accent" @click="() => {if(props.done) props.done()}">􀆉 Back</div>
+      <div class="label-w500 label-c1 text-accent" @click="() => done()">􀆉 Back</div>
     </div>
     <div class="d-flex justify-content-center">
       <div class="label-w500 label-o5 label-c1 align-self-center">{{ props.title }}
       </div>
     </div>
     <div class="d-flex justify-content-end">
-      <div class="label-w500 label-c1 text-accent" @click="save">Save</div>
+      <div class="label-w500 label-c1 text-accent" @click="() => save()">Save</div>
     </div>
   </div>
 </template>
@@ -45,5 +58,4 @@ function click() {
   grid-template-rows: repeat(1, 1fr);
   grid-template-columns: repeat(3, 1fr);
 }
-
 </style>

@@ -219,19 +219,19 @@ const terminalRoutes = {
             path: '/terminal/home',
             name: 'Home',
             component: Home,
-            icon: 'fa-house',
+            icon: '􀎟',
         },
         {
             path: '/terminal/wifi',
             name: 'Wifi',
             component: Wifi,
-            icon: 'fa-wifi',
+            icon: '􀙇',
         },
         {
             path: '/terminal/energy',
             name: 'Energy',
             component: Energy,
-            icon: 'fa-bolt',
+            icon: '􀋦',
         },
 
         settings.routes,

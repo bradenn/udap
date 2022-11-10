@@ -16,7 +16,7 @@ const router = useRouter()
 const remote = inject("remote") as Remote
 
 interface Props {
-  done?: () => {},
+  done?: () => void,
 }
 
 const props = defineProps<Props>()

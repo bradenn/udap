@@ -20,7 +20,7 @@ export default {
         name: 'Settings',
         redirect: '/terminal/settings/preferences',
         component: Settings,
-        icon: 'fa-cog',
+        icon: '􀍟',
         meta: {
             icon: "/applications-system.svg"
         },

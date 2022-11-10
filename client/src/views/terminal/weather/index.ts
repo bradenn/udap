@@ -12,7 +12,6 @@ const weatherRoutes = {
     icon: 'fa-cloud-sun',
     meta: {
         status: "wip",
-        icon: "/ven/weather.svg"
     },
     children: [
         {
