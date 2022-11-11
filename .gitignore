@@ -40,3 +40,4 @@ spotify.json
 /embeded/haptics/sdkconfig
 /embeded/sentry/sdkconfig
 /embeded/sentry/sdkconfig.old
+/client/tsconfig.vite-config.tsbuildinfo
