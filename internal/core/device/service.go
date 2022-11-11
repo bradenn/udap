@@ -4,17 +4,19 @@ package device
 
 import (
 	"time"
+	"udap/internal/core/domain"
 	"udap/internal/core/generic"
+	"udap/internal/core/ports"
 )
 
-func newService(repository Repository) Service {
-	return &deviceService{repository: repository, utilization: map[string]Utilization{}}
+func newService(repository ports.DeviceRepository) ports.DeviceService {
+	return &deviceService{repository: repository, utilization: map[string]domain.Utilization{}}
 }
 
 type deviceService struct {
-	repository  Repository
-	utilization map[string]Utilization
-	generic.Watchable[Device]
+	repository  ports.DeviceRepository
+	utilization map[string]domain.Utilization
+	generic.Watchable[domain.Device]
 }
 
 func (u *deviceService) EmitAll() error {
@@ -31,7 +33,7 @@ func (u *deviceService) EmitAll() error {
 	return nil
 }
 
-func (u *deviceService) emit(device *Device) error {
+func (u *deviceService) emit(device *domain.Device) error {
 	device.Utilization = u.utilization[device.Id]
 	err := u.Emit(*device)
 	if err != nil {
@@ -61,7 +63,7 @@ func (u *deviceService) Ping(id string, latency time.Duration) error {
 	return nil
 }
 
-func (u *deviceService) Utilization(id string, utilization Utilization) error {
+func (u *deviceService) Utilization(id string, utilization domain.Utilization) error {
 	byId, err := u.repository.FindById(id)
 	if err != nil {
 		return err
@@ -74,7 +76,7 @@ func (u *deviceService) Utilization(id string, utilization Utilization) error {
 	return nil
 }
 
-func (u *deviceService) Register(device *Device) error {
+func (u *deviceService) Register(device *domain.Device) error {
 	err := u.repository.FindOrCreate(device)
 	if err != nil {
 		return err
@@ -88,23 +90,23 @@ func (u *deviceService) Register(device *Device) error {
 
 // Repository Mapping
 
-func (u *deviceService) FindAll() (*[]Device, error) {
+func (u *deviceService) FindAll() (*[]domain.Device, error) {
 	return u.repository.FindAll()
 }
 
-func (u *deviceService) FindById(id string) (*Device, error) {
+func (u *deviceService) FindById(id string) (*domain.Device, error) {
 	return u.repository.FindById(id)
 }
 
-func (u *deviceService) Create(device *Device) error {
+func (u *deviceService) Create(device *domain.Device) error {
 	return u.repository.Create(device)
 }
 
-func (u *deviceService) FindOrCreate(device *Device) error {
+func (u *deviceService) FindOrCreate(device *domain.Device) error {
 	return u.repository.FindOrCreate(device)
 }
 
-func (u *deviceService) Update(device *Device) error {
+func (u *deviceService) Update(device *domain.Device) error {
 
 	err := u.repository.Update(device)
 	if err != nil {
@@ -119,6 +121,6 @@ func (u *deviceService) Update(device *Device) error {
 	return nil
 }
 
-func (u *deviceService) Delete(device *Device) error {
+func (u *deviceService) Delete(device *domain.Device) error {
 	return u.repository.Delete(device)
 }

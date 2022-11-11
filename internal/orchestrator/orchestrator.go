@@ -12,6 +12,7 @@ import (
 	"time"
 	"udap/internal/controller"
 	"udap/internal/core"
+	"udap/internal/core/device"
 	"udap/internal/core/domain"
 	"udap/internal/log"
 	"udap/internal/modules"
@@ -115,7 +116,7 @@ func (o *orchestrator) Start() error {
 		modules.NewTrigger,
 		modules.NewUser,
 		modules.NewNetwork,
-		modules.NewDevice,
+		device.NewModule,
 		modules.NewNotifications,
 		modules.NewLog,
 	)
