@@ -5,12 +5,12 @@
 </script>
 
 <template>
-  <div class="content-bar d-flex justify-content-between align-items-center pt-0 mt-0">
-    <slot>
+    <div class="content-bar d-flex justify-content-between align-items-center pt-0 mt-0">
+        <slot>
 
-    </slot>
+        </slot>
 
-  </div>
+    </div>
 
 </template>
 

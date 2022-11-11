@@ -153,6 +153,7 @@ export interface TerminalDiagnostics {
 }
 
 export interface Remote {
+    connecting: boolean,
     connected: boolean,
     metadata: Metadata,
     entities: Entity[],

@@ -5,68 +5,68 @@ import {useRouter} from "vue-router";
 
 
 let props = defineProps<{
-  small?: boolean,
-  large?: boolean
+    small?: boolean,
+    large?: boolean
 }>()
 
 let state = reactive({
-  time: "",
-  date: "",
-  timer: 0,
-  day: "",
-  page: "",
-  parent: "",
+    time: "",
+    date: "",
+    timer: 0,
+    day: "",
+    page: "",
+    parent: "",
 })
 
 onMounted(() => {
-  startClock()
-  currentPageName()
+    startClock()
+    currentPageName()
 })
 
 const router = useRouter()
 router.afterEach(() => {
-  currentPageName()
+    currentPageName()
 })
 
 
 function formatDay(wd: number) {
-  let m = moment()
-  let weekday = m.weekday()
-  return {
-    numeric: m.weekday(weekday + wd).format("DD"),
-    long: m.weekday(weekday + wd).format("dddd"),
-  }
+    let m = moment()
+    let weekday = m.weekday()
+    return {
+        numeric: m.weekday(weekday + wd).format("DD"),
+        long: m.weekday(weekday + wd).format("dddd"),
+    }
 }
 
 function startClock() {
-  updateTime()
-  setTimeout(() => {
-    state.timer = setInterval(updateTime, 1000)
-  }, 500 - new Date().getMilliseconds())
+    updateTime()
+    setTimeout(() => {
+        state.timer = setInterval(updateTime, 1000)
+    }, 500 - new Date().getMilliseconds())
 }
 
 function updateTime() {
-  state.time = moment().format("h:mm:ss");
-  let m = moment();
-  m.year(m.year() + 10000)
-  state.date = m.format("ddd, MMM Do, YYYY");
+    state.time = moment().format("h:mm:ss");
+    let m = moment();
+    m.year(m.year() + 10000)
+    state.date = m.format("ddd, MMM Do, YYYY");
 }
 
 
 function currentPageName() {
-  let last = router.currentRoute.value.matched.length
-  let current = router.currentRoute.value.matched[last - 1]
-  let meta = current.meta
-  state.parent = ""
-  if (meta) {
-    if (meta.title) {
-      state.page = current?.meta?.title as string
+    let last = router.currentRoute.value.matched.length
+    let current = router.currentRoute.value.matched[last - 1]
+    let meta = current.meta
+    state.parent = ""
+    if (meta) {
+        if (meta.title) {
+            state.page = current?.meta?.title as string
 
-      return
+            return
+        }
     }
-  }
 
-  state.page = current.name as string || ""
+    state.page = current.name as string || ""
 
 }
 
@@ -75,18 +75,17 @@ function currentPageName() {
 <template>
 
 
-  <div v-if="props.large">
+    <div v-if="props.large">
 
-    <div class="date" v-html="state.date"></div>
-  </div>
-  <div v-else>
-    <div class="d-flex label-md label-w600 label-o5 align-items-center lh-1"
-         style="font-family: 'SF Compact Rounded', sans-serif; ">
-      {{ state.time }}
-
+        <div class="date" v-html="state.date"></div>
     </div>
-    <div v-if="!props.small" class="date" v-html="state.date"></div>
-  </div>
+    <div v-else>
+        <div class="d-flex label-md label-w600 label-o5 align-items-center lh-1"
+             style="font-family: 'SF Compact Rounded', sans-serif; ">
+            {{ state.time }}
+        </div>
+        <div v-if="!props.small" class="date" v-html="state.date"></div>
+    </div>
 </template>
 
 <style lang="scss">
