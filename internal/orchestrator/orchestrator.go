@@ -122,6 +122,7 @@ func (o *orchestrator) Start() error {
 
 	o.sys.Loaded()
 	o.ready = true
+
 	return nil
 }
 
@@ -215,6 +216,9 @@ func (o *orchestrator) Run() error {
 				return
 			case <-t.C:
 				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*100).String())
+				log.Event("Currently %d threads.", runtime.NumGoroutine())
+				log.Event("%s", runtime.ReadTrace())
+
 				pulse.End("update")
 				continue
 			case err := <-o.tick():

@@ -19,13 +19,14 @@
 
 				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-				gl_PointSize = size * ( 325.0 / -mvPosition.z );
+				gl_PointSize = size * ( 750.0 / -mvPosition.z );
 
 				vColor *= ( 125.0 / -mvPosition.z );
 
 				gl_Position = projectionMatrix * mvPosition;
 
 			}
+
 
 </script>
 <script id="fshader" type="x-shader/x-fragment">

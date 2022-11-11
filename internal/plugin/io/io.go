@@ -5,7 +5,6 @@ package io
 import (
 	"net/http"
 	"time"
-	"udap/internal/core/ports"
 )
 
 type Config interface {
@@ -59,17 +58,6 @@ func (p *Pilot) run(r *http.Request, re chan<- *http.Response) error {
 func (p *Pilot) Push(r *http.Request) chan<- *http.Response {
 	p.queue <- r
 	return <-p.reqQueue
-}
-
-type Services struct {
-	Attributes ports.AttributeService
-	Entities   ports.EntityService
-	Triggers   ports.TriggerService
-	Devices    ports.DeviceService
-	Networks   ports.NetworkService
-	Logs       ports.LogService
-	Modules    ports.ModuleService
-	Zones      ports.ZoneService
 }
 
 type IO struct {

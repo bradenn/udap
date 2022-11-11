@@ -70,15 +70,12 @@ function reload() {
 <template>
     <div v-if="state.menu" class="context context-id" @click="state.menu = false">
     </div>
-    <div class="d-flex flex-column">
-        <div
-                class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1 px-2 h-100"
-                style="width: 11.25rem; height: 2rem !important;" @mousedown="open">
+    <div class="d-flex flex-column align-items-start justify-content-start h-100">
+        <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
+             style="height: 2rem !important; width: 12rem" @mousedown="open">
             <div class="id-icon">
-
                 <span v-if="state.connected">􀙇</span>
                 <span v-else>􀙈</span>
-
             </div>
             <div class="id-icon">
                 <span v-if="state.connected">􀌌</span>
@@ -88,15 +85,7 @@ function reload() {
             <div v-if="remote.connecting">
                 <Loader></Loader>
             </div>
-
             <div class="flex-grow-1"></div>
-
-            <div v-if="remote?.nexus.state > 1"
-                 class="d-flex flex-column gap-0 justify-content-end align-items-end lh-1">
-                <div class="label-c3 label-o2 px-1">
-                    <span class="label-c3 label-w300">&nbsp;DOWN</span>
-                </div>
-            </div>
             <div class="label-c2 label-o2 px-0">
                 <div v-if="state.menu">
                     <i class="fa-solid fa-caret-down "></i>
@@ -106,8 +95,7 @@ function reload() {
                 </div>
             </div>
         </div>
-
-        <div v-if="state.menu" class="tag-summary d-flex flex-column gap-1 py-1">
+        <div v-if="state.menu" class="position-absolute tag-summary d-flex flex-column gap-1 " style="top:2.625rem">
             <Plot :cols="4" :rows="1" @click="state.menu = false">
                 <Button :active="true" text="􀎟" @click="$router.push('/terminal/home')"></Button>
                 <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>

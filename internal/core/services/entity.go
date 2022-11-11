@@ -6,7 +6,6 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/log"
 )
 
 func NewEntityService(repository ports.EntityRepository) ports.EntityService {
@@ -67,7 +66,6 @@ func (u *entityService) Register(entity *domain.Entity) error {
 	if err != nil {
 		return err
 	}
-	log.Event("Entity '%s' registered.", entity.Name)
 	err = u.Emit(*entity)
 	if err != nil {
 		return err

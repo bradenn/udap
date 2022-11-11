@@ -37,6 +37,8 @@ import Toast from "@/components/Toast.vue";
 import Clock from '@/components/Clock.vue'
 import IdTag from '@/components/IdTag.vue'
 import ContextBar from "@/components/ContextBar.vue";
+import Plot from "@/components/plot/Plot.vue";
+import Subplot from "@/components/plot/Subplot.vue";
 
 const Input = defineAsyncComponent({
     loader: () => import('@/views/Input.vue'),
@@ -45,7 +47,6 @@ const Input = defineAsyncComponent({
 
 const Glance = defineAsyncComponent({
     loader: () => import('@/views/terminal/Glance.vue'),
-
 })
 
 const Bubbles = defineAsyncComponent({
@@ -531,7 +532,7 @@ provide('remote', remote)
 
 
 <template>
-    <div class="h-100 w-100">
+    <div v-if="!screensaver.hideTerminal" class="h-100 w-100">
         <div class="terminal w-100 h-100"
              v-on:mousedown="dragStart"
              v-on:mousemove="dragContinue"
@@ -544,38 +545,28 @@ provide('remote', remote)
                            :time="toasts.current.duration" :title="toasts.current.name"></Toast>
                     <IdTag></IdTag>
                 </ContextBar>
-                <div style="height: calc(100% - 2rem);">
+                <div style="height: calc(100% - 3rem);">
                     <router-view/>
+                </div>
+                <div class="justify-content-center d-flex align-items-center align-content-center">
+                    <div v-if="$route.matched.length > 1" @click.prevent="state.scrollY!==0">
+                        <div v-if="$route.matched[1].children.length > 1">
+                            <Plot :cols="$route.matched[1].children.length" :rows="1"
+                                  class="bottom-nav">
+                                <Subplot v-for="route in ($route.matched[1].children as any[])"
+                                         :icon="route.icon || 'earth-americas'"
+                                         :name="route.name"
+                                         :to="route.path"></Subplot>
+                            </Plot>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-        </div>
-
-    </div>
-
-    <div v-if="screensaver.hideTerminal"
-         class="terminal pt-2"
-         v-on:mousedown="dragStart"
-         v-on:mousemove="dragContinue" v-on:mouseup="dragStop">
-        <Glance v-if="state.locked"></Glance>
-        <div v-else class="d-inline">
-            <ContextBar class="mb-1">
-                <Clock :small="!state.showClock"></Clock>
-                <!--        <div style="width: 20rem; height: 1.25rem; background-color:black; position: absolute; top:0; left: calc(50vw - 10rem); border-radius: 0 0 1rem 1rem; box-shadow: 0 0 4px 2px rgba(0,0,0,0.25);"></div>-->
-                <Toast v-if="toasts.active" :message="toasts.current.message" :severity="toasts.current.severity"
-                       :time="toasts.current.duration" :title="toasts.current.name"></Toast>
-                <IdTag></IdTag>
-            </ContextBar>
-
-            <div class="route-view ">
-                <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
-                    <component :is="Component"/>
-                </router-view>
-            </div>
-
             <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
-            <!--    <DiagnosticMode></DiagnosticMode>-->
+
         </div>
+
     </div>
 
     <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"

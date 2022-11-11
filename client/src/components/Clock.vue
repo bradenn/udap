@@ -80,7 +80,7 @@ function currentPageName() {
         <div class="date" v-html="state.date"></div>
     </div>
     <div v-else>
-        <div class="d-flex label-md label-w600 label-o5 align-items-center lh-1"
+        <div class="d-flex label-xxl label-w600 label-o5 align-items-center lh-1"
              style="font-family: 'SF Compact Rounded', sans-serif; ">
             {{ state.time }}
         </div>

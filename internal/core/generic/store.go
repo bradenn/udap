@@ -12,11 +12,11 @@ type PersistentType interface {
 		Network | domain.Zone | domain.Notification | domain.Macro | domain.Trigger | domain.SubRoutine | Mock
 }
 
-type Store[T PersistentType] struct {
+type Store[T any] struct {
 	db *gorm.DB
 }
 
-func NewStore[T PersistentType](db *gorm.DB) Store[T] {
+func NewStore[T any](db *gorm.DB) Store[T] {
 	return Store[T]{
 		db: db,
 	}

@@ -26,7 +26,7 @@ func init() {
 		Name:        "macmeta",
 		Type:        "module",
 		Description: "MacOS meta interface for udap",
-		Version:     "0.0.2",
+		Version:     "0.0.3",
 		Author:      "Braden Nicholson",
 	}
 	Module.request = make(chan bool)
@@ -57,7 +57,7 @@ func (v *MacMeta) listen() {
 				err := v.Attributes.Set(v.terminalId, "on", state)
 				if err != nil {
 					v.ErrF("failed to set terminal attribute: %s", err.Error())
-					return
+					break
 				}
 			}
 		case <-v.done:
@@ -170,7 +170,7 @@ func (v *MacMeta) displayOn() error {
 }
 
 func (v *MacMeta) pollDisplay() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*750)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "/bin/bash", "-c",
 		"system_profiler SPDisplaysDataType | grep 'Display Asleep' | wc -l")

@@ -10,52 +10,52 @@ import Error from "@/components/Error.vue";
 import Camera from "@/components/widgets/Camera.vue";
 
 const Spotify = defineAsyncComponent({
-  loader: () => import('@/components/widgets/Spotify.vue'),
-  errorComponent: Error,
-  timeout: 250
+    loader: () => import('@/components/widgets/Spotify.vue'),
+    errorComponent: Error,
+    timeout: 250
 })
 const Calendar = defineAsyncComponent({
-  loader: () => import('@/components/widgets/Calendar.vue'),
-  errorComponent: Error,
-  timeout: 250
+    loader: () => import('@/components/widgets/Calendar.vue'),
+    errorComponent: Error,
+    timeout: 250
 })
 
 const Weather = defineAsyncComponent({
-  loader: () => import('@/components/widgets/Weather.vue'),
-  errorComponent: Error,
-  timeout: 250
+    loader: () => import('@/components/widgets/Weather.vue'),
+    errorComponent: Error,
+    timeout: 250
 })
 
 
 // Define the local reactive data for this view
 let state = reactive<{
-  lights: any[]
-  hideHome: boolean
-  apps: any[]
-  shortcuts: any[]
-  atlas: string,
-  page?: string
+    lights: any[]
+    hideHome: boolean
+    apps: any[]
+    shortcuts: any[]
+    atlas: string,
+    page?: string
 }>({
-  lights: [],
-  hideHome: false,
-  apps: [],
-  atlas: "",
-  shortcuts: [
-    {
-      name: "Good night",
-      icon: "fa-moon"
-    }
-  ],
-  page: router.currentRoute.value.name as string
+    lights: [],
+    hideHome: false,
+    apps: [],
+    atlas: "",
+    shortcuts: [
+        {
+            name: "Good night",
+            icon: "fa-moon"
+        }
+    ],
+    page: router.currentRoute.value.name as string
 })
 
 // Compare the names of the entities to sort them accordingly
 function compareName(a: any, b: any): number {
-  if (a.name < b.name)
-    return -1;
-  if (a.name > b.name)
-    return 1;
-  return 0;
+    if (a.name < b.name)
+        return -1;
+    if (a.name > b.name)
+        return 1;
+    return 0;
 }
 
 // Inject the remote udap context
@@ -64,9 +64,9 @@ let remote: Remote = inject('remote') as Remote
 
 // Force the light state to be read on load
 onMounted(() => {
-  updateLights(remote.entities)
-  getRoutes()
-  state.hideHome = false
+    updateLights(remote.entities)
+    getRoutes()
+    state.hideHome = false
 })
 
 // Update the Lights based on the remote injection changes
@@ -75,66 +75,64 @@ watchEffect(() => updateLights(remote.entities))
 watchEffect(() => updateAtlas(remote.attributes))
 
 function updateAtlas(attributes: Attribute[]) {
-  let target = attributes.find(a => a.key === "buffer")
-  if (!target) return;
+    let target = attributes.find(a => a.key === "buffer")
+    if (!target) return;
 
-  state.atlas = target.value
+    state.atlas = target.value
 }
 
 // Update the current set of lights based on the entities provided
 function updateLights(entities: Entity[]) {
-  // Find all applicable entities
-  let candidates = entities.filter((f: Entity) => f.type === 'spectrum' || f.type === 'switch' || f.type === 'dimmer');
-  candidates = candidates.filter((e: Entity) => remote.attributes.filter((a: Attribute) => a.entity === e.id).length >= 1)
-  // Sort and assign them to the reactive object
-  state.lights = candidates.sort(compareName)
-  return entities
+    // Find all applicable entities
+    let candidates = entities.filter((f: Entity) => f.type === 'spectrum' || f.type === 'switch' || f.type === 'dimmer');
+    candidates = candidates.filter((e: Entity) => remote.attributes.filter((a: Attribute) => a.entity === e.id).length >= 1)
+    // Sort and assign them to the reactive object
+    state.lights = candidates.sort(compareName)
+    return entities
 }
 
 function getRoutes() {
-  let routes = router.getRoutes()
-  let bingo = routes.find(r => r.path === '/terminal')
-  if (!bingo) return
-  state.apps = bingo.children
+    let routes = router.getRoutes()
+    let bingo = routes.find(r => r.path === '/terminal')
+    if (!bingo) return
+    state.apps = bingo.children
 }
 
 </script>
 
 <template>
 
-  <div :class="``" class="h-100 w-100">
-    <div class="home-grid w-100 h-100">
+    <div :class="``" class="h-100 w-100">
+        <div class="home-grid w-100 h-100">
 
-      <div style="grid-column: 1/span 4; grid-row: 1/span 6;">
-        <Macros></Macros>
-      </div>
-
-      <div class="d-flex justify-content-center flex-column align-items-center gap-1"
-           style=" grid-column: 6/span 5; grid-row: 1/span 8;">
-        <Calendar></Calendar>
-        <Camera></Camera>
-      </div>
-      <div style="grid-column: 12 / span 4; grid-row: 1 / span 8;">
-        <div style="grid-column: span 3; display: flex; flex-direction:column;">
-          <div class="p-2 pb-0 d-flex flex-column gap-2">
-            <Spotify></Spotify>
-            <Weather></Weather>
-            <div>
-              <div class="app-grid ">
-                <App v-for="i in state.apps" :key="i.name" :icon="i.icon || 'fa-square'" :img="i?.meta?.icon"
-                     :name="i.name" :status="i?.meta?.status"
-                     style="grid-column: span 1"
-                     @click="router.push(i.path)"></App>
-              </div>
+            <div style="grid-column: 1/span 4; grid-row: 1/span 6;">
+                <Macros></Macros>
             </div>
-          </div>
+
+            <div class="d-flex justify-content-center flex-column align-items-center gap-1"
+                 style=" grid-column: 6/span 5; grid-row: 1/span 8;">
+                <Calendar></Calendar>
+                <Camera></Camera>
+            </div>
+            <div style="grid-column: 12 / span 4; grid-row: 1 / span 8;">
+                <div class="pb-0 d-flex flex-column gap-2">
+                    <Spotify></Spotify>
+                    <Weather></Weather>
+                    <div>
+                        <div class="app-grid">
+                            <App v-for="i in state.apps" :key="i.name" :icon="i.icon || 'fa-square'"
+                                 :img="i?.meta?.icon"
+                                 :name="i.name" :status="i?.meta?.status"
+                                 style="grid-column: span 1"
+                                 @click="router.push(i.path)"></App>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
-      </div>
 
     </div>
-
-  </div>
 </template>
 
 <style lang="scss">

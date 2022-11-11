@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
@@ -179,13 +178,13 @@ func (u *moduleService) Build(id string) error {
 	if err != nil {
 		return err
 	}
-	start := time.Now()
+	// start := time.Now()
 	err = u.operator.Build(module.Name, module.UUID)
 	if err != nil {
 		return err
 	}
-	log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).String())
+	// log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
+	// 	time.Since(start).Truncate(time.Millisecond).String())
 	return nil
 }
 
@@ -203,7 +202,7 @@ func (u *moduleService) Dispose(id string) error {
 	if err != nil {
 		return err
 	}
-	start := time.Now()
+	// start := time.Now()
 	// Attempt to dispose of the module (only works if the module developer plays nicely)
 	err = u.operator.Dispose(module.Name, module.UUID)
 	if err != nil {
@@ -211,8 +210,8 @@ func (u *moduleService) Dispose(id string) error {
 	}
 	// Set the module as not running, so it is not updated
 	module.Running = false
-	log.Event("Module '%s' @ 0x%s unloaded. (%s)", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).String())
+	// log.Event("Module '%s' @ 0x%s unloaded. (%s)", module.Name, module.SessionId(),
+	// 	time.Since(start).Truncate(time.Millisecond).String())
 	module.UUID = ""
 	// Mark the module as stopped if the disposal was successful
 	err = u.setState(module.Id, STOPPED)

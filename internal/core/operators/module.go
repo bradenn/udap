@@ -22,16 +22,27 @@ import (
 
 const PATH = "./modules"
 
+type lifeCycle struct {
+	iface plugin.ModuleInterface
+	mutex sync.Mutex
+}
+
+func newLifeCycle(iface plugin.ModuleInterface) *lifeCycle {
+	return &lifeCycle{
+		iface: iface,
+		mutex: sync.Mutex{},
+	}
+}
+
 type moduleRuntime struct {
 	ctrl    *controller.Controller
-	runtime map[string]plugin.ModuleInterface
-	mutex   sync.Mutex
+	runtime map[string]*lifeCycle
 }
 
 func NewModuleOperator(ctrl *controller.Controller) ports.ModuleOperator {
 	return &moduleRuntime{
 		ctrl:    ctrl,
-		runtime: map[string]plugin.ModuleInterface{},
+		runtime: map[string]*lifeCycle{},
 	}
 }
 
@@ -40,21 +51,34 @@ func (m *moduleRuntime) HandleEmit(mutation domain.Mutation) error {
 }
 
 func (m *moduleRuntime) getModule(id string) (plugin.ModuleInterface, error) {
-	iface := m.runtime[id]
+
+	runtime := m.runtime[id]
+	if runtime == nil {
+		return nil, fmt.Errorf("module lifecycle not found")
+	}
+
+	var iface plugin.ModuleInterface
+
+	runtime.mutex.Lock()
+	iface = runtime.iface
+	runtime.mutex.Unlock()
+
 	if iface == nil {
 		return nil, fmt.Errorf("module not found")
 	}
+
 	return iface, nil
 }
 
 func (m *moduleRuntime) setModule(id string, moduleInterface plugin.ModuleInterface) error {
-	m.runtime[id] = moduleInterface
+	m.runtime[id] = newLifeCycle(moduleInterface)
 	return nil
 }
 
 func (m *moduleRuntime) removeModule(id string) error {
-	if m.runtime[id] == nil {
-		return fmt.Errorf("module not found")
+	runtime := m.runtime[id]
+	if runtime == nil {
+		return fmt.Errorf("module lifecycle not found")
 	}
 	delete(m.runtime, id)
 	return nil
@@ -132,9 +156,7 @@ func (m *moduleRuntime) Load(module string, uuid string) (domain.ModuleConfig, e
 		return domain.ModuleConfig{}, fmt.Errorf("cannot read module")
 	}
 	// Connect the module to the UDAP runtime
-
 	err = mod.Connect(m.ctrl, uuid)
-
 	if err != nil {
 		return domain.ModuleConfig{}, err
 	}
