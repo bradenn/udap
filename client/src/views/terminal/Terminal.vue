@@ -32,27 +32,20 @@ import {memorySizeOf} from "@/types";
 import {Nexus, NexusState, Target} from "@/views/terminal/nexus";
 import type {Haptics} from "@/views/terminal/haptics";
 import haptics from "@/views/terminal/haptics";
-import Toast from "@/components/Toast.vue";
 
 import Clock from '@/components/Clock.vue'
 import IdTag from '@/components/IdTag.vue'
 import ContextBar from "@/components/ContextBar.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import notifications from "@/notifications";
+import Notification from "@/components/Notification.vue";
+import type {Notify} from "@/notifications";
+import notificationOperator from "@/notifications";
 
-const Input = defineAsyncComponent({
-    loader: () => import('@/views/Input.vue'),
+import Input from '@/views/Input.vue'
 
-})
+import Bubbles from '@/views/screensaver/Bubbles.vue'
 
-const Glance = defineAsyncComponent({
-    loader: () => import('@/views/terminal/Glance.vue'),
-})
-
-const Bubbles = defineAsyncComponent({
-    loader: () => import('@/views/screensaver/Bubbles.vue'),
-})
 
 const Warp = defineAsyncComponent({
     loader: () => import('@/views/screensaver/Warp.vue'),
@@ -93,16 +86,15 @@ const remote = reactive<Remote>({
 onMounted(() => {
     haptics.connect("ws://10.0.1.60/ws")
 
-    // haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
     connect()
 })
-provide('notifications', notifications)
+
+provide("notify", notificationOperator as Notify)
 
 function connected() {
+
     remote.connecting = false
-
     remote.connected = true
-
 }
 
 function closed() {
@@ -135,10 +127,6 @@ function connect() {
             break
     }
 }
-
-// function tap(frequency: number, iterations: number, amplitude: number) {
-//   haptic.haptics.tap(frequency, iterations, amplitude)
-// }
 
 provide("haptic", haptics.tap)
 provide("haptics", haptics as Haptics)
@@ -240,6 +228,7 @@ function handleMessage(target: Target, data: any) {
 }
 
 function mouseDown() {
+
     // axios.post("http://10.0.1.60/pop", {
     //   power: 2
     // }).then(res => {
@@ -513,15 +502,7 @@ provide('remote', remote)
                         </div>
 
                         <div style="grid-column: 9 / span 8">
-                            <div v-if="notifications.toasts.active" class="toast-stack ">
-                                <Toast :key="notifications.toasts.current.uuid"
-                                       :index="notifications.toasts.queue.indexOf(notifications.toasts.current)"
-                                       :message="notifications.toasts.current.message"
-                                       :severity="notifications.toasts.current.severity"
-                                       :time="notifications.toasts.current.duration"
-                                       :title="notifications.toasts.current.name"></Toast>
-
-                            </div>
+                            <Notification></Notification>
                         </div>
 
                         <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
@@ -536,15 +517,8 @@ provide('remote', remote)
                         </div>
 
                         <div style="grid-column: 9 / span 8">
-                            <div v-if="notifications.toasts.active" class="toast-stack ">
-                                <Toast :key="notifications.toasts.current.uuid"
-                                       :index="notifications.toasts.queue.indexOf(notifications.toasts.current)"
-                                       :message="notifications.toasts.current.message"
-                                       :severity="notifications.toasts.current.severity"
-                                       :time="notifications.toasts.current.duration"
-                                       :title="notifications.toasts.current.name"
-                                       class=""></Toast>
-                            </div>
+                            <Notification></Notification>
+
                         </div>
 
                         <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">

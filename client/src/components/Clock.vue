@@ -134,7 +134,7 @@ function currentPageName() {
 }
 
 .time-xl {
-  font-variant-numeric: tabular-nums;
+  //font-variant-numeric: tabular-nums;
   font-feature-settings: "ss03"; // Vertically centers the colon for macos
   font-size: 1.4rem;
   line-height: 1.4rem;
@@ -144,7 +144,7 @@ function currentPageName() {
   display: flex;
   align-items: center;
   text-align: center;
-  letter-spacing: -0.25px;
+
   justify-content: left;
 
   font-family: "SF Pro Display", monospace !important;

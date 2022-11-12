@@ -95,6 +95,14 @@ $base: 24px;
 
 /* Label Sizes */
 $fontSizes: (
+        "cn8": $base + 19px,
+        "cn7": $base + 17px,
+        "cn6": $base + 13.5px,
+        "cn5": $base + 11px,
+        "cn3": $base + 8px,
+        "cn2": $base + 5px,
+        "cn1": $base + 2px,
+        "c0": $base,
         "c1": $base - 2px,
         "c2": $base - 5px,
         "c3": $base - 8px,

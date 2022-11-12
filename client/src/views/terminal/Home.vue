@@ -8,6 +8,7 @@ import Macros from "@/components/widgets/Macros.vue";
 import type {Attribute, Entity, Remote} from "@/types";
 import Error from "@/components/Error.vue";
 import Camera from "@/components/widgets/Camera.vue";
+import type {Notify} from "@/notifications";
 
 const Spotify = defineAsyncComponent({
     loader: () => import('@/components/widgets/Spotify.vue'),
@@ -60,6 +61,8 @@ function compareName(a: any, b: any): number {
 
 // Inject the remote udap context
 let remote: Remote = inject('remote') as Remote
+
+const notify = inject("notify") as Notify
 
 
 // Force the light state to be read on load
@@ -116,13 +119,15 @@ function getRoutes() {
             </div>
 
             <div
-                    style="grid-column: 1/span 11; grid-row: 10 / span 4; ">
+                    style="grid-column: 1/span 11; grid-row: 10 / span 4; "
+                    @click="() => {notify.success('Your mom', 'After a day\'s work, I fucked your mom.')}">
                 <div class="label-c1 label-w600 label-o4 px-1 mb-1"
                      style="font-family: 'SF Pro Display', sans-serif">
                     <span class="label-o2">􀎪</span>
                     Recent Macros
                 </div>
-                <div class="mc-grid">
+                <div class="mc-grid"
+                >
 
                     <div v-for="macro in remote.macros.sort((a, b) => new Date(a.updated).valueOf() >= new Date(b.updated).valueOf() ? -1 : 1).slice(0, 10)"
                          class="element d-flex justify-content-between align-items-center py-0">

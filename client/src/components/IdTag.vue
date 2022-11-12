@@ -6,6 +6,10 @@ import Toggle from "@/components/plot/Toggle.vue";
 import type {Attribute, Entity, Preferences, Remote, Status} from "@/types";
 import Button from "@/components/Button.vue";
 import Loader from "@/components/Loader.vue";
+import Toast from "@/components/Toast.vue";
+import core from "@/core";
+import type {Notify, NotifyBody} from "@/notifications";
+import ToolbarButton from "@/components/ToolbarButton.vue";
 
 let state = reactive({
     menu: false,
@@ -14,22 +18,31 @@ let state = reactive({
     link: false,
     zoneEntity: {} as Entity,
     zoneAttribute: {} as Attribute,
-    status: {} as Status
+    status: {} as Status,
+    logs: [] as NotifyBody[]
 })
 
 let preferences: Preferences = inject("preferences") as Preferences
 let remote: Remote = inject('remote') as Remote
 let system: any = inject('system')
+let notify: Notify = core.notify()
 
 onMounted(() => {
     update()
+    state.logs = notify.logs()
     state.reloading = false
 })
 
 watchEffect(() => {
     state.connected = remote.connected
     update()
+
     return state.zoneAttribute
+})
+
+watchEffect(() => {
+    state.logs = notify.logs()
+    return notify.logs()
 })
 
 function update() {
@@ -68,9 +81,27 @@ function reload() {
 </script>
 
 <template>
-    <div v-if="state.menu" class="context context-id" @click="state.menu = false">
+    <div v-if="state.menu" class="context context-id d-flex justify-content-start align-items-center flex-column"
+         @click="state.menu = false">
+        <div>
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="label-c0 label-w700 label-o4 px-1">Notifications</div>
+                <ToolbarButton :accent="true" :active="false" class="text-accent" style="height: 1.4rem"
+                               text="Clear" @click.stop="() => {notify.clearLog()}"
+                ></ToolbarButton>
+            </div>
+            <div class="d-flex gap-1 flex-column" @click.stop>
+                <Toast v-for="log in state.logs" :key="log.uuid"
+                       :index="1"
+                       :message="log.message"
+                       :severity="log.severity"
+                       :time="-1"
+                       :title="log.name"></Toast>
+            </div>
+        </div>
     </div>
     <div class="d-flex flex-column align-items-start justify-content-start h-100">
+
         <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
              style="height: 2rem !important; width: 12rem" @mousedown="open">
             <div class="id-icon">
@@ -96,6 +127,7 @@ function reload() {
             </div>
         </div>
         <div v-if="state.menu" class="position-absolute tag-summary d-flex flex-column gap-1 " style="top:2.625rem">
+
             <Plot :cols="4" :rows="1" @click="state.menu = false">
                 <Button :active="true" text="􀎟" @click="$router.push('/terminal/home')"></Button>
                 <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>

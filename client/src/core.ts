@@ -4,12 +4,13 @@ import {inject} from "vue";
 import type {Remote} from "@/types";
 import type {Haptics} from "@/views/terminal/haptics";
 import {useRouter} from "vue-router";
+import type {Notify} from "@/notifications";
 
 
 export default {
     router: () => useRouter(),
     remote: () => inject("remote") as Remote,
     haptics: () => inject("haptics") as Haptics,
-    notifications: () => inject("notifications") as any,
+    notify: () => inject("notify") as Notify,
 }
 

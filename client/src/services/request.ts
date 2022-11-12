@@ -21,14 +21,13 @@ function host(): string {
     }
 }
 
-const notifications = core.notifications()
 
 export default {
     async post(url: string, data?: {} | undefined): Promise<void> {
         const response = await axios.post(`https://${host()}${url}`, data, headers)
         let resp = response.data
         if (response.status !== 200) {
-            notifications.show(`Request HTTPS ${response.status}`, resp, 2, 1000 * 8)
+            core.notify().show(`Request HTTPS ${response.status}`, resp, 2, 1000 * 8)
         }
     }
 }

@@ -149,6 +149,10 @@ provide('system', system)
   padding: 0;
 }
 
+.backdrop.backdrop-blurred {
+  filter: blur(8px);
+}
+
 /* Watermark Mode */
 
 .watermark {

@@ -3,20 +3,22 @@
 
 import {Preference} from "@/preferences";
 import {PreferenceTypes} from "@/types";
-import index from "@/router";
+import core from "@/core";
+
+const index = core.router()
 
 let storedToken = new Preference(PreferenceTypes.Token).get()
 
 if (storedToken === "unset") {
-  index.push("/setup/controller")
+    index.push("/setup/controller")
 } else {
-  index.push("/terminal/home")
+    index.push("/terminal/home")
 }
 
 </script>
 
 <template>
-  <div>
-    <router-view/>
-  </div>
+    <div>
+        <router-view/>
+    </div>
 </template>
