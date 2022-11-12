@@ -105,14 +105,42 @@ function getRoutes() {
     <div :class="``" class="h-100 w-100">
         <div class="home-grid w-100 h-100">
 
-            <div style="grid-column: 1/span 4; grid-row: 1/span 6;">
+            <div style="grid-column: 1/span 4; grid-row: 1/span 4;">
                 <Macros></Macros>
             </div>
 
             <div class="d-flex justify-content-center flex-column align-items-center gap-1"
-                 style=" grid-column: 6/span 5; grid-row: 1/span 8;">
+                 style=" grid-column: 6/span 5; grid-row: 1/span 6;">
                 <Calendar></Calendar>
                 <Camera></Camera>
+            </div>
+
+            <div
+                    style="grid-column: 1/span 11; grid-row: 10 / span 4; ">
+                <div class="label-c1 label-w600 label-o4 px-1 mb-1"
+                     style="font-family: 'SF Pro Display', sans-serif">
+                    <span class="label-o2">􀎪</span>
+                    Recent Macros
+                </div>
+                <div class="mc-grid">
+
+                    <div v-for="macro in remote.macros.sort((a, b) => new Date(a.updated).valueOf() >= new Date(b.updated).valueOf() ? -1 : 1).slice(0, 10)"
+                         class="element d-flex justify-content-between align-items-center py-0">
+                        <div style="padding-left: 0.125rem">
+                            <div class="label-c2 label-o3 label-w500 lh-1">
+                                {{ macro.name }}
+                            </div>
+                            <div class="label-c3 label-o2 label-w500 lh-1">
+                                {{ macro.description.slice(0, 18) }}
+                            </div>
+                        </div>
+                        <div class="subplot d-flex align-items-center justify-content-center"
+                             style="height: 1.5rem; width: 1.6rem">
+                            <div class="label-c3 d-block label-o3 label-w700">􀊃</div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
             <div style="grid-column: 12 / span 4; grid-row: 1 / span 8;">
                 <div class="pb-0 d-flex flex-column gap-2">
@@ -150,6 +178,14 @@ $macro-width: 12rem;
 $macro-height: 2rem;
 .terminal-home > * {
   //outline: 1px solid white;
+}
+
+.mc-grid {
+  display: grid;
+  grid-gap: 0.25rem;
+
+  grid-template-rows: repeat(2, minmax(2rem, 1fr));
+  grid-template-columns: repeat(5, minmax(6rem, 1fr));
 }
 
 .app-grid {

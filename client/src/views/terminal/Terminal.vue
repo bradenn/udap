@@ -288,6 +288,7 @@ let state = reactive({
     timeout: null,
     verified: false,
     distance: 0,
+    animationFrame: 0,
     lastUpdate: 0,
     sideAppLock: false,
     showClock: true,
@@ -329,6 +330,7 @@ function timeout() {
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
+    haltAnimation()
     dragStop(e)
     // Record the current user position
     let a = {x: e.screenX, y: e.screenY}
@@ -427,7 +429,8 @@ function dragContinue(e: MouseEvent) {
         let topPull = dragB.y - state.dragA.y;
         let bottomPull = state.dragA.y - dragB.y;
         let rightPull = state.dragA.x - dragB.x;
-        let gestureThreshold = 24;
+        let gestureThreshold = 30;
+
 
         if (isBottom) {
             if (bottomPull > gestureThreshold) {
@@ -436,9 +439,7 @@ function dragContinue(e: MouseEvent) {
                 state.locked = false
                 router.push("/terminal/home")
             }
-            if (state.dragA.y > dragB.y) {
-                state.scrollY -= e.movementY
-            }
+            state.scrollY = height - e.clientY
         } else if (isTop) {
             if (topPull > gestureThreshold) {
                 screensaver.startScreensaver()
@@ -446,6 +447,26 @@ function dragContinue(e: MouseEvent) {
         } else {
         }
     }
+}
+
+
+function haltAnimation() {
+    state.scrollY = 0
+    state.scrollYBack = 0
+    cancelAnimationFrame(state.animationFrame)
+}
+
+function decelerate() {
+
+    state.animationFrame = requestAnimationFrame(decelerate)
+
+    if (state.isDragging) return
+    state.scrollY = state.scrollY * 0.50
+    if (Math.abs(state.scrollY) <= 0.01) {
+
+        haltAnimation()
+    }
+
 }
 
 // When the user cancels a drag intent
@@ -462,17 +483,9 @@ function dragStop(e: MouseEvent) {
 
     if (Math.abs(state.scrollY) != 0 && state.scrollYBack == 0) {
         if (state.scrollYBack == 0) {
-            state.scrollYBack = setInterval(() => {
-                if (state.isDragging) return
-                state.scrollY -= state.scrollY * 0.2
-                if (Math.abs(state.scrollY) < 0.01) {
-                    state.scrollY = 0
-                    state.scrollYBack = 0
-                    clearInterval(state.scrollYBack)
-                }
-            }, 14)
+            decelerate()
         } else {
-            clearInterval(state.scrollYBack)
+            haltAnimation()
         }
     }
 
