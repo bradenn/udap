@@ -73,18 +73,20 @@ function currentPageName() {
 </script>
 
 <template>
+    <div v-if="!props.small">
 
+        <div>
 
-    <div v-if="props.large">
-
-        <div class="date" v-html="state.date"></div>
+            <div class="d-flex align-items-center time-xl">
+                {{ state.time }}
+            </div>
+            <div class="date" v-html="state.date"></div>
+        </div>
     </div>
-    <div v-else>
-        <div class="d-flex label-xxl label-w600 label-o5 align-items-center lh-1"
-             style="font-family: 'SF Compact Rounded', sans-serif; ">
+    <div v-else class="h-100">
+        <div class="d-flex align-items-start flex-column justify-content-center time-xl h-100 px-1">
             {{ state.time }}
         </div>
-        <div v-if="!props.small" class="date" v-html="state.date"></div>
     </div>
 </template>
 
@@ -111,22 +113,44 @@ function currentPageName() {
   margin-bottom: 30px;
 }
 
-.time-xl {
-  font-size: 4.5rem;
-  line-height: 3.5rem;
+.time-sm {
+
+  font-feature-settings: "ss03"; // Vertically centers the colon for macos
+  font-size: 1.6rem;
+  line-height: 1.6rem;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
 
   display: flex;
   align-items: center;
   text-align: center;
-  letter-spacing: 0;
-  font-family: "SF Pro Rounded", sans-serif;
-  background: linear-gradient(0deg, rgba(255, 255, 255, 0.25) 20.17%, rgba(255, 255, 255, 0.15) 67.23%), linear-gradient(0deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)), rgba(255, 255, 255, 0.4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: "SF Compact Display", sans-serif !important;
 
   //text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  color: white;
+
+  mix-blend-mode: screen !important;
+  transition: font-size 50ms ease-in;
+}
+
+.time-xl {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "ss03"; // Vertically centers the colon for macos
+  font-size: 1.4rem;
+  line-height: 1.4rem;
+  font-weight: 600;
+
+  //outline: 1px solid red;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  letter-spacing: -0.25px;
+  justify-content: left;
+
+  font-family: "SF Pro Display", monospace !important;
+
+  //text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.6);
 
   mix-blend-mode: screen !important;
   transition: font-size 50ms ease-in;
@@ -165,16 +189,6 @@ $dist: 2px;
   font-family: "SF Compact Rounded", sans-serif !important;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
 
-}
-
-.time-sm {
-  font-size: 0.75rem;
-  line-height: 0.75rem;
-  font-weight: 500;
-
-  color: rgba(255, 255, 255, 0.5);
-  font-family: "SF Pro Display", sans-serif;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .date-sm {

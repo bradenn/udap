@@ -39,6 +39,7 @@ import IdTag from '@/components/IdTag.vue'
 import ContextBar from "@/components/ContextBar.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
+import notifications from "@/notifications";
 
 const Input = defineAsyncComponent({
     loader: () => import('@/views/Input.vue'),
@@ -95,11 +96,13 @@ onMounted(() => {
     // haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
     connect()
 })
+provide('notifications', notifications)
 
 function connected() {
     remote.connecting = false
 
     remote.connected = true
+
 }
 
 function closed() {
@@ -232,7 +235,6 @@ function handleMessage(target: Target, data: any) {
         remote.diagnostics.queue = remote.diagnostics.queue.slice(0, remote.diagnostics.queue.length - 2)
     }
 
-
     remote.diagnostics.maxRSS = memorySizeOf(remote)
     pollMeta(remote as Remote)
 }
@@ -327,7 +329,6 @@ function timeout() {
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
-
     dragStop(e)
     // Record the current user position
     let a = {x: e.screenX, y: e.screenY}
@@ -478,52 +479,6 @@ function dragStop(e: MouseEvent) {
 
 }
 
-interface ToastObject {
-    name: string,
-    message: string,
-    severity: number,
-    duration: number
-}
-
-const toasts = reactive({
-    queue: [] as ToastObject[],
-    active: false,
-    interval: 0,
-    current: {} as ToastObject
-})
-
-watchEffect(() => {
-    if (toasts.queue.length > 0 && !toasts.active) {
-        toasts.active = true
-        toasts.current = toasts.queue[0]
-        toasts.queue = toasts.queue.filter(q => q !== toasts.current)
-        toasts.interval = setInterval(() => {
-            if (toasts.active) {
-                toasts.current.duration -= 1000
-                if (toasts.current.duration <= 0) {
-                    toasts.active = false
-                    toasts.current = {} as ToastObject
-                    clearInterval(toasts.interval)
-                }
-            }
-        }, 1000)
-    }
-    return toasts.queue
-})
-
-
-const notifications = {
-    show: (name: string, message: string, severity: number, duration: number) => {
-        toasts.queue.push({
-            name: name,
-            message: message,
-            severity: severity,
-            duration: duration
-        })
-    },
-}
-
-provide('notifications', notifications)
 
 // Provide the remote component for child components
 provide('terminal', state)
@@ -538,14 +493,53 @@ provide('remote', remote)
              v-on:mousemove="dragContinue"
              v-on:mouseup="dragStop">
             <div class="d-flex flex-column h-100 ">
-                <ContextBar style="height: 2.5rem !important;">
-                    <Clock :small="!state.showClock"></Clock>
-                    <!--        <div style="width: 20rem; height: 1.25rem; background-color:black; position: absolute; top:0; left: calc(50vw - 10rem); border-radius: 0 0 1rem 1rem; box-shadow: 0 0 4px 2px rgba(0,0,0,0.25);"></div>-->
-                    <Toast v-if="toasts.active" :message="toasts.current.message" :severity="toasts.current.severity"
-                           :time="toasts.current.duration" :title="toasts.current.name"></Toast>
-                    <IdTag></IdTag>
-                </ContextBar>
-                <div style="height: calc(100% - 3rem);">
+                <div>
+                    <ContextBar v-if="!state.showClock">
+                        <div style="grid-column: span 3">
+                            <Clock :small="!state.showClock"></Clock>
+                        </div>
+
+                        <div style="grid-column: 9 / span 8">
+                            <div v-if="notifications.toasts.active" class="toast-stack ">
+                                <Toast :key="notifications.toasts.current.uuid"
+                                       :index="notifications.toasts.queue.indexOf(notifications.toasts.current)"
+                                       :message="notifications.toasts.current.message"
+                                       :severity="notifications.toasts.current.severity"
+                                       :time="notifications.toasts.current.duration"
+                                       :title="notifications.toasts.current.name"></Toast>
+
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
+                            <IdTag></IdTag>
+                        </div>
+                    </ContextBar>
+                    <ContextBar v-else>
+
+                        <div class=" d-flex align-content-center align-items-center justify-content-start px-1"
+                             style="grid-column: span 3">
+                            <Clock :small="!state.showClock"></Clock>
+                        </div>
+
+                        <div style="grid-column: 9 / span 8">
+                            <div v-if="notifications.toasts.active" class="toast-stack ">
+                                <Toast :key="notifications.toasts.current.uuid"
+                                       :index="notifications.toasts.queue.indexOf(notifications.toasts.current)"
+                                       :message="notifications.toasts.current.message"
+                                       :severity="notifications.toasts.current.severity"
+                                       :time="notifications.toasts.current.duration"
+                                       :title="notifications.toasts.current.name"
+                                       class=""></Toast>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
+                            <IdTag></IdTag>
+                        </div>
+                    </ContextBar>
+                </div>
+                <div class="mt-1" style="height: calc(100% - 3.5rem);">
                     <router-view/>
                 </div>
                 <div class="justify-content-center d-flex align-items-center align-content-center">
@@ -582,6 +576,53 @@ provide('remote', remote)
 </template>
 
 <style lang="scss" scoped>
+.toast-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+
+}
+
+.toast-stack .toast-stack-away {
+}
+
+@keyframes notify-away {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes notify {
+  0% {
+    transform: translateY(0.125rem) scale(0.97);
+  }
+  100% {
+    transform: translateY(0rem) scale(1);
+  }
+}
+
+.toast-stack > :not(:first-child) {
+  width: 100%;
+  height: 1rem !important;
+  outline: 1px solid rgba(255, 255, 0, 0.1);
+  scale: 0.9;
+  margin-top: -1.5rem;
+  z-index: -1;
+  animation: pull-in 125ms linear forwards;
+}
+
+@keyframes pull-in {
+  0% {
+    transform: translateY(-20rem) scale(0.6);
+  }
+  100% {
+    transform: translateY(0rem) scale(1);
+  }
+}
 
 .terminal {
   //box-shadow: inset 0 0 36px 6px rgba(255,12,255,0.8);

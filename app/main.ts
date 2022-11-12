@@ -17,6 +17,7 @@ function createWindow() {
         show: true,
         fullscreen: true,
         skipTaskbar: true,
+        kiosk: true,
         hiddenInset: true
     });
 
