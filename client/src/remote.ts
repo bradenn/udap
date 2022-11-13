@@ -59,12 +59,6 @@ export interface Remote {
     disconnect(): void,
 }
 
-interface RemoteState {
-    remote: Remote,
-    ready: boolean,
-    ws: WebSocket
-}
-
 const remote = reactive<Remote>({
     connecting: false,
     connected: false,
@@ -132,13 +126,13 @@ export {
     disconnect
 }
 
-function onOpen(event: Event) {
+function onOpen(_: Event) {
     state.ready = true
     remote.connected = true
     remote.connecting = false
 }
 
-function onClose(event: CloseEvent) {
+function onClose(_: CloseEvent) {
     state.ready = false
     remote.connected = false
     remote.connecting = false
@@ -158,7 +152,7 @@ function onMessage(event: MessageEvent) {
     remote.connected = true
 }
 
-function onError(event: Event) {
+function onError(_: Event) {
     state.ready = true
 }
 

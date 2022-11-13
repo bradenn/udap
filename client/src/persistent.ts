@@ -11,7 +11,7 @@ export function usePersistent() {
             screensaver: {
                 enabled: true,
                 countdown: 60 * 10,
-                selection: "bubbles"
+                selection: "warp"
             },
             background: {
                 image: "nil",
