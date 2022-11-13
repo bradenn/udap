@@ -39,14 +39,16 @@ static void gpioTriggerQueue(void *arg) {
     uint32_t io_num;
     int lastRequest = millis() - 500;
     while (true) {
-        if (xQueueReceive(gpioQueue, &io_num, portMAX_DELAY/1000)) {
+        if (xQueueReceive(gpioQueue, &io_num, portMAX_DELAY)) {
             if(io_num != GPIO_INPUT_PIN_1) continue;
-            if (millis() - lastRequest >= 500) {
-                request("http://10.0.1.2:5058/haptic-1");
+            if (millis() - lastRequest > 500) {
                 ESP_LOGI("MOTION", "TRIGGER (%d)", io_num);
+                lastRequest = millis();
+                request("http://10.0.1.2:5058/haptic-1");
+            }else{
+                xQueueReset(gpioQueue);
+                lastRequest = millis();
             }
-
-            lastRequest = millis();
         }
     }
 }
@@ -58,12 +60,12 @@ extern "C" void app_main(void) {
     Haptic::instance();
 
 
-    gpioQueue = xQueueCreate(10, sizeof(uint32_t));
-    gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3);
-    gpio_isr_handler_add(static_cast<gpio_num_t>(GPIO_INPUT_PIN_1),
-                         gpio_isr_handler, (void *) GPIO_INPUT_PIN_1);
+    gpioQueue = xQueueCreate(4, sizeof(uint32_t));
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(GPIO_NUM_2, gpio_isr_handler, (void *)
+    GPIO_INPUT_PIN_1);
 
-    xTaskCreate(gpioTriggerQueue, "gpioTriggerQueue", 5000, nullptr, 3,
+    xTaskCreate(gpioTriggerQueue, "gpioTriggerQueue", 4000, nullptr, 1,
                 nullptr);
 
     // Load the web server

@@ -63,7 +63,7 @@ func init() {
 		Name:        "worldspace",
 		Type:        "module",
 		Description: "worldspace integration",
-		Version:     "0.1.1",
+		Version:     "0.1.2",
 		Author:      "Braden Nicholson",
 	}
 	Module.Config = config
@@ -231,6 +231,11 @@ func (w *Worldspace) Run() error {
 	w.server.Addr = "0.0.0.0:5058"
 	router := chi.NewRouter()
 	err := w.endpointTrigger(router, "motion", "dummy motion")
+	if err != nil {
+		return err
+	}
+
+	err = w.endpointTrigger(router, "haptic-1", "Haptic Hub Foot Pedal")
 	if err != nil {
 		return err
 	}
