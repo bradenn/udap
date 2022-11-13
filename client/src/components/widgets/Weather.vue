@@ -2,9 +2,10 @@
 
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import moment from "moment";
-import type {Attribute, Entity, Remote} from "@/types";
+import type {Attribute, Entity} from "@/types";
 import type {CurrentWeather, Weather} from "@/weather"
 import {getWeatherIcon, getWeatherState} from "@/weather"
+import type {Remote} from "@/remote";
 
 function degToCompass(num: number) {
     const val = Math.floor((num / 45) + 0.5);

@@ -2,8 +2,9 @@
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import AttributeComponent from "@/components/entity/Attribute.vue"
-import type {ApiRateLimit, Attribute, Entity, Remote} from "@/types"
+import type {ApiRateLimit, Attribute, Entity} from "@/types"
 import moment from "moment";
+import type {Remote} from "@/remote";
 // Establish a local reactive state
 let state = reactive<{
     loading: boolean,

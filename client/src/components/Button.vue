@@ -2,46 +2,46 @@
 
 <script lang="ts" setup>
 
-import {inject, reactive} from "vue";
-import {useRouter} from "vue-router";
+import {reactive} from "vue";
+import core from "@/core";
 
 
 const props = defineProps<{
-  active: boolean,
-  text: string,
-  to?: string,
-  icon?: string,
-  accent?: boolean,
+    active: boolean,
+    text: string,
+    to?: string,
+    icon?: string,
+    accent?: boolean,
 }>()
 
 let state = reactive({})
-let router = useRouter()
+let router = core.router()
 
-const haptics = inject("haptic") as (a: number, b: number, c: number) => void
+const haptics = core.haptics()
 
 function push(_: Event) {
-  haptics(2, 1, 75)
-  if (props.to) {
-    router.push(props.to)
-  }
+    haptics.tap(2, 1, 75)
+    if (props.to) {
+        router.push(props.to)
+    }
 }
 
 function release(_: Event) {
-  // haptics(1, 1, 75)
-  // haptics(1, 1, 5)
+    // haptics(1, 1, 75)
+    // haptics(1, 1, 5)
 }
 
 
 </script>
 
 <template>
-  <div :class="`${props.active?props.accent?'text-accent':'':'subplot-inline'}`"
-       class="switch-space subplot switch-space-active"
-       @mousedown="push"
-       @mouseup="release">
-    <div v-if="props.icon" class="label-o2" style="padding-right: 0.125rem">{{ props.icon }}</div>
-    <span :class="`${props.active?'':''}`">{{ props.text }}</span>
-  </div>
+    <div :class="`${props.active?props.accent?'text-accent':'':'subplot-inline'}`"
+         class="switch-space subplot switch-space-active"
+         @mousedown="push"
+         @mouseup="release">
+        <div v-if="props.icon" class="label-o2" style="padding-right: 0.125rem">{{ props.icon }}</div>
+        <span :class="`${props.active?'':''}`">{{ props.text }}</span>
+    </div>
 </template>
 
 <style lang="scss" scoped>

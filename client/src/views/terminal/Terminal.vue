@@ -2,36 +2,10 @@
 <script lang="ts" setup>
 
 import router from '@/router'
-import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, watch, watchEffect} from "vue";
+import {inject, onMounted, onUnmounted, provide, reactive, watch} from "vue";
 import "@/types";
 
-import type {
-    Attribute,
-    Device,
-    Endpoint,
-    Entity,
-    Identifiable,
-    Log,
-    Macro,
-    Metadata,
-    Module,
-    Network,
-    Preferences,
-    Remote,
-    RemoteRequest,
-    Session,
-    SubRoutine,
-    TerminalDiagnostics,
-    Timing,
-    Trigger,
-    User,
-    Zone
-} from "@/types";
-import {memorySizeOf} from "@/types";
-
-import {Nexus, NexusState, Target} from "@/views/terminal/nexus";
-import type {Haptics} from "@/views/terminal/haptics";
-import haptics from "@/views/terminal/haptics";
+import type {Entity, Preferences} from "@/types";
 
 import Clock from '@/components/Clock.vue'
 import IdTag from '@/components/IdTag.vue'
@@ -39,230 +13,51 @@ import ContextBar from "@/components/ContextBar.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 import Notification from "@/components/Notification.vue";
-import type {Notify} from "@/notifications";
-import notificationOperator from "@/notifications";
-
 import Input from '@/views/Input.vue'
-import Bubbles from '@/views/screensaver/Bubbles.vue'
+import ScreensaverDom from "@/views/screensaver/Screensaver.vue";
 
-const Warp = defineAsyncComponent({
-    loader: () => import('@/views/screensaver/Warp.vue'),
-})
 
-// Define the reactive components for the remote data
-const remote = reactive<Remote>({
-    connecting: false,
-    connected: false,
-    metadata: {} as Metadata,
-    entities: [] as Entity[],
-    attributes: [] as Attribute[],
-    devices: [] as Device[],
-    networks: [] as Network[],
-    endpoints: [] as Endpoint[],
-    users: [] as User[],
-    timings: [] as Timing[],
-    modules: [] as Module[],
-    zones: [] as Zone[],
-    subroutines: [] as SubRoutine[],
-    macros: [] as Macro[],
-    triggers: [] as Trigger[],
-    logs: [] as Log[],
-    nexus: {} as Nexus,
-    size: "" as string,
-    diagnostics: {
-        queue: [] as RemoteRequest[],
-        updates: new Map<string, number>(),
-        connected: false,
-        maxRSS: 0,
-        lastTarget: "",
-        lastUpdate: 0,
-        objects: 0
-    } as TerminalDiagnostics
-});
+import type {Remote} from "@/remote";
+import _remote from "@/remote";
 
-// -- Websockets --
+import type {Haptics} from "@/haptics";
+import _haptics from "@/haptics";
+
+import type {Notify} from "@/notifications";
+import _notify from "@/notifications";
+
+import type {Screensaver} from "@/screensaver";
+import _screensaver from "@/screensaver";
+
+/* Remote */
+const remote: Remote = _remote
+provide("remote", remote)
+
+/* Notify */
+const notify: Notify = _notify
+provide("notify", notify)
+
+/* Screensaver */
+const screensaver: Screensaver = _screensaver
+provide("screens", screensaver)
+
+/* Haptics */
+const haptics: Haptics = _haptics
+provide("haptics", haptics)
+
+// Load runtime when the terminal view is loaded
 onMounted(() => {
     haptics.connect("ws://10.0.1.60/ws")
-
-    connect()
+    remote.connect()
 })
-
-provide("notify", notificationOperator as Notify)
-
-function connected() {
-
-    remote.connecting = false
-    remote.connected = true
-}
-
-function closed() {
-    remote.connected = false
-}
-
-
-function connect() {
-    remote.connecting = true
-    remote.connected = false
-
-    if (remote.nexus.ws) remote.nexus.ws.close()
-
-    remote.nexus = new Nexus(handleMessage, connected, closed)
-
-    switch (remote.nexus.state) {
-        case NexusState.Connected:
-            remote.connecting = false
-            remote.connected = true
-            break
-        case NexusState.Connecting:
-            remote.connecting = true
-            remote.connected = false
-            break
-        case NexusState.Disconnected:
-            remote.connecting = false
-            remote.connected = false
-            break
-        default:
-            break
-    }
-}
-
-provide("haptic", haptics.tap)
-provide("haptics", haptics as Haptics)
 
 onUnmounted(() => {
-    if (!remote.nexus.ws) return
-    remote.nexus.ws.close()
-    if (!haptics) return
-    haptics.close()
-
+    haptics.disconnect()
+    // remote.disconnect()
 })
 
-let screensaver: any = inject("screensaver")
 let preferences = inject("preferences") as Preferences
 let system: any = inject("system")
-
-// Handle and route incoming messages to the local cache
-function handleMessage(target: Target, data: any) {
-    remote.diagnostics.lastUpdate = new Date().valueOf()
-    state.lastUpdate = new Date().valueOf()
-
-    let dx = 0;
-    switch (target) {
-        case Target.Close:
-            setTimeout(connect, 5000)
-            return
-
-        case Target.Metadata:
-            system.udap.system = data.system as Metadata
-            remote.metadata = data as Metadata
-            dx = 1
-            break
-        case Target.Timing:
-            if (remote.timings.find((e: Timing) => e.pointer === data.pointer)) {
-                remote.timings = remote.timings.map((a: Timing) => a.pointer === data.pointer ? data : a)
-                dx = 0
-            } else {
-
-                remote.timings.push(data)
-                dx = 1
-            }
-            break
-        case Target.Entity:
-            remote.entities = createOrUpdate(remote.entities, data)
-            break
-        case Target.Macro:
-            remote.macros = createOrUpdate(remote.macros, data)
-            break
-        case Target.SubRoutine:
-            remote.subroutines = createOrUpdate(remote.subroutines, data)
-            break
-        case Target.Trigger:
-            remote.triggers = createOrUpdate(remote.triggers, data)
-            break
-        case Target.Attribute:
-            remote.attributes = createOrUpdate(remote.attributes, data)
-            break
-        case Target.User:
-            remote.users = createOrUpdate(remote.users, data)
-            break
-        case Target.Device:
-            remote.devices = createOrUpdate(remote.devices, data)
-            break
-        case Target.Network:
-            remote.networks = createOrUpdate(remote.networks, data)
-            break
-        case Target.Endpoint:
-            remote.endpoints = createOrUpdate(remote.endpoints, data)
-            break
-        case Target.Module:
-            remote.modules = createOrUpdate(remote.modules, data)
-            break
-        case Target.Zone:
-            remote.zones = createOrUpdate(remote.zones, data)
-            break
-        case Target.Log:
-            remote.entities = createOrUpdate(remote.entities, data)
-            break
-    }
-
-    let prev = remote.diagnostics.updates.get(target) || 0
-    remote.diagnostics.updates.set(target, prev + dx);
-    let session = {
-        target: target,
-        time: new Date().valueOf(),
-        operation: "update",
-        payload: data,
-        id: (data as Identifiable).id
-    } as RemoteRequest
-    remote.diagnostics.queue.push(session)
-    remote.diagnostics.lastTarget = target
-    if (remote.diagnostics.queue.length >= 10) {
-        remote.diagnostics.queue = remote.diagnostics.queue.slice(0, remote.diagnostics.queue.length - 2)
-    }
-
-    remote.diagnostics.maxRSS = memorySizeOf(remote)
-    pollMeta(remote as Remote)
-}
-
-function mouseDown() {
-
-    // axios.post("http://10.0.1.60/pop", {
-    //   power: 2
-    // }).then(res => {
-    //   return
-    // }).catch(err => {
-    //   return
-    // })
-}
-
-function createOrUpdate(target: any[], data: Identifiable): any[] {
-    if (target.find((e: Identifiable) => e.id === data.id)) {
-        if (data.deleted) {
-            return target.filter((a: Identifiable) => a.id !== data.id)
-        } else {
-            return target.map((a: Identifiable) => a.id === data.id ? data : a)
-        }
-    } else {
-        if (!data.deleted) {
-            target.push(data)
-            return target
-        }
-    }
-    return target
-}
-
-// -- Gesture Navigation --
-
-onUnmounted(() => {
-    remote.nexus.ws.close(1001, "Disconnecting")
-})
-
-let session = reactive<Session>({
-    user: {} as User,
-    screensaver: false
-})
-
-provide("session", session)
 
 // Stores the changing components of the main terminal
 let state = reactive({
@@ -292,7 +87,6 @@ let state = reactive({
         y: 0
     }
 });
-
 
 watch(() => router.currentRoute.value, () => {
     state.showClock = router.currentRoute.value.path === '/terminal/home'
@@ -325,10 +119,8 @@ function dragStart(e: MouseEvent) {
     state.dragA = a
     // Verify drag intent if the user is still dragging after 100ms
     setTimeout(timeout, 10)
-    mouseDown();
     // Otherwise, we consider the swipes
 }
-
 
 interface InputProps {
     name: string
@@ -351,11 +143,10 @@ let meta = reactive({
     dim: 0
 })
 
-
-watchEffect(() => {
-    pollMeta(remote as Remote)
-    return remote as Remote
-})
+// watchEffect(() => {
+//     pollMeta(remote as Remote)
+//     return remote as Remote
+// })
 
 function pollMeta(rm: Remote): boolean {
     if (!rm) return true
@@ -425,13 +216,12 @@ function dragContinue(e: MouseEvent) {
             state.scrollY = height - e.clientY
         } else if (isTop) {
             if (topPull > gestureThreshold) {
-                screensaver.startScreensaver()
+                screensaver.start()
             }
         } else {
         }
     }
 }
-
 
 function haltAnimation() {
     state.scrollY = 0
@@ -501,16 +291,14 @@ function dragStop(_: MouseEvent) {
     if (Math.abs(state.scrollY) > 0) animate()
 }
 
-
 // Provide the remote component for child components
 provide('terminal', state)
-provide('remote', remote)
-</script>
 
+</script>
 
 <template>
 
-    <div v-if="!screensaver.hideTerminal" class="h-100 w-100">
+    <div v-if="!screensaver.active()" class="h-100 w-100">
 
         <div class="terminal w-100 h-100"
              v-on:mousedown="dragStart"
@@ -572,10 +360,8 @@ provide('remote', remote)
 
     </div>
 
-    <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"
-             class="screensaver-overlay"></Bubbles>
-    <Warp v-else-if="screensaver.show && preferences.ui.screensaver.selection === 'warp'"
-          class="screensaver-overlay"></Warp>
+    <ScreensaverDom></ScreensaverDom>
+
     <Input v-if="state.input.open" :apply="applyInput" :close="closeInput"
            :description="state.input.meta.description"
            :name="state.input.meta.name" :value="state.input.meta.value"></Input>
@@ -689,46 +475,9 @@ provide('remote', remote)
 .bottom-nav {
   display: inline-block;
   position: relative;
-  bottom: 2.5rem;
+  bottom: 1.25rem;
   z-index: 0 !important;
   animation: dock-in 125ms ease-in forwards;
-}
-
-
-@keyframes dock-in {
-  0% {
-    bottom: -1rem;
-  }
-
-  100% {
-    bottom: 2.5rem;
-  }
-}
-
-.v-enter-active,
-.v-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.v-enter-from,
-.v-leave-to {
-  opacity: 0;
-}
-
-.animate-in {
-  animation: dock-in 100ms forwards;
-}
-
-
-.footer {
-  position: absolute;
-  bottom: 1.2rem;
-}
-
-.route-view {
-  /*outline: 1px solid rgba(255,255,255,0.3);*/
-  border-radius: 0.5rem;
-  height: calc(100% - 3rem);
 }
 
 

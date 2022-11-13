@@ -10,6 +10,8 @@ interface HapticPulse {
 interface Haptics {
     connect(url: string): void
 
+    disconnect(): void
+
     tap(frequency: number, iterations: number, amplitude: number): void
 }
 
@@ -19,18 +21,20 @@ function connect(url: string): void {
     hapticEngine = new HapticEngine(url)
 }
 
+function disconnect(): void {
+    if (hapticEngine.ready) {
+        hapticEngine.ws.close(1001, "Disconnecting")
+    }
+}
+
 function tap(frequency: number, iterations: number, amplitude: number): void {
     return hapticEngine.tap(frequency, iterations, amplitude)
 }
 
-function close() {
-    hapticEngine.ws.close()
-}
-
 export default {
     connect,
+    disconnect,
     tap,
-    close
 }
 
 class HapticEngine {

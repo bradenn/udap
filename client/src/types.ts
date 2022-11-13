@@ -2,8 +2,6 @@
 
 // Configuration Types
 
-import type {Nexus} from "@/views/terminal/nexus";
-
 export interface Trigger {
     created: string;
     updated: string;
@@ -150,28 +148,6 @@ export interface TerminalDiagnostics {
     lastTarget: string
     queue: RemoteRequest[]
     updates: Map<string, number>
-}
-
-export interface Remote {
-    connecting: boolean,
-    connected: boolean,
-    metadata: Metadata,
-    entities: Entity[],
-    subroutines: SubRoutine[],
-    macros: Macro[],
-    triggers: Trigger[],
-    attributes: Attribute[],
-    users: User[],
-    devices: Device[],
-    networks: Network[],
-    modules: Module[],
-    endpoints: Endpoint[],
-    timings: Timing[],
-    zones: Zone[],
-    logs: Log[],
-    nexus: Nexus,
-    size: string,
-    diagnostics: TerminalDiagnostics
 }
 
 export interface RemoteRequest {

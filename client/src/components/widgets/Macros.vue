@@ -4,12 +4,13 @@
 
 import Plot from "@/components/plot/Plot.vue";
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import type {Attribute, Entity, Remote, Zone} from "@/types";
+import type {Attribute, Entity, Zone} from "@/types";
 import Light from "@/components/widgets/Light.vue";
 import Widget from "@/components/widgets/Widget.vue";
 import Select from "@/components/plot/Select.vue";
 import attributeService from "@/services/attributeService";
 import Button from "@/components/Button.vue";
+import type {Remote} from "@/remote";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')

@@ -4,13 +4,14 @@
 // Copyright (c) 2022 Braden Nicholson
 import moment from "moment";
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import type {Attribute, Entity, Remote} from "@/types";
+import type {Attribute, Entity} from "@/types";
 import type {CurrentWeather, Weather} from "@/weather";
 import {getWeatherIcon, getWeatherState} from "@/weather"
 import PaneList from "@/components/pane/PaneList.vue";
 import PaneListItemInline from "@/components/pane/PaneListItemInline.vue";
 import Scroll from "@/components/scroll/Scroll.vue";
 import HorizontalChart from "@/components/charts/HorizontalChart.vue";
+import type {Remote} from "@/remote";
 
 interface WeatherProps {
     current: CurrentWeather
@@ -388,7 +389,8 @@ function getWeekday(ms: number): string {
                     <div class="d-flex justify-content-between lh-1">
                         <div class="label-o4 label-w500 label-c1 py-1">This Week</div>
                         <div v-if="state.latest.hourly.precipitation[new Date().getHours()] >= 0.0001"
-                             class="label-o3 label-w500 label-r label-c2 py-1">Tut, Tut, Looks Like Rain</div>
+                             class="label-o3 label-w500 label-r label-c2 py-1">Tut, Tut, Looks Like Rain
+                        </div>
                     </div>
                     <Scroll horizontal style="overflow-x: scroll; height: 100%">
                         <div class="d-flex flex-column" style="width: 200%">

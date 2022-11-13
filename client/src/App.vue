@@ -127,14 +127,6 @@ provide('system', system)
 
 }
 
-.screensaver-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 50 !important;
-}
-
-
 .backdrop {
 
   position: absolute !important;

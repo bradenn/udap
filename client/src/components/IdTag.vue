@@ -3,13 +3,14 @@
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import Plot from "@/components/plot/Plot.vue";
 import Toggle from "@/components/plot/Toggle.vue";
-import type {Attribute, Entity, Preferences, Remote, Status} from "@/types";
+import type {Attribute, Entity, Preferences, Status} from "@/types";
 import Button from "@/components/Button.vue";
 import Loader from "@/components/Loader.vue";
 import Toast from "@/components/Toast.vue";
 import core from "@/core";
 import type {Notify, NotifyBody} from "@/notifications";
 import ToolbarButton from "@/components/ToolbarButton.vue";
+import type {Remote} from "@/remote";
 
 let state = reactive({
     menu: false,
@@ -61,10 +62,10 @@ function update() {
 
 }
 
-const haptics = inject("haptic") as (a: number, b: number, c: number) => void
+const haptics = core.haptics()
 
 function open() {
-    haptics(2, 1, 100)
+    haptics.tap(2, 1, 100)
     state.menu = !state.menu
 }
 

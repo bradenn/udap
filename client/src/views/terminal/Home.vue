@@ -1,18 +1,16 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 
 <script lang="ts" setup>
-import {defineAsyncComponent, inject, onMounted, reactive, watchEffect} from "vue";
+import {inject, onMounted, reactive, watchEffect} from "vue";
 import router from "@/router";
 import App from "@/components/App.vue";
 import Macros from "@/components/widgets/Macros.vue";
-import type {Attribute, Entity, Remote} from "@/types";
+import type {Attribute, Entity} from "@/types";
 import type {Notify} from "@/notifications";
 import Weather from '@/components/widgets/Weather.vue';
 import Calendar from '@/components/widgets/Calendar.vue';
-
-const Spotify = defineAsyncComponent({
-    loader: () => import('@/components/widgets/Spotify.vue'),
-})
+import Spotify from '@/components/widgets/Spotify.vue'
+import type {Remote} from "@/remote";
 
 
 // Define the local reactive data for this view
@@ -93,7 +91,6 @@ function getRoutes() {
 <template>
 
     <div :class="``" class="h-100 w-100">
-        {{ apples }}
         <div class="home-grid w-100 h-100">
 
             <div style="grid-column: 1/span 3; grid-row: 1/span 4;">

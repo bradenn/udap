@@ -6,6 +6,7 @@ import {v4 as uuidv4} from "uuid";
 export interface NotifyBody {
     name: string,
     message: string,
+    trace?: string,
     severity: number,
     priority: number,
     duration: number,
@@ -25,7 +26,7 @@ interface NotifyState {
 export interface Notify {
     success(name: string, message: string): void
 
-    fail(name: string, message: string): void
+    fail(name: string, message: string, trace?: string): void
 
     show(name: string, message: string, severity: number, duration: number): void
 
@@ -137,13 +138,14 @@ function success(name: string, message: string): void {
 }
 
 // Sends a failure notification to the user
-function fail(name: string, message: string): void {
+function fail(name: string, message: string, trace?: string): void {
     pushQueue({
         name: name,
         message: message,
         severity: 3,
         priority: 2,
         duration: 3000,
+        trace: trace,
         uuid: uuidv4()
     })
 }

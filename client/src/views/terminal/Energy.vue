@@ -5,104 +5,104 @@ import AllocationBar from "@/components/AllocationBar.vue";
 import Header from "@/components/Header.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import type {Remote} from "@/types";
+import type {Remote} from "@/remote";
 
 let s1: Allocation[] = [
-  {
-    name: 'bmni',
-    source: "sq2",
-    allocated: 0.325,
-    active: 0.21,
-    battery: true
-  },
-  {
-    name: 'nuc',
-    source: "sq2",
-    allocated: 1.5,
-    active: 1.17,
-    battery: true
-  }, {
-    name: 'ap',
-    source: "sq2",
-    allocated: 0.15,
-    active: 0.14,
-    battery: true
-  },
+    {
+        name: 'bmni',
+        source: "sq2",
+        allocated: 0.325,
+        active: 0.21,
+        battery: true
+    },
+    {
+        name: 'nuc',
+        source: "sq2",
+        allocated: 1.5,
+        active: 1.17,
+        battery: true
+    }, {
+        name: 'ap',
+        source: "sq2",
+        allocated: 0.15,
+        active: 0.14,
+        battery: true
+    },
 ]
 
 let s2: Allocation[] = [
 
-  {
-    name: 'bmbp',
-    source: "sq1",
-    allocated: 2,
-    active: 1.56
-  },
-  {
-    name: 'mon1',
-    source: "sq1",
-    allocated: 1.8,
-    active: 1.1
-  },
-  {
-    name: 'mon2',
-    source: "sq1",
-    allocated: 1.2,
-    active: 0.8
-  },
-  {
-    name: 'hp1',
-    source: "sq1",
-    allocated: 0.5,
-    active: 0.45
-  }, {
-    name: 'hp2',
-    source: "sq1",
-    allocated: 0.5,
-    active: 0.45
-  }, {
-    name: 'tv',
-    source: "sq1",
-    allocated: 1.21,
-    active: 0.11
-  },
-  {
-    name: 'at',
-    source: "sq1",
-    allocated: 1,
-    active: 0.12
-  }
+    {
+        name: 'bmbp',
+        source: "sq1",
+        allocated: 2,
+        active: 1.56
+    },
+    {
+        name: 'mon1',
+        source: "sq1",
+        allocated: 1.8,
+        active: 1.1
+    },
+    {
+        name: 'mon2',
+        source: "sq1",
+        allocated: 1.2,
+        active: 0.8
+    },
+    {
+        name: 'hp1',
+        source: "sq1",
+        allocated: 0.5,
+        active: 0.45
+    }, {
+        name: 'hp2',
+        source: "sq1",
+        allocated: 0.5,
+        active: 0.45
+    }, {
+        name: 'tv',
+        source: "sq1",
+        allocated: 1.21,
+        active: 0.11
+    },
+    {
+        name: 'at',
+        source: "sq1",
+        allocated: 1,
+        active: 0.12
+    }
 ]
 
 let ups: Allocation[] = [
-  {
-    name: 'bmni',
-    source: "sq2",
-    allocated: 0.325,
-    active: 0.22
-  },
-  {
-    name: 'nuc',
-    source: "sq2",
-    allocated: 1.5,
-    active: 1.34
-  }, {
-    name: 'ap',
-    source: "sq2",
-    allocated: 0.15,
-    active: 0.14
-  },
+    {
+        name: 'bmni',
+        source: "sq2",
+        allocated: 0.325,
+        active: 0.22
+    },
+    {
+        name: 'nuc',
+        source: "sq2",
+        allocated: 1.5,
+        active: 1.34
+    }, {
+        name: 'ap',
+        source: "sq2",
+        allocated: 0.15,
+        active: 0.14
+    },
 ]
 
 let grid: Allocation[] = []
 
 
 let state = reactive({
-  side1: s1,
-  side2: s2,
-  grid: grid,
-  isFixed: true,
-  attributes: [] as Allocation[]
+    side1: s1,
+    side2: s2,
+    grid: grid,
+    isFixed: true,
+    attributes: [] as Allocation[]
 })
 
 
@@ -110,55 +110,55 @@ let remote = inject("remote") as Remote
 
 onMounted(() => {
 
-  updateDynamic()
+    updateDynamic()
 })
 
 
 watchEffect(() => {
-  updateDynamic()
-  return remote.attributes
+    updateDynamic()
+    return remote.attributes
 })
 
 
 function updateDynamic() {
-  let entities = remote.entities.filter(e => e.type === "dimmer" || e.type === "spectrum" || e.type === "toggle")
-  for (let i = 0; i < entities.length; i++) {
-    let attrs = remote.attributes.find(a => a.key === 'dim' && a.entity == entities[i].id)
-    if (!attrs) return
-    state.grid = state.grid.filter(g => g.name !== entities[i].name)
-    state.grid.push({
-      name: entities[i].name,
-      source: "grid",
-      allocated: 9 / 120,
-      active: (9 / 120) * (parseInt(attrs.value, 10) / 100),
-    })
-  }
+    let entities = remote.entities.filter(e => e.type === "dimmer" || e.type === "spectrum" || e.type === "toggle")
+    for (let i = 0; i < entities.length; i++) {
+        let attrs = remote.attributes.find(a => a.key === 'dim' && a.entity == entities[i].id)
+        if (!attrs) return
+        state.grid = state.grid.filter(g => g.name !== entities[i].name)
+        state.grid.push({
+            name: entities[i].name,
+            source: "grid",
+            allocated: 9 / 120,
+            active: (9 / 120) * (parseInt(attrs.value, 10) / 100),
+        })
+    }
 }
 
 function setFixed(isFixed: boolean) {
-  state.isFixed = isFixed
+    state.isFixed = isFixed
 }
 
 </script>
 
 <template>
 
-  <div class="d-flex flex-column gap-1 justify-content-start">
-    <div class="d-flex justify-content-between">
-      <Header icon="diagram-project" name="Allocations" title="Allocations"></Header>
-      <Plot :cols="2" :rows="1" style="width: 13rem">
-        <Subplot :active="state.isFixed" :fn="() => setFixed(true)" name="Fixed"></Subplot>
-        <Subplot :active="!state.isFixed" :fn="() => setFixed(false)" name="Dynamic"></Subplot>
-      </Plot>
-    </div>
+    <div class="d-flex flex-column gap-1 justify-content-start">
+        <div class="d-flex justify-content-between">
+            <Header icon="diagram-project" name="Allocations" title="Allocations"></Header>
+            <Plot :cols="2" :rows="1" style="width: 13rem">
+                <Subplot :active="state.isFixed" :fn="() => setFixed(true)" name="Fixed"></Subplot>
+                <Subplot :active="!state.isFixed" :fn="() => setFixed(false)" name="Dynamic"></Subplot>
+            </Plot>
+        </div>
 
-    <AllocationBar :allocatable="15" :allocations="state.side1" :is-fixed="state.isFixed"
-                   name="Squid 1-8"></AllocationBar>
-    <AllocationBar :allocatable="15" :allocations="state.side2" :is-fixed="state.isFixed"
-                   name="Squid 9-16"></AllocationBar>
-    <AllocationBar :allocatable="0.5" :allocations="state.grid" :is-fixed="state.isFixed"
-                   name="Lighting"></AllocationBar>
-  </div>
+        <AllocationBar :allocatable="15" :allocations="state.side1" :is-fixed="state.isFixed"
+                       name="Squid 1-8"></AllocationBar>
+        <AllocationBar :allocatable="15" :allocations="state.side2" :is-fixed="state.isFixed"
+                       name="Squid 9-16"></AllocationBar>
+        <AllocationBar :allocatable="0.5" :allocations="state.grid" :is-fixed="state.isFixed"
+                       name="Lighting"></AllocationBar>
+    </div>
 </template>
 
 <style lang="scss" scoped>
