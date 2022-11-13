@@ -3,6 +3,7 @@
 import {onMounted, provide, reactive} from "vue";
 import {version} from "../package.json";
 import {usePersistent} from "@/persistent";
+import core from "@/core";
 
 let system = reactive({
     nexus: {
@@ -16,6 +17,8 @@ let system = reactive({
         }
     }
 })
+
+const router = core.router()
 
 const preferences = usePersistent()
 
@@ -67,13 +70,11 @@ provide('system', system)
 
 <template>
 
-    <div :class="`root theme-${preferences.ui.theme} mode-${preferences.ui.mode}
-                  blurs-${preferences.ui.blur} brightness-${preferences.ui.brightness} h-100`"
+    <div :class="`root theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} h-100`"
          @mousedown="() => resetCountdown()">
 
         <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
              :src="`/custom/${preferences.ui.background.image}@4x.png`" alt="" class="backdrop "/>
-
 
         <div v-if="preferences.ui.watermark" class="watermark">
             <div class="d-flex gap">
@@ -87,7 +88,7 @@ provide('system', system)
                 </div>
             </div>
 
-            <div class="float-end">{{ $route.path }}</div>
+            <div class="float-end">{{ router.currentRoute.value.path }}</div>
         </div>
 
         <div v-if="preferences.ui.grid" class="grid"></div>
@@ -98,7 +99,18 @@ provide('system', system)
 
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
+
+.root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  border-radius: 0.4rem 0.4rem 0.4rem 0.4rem !important;
+}
+
 .screensaver-text {
   animation: screensaverTextLoadIn 500ms ease-in forwards;
 }
@@ -122,17 +134,6 @@ provide('system', system)
   z-index: 50 !important;
 }
 
-.root {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  border-radius: 0.4rem 0.4rem 0.4rem 0.4rem !important;
-  //box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.125) !important;
-  background-color: rgba(22, 22, 22, 0.33);
-}
 
 .backdrop {
 

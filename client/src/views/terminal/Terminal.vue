@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 
 import router from '@/router'
-import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch, watchEffect} from "vue";
+import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, watch, watchEffect} from "vue";
 import "@/types";
 
 import type {
@@ -43,9 +43,7 @@ import type {Notify} from "@/notifications";
 import notificationOperator from "@/notifications";
 
 import Input from '@/views/Input.vue'
-
 import Bubbles from '@/views/screensaver/Bubbles.vue'
-
 
 const Warp = defineAsyncComponent({
     loader: () => import('@/views/screensaver/Warp.vue'),
@@ -138,7 +136,6 @@ onUnmounted(() => {
     haptics.close()
 
 })
-
 
 let screensaver: any = inject("screensaver")
 let preferences = inject("preferences") as Preferences
@@ -256,8 +253,6 @@ function createOrUpdate(target: any[], data: Identifiable): any[] {
 
 // -- Gesture Navigation --
 
-let lastTick = ref(0);
-
 onUnmounted(() => {
     remote.nexus.ws.close(1001, "Disconnecting")
 })
@@ -315,7 +310,6 @@ function timeout() {
         state.verified = true
     }
 }
-
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
@@ -445,22 +439,56 @@ function haltAnimation() {
     cancelAnimationFrame(state.animationFrame)
 }
 
-function decelerate() {
+const animation = reactive({
+    frame: 0,
+    lastFrame: Date.now(),
+})
 
-    state.animationFrame = requestAnimationFrame(decelerate)
+const frameInterval = 1000.0 / 30.0;
 
-    if (state.isDragging) return
-    state.scrollY = state.scrollY * 0.50
-    if (Math.abs(state.scrollY) <= 0.01) {
-
-        haltAnimation()
+// Animate the retraction of the home bar
+function animate() {
+    // Request the animation frame for the next update
+    animation.frame = requestAnimationFrame(animate)
+    // Get the current time in milliseconds
+    let now = Date.now()
+    // Get milliseconds since last frame
+    let delta = now - animation.lastFrame
+    // Check if the delta exceeds the frame interval (16.667ms, 33.33ms, 25ms, etc)
+    if (delta > frameInterval) {
+        // Set the time of the last frame to now minus the elapsed frame time
+        animation.lastFrame = now - (delta % frameInterval)
+        // Run the desired code to be animated
+        decelerate()
     }
+}
 
+// Stops the current animation from proceeding beyond the current frame
+function stopAnimation() {
+    // Cancel the animation frame to block the next update
+    cancelAnimationFrame(animation.frame)
+    animation.frame = 0
+    animation.lastFrame = 0
+}
+
+// Returns the moving object back to its original position
+function decelerate() {
+    // Stop if the user is currently dragging
+    if (state.isDragging) return
+    // Decrease the scroll position
+    state.scrollY = state.scrollY * 0.5
+
+    // If the item is close enough to its original position, reset it
+    if (Math.abs(state.scrollY) <= 0.05) {
+        // Set the level to 0
+        state.scrollY = 0
+        // Stop any further animation
+        stopAnimation()
+    }
 }
 
 // When the user cancels a drag intent
-function dragStop(e: MouseEvent) {
-
+function dragStop(_: MouseEvent) {
     // Discard the drag intent
     state.isDragging = false;
     // Reset the distance
@@ -469,16 +497,8 @@ function dragStop(e: MouseEvent) {
     state.verified = false;
     // Reset current position
     state.dragA = {x: 0, y: 0}
-
-    if (Math.abs(state.scrollY) != 0 && state.scrollYBack == 0) {
-        if (state.scrollYBack == 0) {
-            decelerate()
-        } else {
-            haltAnimation()
-        }
-    }
-
-
+    // Return the bar back to its position
+    if (Math.abs(state.scrollY) > 0) animate()
 }
 
 
@@ -489,7 +509,9 @@ provide('remote', remote)
 
 
 <template>
+
     <div v-if="!screensaver.hideTerminal" class="h-100 w-100">
+
         <div class="terminal w-100 h-100"
              v-on:mousedown="dragStart"
              v-on:mousemove="dragContinue"

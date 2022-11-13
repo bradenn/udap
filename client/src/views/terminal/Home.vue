@@ -93,6 +93,7 @@ function getRoutes() {
 <template>
 
     <div :class="``" class="h-100 w-100">
+        {{ apples }}
         <div class="home-grid w-100 h-100">
 
             <div style="grid-column: 1/span 3; grid-row: 1/span 4;">
