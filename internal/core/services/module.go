@@ -6,25 +6,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 	"udap/internal/log"
 	"udap/internal/pulse"
 )
 
-func NewModuleService(db *gorm.DB, runtime ports.ModuleOperator) ports.ModuleService {
-	repo := repository.NewModuleRepository(db)
-	operator := runtime
+func NewModuleService(repository ports.ModuleRepository, runtime ports.ModuleOperator) ports.ModuleService {
 	return &moduleService{
-		repository: repo,
-		operator:   operator,
+		repository: repository,
+		operator:   runtime,
 	}
 }
 
@@ -69,18 +64,23 @@ func (u *moduleService) EmitAll() error {
 	return nil
 }
 
+// Update all the running modules
 func (u *moduleService) Update(id string) error {
+	// Find the local module from the repository
 	module, err := u.repository.FindById(id)
 	if err != nil {
 		return err
 	}
+	// Make sure the module is valid
 	if !module.Enabled || !module.Running {
 		return fmt.Errorf("module must be enabled and running to update")
 	}
+	// Catch any panics that may occur when running the update function
 	defer func() {
+		// Attempt to recover from a panic
 		if r := recover(); r != nil {
 			log.Recovered("Module '%s' panicked; module entering safe-mode", module.Name)
-			err := u.Dispose(module.Id)
+			err = u.Dispose(module.Id)
 			if err != nil {
 				log.Err(fmt.Errorf("module disposal failed, runtime must be flushed to resume operation: %s",
 					err.Error()))
@@ -88,17 +88,16 @@ func (u *moduleService) Update(id string) error {
 			}
 		}
 	}()
+	// Mark the time that the update begins
 	pulse.Begin(module.Id)
 	// End the pulse when the update concludes or errors out
-	defer func() {
-		pulse.End(module.Id)
-	}()
-
+	defer pulse.End(module.Id)
+	// Attempt to update the modules
 	err = u.operator.Update(module.UUID)
 	if err != nil {
 		return err
 	}
-
+	// Return normally
 	return nil
 }
 
@@ -145,7 +144,6 @@ func (u *moduleService) Load(id string) error {
 	if err != nil {
 		return err
 	}
-	module.Running = false
 	// Attempt to load the module
 	config, err := u.operator.Load(module.Name, module.UUID)
 	if err != nil {
@@ -156,6 +154,7 @@ func (u *moduleService) Load(id string) error {
 	module.Description = config.Description
 	module.Type = config.Type
 	module.Author = config.Author
+	module.Running = false
 	err = u.repository.Update(module)
 	if err != nil {
 		return err
@@ -179,13 +178,13 @@ func (u *moduleService) Build(id string) error {
 	if err != nil {
 		return err
 	}
-	start := time.Now()
+	// start := time.Now()
 	err = u.operator.Build(module.Name, module.UUID)
 	if err != nil {
 		return err
 	}
-	log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).String())
+	// log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
+	// 	time.Since(start).Truncate(time.Millisecond).String())
 	return nil
 }
 
@@ -203,7 +202,7 @@ func (u *moduleService) Dispose(id string) error {
 	if err != nil {
 		return err
 	}
-	start := time.Now()
+	// start := time.Now()
 	// Attempt to dispose of the module (only works if the module developer plays nicely)
 	err = u.operator.Dispose(module.Name, module.UUID)
 	if err != nil {
@@ -211,8 +210,8 @@ func (u *moduleService) Dispose(id string) error {
 	}
 	// Set the module as not running, so it is not updated
 	module.Running = false
-	log.Event("Module '%s' @ 0x%s unloaded. (%s)", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).String())
+	// log.Event("Module '%s' @ 0x%s unloaded. (%s)", module.Name, module.SessionId(),
+	// 	time.Since(start).Truncate(time.Millisecond).String())
 	module.UUID = ""
 	// Mark the module as stopped if the disposal was successful
 	err = u.setState(module.Id, STOPPED)
@@ -230,13 +229,13 @@ func (u *moduleService) UpdateAll() error {
 	}
 	wg := sync.WaitGroup{}
 	ref := *modules
-	wg.Add(len(ref))
 	for _, module := range ref {
+		if !module.Running || !module.Enabled {
+			continue
+		}
+		wg.Add(1)
 		go func(mod domain.Module) {
 			defer wg.Done()
-			if !mod.Running || !mod.Enabled {
-				return
-			}
 			err = u.Update(mod.Id)
 			if err != nil {
 				log.Err(err)

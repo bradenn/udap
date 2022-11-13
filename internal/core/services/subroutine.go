@@ -3,16 +3,14 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewSubRoutineService(db *gorm.DB, operator ports.SubRoutineOperator) ports.SubRoutineService {
-	repo := repository.NewSubRoutineRepository(db)
-	return &subRoutineService{repository: repo, operator: operator}
+func NewSubRoutineService(repository ports.SubRoutineRepository, operator ports.SubRoutineOperator) ports.
+	SubRoutineService {
+	return &subRoutineService{repository: repository, operator: operator}
 }
 
 type subRoutineService struct {
@@ -50,7 +48,6 @@ func (u *subRoutineService) TriggerById(id string) error {
 	if err != nil {
 		return err
 	}
-
 	for _, routine := range routines {
 		err = u.operator.Run(*routine)
 		if err != nil {
@@ -94,11 +91,27 @@ func (u *subRoutineService) FindById(id string) (*domain.SubRoutine, error) {
 }
 
 func (u *subRoutineService) Create(subRoutine *domain.SubRoutine) error {
-	return u.repository.Create(subRoutine)
+	err := u.repository.Create(subRoutine)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*subRoutine)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *subRoutineService) Update(subRoutine *domain.SubRoutine) error {
-	return u.repository.Update(subRoutine)
+	err := u.repository.Update(subRoutine)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*subRoutine)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *subRoutineService) Delete(id string) error {

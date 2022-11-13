@@ -5,16 +5,13 @@ package services
 import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewUserService(db *gorm.DB) ports.UserService {
-	repo := repository.NewUserRepository(db)
-	return &userService{repository: repo}
+func NewUserService(repository ports.UserRepository) ports.UserService {
+	return &userService{repository: repository}
 }
 
 type userService struct {

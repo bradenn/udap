@@ -3,10 +3,8 @@
 package controller
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
-	"udap/internal/core/services"
 )
 
 type Controller struct {
@@ -23,6 +21,7 @@ type Controller struct {
 	Macros        ports.MacroService
 	Triggers      ports.TriggerService
 	SubRoutines   ports.SubRoutineService
+	RX            chan<- domain.Mutation
 }
 
 type CoreModule interface {
@@ -30,86 +29,11 @@ type CoreModule interface {
 	EmitAll() error
 }
 
-func NewController(db *gorm.DB) (*Controller, error) {
-	c := &Controller{}
-	c.Entities = services.NewEntityService(db)
-	c.Devices = services.NewDeviceService(db)
-	c.Networks = services.NewNetworkService(db)
-	c.Users = services.NewUserService(db)
-	c.Notifications = services.NewNotificationService(db)
-	c.Zones = services.NewZoneService(db)
-	c.Logs = services.NewLogService()
-
+func NewController(resp chan domain.Mutation) (*Controller, error) {
+	c := &Controller{
+		RX: resp,
+	}
 	return c, nil
-}
-
-func (c *Controller) WatchAll(resp chan domain.Mutation) {
-
-	err := c.Attributes.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Entities.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Modules.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Endpoints.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Devices.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Networks.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Zones.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Notifications.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Users.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Logs.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Macros.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.Triggers.Watch(resp)
-	if err != nil {
-		return
-	}
-
-	err = c.SubRoutines.Watch(resp)
-	if err != nil {
-		return
-	}
-
 }
 
 func (c *Controller) EmitAll() error {

@@ -4,16 +4,13 @@ package services
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewZoneService(db *gorm.DB) ports.ZoneService {
-	repo := repository.NewZoneRepository(db)
-	return &zoneService{repository: repo}
+func NewZoneService(db ports.ZoneRepository) ports.ZoneService {
+	return &zoneService{repository: db}
 }
 
 type zoneService struct {

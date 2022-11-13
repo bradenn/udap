@@ -8,8 +8,10 @@ import (
 )
 
 func NewModuleRuntime(service ports.ModuleService) {
+	log.Event("Starting Modules: ")
 	err := service.Discover()
 	if err != nil {
+		log.Err(err)
 		return
 	}
 

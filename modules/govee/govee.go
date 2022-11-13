@@ -154,7 +154,7 @@ func (g *Govee) sendApiDeviceRequest(id string, method string, path string, body
 
 	c := http.Client{}
 	defer c.CloseIdleConnections()
-	c.Timeout = time.Millisecond * 500
+	c.Timeout = time.Millisecond * 2000
 	p := fmt.Sprintf("https://developer-api.govee.com/v1/devices%s", path)
 	request, err := http.NewRequest(method, p, &buf)
 	if err != nil {

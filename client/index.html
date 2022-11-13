@@ -5,10 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <script src="./vendor/fa-6/js/all.min.js"></script>
     <title>UDAP</title>
-</head>
-<body>
-
-<script id="vshader" type="x-shader/x-vertex">
+    <script id="vshader" type="x-shader/x-vertex">
 	attribute float size;
 
 			varying vec3 vColor;
@@ -19,7 +16,7 @@
 
 				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-				gl_PointSize = size * ( 325.0 / -mvPosition.z );
+				gl_PointSize = size * ( 750.0 / -mvPosition.z );
 
 				vColor *= ( 125.0 / -mvPosition.z );
 
@@ -27,8 +24,12 @@
 
 			}
 
-</script>
-<script id="fshader" type="x-shader/x-fragment">
+
+
+
+
+    </script>
+    <script id="fshader" type="x-shader/x-fragment">
 uniform sampler2D pointTexture;
 
 varying vec3 vColor;
@@ -41,14 +42,14 @@ void main() {
 }
 
 
+    </script>
+</head>
 
+<body>
 
-</script>
-
-<div id="app">
-
-<div class="simple-keyboard"></div>
-</div>
+<div id="app"></div>
 <script src="./src/main.ts" type="module"></script>
+
 </body>
+
 </html>

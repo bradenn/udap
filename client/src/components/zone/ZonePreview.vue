@@ -4,11 +4,12 @@
 
 import Plot from "@/components/plot/Plot.vue";
 import {inject} from "vue";
-import type {Remote, Zone} from "@/types";
+import type {Zone} from "@/types";
 import axios from "axios";
+import type {Remote} from "@/remote";
 
 interface ZoneProps {
-  zone: Zone
+    zone: Zone
 }
 
 let props = defineProps<ZoneProps>()
@@ -16,44 +17,44 @@ let props = defineProps<ZoneProps>()
 let remote = inject('remote') as Remote
 
 function restoreZone(id: string) {
-  axios.post(`http://localhost:3020/zones/${id}/restore`).then(res => {
-  }).catch(err => console.log(err))
-  // remote.nexus.requestId("zone", "restore", "", id)
+    axios.post(`http://localhost:3020/zones/${id}/restore`).then(res => {
+    }).catch(err => console.log(err))
+    // remote.nexus.requestId("zone", "restore", "", id)
 }
 
 function deleteZone(id: string) {
-  axios.post(`http://localhost:3020/zones/${id}/delete`).then(res => {
-  }).catch(err => console.log(err))
-  // remote.nexus.requestId("zone", "delete", "", id)
+    axios.post(`http://localhost:3020/zones/${id}/delete`).then(res => {
+    }).catch(err => console.log(err))
+    // remote.nexus.requestId("zone", "delete", "", id)
 }
 
 </script>
 
 <template>
 
-  <Plot :cols="2" :rows="3">
-    <div class="subplot subplot-inline">
-      <div class="d-flex label-sm label-o4">{{ props.zone.name }}</div>
-    </div>
-    <div class="d-flex label-sm label-o4 subplot justify-content-end px-1 subplot-inline"
-         @click="props.zone.deleted?restoreZone(props.zone.id):deleteZone(props.zone.id)">
-      <div>
-        {{ props.zone.deleted ? 'Restore' : 'Delete' }}
-      </div>
+    <Plot :cols="2" :rows="3">
+        <div class="subplot subplot-inline">
+            <div class="d-flex label-sm label-o4">{{ props.zone.name }}</div>
+        </div>
+        <div class="d-flex label-sm label-o4 subplot justify-content-end px-1 subplot-inline"
+             @click="props.zone.deleted?restoreZone(props.zone.id):deleteZone(props.zone.id)">
+            <div>
+                {{ props.zone.deleted ? 'Restore' : 'Delete' }}
+            </div>
 
-    </div>
+        </div>
 
-    <div v-for="entity in props.zone.entities" class="subplot">
-      <div v-if="entity" class="d-flex justify-content-start align-items-center flex-row  w-100">
-        <div class="label-w500 label-o3 label-c1">{{ entity.icon }}&nbsp;</div>
-        <div class="label-w500 label-c1">{{ entity.name }}</div>
-        <div class="flex-grow-1"></div>
-      </div>
-    </div>
+        <div v-for="entity in props.zone.entities" class="subplot">
+            <div v-if="entity" class="d-flex justify-content-start align-items-center flex-row  w-100">
+                <div class="label-w500 label-o3 label-c1">{{ entity.icon }}&nbsp;</div>
+                <div class="label-w500 label-c1">{{ entity.name }}</div>
+                <div class="flex-grow-1"></div>
+            </div>
+        </div>
 
-    <div>
-    </div>
-  </Plot>
+        <div>
+        </div>
+    </Plot>
 </template>
 
 <style lang="scss" scoped>

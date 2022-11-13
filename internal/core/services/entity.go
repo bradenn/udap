@@ -3,18 +3,14 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
-	"udap/internal/log"
 )
 
-func NewEntityService(db *gorm.DB) ports.EntityService {
-	repo := repository.NewEntityRepository(db)
+func NewEntityService(repository ports.EntityRepository) ports.EntityService {
 	return &entityService{
-		repository: repo}
+		repository: repository}
 }
 
 type entityService struct {
@@ -70,7 +66,6 @@ func (u *entityService) Register(entity *domain.Entity) error {
 	if err != nil {
 		return err
 	}
-	log.Event("Entity '%s' registered.", entity.Name)
 	err = u.Emit(*entity)
 	if err != nil {
 		return err

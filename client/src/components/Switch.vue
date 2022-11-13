@@ -2,55 +2,57 @@
 
 <script lang="ts" setup>
 
-import {inject, reactive} from "vue";
+import {reactive} from "vue";
 import {v4 as uuidv4} from "uuid";
+import core from "@/core";
 
 
 const props = defineProps<{
-  active: boolean,
-  name?: string,
-  unit?: string,
+    active: boolean,
+    name?: string,
+    unit?: string,
 }>()
 
 let state = reactive({
-  active: props.active,
-  uuid: uuidv4().toString(),
+    active: props.active,
+    uuid: uuidv4().toString(),
 })
 
-const haptics = inject("haptic") as (a: number, b: number, c: number) => void
+const haptics = core.haptics()
+
 
 function toggle(pos: boolean) {
-  if (pos != state.active) {
-    state.active = !state.active
-    haptics(2, 1, 100)
-    // haptics(1, 1, 75)
+    if (pos != state.active) {
+        state.active = !state.active
+        haptics.tap(2, 1, 100)
+        // haptics(1, 1, 75)
 
-  }
+    }
 }
 
 
 </script>
 
 <template>
-  <div class="element w-100 p-1">
-    <div class="d-flex justify-content-between">
-      <div class="label-c1 label-o3 label-w500 p-1 px-1 pb-1 pt-0">{{ props.name }}</div>
-      <div class="label-c1 label-o3 label-w500 p-1 px-1 pb-1 pt-0">
-        {{ state.active ? "ON" : "OFF" }}
-      </div>
+    <div class="element w-100 p-1">
+        <div class="d-flex justify-content-between">
+            <div class="label-c1 label-o3 label-w500 p-1 px-1 pb-1 pt-0">{{ props.name }}</div>
+            <div class="label-c1 label-o3 label-w500 p-1 px-1 pb-1 pt-0">
+                {{ state.active ? "ON" : "OFF" }}
+            </div>
+        </div>
+        <div class="switch-path subplot"></div>
+        <div class="switch-spots">
+            <div :class="`${state.active?'subplot switch-space-active switch-left':''}`" class="switch-space"
+                 @click="() => toggle(true)">
+                􀥤
+            </div>
+            <div :class="`${!state.active?'subplot switch-space-active switch-right':''}`" class="switch-space"
+                 @click="() => toggle(false)">
+                􀥥
+            </div>
+        </div>
     </div>
-    <div class="switch-path subplot"></div>
-    <div class="switch-spots">
-      <div :class="`${state.active?'subplot switch-space-active switch-left':''}`" class="switch-space"
-           @click="() => toggle(true)">
-        􀥤
-      </div>
-      <div :class="`${!state.active?'subplot switch-space-active switch-right':''}`" class="switch-space"
-           @click="() => toggle(false)">
-        􀥥
-      </div>
-    </div>
-  </div>
 
 </template>
 

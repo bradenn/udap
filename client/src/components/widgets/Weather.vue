@@ -2,68 +2,69 @@
 
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import moment from "moment";
-import type {Attribute, Entity, Remote} from "@/types";
+import type {Attribute, Entity} from "@/types";
 import type {CurrentWeather, Weather} from "@/weather"
 import {getWeatherIcon, getWeatherState} from "@/weather"
+import type {Remote} from "@/remote";
 
 function degToCompass(num: number) {
-  const val = Math.floor((num / 45) + 0.5);
-  const arr = ["North", "North East", "East", "South East", "South", "South West", "West", "North West"];
-  return arr[(val % 8)]
+    const val = Math.floor((num / 45) + 0.5);
+    const arr = ["North", "North East", "East", "South East", "South", "South West", "West", "North West"];
+    return arr[(val % 8)]
 }
 
 
 interface StateType {
-  entity: Entity
-  forecast: Attribute
-  interval: number
-  loading: boolean
-  gradient: number
-  weather: Weather
-  ranges: any
-  menu: boolean
-  current: CurrentWeather
-  timeSince: string
-  lastPull: number
-  properties: any
-  now: any
+    entity: Entity
+    forecast: Attribute
+    interval: number
+    loading: boolean
+    gradient: number
+    weather: Weather
+    ranges: any
+    menu: boolean
+    current: CurrentWeather
+    timeSince: string
+    lastPull: number
+    properties: any
+    now: any
 }
 
 const state = reactive<StateType>({
-  entity: {} as Entity,
-  forecast: {} as Attribute,
-  interval: 0,
-  loading: true,
-  menu: false,
-  gradient: 0,
-  weather: {} as Weather,
-  current: {} as CurrentWeather,
-  lastPull: 0,
-  timeSince: "",
-  properties: {
-    updateTime: "",
-    generatedAt: "",
-  },
-  ranges: {
-    temp: {
-      min: 100,
-      max: -100,
+    entity: {} as Entity,
+    forecast: {} as Attribute,
+    interval: 0,
+    loading: true,
+    menu: false,
+    gradient: 0,
+    weather: {} as Weather,
+    current: {} as CurrentWeather,
+    lastPull: 0,
+    timeSince: "",
+    properties: {
+        updateTime: "",
+        generatedAt: "",
     },
-    wind: {
-      min: 100,
-      max: 0,
-    }, rain: {
-      min: 0,
-      max: 0,
+    ranges: {
+        temp: {
+            min: 100,
+            max: -100,
+        },
+        wind: {
+            min: 100,
+            max: 0,
+        }, rain: {
+            min: 0,
+            max: 0,
+        },
     },
-  },
-  now: {}
+    now: {}
 })
 
 
 onMounted(() => {
-  state.loading = true
-  handleUpdates(remote)
+    state.loading = true
+    handleUpdates(remote)
 })
 
 
@@ -72,237 +73,228 @@ let remote: Remote = inject("remote") || {} as Remote
 watchEffect(() => handleUpdates(remote))
 
 function handleUpdates(remote: Remote) {
-  if (!remote) return
-  let entity = remote.entities.find(e => e.name === 'weather')
-  if (!entity) return;
-  state.entity = entity
-  let attribute = remote.attributes.find(e => e.entity === (entity as Entity).id && e.key === 'forecast')
-  if (!attribute) return;
-  state.forecast = attribute
-  parseWeather(JSON.parse(attribute.value) as Weather)
-  return remote.attributes
+    if (!remote) return
+    let entity = remote.entities.find(e => e.name === 'weather')
+    if (!entity) return;
+    state.entity = entity
+    let attribute = remote.attributes.find(e => e.entity === (entity as Entity).id && e.key === 'forecast')
+    if (!attribute) return;
+    state.forecast = attribute
+    parseWeather(JSON.parse(attribute.value) as Weather)
+    return remote.attributes
 }
 
 function parseWeather(we: Weather) {
 
-  state.properties.updateTime = moment(we.generationtime_ms).fromNow()
+    state.properties.updateTime = moment(we.generationtime_ms).fromNow()
 
-  state.properties.generatedAt = moment(we.generationtime_ms).fromNow()
-  state.current = we.current_weather
+    state.properties.generatedAt = moment(we.generationtime_ms).fromNow()
+    state.current = we.current_weather
 
-  if (we.hourly.temperature_2m.length <= 0) return
-  for (let i = 0; i < Math.min(we.hourly.temperature_2m.length, 24); i++) {
-    if (state.ranges.temp.max < we.hourly.temperature_2m[i]) {
-      state.ranges.temp.max = we.hourly.temperature_2m[i]
-    } else if (state.ranges.temp.min > we.hourly.temperature_2m[i]) {
-      state.ranges.temp.min = we.hourly.temperature_2m[i]
+    if (we.hourly.temperature_2m.length <= 0) return
+    for (let i = 0; i < Math.min(we.hourly.temperature_2m.length, 24); i++) {
+        if (state.ranges.temp.max < we.hourly.temperature_2m[i]) {
+            state.ranges.temp.max = we.hourly.temperature_2m[i]
+        } else if (state.ranges.temp.min > we.hourly.temperature_2m[i]) {
+            state.ranges.temp.min = we.hourly.temperature_2m[i]
+        }
+
+        if (state.ranges.rain.max < we.hourly.precipitation[i]) {
+            state.ranges.rain.max = we.hourly.precipitation[i]
+        } else if (state.ranges.rain.min > we.hourly.precipitation[i]) {
+            state.ranges.rain.min = we.hourly.precipitation[i]
+        }
+
     }
 
-    if (state.ranges.rain.max < we.hourly.precipitation[i]) {
-      state.ranges.rain.max = we.hourly.precipitation[i]
-    } else if (state.ranges.rain.min > we.hourly.precipitation[i]) {
-      state.ranges.rain.min = we.hourly.precipitation[i]
-    }
 
-  }
-
-
-  state.weather = we
-  state.lastPull = new Date(we.generationtime_ms).valueOf()
-  state.timeSince = moment(state.lastPull).fromNow()
-  state.loading = false
+    state.weather = we
+    state.lastPull = new Date(we.generationtime_ms).valueOf()
+    state.timeSince = moment(state.lastPull).fromNow()
+    state.loading = false
 }
 
 function toggleMenu() {
-  state.menu = !state.menu
+    state.menu = !state.menu
 }
 
 </script>
 
 <template>
-  <div v-if="state.loading" class="element gap w-100 h-100 p-2">
+    <div v-if="state.loading" class="element gap w-100 h-100 p-2">
 
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="label-xl label-o6 label-w500 lh-1 ">
-        --°
-      </div>
-      <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-end" style="gap: 0.125rem">
-        <div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="label-xl label-o6 label-w500 lh-1 ">
+                --°
+            </div>
+            <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-end" style="gap: 0.125rem">
+                <div>
 
-          <span>--</span>
+                    <span>--</span>
+                </div>
+                <div class="label-c3 label-o2">H: --° L:
+                                               --°
+                </div>
+            </div>
         </div>
-        <div class="label-c3 label-o2">H: --° L:
-                                       --°
+
+        <h6 class="mb-1 mt-1">Today</h6>
+        <div class=" d-flex flex-row justify-content-between px-1">
+            <div class="d-flex flex-row justify-content-between align-items-end w-100">
+                <div v-for="v in Array(7).keys()"
+                     class="d-flex flex-column justify-content-center align-items-center">
+                    <div class="label-c4 label-w400 label-o4">{{
+                            moment(new Date().setHours(new Date().getHours() + v)).format("hA")
+                        }}
+                    </div>
+                    <div class="label-c2 label-o4">
+                        --
+                    </div>
+                    <div class="label-c4 label-o3 label-w500">&nbsp;--°</div>
+
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <h6 class="mb-1 mt-1">Today</h6>
-    <div class=" d-flex flex-row justify-content-between px-1">
-      <div class="d-flex flex-row justify-content-between align-items-end w-100">
-        <div v-for="v in Array(7).keys()"
-             class="d-flex flex-column justify-content-center align-items-center">
-          <div class="label-c4 label-w400 label-o4">{{
-              moment(new Date().setHours(new Date().getHours() + v)).format("hA")
-            }}
-          </div>
-          <div class="label-c2 label-o4">
-            --
-          </div>
-          <div class="label-c4 label-o3 label-w500">&nbsp;--°</div>
-
+        <div class="label-c2 label-o3 py-1 pb-0">
         </div>
-      </div>
-    </div>
-
-    <div class="label-c2 label-o3 py-1 pb-0">
-    </div>
-    <div class="h-sep my-0"></div>
-    <div class="label-c2 label-w400 label-o2 lh-lg">
-      <div>Winds at -- mph going --
-      </div>
-    </div>
-
-  </div>
-  <div v-else-if="state.menu" class="element gap w-100 h-100 p-2 weather-widget" @click="state.menu = false">
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="label-xl label-o6 label-w500 lh-1 ">{{ Math.round(state.current.temperature) }}°</div>
-      <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-end" style="gap: 0.125rem">
-        <div>
-          <div v-if="getWeatherState(state.current.weathercode).toLowerCase().includes('rain')">
-            Tut, Tut; Looks like {{ getWeatherState(state.current.weathercode) }}
-          </div>
-          <div v-else>
-            {{ getWeatherState(state.current.weathercode) }}
-          </div>
+        <div class="h-sep my-0"></div>
+        <div class="label-c2 label-w400 label-o2 lh-lg">
+            <div>Winds at -- mph going --
+            </div>
         </div>
-        <div class="label-c3 label-o2">H: {{ Math.round(state.ranges.temp.max) }}° L:
-          {{ Math.round(state.ranges.temp.min) }}°
+
+    </div>
+    <div v-else-if="state.menu" class="element gap w-100 h-100 p-2 weather-widget" @click="state.menu = false">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="label-xl label-o6 label-w500 lh-1 ">{{ Math.round(state.current.temperature) }}°</div>
+            <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-end" style="gap: 0.125rem">
+                <div>
+                    <div v-if="getWeatherState(state.current.weathercode).toLowerCase().includes('rain')">
+                        Tut, Tut; Looks like {{ getWeatherState(state.current.weathercode) }}
+                    </div>
+                    <div v-else>
+                        {{ getWeatherState(state.current.weathercode) }}
+                    </div>
+                </div>
+                <div class="label-c3 label-o2">H: {{ Math.round(state.ranges.temp.max) }}° L:
+                    {{ Math.round(state.ranges.temp.min) }}°
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <h6 class="mb-0 mt-1">This Week</h6>
-    <div class=" d-flex flex-row justify-content-between px-1">
-      <div class="d-flex flex-row justify-content-between align-items-end w-100">
-        <div v-for="v in Array(7).keys()"
-             class="d-flex flex-column justify-content-center align-items-center">
-          <div class="label-c4 label-w400 label-o4">{{
-              moment(new Date()).add(v, "day").format("ddd")
-            }}
-          </div>
+        <h6 class="mb-0 mt-1">This Week</h6>
+        <div class=" d-flex flex-row justify-content-between px-1">
+            <div class="d-flex flex-row justify-content-between align-items-end w-100">
+                <div v-for="v in Array(7).keys()"
+                     class="d-flex flex-column justify-content-center align-items-center">
+                    <div class="label-c4 label-w400 label-o4">{{
+                            moment(new Date()).add(v, "day").format("ddd")
+                        }}
+                    </div>
 
 
-          <div class="label-c2 label-o4">{{ getWeatherIcon(state.weather.daily.weathercode[v], 24) }}</div>
-          <div v-if="state.weather.daily.precipitation_sum[v] === 0" class="label-c4 label-o3 label-w500">
-            &nbsp;{{ Math.round(state.weather.daily.temperature_2m_max[v]) }}°
-          </div>
-          <div v-else class="label-c4 label-o3 label-w500" style="color: rgba(92,177,246,0.6)">{{
-              state.weather.daily.precipitation_sum[v]
-            }}"
-          </div>
+                    <div class="label-c2 label-o4">{{ getWeatherIcon(state.weather.daily.weathercode[v], 24) }}</div>
+                    <div v-if="state.weather.daily.precipitation_sum[v] === 0" class="label-c4 label-o3 label-w500">
+                        &nbsp;{{ Math.round(state.weather.daily.temperature_2m_max[v]) }}°
+                    </div>
+                    <div v-else class="label-c4 label-o3 label-w500" style="color: rgba(92,177,246,0.6)">{{
+                            state.weather.daily.precipitation_sum[v]
+                        }}"
+                    </div>
 
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div v-show="false">
-      <div class="h-sep my-1"></div>
-      <h6 class="mb-1 mt-2">Rain</h6>
-      <div class=" d-flex flex-row justify-content-between px-1">
-        <div class="d-flex flex-row justify-content-between align-items-end w-100">
-          <div v-for="p in state.weather.hourly.precipitation.slice(0, 24)">
-            <div :style="`height: ${(p - state.ranges.rain.min)/(state.ranges.rain.max - state.ranges.rain.min)}rem;`"
-                 class="temp-bar"></div>
-          </div>
+        <div v-show="false">
+            <div class="h-sep my-1"></div>
+            <h6 class="mb-1 mt-2">Rain</h6>
+            <div class=" d-flex flex-row justify-content-between px-1">
+                <div class="d-flex flex-row justify-content-between align-items-end w-100">
+                    <div v-for="p in state.weather.hourly.precipitation.slice(0, 24)">
+                        <div :style="`height: ${(p - state.ranges.rain.min)/(state.ranges.rain.max - state.ranges.rain.min)}rem;`"
+                             class="temp-bar"></div>
+                    </div>
+                </div>
+                <div class="d-flex flex-column justify-content-start align-items-end px-1">
+                    <div class="label-subtext">{{ state.ranges.rain.max }}in</div>
+                    <div class="label-subtext mt-1">{{ state.ranges.rain.min }}in</div>
+                </div>
+            </div>
         </div>
-        <div class="d-flex flex-column justify-content-start align-items-end px-1">
-          <div class="label-subtext">{{ state.ranges.rain.max }}in</div>
-          <div class="label-subtext mt-1">{{ state.ranges.rain.min }}in</div>
+        <div class="label-c2 label-o3 py-1 pb-0">
         </div>
-      </div>
-    </div>
-    <div class="label-c2 label-o3 py-1 pb-0">
-    </div>
-    <div class="h-sep my-0"></div>
-    <div class="label-c2 label-w400 label-o2 lh-lg">
-      <div>Winds at {{ state.current.windspeed }} mph going {{
-          degToCompass(state.current.winddirection)
-        }}
-      </div>
-    </div>
+        <div class="h-sep my-0"></div>
+        <div class="label-c2 label-w400 label-o2 lh-lg">
+            <div>Winds at {{ state.current.windspeed }} mph going {{
+                    degToCompass(state.current.winddirection)
+                }}
+            </div>
+        </div>
 
-  </div>
-  <div v-else class="element clear gap w-100 h-100 p-2 weather-widget" @click="toggleMenu">
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="label-xl label-o6 label-w500 lh-1 ">{{ Math.round(state.current.temperature) }}°</div>
-      <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-end" style="gap: 0.125rem">
-        <div v-if="state.current">
-          <div v-if="getWeatherState(state.current.weathercode || 0).toLowerCase().includes('rain')">
-            Tut, Tut; Looks like {{ getWeatherState(state.current.weathercode) }}
-          </div>
-          <div v-else>
-            {{ getWeatherState(state.current.weathercode) }}
-          </div>
-        </div>
-        <div class="label-c3 label-o2">H: {{ Math.round(state.ranges.temp.max) }}° L:
-          {{ Math.round(state.ranges.temp.min) }}°
-        </div>
-      </div>
     </div>
+    <div v-else class="element gap w-100 h-100 p-1 px-2 weather-widget" @click="toggleMenu">
+        <div class="d-flex justify-content-start align-items-center">
+            <div class="label-c2 label-w400 label-o4 lh-1 d-flex flex-column align-items-start "
+                 style="gap: 0.125rem; width: 4rem">
+                <div class="label-cn6 label-o5 label-w600 pt-1 pb-0 lh-1 label-r">{{
+                        Math.round(state.current.temperature)
+                    }}°
+                </div>
+                <div v-if="state.current">
+                    <div v-if="getWeatherState(state.current.weathercode || 0).toLowerCase().includes('rain')">
+                        Tut, Tut; Looks like {{ getWeatherState(state.current.weathercode) }}
+                    </div>
+                    <div v-else>
+                        {{ getWeatherState(state.current.weathercode) }}
+                    </div>
+                </div>
+                <div class="label-c3 label-o2 label-w500">H: {{ Math.round(state.ranges.temp.max) }}° L:
+                    {{ Math.round(state.ranges.temp.min) }}°
+                </div>
+            </div>
+            <div class="flex-grow-1 pt-1">
+                <div class=" d-flex flex-row justify-content-between px-1">
+                    <div class="d-flex flex-row justify-content-between align-items-end w-100">
+                        <div v-for="v in Array(6).keys()"
+                             class="d-flex flex-column justify-content-center align-items-center">
+                            <div class="label-c4 label-w400 label-o4">{{
+                                    moment(new Date()).add(v, "hour").format("hA")
+                                }}
+                            </div>
 
-    <h6 class="mb-0 mt-1">Today</h6>
-    <div class=" d-flex flex-row justify-content-between px-1">
-      <div class="d-flex flex-row justify-content-between align-items-end w-100">
-        <div v-for="v in Array(7).keys()"
-             class="d-flex flex-column justify-content-center align-items-center">
-          <div class="label-c4 label-w400 label-o4">{{
-              moment(new Date()).add(v, "hour").format("hA")
-            }}
-          </div>
 
+                            <div class="label-c2 label-o4">
+                                {{ getWeatherIcon(state.weather.hourly.weathercode[new Date().getHours() + v], v) }}
+                            </div>
+                            <div v-if="state.weather.hourly.precipitation[new Date().getHours()+v] <= 0.0001"
+                                 class="label-c4 label-o3 label-w500">
+                                &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[new Date().getHours() + v]) }}°
+                            </div>
+                            <div v-else class="label-c4 label-o3 label-w500" style="color: rgba(92,177,246,0.6)">{{
+                                    state.weather.hourly.precipitation[new Date().getHours() + v]
+                                }}"
+                            </div>
 
-          <div class="label-c2 label-o4">
-            {{ getWeatherIcon(state.weather.hourly.weathercode[new Date().getHours() + v], v) }}
-          </div>
-          <div v-if="state.weather.hourly.precipitation[new Date().getHours()+v] <= 0.0001"
-               class="label-c4 label-o3 label-w500">
-            &nbsp;{{ Math.round(state.weather.hourly.temperature_2m[new Date().getHours() + v]) }}°
-          </div>
-          <div v-else class="label-c4 label-o3 label-w500 rain">{{
-              state.weather.hourly.precipitation[new Date().getHours() + v]
-            }}"
-          </div>
+                        </div>
+                    </div>
+                </div>
 
+            </div>
         </div>
-      </div>
-    </div>
-    <div v-show="false">
-      <div class="h-sep my-1"></div>
-      <h6 class="mb-1 mt-2">Rain</h6>
-      <div class=" d-flex flex-row justify-content-between px-1">
-        <div class="d-flex flex-row justify-content-between align-items-end w-100">
-          <div v-for="p in state.weather.hourly.precipitation.slice(0, 24)">
-            <div :style="`height: ${(p - state.ranges.rain.min)/(state.ranges.rain.max - state.ranges.rain.min)}rem;`"
-                 class="temp-bar"></div>
-          </div>
-        </div>
-        <div class="d-flex flex-column justify-content-start align-items-end px-1">
-          <div class="label-subtext">{{ state.ranges.rain.max }}in</div>
-          <div class="label-subtext mt-1">{{ state.ranges.rain.min }}in</div>
-        </div>
-      </div>
-    </div>
-    <div class="label-c2 label-o3 py-1 pb-0">
-    </div>
-    <div class="h-sep my-0"></div>
-    <div class="label-c2 label-w400 label-o2 lh-lg">
-      <div>Winds at {{ state.current.windspeed }} mph going {{
-          degToCompass(state.current.winddirection)
-        }}
-      </div>
-    </div>
 
-  </div>
+
+        <div class="label-c2 label-o3 py-1 pb-0">
+        </div>
+        <div class="label-c2 label-w400 label-o2 lh-lg">
+            <!--      <div>Winds at {{ state.current.windspeed }} mph going {{-->
+            <!--    <div class="h-sep my-0"></div>-->
+            <!--          degToCompass(state.current.winddirection)-->
+            <!--        }}-->
+            <!--      </div>-->
+        </div>
+
+    </div>
 
 
 </template>

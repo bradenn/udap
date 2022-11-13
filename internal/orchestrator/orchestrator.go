@@ -12,14 +12,12 @@ import (
 	"time"
 	"udap/internal/controller"
 	"udap/internal/core"
+	"udap/internal/core/device"
 	"udap/internal/core/domain"
-	"udap/internal/core/ports"
-	"udap/internal/core/services"
 	"udap/internal/log"
-	"udap/internal/operators"
-	"udap/internal/port/routes"
-	"udap/internal/port/runtimes"
+	"udap/internal/modules"
 	"udap/internal/pulse"
+	"udap/internal/srv"
 	"udap/platform/database"
 )
 
@@ -27,13 +25,11 @@ type orchestrator struct {
 	db         *gorm.DB
 	controller *controller.Controller
 
-	server  Server
-	maxTick time.Duration
-	done    chan bool
-
-	modules   ports.ModuleService
-	endpoints ports.EndpointService
-
+	server    srv.Server
+	maxTick   time.Duration
+	done      chan bool
+	ready     bool
+	sys       srv.System
 	mutations chan domain.Mutation
 }
 
@@ -42,9 +38,9 @@ type Orchestrator interface {
 	Run() error
 }
 
-func (o *orchestrator) Terminate(reason string) {
-	_ = o.modules.DisposeAll()
-	_ = o.endpoints.CloseAll()
+func (o *orchestrator) Terminate() {
+	_ = o.controller.Modules.DisposeAll()
+	_ = o.controller.Endpoints.CloseAll()
 	fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
 	os.Exit(0)
 }
@@ -56,7 +52,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		return nil, err
 	}
 	// Initialize Server
-	server := NewServer()
+	server := srv.NewServer()
 	// Initialize Orchestrator
 	return &orchestrator{
 		db:         db,
@@ -64,7 +60,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second,
-		mutations:  make(chan domain.Mutation, 16),
+		mutations:  make(chan domain.Mutation, 8),
 	}, nil
 }
 
@@ -81,37 +77,64 @@ func (o *orchestrator) Start() error {
 		}
 	}()
 
+	go func() {
+		err := o.handleMutations()
+		if err != nil {
+			log.Err(err)
+			return
+		}
+	}()
+
 	err := core.MigrateModels(o.db)
 	if err != nil {
 		return err
 	}
 
-	o.controller, err = controller.NewController(o.db)
+	o.controller, err = controller.NewController(o.mutations)
 	if err != nil {
 		return err
 	}
 
-	o.modules = services.NewModuleService(o.db, operators.NewModuleOperator(o.controller))
-	o.endpoints = services.NewEndpointService(o.db, operators.NewEndpointOperator(o.controller))
+	o.ready = false
 
-	o.controller.Attributes = services.NewAttributeService(o.db, operators.NewAttributeOperator())
-	o.controller.Macros = services.NewMacroService(o.db, operators.NewMacroOperator(o.controller))
-	o.controller.SubRoutines = services.NewSubRoutineService(o.db, operators.NewSubRoutineOperator(o.controller))
-	o.controller.Triggers = services.NewTriggerService(o.db, operators.NewTriggerOperator(o.controller))
+	o.sys = srv.NewRtx(&o.server, o.controller, o.db)
 
-	o.controller.Endpoints = o.endpoints
-	o.controller.Modules = o.modules
+	o.sys.UseModules(
+		modules.NewModule)
+
+	o.sys.UseModules(
+		modules.NewEntity,
+		modules.NewAttribute,
+		modules.NewZone)
+
+	o.sys.UseModules(
+		modules.NewEndpoint)
+
+	o.sys.UseModules(
+		modules.NewMacro,
+		modules.NewSubroutine,
+		modules.NewTrigger,
+		modules.NewUser,
+		modules.NewNetwork,
+		device.NewModule,
+		modules.NewNotifications,
+		modules.NewLog,
+	)
+
+	o.sys.Loaded()
+	o.ready = true
 
 	return nil
 }
 
 func (o *orchestrator) Update() error {
-
-	err := o.modules.UpdateAll()
+	if !o.ready {
+		return nil
+	}
+	err := o.controller.Modules.UpdateAll()
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -131,7 +154,11 @@ func (o *orchestrator) broadcastTimings() error {
 func (o *orchestrator) handleMutations() error {
 	for response := range o.mutations {
 		// o.modules.HandleEmits(response)
-		err := o.endpoints.SendAll(response.Id, response.Operation, response.Body)
+		if !o.ready {
+			continue
+		}
+
+		err := o.controller.Endpoints.SendAll(response.Id, response.Operation, response.Body)
 		if err != nil {
 			log.Err(err)
 			continue
@@ -161,53 +188,15 @@ func (o *orchestrator) tick() <-chan error {
 
 func (o *orchestrator) Run() error {
 
-	o.controller.WatchAll(o.mutations)
-
 	wg := sync.WaitGroup{}
 
-	wg.Add(3)
-	go func() {
-		defer wg.Done()
-		err := o.handleMutations()
-		if err != nil {
-			log.Err(err)
-			return
-		}
-	}()
-
-	// Initialize and route applicable domains
-	o.server.AddRoutes(
-		routes.NewEndpointRouter(o.controller.Endpoints),
-		routes.NewAttributeRouter(o.controller.Attributes),
-		routes.NewUserRouter(o.controller.Users),
-		routes.NewZoneRouter(o.controller.Zones),
-		routes.NewDeviceRouter(o.controller.Devices),
-		routes.NewEntityRouter(o.controller.Entities),
-		routes.NewMacroRouter(o.controller.Macros),
-		routes.NewSubroutineRouter(o.controller.SubRoutines),
-		routes.NewTriggerRouter(o.controller.Triggers),
-		routes.NewModuleRouter(o.modules),
-		routes.NewEndpointRouter(o.endpoints),
-	)
-
-	// o.router.Group(func(r chi.Router) {
-	//
-	// 	routes.NewUserRouter(o.controller.Users).RouteInternal(r)
-	// 	routes.NewAttributeRouter(o.controller.Attributes).RouteInternal(r)
-	// 	routes.NewZoneRouter(o.controller.Zones).RouteInternal(r)
-	// 	routes.NewDeviceRouter(o.controller.Devices).RouteInternal(r)
-	// 	routes.NewEntityRouter(o.controller.Entities).RouteInternal(r)
-	// 	routes.NewModuleRouter(o.modules).RouteInternal(r)
-	// 	routes.NewEndpointRouter(o.endpoints).RouteInternal(r)
-	// })
-	// routes.NewEndpointRouter(o.endpoints).RouteExternal(o.router)
-	runtimes.NewModuleRuntime(o.modules)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
 		err := o.server.Run()
 		if err != nil {
-			// log.Err(err)
+			log.Err(err)
 			return
 		}
 	}()
@@ -216,17 +205,21 @@ func (o *orchestrator) Run() error {
 
 	go func() {
 		defer wg.Done()
+
 		for {
 			pulse.Begin("update")
 			t.Reset(o.maxTick + time.Millisecond*100)
 			select {
 			case <-o.done:
 				log.Event("Event loop exiting...")
-				o.Terminate("Terminated")
+				o.Terminate()
 				close(o.mutations)
 				return
 			case <-t.C:
-				log.Event("Orchestrator event loop timed out")
+				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*100).String())
+				log.Event("Currently %d threads.", runtime.NumGoroutine())
+				log.Event("%s", runtime.ReadTrace())
+
 				pulse.End("update")
 				continue
 			case err := <-o.tick():

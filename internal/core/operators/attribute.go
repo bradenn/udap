@@ -44,16 +44,17 @@ func (a *attributeOperator) Request(attribute *domain.Attribute, s string) error
 	}
 
 	attribute.Request = s
+	if attribute.Request != attribute.Value || time.Since(attribute.UpdatedAt) >= time.Minute*1 {
 
-	channel <- *attribute
+		channel <- *attribute
 
-	attribute.Requested = time.Now()
+		attribute.Requested = time.Now()
 
-	err := a.Set(attribute, s)
-	if err != nil {
-		return err
+		err := a.Set(attribute, s)
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -63,6 +64,7 @@ func (a *attributeOperator) Set(attribute *domain.Attribute, s string) error {
 	attribute.Request = s
 
 	attribute.Value = s
+	attribute.UpdatedAt = time.Now()
 
 	return nil
 }

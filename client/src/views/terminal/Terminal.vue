@@ -2,535 +2,439 @@
 <script lang="ts" setup>
 
 import router from '@/router'
-import {defineAsyncComponent, inject, onMounted, onUnmounted, provide, reactive, ref, watch, watchEffect} from "vue";
+import {inject, onMounted, onUnmounted, provide, reactive, watch} from "vue";
 import "@/types";
 
-import type {
-  Attribute,
-  Device,
-  Endpoint,
-  Entity,
-  Identifiable,
-  Log,
-  Macro,
-  Metadata,
-  Module,
-  Network,
-  Preferences,
-  Remote,
-  RemoteRequest,
-  Session,
-  SubRoutine,
-  TerminalDiagnostics,
-  Timing,
-  Trigger,
-  User,
-  Zone
-} from "@/types";
-import {memorySizeOf} from "@/types";
+import type {Entity, Preferences} from "@/types";
 
-import {Nexus, Target} from "@/views/terminal/nexus";
-
+import Clock from '@/components/Clock.vue'
+import IdTag from '@/components/IdTag.vue'
+import ContextBar from "@/components/ContextBar.vue";
 import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
-import type {Haptics} from "@/views/terminal/haptics";
-import haptics from "@/views/terminal/haptics";
-import Toast from "@/components/Toast.vue";
-
-const Clock = defineAsyncComponent({
-  loader: () => import('@/components/Clock.vue'),
-
-})
-
-const Input = defineAsyncComponent({
-  loader: () => import('@/views/Input.vue'),
-
-})
-
-const Glance = defineAsyncComponent({
-  loader: () => import('@/views/terminal/Glance.vue'),
-
-})
-
-const Bubbles = defineAsyncComponent({
-  loader: () => import('@/views/screensaver/Bubbles.vue'),
-})
-
-const Warp = defineAsyncComponent({
-  loader: () => import('@/views/screensaver/Warp.vue'),
-})
-
-const IdTag = defineAsyncComponent({
-  loader: () => import('@/components/IdTag.vue'),
-})
+import Notification from "@/components/Notification.vue";
+import Input from '@/views/Input.vue'
+import ScreensaverDom from "@/views/screensaver/Screensaver.vue";
 
 
-// -- Websockets --
+import type {Remote} from "@/remote";
+import _remote from "@/remote";
+
+import type {Haptics} from "@/haptics";
+import _haptics from "@/haptics";
+
+import type {Notify} from "@/notifications";
+import _notify from "@/notifications";
+
+import type {Screensaver} from "@/screensaver";
+import _screensaver from "@/screensaver";
+
+/* Remote */
+const remote: Remote = _remote
+provide("remote", remote)
+
+/* Notify */
+const notify: Notify = _notify
+provide("notify", notify)
+
+/* Screensaver */
+const screensaver: Screensaver = _screensaver
+provide("screens", screensaver)
+
+/* Haptics */
+const haptics: Haptics = _haptics
+provide("haptics", haptics)
+
+// Load runtime when the terminal view is loaded
 onMounted(() => {
-  haptics.connect("ws://10.0.1.60/ws")
-
-  // haptic.haptics = new HapticEngine("ws://10.0.1.60/ws")
-  remote.nexus = new Nexus(handleMessage)
+    haptics.connect("ws://10.0.1.60/ws")
+    remote.connect()
 })
-
-// function tap(frequency: number, iterations: number, amplitude: number) {
-//   haptic.haptics.tap(frequency, iterations, amplitude)
-// }
-
-provide("haptic", haptics.tap)
-provide("haptics", haptics as Haptics)
 
 onUnmounted(() => {
-  if (!remote.nexus.ws) return
-  remote.nexus.ws.close()
-  if (!haptics) return
-  haptics.close()
-  remote = {} as Remote
+    haptics.disconnect()
+    // remote.disconnect()
 })
 
-
-// Define the reactive components for the remote data
-let remote = reactive<Remote>({
-  connected: false,
-  metadata: {} as Metadata,
-  entities: [] as Entity[],
-  attributes: [] as Attribute[],
-  devices: [] as Device[],
-  networks: [] as Network[],
-  endpoints: [] as Endpoint[],
-  users: [] as User[],
-  timings: [] as Timing[],
-  modules: [] as Module[],
-  zones: [] as Zone[],
-  subroutines: [] as SubRoutine[],
-  macros: [] as Macro[],
-  triggers: [] as Trigger[],
-  logs: [] as Log[],
-  nexus: {} as Nexus,
-  size: "" as string,
-  diagnostics: {
-    queue: [] as RemoteRequest[],
-    updates: new Map<string, number>(),
-    connected: false,
-    maxRSS: 0,
-    lastTarget: "",
-    lastUpdate: 0,
-    objects: 0
-  } as TerminalDiagnostics
-});
-
-
-let screensaver: any = inject("screensaver")
 let preferences = inject("preferences") as Preferences
 let system: any = inject("system")
 
-// Handle and route incoming messages to the local cache
-function handleMessage(target: Target, data: any) {
-  remote.diagnostics.lastUpdate = new Date().valueOf()
-  state.lastUpdate = new Date().valueOf()
-  remote.connected = true
-  let dx = 0;
-  switch (target) {
-    case Target.Close:
-      remote.connected = false
-      return
-
-    case Target.Metadata:
-      system.udap.system = data.system as Metadata
-      remote.metadata = data as Metadata
-      dx = 1
-      break
-    case Target.Timing:
-      if (remote.timings.find((e: Timing) => e.pointer === data.pointer)) {
-        remote.timings = remote.timings.map((a: Timing) => a.pointer === data.pointer ? data : a)
-        dx = 0
-      } else {
-
-        remote.timings.push(data)
-        dx = 1
-      }
-      break
-    case Target.Entity:
-      remote.entities = createOrUpdate(remote.entities, data)
-      break
-    case Target.Macro:
-      remote.macros = createOrUpdate(remote.macros, data)
-      break
-    case Target.SubRoutine:
-      remote.subroutines = createOrUpdate(remote.subroutines, data)
-      break
-    case Target.Trigger:
-      remote.triggers = createOrUpdate(remote.triggers, data)
-      break
-    case Target.Attribute:
-      remote.attributes = createOrUpdate(remote.attributes, data)
-      break
-    case Target.User:
-      remote.users = createOrUpdate(remote.users, data)
-      break
-    case Target.Device:
-      remote.devices = createOrUpdate(remote.devices, data)
-      break
-    case Target.Network:
-      remote.networks = createOrUpdate(remote.networks, data)
-      break
-    case Target.Endpoint:
-      remote.endpoints = createOrUpdate(remote.endpoints, data)
-      break
-    case Target.Module:
-      remote.modules = createOrUpdate(remote.modules, data)
-      break
-    case Target.Zone:
-      remote.zones = createOrUpdate(remote.zones, data)
-      break
-    case Target.Log:
-      remote.entities = createOrUpdate(remote.entities, data)
-      break
-  }
-
-  let prev = remote.diagnostics.updates.get(target) || 0
-  remote.diagnostics.updates.set(target, prev + dx);
-  let session = {
-    target: target,
-    time: new Date().valueOf(),
-    operation: "update",
-    payload: data,
-    id: (data as Identifiable).id
-  } as RemoteRequest
-  remote.diagnostics.queue.push(session)
-  remote.diagnostics.lastTarget = target
-  if (remote.diagnostics.queue.length >= 10) {
-    remote.diagnostics.queue = remote.diagnostics.queue.slice(0, remote.diagnostics.queue.length - 2)
-  }
-
-
-  remote.diagnostics.maxRSS = memorySizeOf(remote)
-
-
-}
-
-function mouseDown() {
-  // axios.post("http://10.0.1.60/pop", {
-  //   power: 2
-  // }).then(res => {
-  //   return
-  // }).catch(err => {
-  //   return
-  // })
-}
-
-function createOrUpdate(target: any[], data: Identifiable): any[] {
-  if (target.find((e: Identifiable) => e.id === data.id)) {
-    if (data.deleted) {
-      return target.filter((a: Identifiable) => a.id !== data.id)
-    } else {
-      return target.map((a: Identifiable) => a.id === data.id ? data : a)
-    }
-  } else {
-    if (!data.deleted) {
-      target.push(data)
-      return target
-    }
-  }
-  return target
-}
-
-// -- Gesture Navigation --
-
-let lastTick = ref(0);
-
-onUnmounted(() => {
-  remote.nexus.ws.close(1001, "Disconnecting")
-})
-
-let session = reactive<Session>({
-  user: {} as User,
-  screensaver: false
-})
-
-provide("session", session)
-
 // Stores the changing components of the main terminal
 let state = reactive({
-  locked: false,
-  sideApp: false,
-  isDragging: false,
-  timeout: null,
-  verified: false,
-  distance: 0,
-  lastUpdate: 0,
-  sideAppLock: false,
-  showClock: true,
-  hideTerminal: false,
-  scrollX: 0.0,
-  scrollY: 0,
-  scrollXBack: 0,
-  scrollYBack: 0,
-  input: {
-    open: false,
-    meta: {} as InputProps,
-    cb: (a: string) => {
+    locked: false,
+    sideApp: false,
+    isDragging: false,
+    timeout: null,
+    verified: false,
+    distance: 0,
+    animationFrame: 0,
+    lastUpdate: 0,
+    sideAppLock: false,
+    showClock: true,
+    hideTerminal: false,
+    scrollX: 0.0,
+    scrollY: 0,
+    scrollXBack: 0,
+    scrollYBack: 0,
+    input: {
+        open: false,
+        meta: {} as InputProps,
+        cb: (a: string) => {
+        },
     },
-  },
-  dragA: {
-    x: 0,
-    y: 0
-  }
+    dragA: {
+        x: 0,
+        y: 0
+    }
 });
 
-
 watch(() => router.currentRoute.value, () => {
-  state.showClock = router.currentRoute.value.path === '/terminal/home'
+    state.showClock = router.currentRoute.value.path === '/terminal/home'
 })
 
 onMounted(() => {
-  state.showClock = router.currentRoute.value.path === '/terminal/home'
+    state.showClock = router.currentRoute.value.path === '/terminal/home'
 })
 
 // When called, if the user is still dragging, evoke the action confirming drag intent
 function timeout() {
-  // Check if user is till dragging
-  if (state.isDragging) {
-    // Verify the drag intention
-    state.verified = true
-  }
+    // Check if user is till dragging
+    if (state.isDragging) {
+        // Verify the drag intention
+        state.verified = true
+    }
 }
-
 
 // When the user starts dragging, initialize drag intent
 function dragStart(e: MouseEvent) {
-
-  dragStop(e)
-  // Record the current user position
-  let a = {x: e.screenX, y: e.screenY}
-  if (!e.view) return
-  // If the drag has started near the bottom of the screen
-  // Set the dragging status for later verification
-  state.isDragging = true;
-  // Record the drag position
-  state.dragA = a
-  // Verify drag intent if the user is still dragging after 100ms
-  setTimeout(timeout, 10)
-  mouseDown();
-  // Otherwise, we consider the swipes
+    haltAnimation()
+    dragStop(e)
+    // Record the current user position
+    let a = {x: e.screenX, y: e.screenY}
+    if (!e.view) return
+    // If the drag has started near the bottom of the screen
+    // Set the dragging status for later verification
+    state.isDragging = true;
+    // Record the drag position
+    state.dragA = a
+    // Verify drag intent if the user is still dragging after 100ms
+    setTimeout(timeout, 10)
+    // Otherwise, we consider the swipes
 }
 
-
 interface InputProps {
-  name: string
-  value: string
-  description: string
-  icon?: string
-  type?: string
+    name: string
+    value: string
+    description: string
+    icon?: string
+    type?: string
 }
 
 function openInput(props: InputProps, cb: (a: string) => void) {
-  if (!state.input.open) {
-    state.input.open = true
-    state.input.meta = props
-    state.input.cb = cb
-  }
+    if (!state.input.open) {
+        state.input.open = true
+        state.input.meta = props
+        state.input.cb = cb
+    }
+}
+
+let meta = reactive({
+    hue: 0,
+    dim: 0
+})
+
+// watchEffect(() => {
+//     pollMeta(remote as Remote)
+//     return remote as Remote
+// })
+
+function pollMeta(rm: Remote): boolean {
+    if (!rm) return true
+
+    let e = rm.entities.find(a => a.name === "terminal") || {} as Entity
+    if (!e) return false
+
+    let attrs = rm.attributes.filter(a => a.entity === e.id)
+
+    let hue = attrs.find(a => a.key === "hue")
+    if (!hue) return false;
+    meta.hue = parseInt(hue.value)
+
+    let dim = attrs.find(a => a.key === "dim")
+    if (!dim) return false;
+    meta.dim = parseInt(dim.value)
+
+    return true
 }
 
 function applyInput(a: string) {
-  state.input.cb(a)
-  closeInput()
+    state.input.cb(a)
+    closeInput()
 }
 
 function closeInput() {
-  state.input.open = false
-  state.input.meta = {} as InputProps
-  state.input.cb = () => {
-  }
+    state.input.open = false
+    state.input.meta = {} as InputProps
+    state.input.cb = () => {
+    }
 }
 
 provide("input", openInput)
 
 // While the user is still dragging
 function dragContinue(e: MouseEvent) {
-  // If the user is dragging, and the drag intent has been established
-  state.isDragging = true;
-  if (state.verified) {
-    // Record the current position
-    let dragB = {x: e.screenX, y: e.screenY}
+    // If the user is dragging, and the drag intent has been established
+    state.isDragging = true;
+    if (state.verified) {
+        // Record the current position
+        let dragB = {x: e.screenX, y: e.screenY}
 
-    if (!e.view) return
+        if (!e.view) return
 
-    let height = e.view.screen.availHeight;
-    let width = e.view.screen.availWidth;
-    let thresholdOffset = 80;
+        let height = e.view.screen.availHeight;
+        let width = e.view.screen.availWidth;
+        let thresholdOffset = 80;
 
-    let isBottom = e.screenY > height - thresholdOffset;
-    let isTop = e.screenY <= thresholdOffset;
+        let isBottom = e.screenY > height - thresholdOffset;
+        let isTop = e.screenY <= thresholdOffset;
 
-    let isRight = state.dragA.x > width - thresholdOffset;
+        let isRight = state.dragA.x > width - thresholdOffset;
 
-    let topPull = dragB.y - state.dragA.y;
-    let bottomPull = state.dragA.y - dragB.y;
-    let rightPull = state.dragA.x - dragB.x;
-    let gestureThreshold = 24;
+        let topPull = dragB.y - state.dragA.y;
+        let bottomPull = state.dragA.y - dragB.y;
+        let rightPull = state.dragA.x - dragB.x;
+        let gestureThreshold = 30;
 
-    if (isBottom) {
-      if (bottomPull > gestureThreshold) {
-        state.verified = false
-        haptics.tap(2, 1, 50)
-        state.locked = false
-        router.push("/terminal/home")
-      }
-      if (state.dragA.y > dragB.y) {
-        state.scrollY -= e.movementY
-      }
-    } else if (isTop) {
-      if (topPull > gestureThreshold) {
-        screensaver.startScreensaver()
-      }
-    } else {
+
+        if (isBottom) {
+            if (bottomPull > gestureThreshold) {
+                state.verified = false
+                haptics.tap(2, 1, 50)
+                state.locked = false
+                router.push("/terminal/home")
+            }
+            state.scrollY = height - e.clientY
+        } else if (isTop) {
+            if (topPull > gestureThreshold) {
+                screensaver.start()
+            }
+        } else {
+        }
     }
-  }
+}
+
+function haltAnimation() {
+    state.scrollY = 0
+    state.scrollYBack = 0
+    cancelAnimationFrame(state.animationFrame)
+}
+
+const animation = reactive({
+    frame: 0,
+    lastFrame: Date.now(),
+})
+
+const frameInterval = 1000.0 / 30.0;
+
+// Animate the retraction of the home bar
+function animate() {
+    // Request the animation frame for the next update
+    animation.frame = requestAnimationFrame(animate)
+    // Get the current time in milliseconds
+    let now = Date.now()
+    // Get milliseconds since last frame
+    let delta = now - animation.lastFrame
+    // Check if the delta exceeds the frame interval (16.667ms, 33.33ms, 25ms, etc)
+    if (delta > frameInterval) {
+        // Set the time of the last frame to now minus the elapsed frame time
+        animation.lastFrame = now - (delta % frameInterval)
+        // Run the desired code to be animated
+        decelerate()
+    }
+}
+
+// Stops the current animation from proceeding beyond the current frame
+function stopAnimation() {
+    // Cancel the animation frame to block the next update
+    cancelAnimationFrame(animation.frame)
+    animation.frame = 0
+    animation.lastFrame = 0
+}
+
+// Returns the moving object back to its original position
+function decelerate() {
+    // Stop if the user is currently dragging
+    if (state.isDragging) return
+    // Decrease the scroll position
+    state.scrollY = state.scrollY * 0.5
+
+    // If the item is close enough to its original position, reset it
+    if (Math.abs(state.scrollY) <= 0.05) {
+        // Set the level to 0
+        state.scrollY = 0
+        // Stop any further animation
+        stopAnimation()
+    }
 }
 
 // When the user cancels a drag intent
-function dragStop(e: MouseEvent) {
-
-  // Discard the drag intent
-  state.isDragging = false;
-  // Reset the distance
-  state.distance = 0;
-  // Reset verified drag intent
-  state.verified = false;
-  // Reset current position
-  state.dragA = {x: 0, y: 0}
-
-  if (Math.abs(state.scrollY) != 0 && state.scrollYBack == 0) {
-    if (state.scrollYBack == 0) {
-      state.scrollYBack = setInterval(() => {
-        if (state.isDragging) return
-        state.scrollY -= state.scrollY * 0.2
-        if (Math.abs(state.scrollY) < 0.01) {
-          state.scrollY = 0
-          state.scrollYBack = 0
-          clearInterval(state.scrollYBack)
-        }
-      }, 14)
-    } else {
-      clearInterval(state.scrollYBack)
-    }
-  }
-
-
+function dragStop(_: MouseEvent) {
+    // Discard the drag intent
+    state.isDragging = false;
+    // Reset the distance
+    state.distance = 0;
+    // Reset verified drag intent
+    state.verified = false;
+    // Reset current position
+    state.dragA = {x: 0, y: 0}
+    // Return the bar back to its position
+    if (Math.abs(state.scrollY) > 0) animate()
 }
-
-interface ToastObject {
-  name: string,
-  message: string,
-  severity: number,
-  duration: number
-}
-
-const toasts = reactive({
-  queue: [] as ToastObject[],
-  active: false,
-  interval: 0,
-  current: {} as ToastObject
-})
-
-watchEffect(() => {
-  if (toasts.queue.length > 0 && !toasts.active) {
-    toasts.active = true
-    toasts.current = toasts.queue[0]
-    toasts.queue = toasts.queue.filter(q => q !== toasts.current)
-    toasts.interval = setInterval(() => {
-      if (toasts.active) {
-        toasts.current.duration -= 1000
-        if (toasts.current.duration <= 0) {
-          toasts.active = false
-          toasts.current = {} as ToastObject
-          clearInterval(toasts.interval)
-        }
-      }
-    }, 1000)
-  }
-  return toasts.queue
-})
-
-
-const notifications = {
-  show: (name: string, message: string, severity: number, duration: number) => {
-    toasts.queue.push({
-      name: name,
-      message: message,
-      severity: severity,
-      duration: duration
-    })
-  },
-}
-
-provide('notifications', notifications)
 
 // Provide the remote component for child components
 provide('terminal', state)
-provide('remote', remote)
-</script>
 
+</script>
 
 <template>
 
-  <div v-if="!screensaver.hideTerminal"
-       class="terminal"
-       v-on:mousedown="dragStart"
-       v-on:mousemove="dragContinue" v-on:mouseup="dragStop">
-    <Glance v-if="state.locked"></Glance>
-    <div v-else class="d-inline">
-      <div class="generic-container gap-2">
-        <div class="" v-on:click="(e) => state.locked = true">
-          <Clock :small="!state.showClock"></Clock>
+    <div v-if="!screensaver.active()" class="h-100 w-100">
+
+        <div class="terminal w-100 h-100"
+             v-on:mousedown="dragStart"
+             v-on:mousemove="dragContinue"
+             v-on:mouseup="dragStop">
+            <div class="d-flex flex-column h-100 ">
+                <div>
+                    <ContextBar v-if="!state.showClock">
+                        <div style="grid-column: span 3">
+                            <Clock :small="!state.showClock"></Clock>
+                        </div>
+
+                        <div style="grid-column: 9 / span 8">
+                            <Notification></Notification>
+                        </div>
+
+                        <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
+                            <IdTag></IdTag>
+                        </div>
+                    </ContextBar>
+                    <ContextBar v-else>
+
+                        <div class=" d-flex align-content-center align-items-center justify-content-start px-1"
+                             style="grid-column: span 3">
+                            <Clock :small="!state.showClock"></Clock>
+                        </div>
+
+                        <div style="grid-column: 9 / span 8">
+                            <Notification></Notification>
+
+                        </div>
+
+                        <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
+                            <IdTag></IdTag>
+                        </div>
+                    </ContextBar>
+                </div>
+                <div class="mt-1" style="height: calc(100% - 3.5rem);">
+                    <router-view/>
+                </div>
+                <div class="justify-content-center d-flex align-items-center align-content-center">
+                    <div v-if="$route.matched.length > 1" @click.prevent="state.scrollY!==0">
+                        <div v-if="$route.matched[1].children.length > 1">
+                            <Plot :cols="$route.matched[1].children.length" :rows="1"
+                                  class="bottom-nav">
+                                <Subplot v-for="route in ($route.matched[1].children as any[])"
+                                         :icon="route.icon || 'earth-americas'"
+                                         :name="route.name"
+                                         :to="route.path"></Subplot>
+                            </Plot>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
+
         </div>
 
-        <Toast v-if="toasts.active" :message="toasts.current.message" :severity="toasts.current.severity"
-               :time="toasts.current.duration" :title="toasts.current.name"></Toast>
-
-        <div class="generic-slot-sm ">
-          <div v-if="false" class="element p-2" style="width: 13rem !important;">
-            {{ remote.logs.find(l => ((new Date().valueOf() - new Date(l.time).valueOf()) >= 60000)) }}
-            <div class="label-c2 label-w500 label-o5 lh-1">Worldspace</div>
-            <div class="label-c3 label-w400 label-o3 lh-1">Matthew has arrived</div>
-          </div>
-        </div>
-        <div class="generic-slot-sm ">
-          <IdTag></IdTag>
-        </div>
-
-      </div>
-      <div class="route-view pt-1">
-        <router-view v-slot="{ Component }" style="max-height: calc(100% - 2.9rem) !important;">
-          <component :is="Component"/>
-        </router-view>
-      </div>
-      <div class="justify-content-center d-flex align-items-center align-content-center">
-        <div v-if="$route.matched.length > 1" @click.prevent="state.scrollY!==0">
-          <div v-if="$route.matched[1].children.length > 1">
-            <Plot :cols="$route.matched[1].children.length" :rows="1"
-                  class="bottom-nav">
-              <Subplot v-for="route in ($route.matched[1].children as any[])" :icon="route.icon || 'earth-americas'"
-                       :name="route.name"
-                       :to="route.path"></Subplot>
-            </Plot>
-          </div>
-        </div>
-      </div>
     </div>
-    <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
-  </div>
 
-  <Bubbles v-if="screensaver.show && preferences.ui.screensaver.selection === 'bubbles'"
-           class="screensaver-overlay"></Bubbles>
-  <Warp v-else-if="screensaver.show && preferences.ui.screensaver.selection === 'warp'"
-        class="screensaver-overlay"></Warp>
-  <Input v-if="state.input.open" :apply="applyInput" :close="closeInput" :description="state.input.meta.description"
-         :name="state.input.meta.name" :value="state.input.meta.value"></Input>
+    <ScreensaverDom></ScreensaverDom>
+
+    <Input v-if="state.input.open" :apply="applyInput" :close="closeInput"
+           :description="state.input.meta.description"
+           :name="state.input.meta.name" :value="state.input.meta.value"></Input>
+    <div
+            :style="`box-shadow: inset 0 0 4px 7px hsla(${meta.hue},75%,50%,${0.8*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
+            class="neon" @mousedown.passive></div>
 </template>
 
 <style lang="scss" scoped>
+.toast-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+
+}
+
+.toast-stack .toast-stack-away {
+}
+
+@keyframes notify-away {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes notify {
+  0% {
+    transform: translateY(0.125rem) scale(0.97);
+  }
+  100% {
+    transform: translateY(0rem) scale(1);
+  }
+}
+
+.toast-stack > :not(:first-child) {
+  width: 100%;
+  height: 1rem !important;
+  outline: 1px solid rgba(255, 255, 0, 0.1);
+  scale: 0.9;
+  margin-top: -1.5rem;
+  z-index: -1;
+  animation: pull-in 125ms linear forwards;
+}
+
+@keyframes pull-in {
+  0% {
+    transform: translateY(-20rem) scale(0.6);
+  }
+  100% {
+    transform: translateY(0rem) scale(1);
+  }
+}
+
+.terminal {
+  //box-shadow: inset 0 0 36px 6px rgba(255,12,255,0.8);
+  z-index: 2;
+  display: inline-block;
+}
+
+.neon {
+
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-radius: 0.5rem;
+  z-index: -1 !important;
+}
 
 
 .focus-enter-active {
@@ -571,53 +475,10 @@ provide('remote', remote)
 .bottom-nav {
   display: inline-block;
   position: relative;
-  bottom: 2.5rem;
+  bottom: 1.25rem;
+  z-index: 0 !important;
   animation: dock-in 125ms ease-in forwards;
 }
 
-
-@keyframes dock-in {
-  0% {
-    bottom: -1rem;
-  }
-
-  100% {
-    bottom: 2.5rem;
-  }
-}
-
-.v-enter-active,
-.v-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.v-enter-from,
-.v-leave-to {
-  opacity: 0;
-}
-
-.animate-in {
-  animation: dock-in 100ms forwards;
-}
-
-
-.footer {
-  position: absolute;
-  bottom: 1.2rem;
-}
-
-.route-view {
-  /*outline: 1px solid rgba(255,255,255,0.3);*/
-  border-radius: 0.5rem;
-  height: calc(100% - 3rem);
-}
-
-.terminal {
-  padding: 1em;
-  height: 100%;
-  flex-direction: column;
-  justify-content: start;
-  transition: all 500ms;
-}
 
 </style>

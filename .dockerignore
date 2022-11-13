@@ -3,3 +3,4 @@ app/
 pkg/
 **/*.crt
 **/*.key
+embeded/

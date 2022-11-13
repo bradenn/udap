@@ -4,16 +4,13 @@ package services
 
 import (
 	"github.com/gorilla/websocket"
-	"gorm.io/gorm"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewEndpointService(db *gorm.DB, operator ports.EndpointOperator) ports.EndpointService {
-	repo := repository.NewEndpointRepository(db)
-	return &endpointService{repository: repo, operator: operator}
+func NewEndpointService(repository ports.EndpointRepository, operator ports.EndpointOperator) ports.EndpointService {
+	return &endpointService{repository: repository, operator: operator}
 }
 
 type endpointService struct {
@@ -69,6 +66,11 @@ func (u *endpointService) Enroll(id string, conn *websocket.Conn) error {
 	if err != nil {
 		return err
 	}
+	endpoint.Connected = true
+	err = u.repository.Update(endpoint)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -78,6 +80,11 @@ func (u *endpointService) Unenroll(id string) error {
 		return err
 	}
 	err = u.operator.Unenroll(endpoint)
+	if err != nil {
+		return err
+	}
+	endpoint.Connected = false
+	err = u.repository.Update(endpoint)
 	if err != nil {
 		return err
 	}
@@ -106,6 +113,10 @@ func (u *endpointService) Update(endpoint *domain.Endpoint) error {
 	return u.repository.Update(endpoint)
 }
 
-func (u *endpointService) Delete(endpoint *domain.Endpoint) error {
-	return u.repository.Delete(endpoint)
+func (u *endpointService) Delete(id string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	return u.repository.Delete(byId)
 }

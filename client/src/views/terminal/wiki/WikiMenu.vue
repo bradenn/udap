@@ -7,6 +7,7 @@ import axios from "axios";
 import wtf from 'wtf_wikipedia'
 // @ts-ignore
 import wtf_html from 'wtf-plugin-html'
+import FixedScroll from "@/components/scroll/FixedScroll.vue";
 
 wtf.extend(wtf_html)
 
@@ -21,10 +22,10 @@ onMounted(() => {
 })
 
 function fetch() {
-  axios.get("http://10.0.1.202:8080/search?q=Cat").then(res => {
-    state.data = wtf(res.data.text).json()
+  axios.get("https://en.wikipedia.org/w/api.php?action=query&format=xml&origin=*&export=1&titles=Cat").then(res => {
+    state.data = wtf(res.data).json()
     // @ts-ignore
-    state.dom = wtf(res.data.text).html()
+    state.dom = wtf(res.data).html()
   }).catch(err => {
     state.dom = err
   })
@@ -34,9 +35,10 @@ function fetch() {
 
 <template>
   <div class="h-100">
-    <div class="element p-2" style="max-height: 100%; height: 98%">
-      <div class="overflow-scroll h-100 pb-2" v-html="state.dom"></div>
-
+    <div class="element p-2 " style="height: 100%;">
+      <FixedScroll class="" style=" height: 100%; overflow-y: scroll;">
+        <div class=" " v-html="state.dom"></div>
+      </FixedScroll>
     </div>
   </div>
 </template>

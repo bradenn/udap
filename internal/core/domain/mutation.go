@@ -17,6 +17,6 @@ func (o *Observer) emit() {
 }
 
 type Observable interface {
-	Watch(chan<- Mutation) error
+	Watch(chan<- Mutation)
 	EmitAll() error
 }

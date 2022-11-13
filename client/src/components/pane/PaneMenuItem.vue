@@ -14,9 +14,11 @@ let props = defineProps<Plot>()
 
 <template>
   <div :class="props.active?'subplot':'subplot subplot-inline'"
-       class="d-flex justify-content-between align-items-center" @click="(e) => props.fn?props.fn():{}">
+       class="d-flex justify-content-between align-items-center" style="margin-right: 6px;"
+       @click="(e) => props.fn?props.fn():{}">
     <div class="d-flex align-items-start">
-                <span class="label-c4 label-o2 lh-1 pt-1" style="width: 0.4rem; margin-top: 6px;"><span
+                <span class="label-c4 label-o2 lh-1 pt-1"
+                      style="width: 0.4rem; margin-top: 6px;"><span
                     v-if="props.icon">{{ props.icon }}</span></span>
       <div class="py-1 px-1">
         <div class="label-c2 text-capitalize label-w400 label-o5 lh-sm title">{{ props.title }}</div>

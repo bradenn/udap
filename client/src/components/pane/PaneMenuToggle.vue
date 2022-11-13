@@ -1,5 +1,7 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
+import core from "@/core";
+
 interface Plot {
   title: string
   subtext: string
@@ -10,14 +12,25 @@ interface Plot {
 }
 
 let props = defineProps<Plot>()
+
+
+const haptics = core.haptics()
+
+
+function click() {
+  haptics.tap(1, 1, 50)
+  props.fn ? props.fn() : {}
+}
+
 </script>
 
 <template>
-  <div :class="props.active?'subplot':'subplot subplot-inline'"
-       class="d-flex justify-content-between align-items-center" @click="(e) => props.fn?props.fn():{}">
+  <div :class="`${props.active?'subplot':'subplot subplot-inline'}`"
+       class="d-flex justify-content-between align-items-center" @click="(e) => click()">
     <div class="d-flex align-items-start">
-                <span class="label-c4 label-o2 lh-1 pt-1" style="width: 0.4rem; margin-top: 6px;"><span
-                    v-if="props.icon">{{ props.icon }}</span></span>
+                <span class="label-c4 label-o2 lh-1 pt-1"
+                      style="width: 0.4rem; margin-top: 6px;"><span
+                >{{ props.icon }}</span></span>
       <div class="py-1 ">
         <div class="label-c2 text-capitalize label-w400 label-o5 lh-sm title">{{ props.title }}</div>
 
@@ -28,7 +41,7 @@ let props = defineProps<Plot>()
       {{ (props.active ? '􀨂' : '􀀀') }}
     </div>
   </div>
-  <div class="h-sep mb-1" style="width: 92%; margin-left: 0.5rem"></div>
+  <div class="h-sep" style="width: 92%; margin-left: 0.5rem; margin-bottom: 0.0625rem;"></div>
 </template>
 
 

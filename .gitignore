@@ -10,7 +10,6 @@ private-key.pem
 */node_modules
 /pkg/vosk/large_model
 /pkg/vosk/model
-/pkg/vosk/model
 
 spotify.json
 /db-data
@@ -41,3 +40,6 @@ spotify.json
 /embeded/haptics/sdkconfig
 /embeded/sentry/sdkconfig
 /embeded/sentry/sdkconfig.old
+/client/tsconfig.vite-config.tsbuildinfo
+/modules/worldspace/face/known/*
+/modules/worldspace/face/trained_knn_model.clf

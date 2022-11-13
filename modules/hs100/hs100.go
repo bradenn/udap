@@ -24,7 +24,7 @@ func init() {
 		Name:        "hs100",
 		Type:        "module",
 		Description: "Control TP-Link HS100 Outlets",
-		Version:     "1.7.3",
+		Version:     "1.7.4",
 		Author:      "Braden Nicholson",
 	}
 
@@ -73,7 +73,7 @@ func (h *HS100) findDevices() error {
 			for attribute := range channel {
 				err = h.put(device)(attribute.Request)
 				if err != nil {
-					return
+					continue
 				}
 			}
 		}()
@@ -90,7 +90,7 @@ func (h *HS100) findDevices() error {
 // Setup is called once at the launch of the module
 func (h *HS100) Setup() (plugin.Config, error) {
 	h.devices = map[string]*hs100.Hs100{}
-	err := h.UpdateInterval(2000)
+	err := h.UpdateInterval(5000)
 	if err != nil {
 		return plugin.Config{}, err
 	}

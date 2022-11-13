@@ -59,10 +59,11 @@ export class Nexus {
     ws: WebSocket
     state: NexusState
 
-    constructor(fn: (target: Target, data: any) => void) {
+    constructor(fn: (target: Target, data: any) => void, open: () => void, close: () => void) {
         this.state = NexusState.Connecting
         this.ws = new WebSocket(connectionString())
         this.ws.onopen = (event: Event) => {
+            open()
             this.state = NexusState.Connected
         }
         this.ws.onmessage = (event: MessageEvent) => {
@@ -78,6 +79,7 @@ export class Nexus {
             }
         }
         this.ws.onclose = (event: CloseEvent) => {
+            close()
             fn(Target.Close, "")
         }
     }

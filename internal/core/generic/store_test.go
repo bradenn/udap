@@ -3,43 +3,58 @@
 package generic
 
 import (
+	"database/sql"
+	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"regexp"
 	"testing"
 )
 
+var DB *gorm.DB
+var mock sqlmock.Sqlmock
+
+var store Store[Mock]
+
 func TestNewStore(t *testing.T) {
-	conn, mock, _ := sqlmock.New()
-	pg := postgres.New(postgres.Config{Conn: conn})
-	db, _ := gorm.Open(pg, &gorm.Config{})
+	var db *sql.DB
+	var err error
+	db, mock, err = sqlmock.New()
+	if err != nil {
+		t.Errorf("Failed to open mock sql db, got error: %v", err)
+	}
 
-	store := NewStore[Mock](db)
+	if mock == nil {
+		t.Errorf("Mock is null: %v", err)
+	}
 
-	t.Run("FindAll", func(t *testing.T) {
-		u1 := uuid.New()
-		u2 := uuid.New()
-		rows := mock.NewRows([]string{"name", "value", "id"})
-		rows.AddRow("test1a", "test1b", u1)
-		rows.AddRow("test2a", "test2b", u2)
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "mocks"`)).WillReturnRows(rows)
-		mock.ExpectBegin()
-		mock.ExpectCommit()
+	if db == nil {
+		t.Errorf("Database is null: %v", err)
+	}
 
-		all, err := store.FindAll()
-		if err != nil {
-			t.Error(err)
-		}
-		if len(*all) != 2 {
-			t.Error("Wrong number of rows returned")
-		}
-		res := *all
-		if res[0].Name != "test1a" {
-			t.Error("Results out of order")
-		}
-
+	dial := postgres.New(postgres.Config{
+		DSN:                  "mock",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
 	})
+
+	DB, err = gorm.Open(dial, &gorm.Config{})
+	if err != nil {
+		t.Errorf("Failed to open gorm v2 db, got error: %v", err)
+	}
+
+	store = NewStore[Mock](DB)
+
+}
+
+func TestFindById(t *testing.T) {
+
+	elem, err := store.FindById("123")
+	if err != nil {
+		t.Errorf("Failed to FindById: %v", err)
+	}
+
+	fmt.Println(elem)
 
 }

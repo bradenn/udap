@@ -2,8 +2,7 @@
 <script lang="ts" setup>
 
 import {reactive} from "vue";
-import Subplot from "@/components/plot/Subplot.vue";
-import Scroll from "@/components/scroll/Scroll.vue";
+import FixedScroll from "@/components/scroll/FixedScroll.vue";
 
 interface Props {
   selected: string
@@ -30,21 +29,15 @@ function dragScroll(e: DragEvent) {
       <div class="label-c1  label-o4 label-w500 px-1">Zones</div>
       <div class="label-c2 label-w500 label-r label-o3 px-1 text-link"></div>
     </div>
-    <Scroll class="select-scroll">
+    <FixedScroll class="select-scroll">
       <slot></slot>
-    </Scroll>
-    <div class="h-sep my-1"></div>
-    <div class="d-flex gap-1 justify-content-between" style="height: 1.75rem">
-      <div></div>
-      <div class="d-flex">
-        <Subplot :active="false" :fn="() => {}" name="Close"></Subplot>
-        <Subplot :active="true" :fn="() => {}" name="Edit"></Subplot>
-      </div>
-    </div>
+    </FixedScroll>
+
+
   </div>
-  <div :class="state.active?'select-active':''" class="element p-0 "
+  <div :class="state.active?'select-active':''" class=" p-0 "
        v-on:click="state.active = !state.active">
-    <div class="subplot d-flex w-100" style="height: 1.8rem">
+    <div class="subplot d-flex w-100 element" style="height: 1.8rem; border-radius: 0.5rem !important;">
       <div class="d-flex justify-content-start align-items-center align-content-center h-100 gap-0">
         <div class="label-c1 label-o4 px-1">􀟻</div>
         <div class="label-c1 label-o4 label-r ">{{ props.selected }}</div>
@@ -60,7 +53,7 @@ function dragScroll(e: DragEvent) {
 <style lang="scss">
 .select-scroll {
   width: 100%;
-  overflow: scroll;
+  overflow-y: scroll;
   height: 10rem;
   max-height: 10rem;
   padding-right: 0.25rem;

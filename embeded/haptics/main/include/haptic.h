@@ -14,8 +14,6 @@ public:
 
     Haptic &operator=(const Haptic &) = delete;
 
-    void pulse();
-    void lightPulse();
     void sinPulse();
 
     void pulseCustom(int freq, int amp, int max);
@@ -30,10 +28,9 @@ private:
         allocateGpio();
     }
 
-    void pulseHigh(int value);
+    static void pulseHigh(int value);
 
-    void pulseLow(int value);
-
+    static void pulseLow(int value);
 };
 
 

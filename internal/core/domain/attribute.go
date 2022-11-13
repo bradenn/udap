@@ -74,7 +74,7 @@ func NewAttribute(key string, variant string, entity string) Attribute {
 }
 
 func (a *Attribute) AsInt() int {
-	parsed, err := strconv.ParseInt(a.Value, 10, 0)
+	parsed, err := strconv.ParseInt(a.Value, 10, 32)
 	if err != nil {
 		return 0
 	}

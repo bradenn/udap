@@ -6,7 +6,6 @@ import (
 	"udap/internal/controller"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
-	"udap/internal/log"
 )
 
 type triggerOperator struct {
@@ -20,7 +19,6 @@ func NewTriggerOperator(ctrl *controller.Controller) ports.TriggerOperator {
 }
 
 func (m *triggerOperator) Run(trigger domain.Trigger) error {
-	log.Event("Triggering '%s'", trigger.Name)
 	err := m.ctrl.SubRoutines.TriggerById(trigger.Id)
 	if err != nil {
 		return err

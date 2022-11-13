@@ -3,17 +3,14 @@
 package services
 
 import (
-	"gorm.io/gorm"
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewMacroService(db *gorm.DB, operator ports.MacroOperator) ports.MacroService {
-	repo := repository.NewMacroRepository(db)
-
-	return &macroService{repository: repo, operator: operator}
+func NewMacroService(repository ports.MacroRepository, operator ports.MacroOperator) ports.MacroService {
+	return &macroService{repository: repository, operator: operator}
 }
 
 type macroService struct {
@@ -28,6 +25,18 @@ func (u *macroService) Run(id string) error {
 		return err
 	}
 	err = u.operator.Run(*byId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *macroService) RunAndRevert(id string, revert time.Duration) error {
+	byId, err := u.FindById(id)
+	if err != nil {
+		return err
+	}
+	err = u.operator.RunAndRevert(*byId, domain.Macro{}, revert)
 	if err != nil {
 		return err
 	}

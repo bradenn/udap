@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"os"
+	"time"
 	"udap/internal/log"
 	"udap/internal/orchestrator"
 )
 
-const VERSION = "2.16.1-beta"
+const VERSION = "2.17.02"
 
 func main() {
 
@@ -42,7 +43,10 @@ func main() {
 }
 
 func setup() error {
-	log.Log("UDAP v%s - Copyright (c) 2019-2022 Braden Nicholson", VERSION)
+
+	year := time.Now().Year()
+
+	log.Log("UDAP v%s - Copyright (c) 2019-%d Braden Nicholson", VERSION, year)
 
 	err := godotenv.Load()
 	if err != nil {
@@ -59,5 +63,6 @@ func setup() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

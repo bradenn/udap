@@ -3,18 +3,15 @@
 package services
 
 import (
-	"gorm.io/gorm"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
-	"udap/internal/core/repository"
 )
 
-func NewAttributeService(db *gorm.DB, op ports.AttributeOperator) ports.AttributeService {
-	repo := repository.NewAttributeRepository(db)
+func NewAttributeService(repository ports.AttributeRepository, op ports.AttributeOperator) ports.AttributeService {
 	return &attributeService{
-		repository: repo,
+		repository: repository,
 		operator:   op,
 	}
 }
