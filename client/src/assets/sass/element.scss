@@ -41,12 +41,17 @@ $loadInDistance: 0.98;
 }
 
 
+$base: 0.96;
+$apex: 1.0;
+
 @keyframes loadIn {
   0% {
-    transform: scale3d($loadInDistance, $loadInDistance, $loadInDistance) translateZ(0);
+    transform: scale($base);
   }
+
   100% {
-    transform: scale3d(1, 1, 1) translateZ(0);
+    transform: scale($apex);
+
   }
 }
 
@@ -65,7 +70,7 @@ $themes: (
     .element {
       background-color: $i !important;
       filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
-      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
       box-shadow: inset 0 0 2px 0.5px opacify($element-border, 0.00125) !important;
 
       * {
@@ -142,9 +147,7 @@ $themes: (
   @extend .bg-blur;
   position: relative;
   background: linear-gradient(148.05deg, rgba(44, 44, 44, 0.1) 0%, rgba(44, 44, 44, 0) 100%);
-  background-blend-mode: soft-light;
-  //
-  animation: loadIn 150ms forwards cubic-bezier(0, 1.05, .85, .96) !important;
+  animation: loadIn 200ms forwards linear !important;
   padding: 0.25rem;
   backface-visibility: hidden;
   will-change: transform;

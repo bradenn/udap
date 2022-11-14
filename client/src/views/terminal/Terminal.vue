@@ -304,7 +304,9 @@ provide('terminal', state)
              v-on:mousedown="dragStart"
              v-on:mousemove="dragContinue"
              v-on:mouseup="dragStop">
+
             <div class="d-flex flex-column h-100 ">
+
                 <div>
                     <ContextBar v-if="!state.showClock">
                         <div style="grid-column: span 3">
@@ -336,9 +338,11 @@ provide('terminal', state)
                         </div>
                     </ContextBar>
                 </div>
+
                 <div class="mt-1" style="height: calc(100% - 3.5rem);">
                     <router-view/>
                 </div>
+
                 <div class="justify-content-center d-flex align-items-center align-content-center">
                     <div v-if="$route.matched.length > 1" @click.prevent="state.scrollY!==0">
                         <div v-if="$route.matched[1].children.length > 1">
@@ -352,6 +356,7 @@ provide('terminal', state)
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
@@ -365,68 +370,17 @@ provide('terminal', state)
     <Input v-if="state.input.open" :apply="applyInput" :close="closeInput"
            :description="state.input.meta.description"
            :name="state.input.meta.name" :value="state.input.meta.value"></Input>
-    <div
-            :style="`box-shadow: inset 0 0 4px 7px hsla(${meta.hue},75%,50%,${0.8*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
-            class="neon" @mousedown.passive></div>
+    <div :style="`box-shadow: inset 0 0 4px 7px hsla(${meta.hue},75%,50%,${0.8*meta.dim/100}), inset 0 0 96px 16px hsla(${meta.hue},75%,50%,${0.5*meta.dim/100}) !important;`"
+         class="neon" @mousedown.passive></div>
 </template>
 
 <style lang="scss" scoped>
-.toast-stack {
-  display: flex;
-  flex-direction: column;
-  justify-content: start;
-  align-items: center;
-
-}
-
-.toast-stack .toast-stack-away {
-}
-
-@keyframes notify-away {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(0.97);
-  }
-}
-
-@keyframes notify {
-  0% {
-    transform: translateY(0.125rem) scale(0.97);
-  }
-  100% {
-    transform: translateY(0rem) scale(1);
-  }
-}
-
-.toast-stack > :not(:first-child) {
-  width: 100%;
-  height: 1rem !important;
-  outline: 1px solid rgba(255, 255, 0, 0.1);
-  scale: 0.9;
-  margin-top: -1.5rem;
-  z-index: -1;
-  animation: pull-in 125ms linear forwards;
-}
-
-@keyframes pull-in {
-  0% {
-    transform: translateY(-20rem) scale(0.6);
-  }
-  100% {
-    transform: translateY(0rem) scale(1);
-  }
-}
-
 .terminal {
-  //box-shadow: inset 0 0 36px 6px rgba(255,12,255,0.8);
   z-index: 2;
   display: inline-block;
 }
 
 .neon {
-
   position: absolute;
   width: 100%;
   height: 100%;
@@ -436,49 +390,11 @@ provide('terminal', state)
   z-index: -1 !important;
 }
 
-
-.focus-enter-active {
-  animation: animateIn 200ms;
-}
-
-.focus-leave-active {
-
-  animation: animateOut 100ms;
-}
-
-@keyframes animateIn {
-  0% {
-    transform: scale(0.98);
-    //opacity: 0.4;
-  }
-  50% {
-    transform: scale(0.99);
-    //opacity: 0.8;
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes animateOut {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-}
-
 .bottom-nav {
-  display: inline-block;
-  position: relative;
-  bottom: 1.25rem;
+
   z-index: 0 !important;
   animation: dock-in 125ms ease-in forwards;
+  bottom: 1.5rem;
+  left: 0;
 }
-
-
 </style>
