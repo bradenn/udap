@@ -11,6 +11,7 @@ const props = defineProps<{
     active: boolean,
     name?: string,
     unit?: string,
+    change?: (a: boolean) => void
 }>()
 
 let state = reactive({
@@ -21,12 +22,17 @@ let state = reactive({
 const haptics = core.haptics()
 
 
+function apply() {
+    if (props.change) {
+        props.change(state.active);
+    }
+}
+
 function toggle(pos: boolean) {
     if (pos != state.active) {
-        state.active = !state.active
+        state.active = pos
         haptics.tap(2, 1, 100)
-        // haptics(1, 1, 75)
-
+        apply()
     }
 }
 

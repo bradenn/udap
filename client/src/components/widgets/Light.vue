@@ -1,10 +1,10 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import AttributeComponent from "@/components/entity/Attribute.vue"
 import type {ApiRateLimit, Attribute, Entity} from "@/types"
 import moment from "moment";
 import type {Remote} from "@/remote";
+import ControlLight from "@/components/widgets/ControlLight.vue";
 // Establish a local reactive state
 let state = reactive<{
     loading: boolean,
@@ -132,139 +132,25 @@ function toggleMenu(): void {
 </script>
 
 <template>
-    <div v-if="state.showMenu" class="context context-light" @click="toggleMenu"></div>
-    <div v-if="state.loading" class="w-100 h-100">
-        <div class="entity-small element">
-            <div class="entity-header mb-2 ">
-                <div class="label-o5">
-                    {{ props.entity.icon }}
-                </div>
-                <div class="label-c1 label-w400 label-o4 px-2">
-                    {{ props.entity.name }}
-                </div>
-                <div class="fill"></div>
-
+    <ControlLight v-if="state.showMenu" :entity="props.entity" @click="state.showMenu = false"></ControlLight>
+    <div class=" element" @click="state.showMenu = !state.showMenu">
+        <div class="d-flex justify-content-start align-items-center align-content-center ">
+            <div :style="`width: 0.8rem; margin-left:0.25rem; color:${state.activeColor}; height: 100%;border-radius: 0.25rem; `"
+                 class="label-c2 light-on d-flex align-items-center label-w700 justify-content-center">
+                {{ (props.entity.icon || '􀛭') }}
             </div>
-        </div>
-    </div>
-    <div v-else class="w-100 h-100">
-        <div v-if="!state.showMenu" class="element d-flex justify-content-start align-items-center "
-             style="height: 2.125em !important; margin-bottom: 0rem; width: 100%"
-             @click="toggleMenu">
-            <div class="d-flex justify-content-start align-items-center align-content-center ">
-                <div
-                        :style="`width: 0.8rem; margin-left:0.25rem; color:${state.activeColor}; height: 100%;border-radius: 0.25rem; `"
-
-                        class="label-c2 light-on d-flex align-items-center label-w700 justify-content-center">
-                    {{ (props.entity.icon || '􀛭') }}
-                </div>
-                <div class="d-flex flex-column">
-                    <div class="label-c2 label-o3 label-w500 px-1 lh-1">{{ props.entity.name }}</div>
-                    <div class="label-c3 label-o2  label-w500 px-1 lh-1">{{ state.shortStatus }}</div>
-                </div>
-            </div>
-        </div>
-        <div v-else class="entity-small element quickedit" style="z-index: 99999!important;">
-            <div class="entity-header mb-1 d-flex justify-content-between align-items-center w-100">
-                <div class="d-flex">
-                    <div class="label-o5">
-                        {{ props.entity.icon || '􀛮' }}
-                    </div>
-                    <div class="label-c1 label-w400 label-o4 px-2">
-                        {{ props.entity.name }}
-                    </div>
-                </div>
-                <AttributeComponent :attribute="state.powerAttribute" :entity-id="props.entity.id"
-                                    small></AttributeComponent>
-                <!--        <div class="" @click="toggleMenu">-->
-                <!--          <i class="fa-solid fa-circle-xmark label-o3 label-c1 label-w400 px-1"></i>-->
-                <!--        </div>-->
-            </div>
-            <div class="w-100 d-flex flex-column gap">
-                <div
-                        v-for="attribute in state.attributes.filter((attr: Attribute) => attr.key === 'dim' || attr.key === 'cct' || attr.key === 'hue')"
-                        :key="attribute.id">
-                    <AttributeComponent :attribute="attribute" :entity-id="props.entity.id" primitive
-                                        small></AttributeComponent>
-                </div>
-            </div>
-            <div v-if="false" class="entity-small element ">
-                <div class="element surface d-flex flex-column gap py-4 px-3 pt-2">
-                    <div class="d-flex justify-content-start align-items-end align-content-end" v-on:click.stop>
-                        <div class="mt-1">
-              <span :style="`text-shadow: 0 0 8px ${state.activeColor};`"
-                    class="label-md label-w600 label-o3">{{ props.entity.icon }}</span>
-                            <span class="label-md label-w600 label-o6 px-2">{{ props.entity.name }}</span>
-                        </div>
-                        <div class="fill "></div>
-
-                        <div class="h-bar">
-                            <AttributeComponent :attribute="state.powerAttribute" :entity-id="props.entity.id"
-                                                small></AttributeComponent>
-                        </div>
-                    </div>
-                    <div class="h-sep"></div>
-                    <div
-                            v-for="attribute in state.attributes.filter((a: Attribute) => a.key !== 'on')">
-                        <AttributeComponent :key="attribute.id" :attribute="attribute" :entity-id="props.entity.id"
-                                            primitive
-                                            small></AttributeComponent>
-                    </div>
-                </div>
+            <div class="d-flex flex-column">
+                <div class="label-c2 label-o3 label-w500 px-1 lh-1">{{ props.entity.name }}</div>
+                <div class="label-c3 label-o2  label-w500 px-1 lh-1">{{ state.shortStatus }}</div>
             </div>
         </div>
     </div>
 </template>
 
 <style lang="scss" scoped>
-
-.macro-grid {
-
+.element {
+  padding: 0.5rem;
+  height: 100%;
+  z-index: 1 !important;
 }
-
-
-.light-on {
-  //color: rgba(178, 178, 178, 0.76);
-  background-blend-mode: luminosity;
-  //text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
-}
-
-.light-off {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.entity-small:not(.quickedit):active {
-  animation: click 100ms ease forwards;
-}
-
-.entity-small {
-  animation: click 100ms ease forwards;
-}
-
-
-@keyframes click {
-  0% {
-    transform: scale(1.0);
-  }
-  25% {
-    transform: scale(0.98);
-  }
-  30% {
-    transform: scale(0.97);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.entity-context {
-  position: absolute;
-  backdrop-filter: blur(22px);
-  top: 0;
-  width: 100%;
-  padding: 1rem;
-  height: calc(100% - 4.5rem);
-}
-
-
 </style>

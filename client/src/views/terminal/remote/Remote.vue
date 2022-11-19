@@ -1,25 +1,27 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import PaneMenu from "@/components/pane/PaneMenu.vue";
-import type {Attribute, Entity} from "@/types";
+import type {Attribute, Entity as EntityType} from "@/types";
 import Slider from "@/components/Slider.vue";
+import Entity from "@/components/Entity.vue";
 import Switch from "@/components/Switch.vue";
-import PaneMenuToggle from "@/components/pane/PaneMenuToggle.vue";
 import attributeService from "@/services/attributeService";
 import moment from "moment";
 import type {Remote} from "@/remote";
+import FixedScroll from "@/components/scroll/FixedScroll.vue";
 
 const state = reactive({
-    entities: [] as Entity[],
-    selected: "",
-    target: {} as Entity,
+    entities: [] as EntityType[],
+    selected: [] as string[],
+
+    target: {} as EntityType,
     attributes: [] as Attribute[],
 })
 
+
 const remote = inject("remote") as Remote
 
-function sortByModule(a: Entity, b: Entity): number {
+function sortByModule(a: EntityType, b: EntityType): number {
     if (a.name >= b.name) {
         return 1
     } else if (a.name < b.name) {
@@ -39,15 +41,40 @@ watchEffect(() => {
 })
 
 function updateData() {
-    state.entities = remote.entities.filter(e => e.type === 'spectrum' || e.type === 'dimmer' || e.type === 'media').sort(sortByModule)
+    state.entities = remote.entities.filter(e => e.module === 'govee' || e.module === 'macmeta').sort(sortByModule)
 }
 
 function selectEntity(id: string) {
-    state.selected = id
-    let entities = state.entities.find(e => e.id === id)
-    if (!entities) return
-    state.target = entities
-    state.attributes = remote.attributes.filter(a => a.entity === id).sort((a, b) => a.order - b.order)
+    if (state.selected.includes(id)) {
+        state.selected = state.selected.filter(s => s != id)
+    } else {
+        state.selected.push(id)
+    }
+    fetchAttributes()
+
+}
+
+function fetchAttributes() {
+    if (state.selected.length > 0) {
+        let a = remote.attributes.filter(a => a.entity === state.selected[0])
+        if (!a) return
+        state.attributes = a
+    }
+}
+
+
+function attributeRequestAll(key: string, value: string) {
+    let attrs = remote.attributes.filter(a => state.selected.includes(a.entity) && a.key == key)
+    if (!attrs) return;
+
+    for (let i = 0; i < attrs.length; i--) {
+        let attr = attrs[i];
+        attr.request = value;
+        attributeService.request(attr)
+
+    }
+
+
 }
 
 
@@ -94,19 +121,22 @@ function timeSince(time: string): string {
 </script>
 
 <template>
-    <div class="remote-grid">
-        <PaneMenu title="Devices">
-            <PaneMenuToggle v-for="entity in state.entities" :active="state.selected === entity.id"
-                            :fn="() => selectEntity(entity.id)"
-                            :subtext="entity.module"
-                            :title="entity.name"
-            ></PaneMenuToggle>
-        </PaneMenu>
+    <div class="remote-grid h-100">
+        <FixedScroll class="h-100 overflow-scroll">
+            <div class="entity-grid h-100">
+                <Entity v-for="entity in state.entities" :key="entity.id" :entity="entity"
+                        :selected="state.selected.includes(entity.id)" @mousedown="() => selectEntity(entity.id)">
 
+                </Entity>
+            </div>
+        </FixedScroll>
         <div class="d-flex flex-column remote-controls ">
             <div class="d-flex gap-1 flex-column">
                 <div v-for="attribute in state.attributes" :key="`${attribute.id}`">
-                    <Switch v-if="attribute.key === 'on'" :active="false" name="Power"></Switch>
+                    <Switch v-if="attribute.key === 'on'"
+                            :active="attribute.value === 'true'"
+                            :change="(val) => {attribute.request = `${val?'true':'false'}`; applyState(attribute)}"
+                            name="Power"></Switch>
                     <Slider v-else-if="attribute.key === 'dim'"
                             :change="(val) => {attribute.request = `${val}`; applyState(attribute)}" :live="false"
                             :max="100"
@@ -114,12 +144,11 @@ function timeSince(time: string): string {
                             :step="5"
                             :value="parseInt(attribute.request)" name="Brightness" unit="%"></Slider>
                     <div v-else-if="attribute.key === 'cct'" class="">
-                        <Slider :change="(val) => {attribute.request = `${val}`; applyState(attribute)}"
+                        <Slider :change="(val) => {attribute.request = `${colorTemps[val].value}`; applyState(attribute)}"
                                 :max="colorTemps.length-1"
                                 :min="0" :step="1" :tags="colorTemps.map(c => c.name)"
                                 :value="0"
-                                confirm
-                                name="Color Temperature" unit="K"></Slider>
+                                :live="false" name="Color Temperature" unit="K"></Slider>
 
                     </div>
                     <div v-else-if="attribute.key === 'api'">
@@ -177,6 +206,15 @@ function timeSince(time: string): string {
 
 .remote-controls {
     grid-column: span 2 / 4;
+}
+
+.entity-grid {
+    padding: 0.25rem;
+    display: grid;
+    grid-column-gap: 0.25rem;
+    grid-row-gap: 0.25rem;
+    grid-template-rows: repeat(120, 1fr);
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .remote-grid {

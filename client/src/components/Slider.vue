@@ -44,10 +44,12 @@ onMounted(() => {
 
     let r = document.getElementById(`track-${state.uuid}`) as HTMLElement
 
-    let w = r.getBoundingClientRect().width - 16 - 51
+    let wa = r.getBoundingClientRect()
+    if (!wa) return
+    let w = wa.width - 51
     // let np = ev.clientX - r.offsetLeft
     state.thumbWidth = (w / state.stops)
-    state.transform = (state.stops) * (state.thumbWidth) + 16
+    state.transform = (state.stops) * (state.thumbWidth)
     state.value = Math.floor(props.value / props.step)
     state.track = Math.floor(state.value * state.thumbWidth) + (state.value !== 0 ? 10 : 0)
     state.target = state.value
@@ -77,8 +79,7 @@ watchEffect(() => {
     if (state.value == 0 || state.value == state.stops - 1) {
 
         // haptics(0, 1, 25)
-        haptics.tap(2, 1, 100)
-        haptics.tap(0, 1, 100)
+
         haptics.tap(1, 1, 100)
         // haptics(1, 2, 100)
     } else {
@@ -98,18 +99,14 @@ function handleDrag(ev: MouseEvent) {
     if (!state.dragging) return
     let r = document.getElementById(`track-${state.uuid}`) as HTMLElement
 
-    let w = r.getBoundingClientRect().width - 16 - 51
-    let np = ev.clientX - r.offsetLeft - 25
+    let w = r.getBoundingClientRect().width - 100 + 16
     let dx = (w / state.stops)
+    let np = ev.clientX - r.offsetLeft - 10
     state.thumbWidth = dx
-    if (np / dx <= 0) {
-        // state.value = 0
-        // state.track = 0
-    } else if (np >= w) {
-        // state.value = Math.floor(np/dx)
-        // state.track = Math.floor(np/dx) * (props.max-1)
-        // state.track = dx * props.max
-        // tick(0, 2, 4095)
+    if (np / dx < 0) {
+
+    } else if (np > w) {
+
     } else {
         state.value = Math.floor(np / dx)
         state.change = Math.floor(np / dx) * dx
@@ -170,7 +167,7 @@ function stopDrag() {
 <style lang="scss" scoped>
 .shuttle-path {
   position: absolute;
-  width: calc(100% - 0.5rem - 2px);
+  width: calc(100% - 16px);
   margin: 0.25rem;
   //background-color: #0a58ca;
   height: 2rem;

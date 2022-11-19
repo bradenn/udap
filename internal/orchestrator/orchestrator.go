@@ -181,7 +181,12 @@ func (o *orchestrator) tick() <-chan error {
 			// log.Tick("Elapsed: %s", delta.String())
 			time.Sleep(o.maxTick - delta)
 		}
-		out <- nil
+		select {
+		case out <- nil:
+			break
+		default:
+			break
+		}
 	}()
 	return out
 }

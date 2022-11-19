@@ -306,7 +306,6 @@ provide('terminal', state)
              v-on:mouseup="dragStop">
 
             <div class="d-flex flex-column h-100 ">
-
                 <div>
                     <ContextBar v-if="!state.showClock">
                         <div style="grid-column: span 3">
@@ -320,6 +319,7 @@ provide('terminal', state)
                         <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
                             <IdTag></IdTag>
                         </div>
+
                     </ContextBar>
                     <ContextBar v-else>
 
@@ -375,6 +375,7 @@ provide('terminal', state)
 </template>
 
 <style lang="scss" scoped>
+
 .terminal {
   z-index: 2;
   display: inline-block;

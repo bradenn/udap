@@ -21,23 +21,11 @@ $element-bg-hover: rgba(255, 128, 0, 0.280);
 $loadInDistance: 0.98;
 /* Blur Definitions */
 .bg-blur {
-  position: relative;
-
-  transform: translate3d(0, 0, 0) translateZ(0);
+  transform: translateZ(0);
   backface-visibility: visible;
-  -webkit-backface-visibility: hidden;
-  content: ' ';
   overflow: hidden;
-
   border-radius: inherit;
-  backdrop-filter: blur(22px) saturate(200%) brightness(100%);
-}
-
-
-.bg-blur:before {
-  position: absolute;
-  top: 0;
-  right: 0;
+  backdrop-filter: blur(20px) saturate(200%) brightness(100%);
 }
 
 
@@ -56,7 +44,6 @@ $apex: 1.0;
 }
 
 //
-
 
 /* Theme Definitions */
 $themes: (
@@ -149,7 +136,7 @@ $themes: (
   background: linear-gradient(148.05deg, rgba(44, 44, 44, 0.1) 0%, rgba(44, 44, 44, 0) 100%);
   animation: loadIn 200ms forwards linear !important;
   padding: 0.25rem;
-  backface-visibility: hidden;
+  backface-visibility: visible;
   will-change: transform;
   //border-radius: 12px;
   border-radius: 0.5rem !important;
