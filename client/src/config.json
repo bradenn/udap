@@ -14,7 +14,7 @@
     }
   ],
   "defaults": {
-    "background": "viridian",
+    "background": "waves",
     "theme": "dark",
     "token": "unset"
   }

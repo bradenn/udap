@@ -129,28 +129,63 @@ function toggleMenu(): void {
 }
 
 
-</script>
+</script>xw
 
 <template>
     <ControlLight v-if="state.showMenu" :entity="props.entity" @click="state.showMenu = false"></ControlLight>
-    <div class=" element" @click="state.showMenu = !state.showMenu">
-        <div class="d-flex justify-content-start align-items-center align-content-center ">
-            <div :style="`width: 0.8rem; margin-left:0.25rem; color:${state.activeColor}; height: 100%;border-radius: 0.25rem; `"
-                 class="label-c2 light-on d-flex align-items-center label-w700 justify-content-center">
-                {{ (props.entity.icon || '􀛭') }}
-            </div>
-            <div class="d-flex flex-column">
-                <div class="label-c2 label-o3 label-w500 px-1 lh-1">{{ props.entity.name }}</div>
-                <div class="label-c3 label-o2  label-w500 px-1 lh-1">{{ state.shortStatus }}</div>
-            </div>
+    <div class="element light" @click="state.showMenu = !state.showMenu">
+        <div class="icon cd-2">
+            {{ (props.entity.icon || '􀛭') }}
+        </div>
+        <div class="metadata">
+            <div class="name label-o5">{{ props.entity.name }}</div>
+            <div class="description label-o3">{{ state.shortStatus }}</div>
         </div>
     </div>
 </template>
 
 <style lang="scss" scoped>
-.element {
-  padding: 0.5rem;
-  height: 100%;
+
+.element.light {
+
   z-index: 1 !important;
+
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.25rem;
+  gap: 0.3rem;
+
+  .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.025);
+    border-radius: 8px;
+    aspect-ratio: 1/1 !important;
+    width: 48px;
+    font-size: 20px;
+    line-height: 18px;
+  }
+
+  .metadata {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .name {
+      font-size: 18px;
+      line-height: 18px;
+      font-weight: 500;
+      font-family: "SF Pro Rounded", sans-serif;
+    }
+
+    .description {
+      font-size: 15px;
+      line-height: 20px;
+      font-weight: 500;
+      font-family: "SF Pro Rounded", sans-serif;
+    }
+  }
 }
+
 </style>

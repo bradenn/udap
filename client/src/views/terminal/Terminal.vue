@@ -16,7 +16,6 @@ import Notification from "@/components/Notification.vue";
 import Input from '@/views/Input.vue'
 import ScreensaverDom from "@/views/screensaver/Screensaver.vue";
 
-
 import type {Remote} from "@/remote";
 import _remote from "@/remote";
 
@@ -28,6 +27,7 @@ import _notify from "@/notifications";
 
 import type {Screensaver} from "@/screensaver";
 import _screensaver from "@/screensaver";
+
 
 /* Remote */
 const remote: Remote = _remote
@@ -44,6 +44,7 @@ provide("screens", screensaver)
 /* Haptics */
 const haptics: Haptics = _haptics
 provide("haptics", haptics)
+
 
 // Load runtime when the terminal view is loaded
 onMounted(() => {

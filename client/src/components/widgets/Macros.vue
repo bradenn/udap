@@ -6,7 +6,6 @@ import Plot from "@/components/plot/Plot.vue";
 import {inject, onMounted, reactive, watchEffect} from "vue";
 import type {Attribute, Entity, Zone} from "@/types";
 import Light from "@/components/widgets/Light.vue";
-import Widget from "@/components/widgets/Widget.vue";
 import Select from "@/components/plot/Select.vue";
 import attributeService from "@/services/attributeService";
 import Button from "@/components/Button.vue";
@@ -129,8 +128,6 @@ function changeGlobalCCT() {
 </script>
 
 <template>
-
-    <div v-if="state.colorMenu" class="context context-light" @click="(e) => closeMenu()"></div>
     <div v-if="!state.loading" class="d-flex flex-column gap-1">
         <div>
             <Select :selected="`${state.zone.name?.charAt(0).toUpperCase()}${state.zone.name?.substring(1)}`">
@@ -151,11 +148,11 @@ function changeGlobalCCT() {
                 </div>
             </Select>
         </div>
-        <Widget v-if="!state.loading" :cols="4" :rows="6" class="macro-grid gap-1" size="sm">
+        <div class="light-grid">
             <Light v-for="light in state.lights.slice(0, 5)"
                    :key="light.id"
                    :entity="light"></Light>
-        </Widget>
+        </div>
         <Plot :cols="5" :rows="1" style="width: 100%;">
             <Button :active="false" text="OFF" @click="() => setAttributes('on', 'false')"></Button>
             <Button :active="false" text="ON" @click="() => setAttributes('on', 'true')"></Button>
@@ -163,6 +160,9 @@ function changeGlobalCCT() {
             <Button :active="false" text="􀆮" @click="() => setAttributes('dim', '60')"></Button>
             <Button :active="!state.colorMenu" text="􀎘" @click="() => openMenu()"></Button>
         </Plot>
+
+    </div>
+    <div v-else>
 
     </div>
     <div v-if="state.colorMenu" class="context-container d-flex flex-column justify-content-start gap-1">
@@ -220,6 +220,19 @@ function changeGlobalCCT() {
 
 
 <style lang="scss" scoped>
+
+.light-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-column-gap: 0.125rem;
+  grid-row-gap: 0.125rem;
+  //grid-template-rows: repeat(5, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+}
+
+
 .macro-grid {
   width: 100%;
   height: 100%;

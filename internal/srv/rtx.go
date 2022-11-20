@@ -14,6 +14,15 @@ type Watch interface {
 	EmitAll() error
 }
 
+type Context interface {
+}
+
+type CoreModule interface {
+	Mount(rtx Context) error
+	Unmount() error
+	Mounted() bool
+}
+
 type System interface {
 	WithWatch(watch Watch)
 	WhenLoaded(watch func())

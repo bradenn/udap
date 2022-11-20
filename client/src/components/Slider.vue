@@ -99,7 +99,7 @@ function handleDrag(ev: MouseEvent) {
     if (!state.dragging) return
     let r = document.getElementById(`track-${state.uuid}`) as HTMLElement
 
-    let w = r.getBoundingClientRect().width - 100 + 16
+    let w = r.getBoundingClientRect().width - 50 + 16
     let dx = (w / state.stops)
     let np = ev.clientX - r.offsetLeft - 10
     state.thumbWidth = dx

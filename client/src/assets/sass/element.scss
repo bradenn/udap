@@ -29,7 +29,7 @@ $loadInDistance: 0.98;
 }
 
 
-$base: 0.96;
+$base: 0.985;
 $apex: 1.0;
 
 @keyframes loadIn {
@@ -134,7 +134,7 @@ $themes: (
   @extend .bg-blur;
   position: relative;
   background: linear-gradient(148.05deg, rgba(44, 44, 44, 0.1) 0%, rgba(44, 44, 44, 0) 100%);
-  animation: loadIn 200ms forwards linear !important;
+  animation: loadIn 99ms forwards linear !important;
   padding: 0.25rem;
   backface-visibility: visible;
   will-change: transform;
