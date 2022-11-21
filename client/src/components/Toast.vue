@@ -55,13 +55,13 @@ watchEffect(() => {
 <template>
     <div :class="`${props.time <= 300 && props.time !== -1 ? 'toast-dissolve' : ''}`" :style="`z-index: ${index || 2};`"
          class="element toast"
-         style="width: 18rem; height: 2.25rem; ">
+         style="width: 18rem; height: 2rem; ">
         <div class="d-flex align-items-start px-1">
             <div class="w-100 d-flex flex-column justify-content-start align-items-start">
                 <div class="d-flex justify-content-between align-content-center align-items-center w-100">
                     <div class="d-flex align-items-center align-content-center justify-content-start ">
                         <div :style="`color: rgba(${iconMap.get(props.severity).color})`"
-                             class="label-o2 label-c1 label-w500"
+                             class="label-o2 label-c1 label-w500 lh-1"
                              style="padding-right: 0.225rem">
                             {{ iconMap.get(props.severity).icon }}
                         </div>

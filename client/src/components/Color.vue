@@ -2,41 +2,64 @@
 
 <script lang="ts" setup>
 
+import {reactive} from "vue";
+
 const props = defineProps<{
     color: string
+    selected?: boolean
 }>()
+
+
+const state = reactive({
+    value: 0,
+})
+
+
 </script>
 
 <template>
-    <div :style="`background-color: ${props.color};`" class="color">
-
+    <div :class="`${props.selected?'selected':''}`" class="color subplot surface">
+        <div :style="`background-color: hsl(${props.color}, 100%, 50%);`" class="swatch">
+        </div>
     </div>
 </template>
 
 <style lang="scss" scoped>
-div.color {
-  opacity: 1;
+div.color.subplot.surface {
+
   border-radius: 0.25rem;
-  padding: 0.25rem;
+  padding: 0.125rem;
 
-  aspect-ratio: 1.61803398874/1 !important;
+  aspect-ratio: 2/2 !important;
   //width: 100%;
-
-  height: 2.2rem;
+  background-color: rgba(255, 255, 255, 0.025);
+  height: 2.25rem;
 
 
 }
 
+div.swatch {
+  border-radius: 0.1875rem;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-div.color.selected {
+}
+
+
+div.color.subplot.surface.selected {
   z-index: 10;
-  opacity: 1;
+  padding: 0;
 
-  box-shadow: 0 0 32px 8px rgba(0, 0, 0, 0.5), inset 0 0 1px 1px rgba(255, 255, 255, 0.3);
-  border-radius: 0.25rem;
-  gap: 0.25rem;
-  scale: 1.1;
-  padding: 0.25rem;
+  div.swatch {
+    border-radius: 0.25rem;
+    box-shadow: inset 0 0 1px 2px rgba(255, 255, 255, 0.75), inset 0 0 6px 2px rgba(0, 0, 0, 0.25) !important;
+
+  }
+
 
 }
 </style>

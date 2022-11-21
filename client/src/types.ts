@@ -123,7 +123,7 @@ export interface Preferences {
         outlines: boolean
     },
     appdata: {
-        colors: string[]
+        colors: number[]
     }
 }
 
