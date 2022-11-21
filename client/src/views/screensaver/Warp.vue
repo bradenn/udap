@@ -49,7 +49,7 @@ let depth = 1500
 
 function initCamera() {
     // Initialize Camera
-    camera = new THREE.PerspectiveCamera(75, width / height, 1, depth * 2)
+    camera = new THREE.PerspectiveCamera(60, width / height, 1, depth * 2.5)
 
     camera.position.set(0, 0, 1);
     camera.lookAt(0, 0, 0)
@@ -94,7 +94,7 @@ function initGraphics() {
     // Set up the scene
     initScene()
     const renderScene = new RenderPass(scene, camera);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.5, 0.001, 0.1);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.7, 0.03, 0.5);
     const renderTargetParameters = {
         minFilter: THREE.LinearFilter,
         magFilter: THREE.LinearFilter,
@@ -113,7 +113,7 @@ function initGraphics() {
 // blend pass
     const blendPass = new ShaderPass(BlendShader, "tDiffuse1");
     blendPass.uniforms["tDiffuse2"].value = savePass.renderTarget.texture;
-    blendPass.uniforms["mixRatio"].value = 0.1;
+    blendPass.uniforms["mixRatio"].value = 0.25;
 
 // output pass
     const outputPass = new ShaderPass(CopyShader);
@@ -152,10 +152,10 @@ function initScene() {
 
 // Define animation routine
 function animate() {
+    animationFrame = requestAnimationFrame(animate);
     render()
     // stats.update()
     composer.render();
-    animationFrame = requestAnimationFrame(animate);
 }
 
 function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
@@ -202,7 +202,7 @@ function generateStars(): THREE.Object3D {
         colorArray[i3 + 1] = arr[1] / 255
         colorArray[i3 + 2] = arr[2] / 255
 
-        scaleArray[i] = 1 + Math.random() * 2;
+        scaleArray[i] = 2 + Math.random() * 0.5;
 
 
     }
@@ -258,6 +258,7 @@ function render() {
 .screensaver-context {
     width: 100%;
     height: 100%;
+    border-radius: 4rem;
     animation: screensaverBegin 750ms ease-in-out forwards;
 }
 
@@ -266,11 +267,13 @@ function render() {
         opacity: 0.5;
         transform: scale(0.8);
         filter: blur(20px);
+        border-radius: 100rem !important;
     }
     100% {
         opacity: 1;
         transform: scale(1);
         filter: blur(0px);
+        border-radius: 0.4rem !important;
     }
 }
 

@@ -26,6 +26,9 @@ export function usePersistent() {
             watermark: false,
             night: false,
             outlines: false,
+        },
+        appdata: {
+            colors: []
         }
     }
 

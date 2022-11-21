@@ -41,6 +41,7 @@ type Orchestrator interface {
 func (o *orchestrator) Terminate() {
 	_ = o.controller.Modules.DisposeAll()
 	_ = o.controller.Endpoints.CloseAll()
+	close(o.mutations)
 	fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
 	os.Exit(0)
 }
@@ -181,7 +182,12 @@ func (o *orchestrator) tick() <-chan error {
 			// log.Tick("Elapsed: %s", delta.String())
 			time.Sleep(o.maxTick - delta)
 		}
-		out <- nil
+		select {
+		case out <- nil:
+			break
+		default:
+			break
+		}
 	}()
 	return out
 }
@@ -213,13 +219,10 @@ func (o *orchestrator) Run() error {
 			case <-o.done:
 				log.Event("Event loop exiting...")
 				o.Terminate()
-				close(o.mutations)
 				return
 			case <-t.C:
 				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*100).String())
 				log.Event("Currently %d threads.", runtime.NumGoroutine())
-				log.Event("%s", runtime.ReadTrace())
-
 				pulse.End("update")
 				continue
 			case err := <-o.tick():

@@ -121,6 +121,9 @@ export interface Preferences {
         watermark: boolean
         night: boolean
         outlines: boolean
+    },
+    appdata: {
+        colors: string[]
     }
 }
 
@@ -292,7 +295,8 @@ export interface Identifiable {
 export function memorySizeOf(obj: any) {
     var bytes = 0;
 
-    function sizeOf(obj: any) {
+    function sizeOf(obj: any, max: number) {
+        if (max > 2) return
         if (obj !== null && obj !== undefined) {
             switch (typeof obj) {
                 case 'number':
@@ -309,7 +313,7 @@ export function memorySizeOf(obj: any) {
                     if (objClass === 'Object' || objClass === 'Array') {
                         for (var key in obj) {
                             if (!obj.hasOwnProperty(key)) continue;
-                            sizeOf(obj[key]);
+                            sizeOf(obj[key], max + 1);
                         }
                     } else bytes += obj.toString().length * 2;
                     break;
@@ -319,7 +323,7 @@ export function memorySizeOf(obj: any) {
     }
 
 
-    return sizeOf(obj);
+    return sizeOf(obj, 0);
 }
 
 export function formatByteSize(bytes: number) {
