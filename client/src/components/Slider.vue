@@ -89,8 +89,10 @@ function handleDrag(ev: MouseEvent) {
     let protoPos = Math.floor((mouseX / slider.w) * slider.stops)
 
     if (protoPos >= 0 && protoPos < slider.stops) {
+        if (thumb.position == protoPos) return
         thumb.position = protoPos
         thumb.x = thumb.position * thumb.w
+        haptics.tap(2, 1, 25)
     }
 
 }

@@ -4,8 +4,7 @@
 import ColorSelector from "@/components/ColorSelector.vue";</script>
 <template>
     <div class="d-flex flex-column justify-content-center align-items-center gap-2 w-100 h-100">
-        <h4>Demo UI Elements</h4>
-        <div style="width: 55rem; height: 100%">
+        <div style="width: 100%; height: 100%">
             <ColorSelector></ColorSelector>
 
         </div>

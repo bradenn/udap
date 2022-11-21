@@ -134,7 +134,7 @@ function toggleMenu(): void {
 <template>
     <ControlLight v-if="state.showMenu" :entity="props.entity" @click="state.showMenu = false"></ControlLight>
     <div class="element light" @click="state.showMenu = !state.showMenu">
-        <div class="icon cd-2">
+        <div :style="`color: ${state.activeColor}!important;`" class="icon ">
             {{ (props.entity.icon || '􀛭') }}
         </div>
         <div class="metadata">

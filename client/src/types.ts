@@ -121,6 +121,9 @@ export interface Preferences {
         watermark: boolean
         night: boolean
         outlines: boolean
+    },
+    appdata: {
+        colors: string[]
     }
 }
 
