@@ -4,7 +4,7 @@
 
 import {inject, reactive, watchEffect} from "vue";
 import type {RemoteRequest, TerminalDiagnostics, Timing} from "@/types";
-import {formatByteSize, memorySizeOf} from "@/types";
+import {formatByteSize} from "@/types";
 import PaneListItem from "@/components/pane/PaneListItem.vue";
 import PaneMenu from "@/components/pane/PaneMenu.vue";
 import LiveChart from "@/components/charts/LiveChart.vue";
@@ -138,13 +138,12 @@ function updateStats() {
         <PaneMenu :previous="false" alt="This terminal" title="Terminal">
 
             <PaneListItem v-for="key in Object.keys(remote)" :active="false"
-                          :subtext="`${formatByteSize(// @ts-ignore
-                    memorySizeOf(remote[key]))}`"
+                          :subtext="``"
                           :title="key"></PaneListItem>
         </PaneMenu>
         <PaneMenu :previous="false" alt="This terminal" title="Terminal">
             <PaneListItem v-for="attribute in remote.attributes" :active="false"
-                          :subtext="`${formatByteSize(memorySizeOf(attribute))}`"
+                          :subtext="``"
                           :title="attribute.key"></PaneListItem>
         </PaneMenu>
 

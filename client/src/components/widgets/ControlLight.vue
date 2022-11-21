@@ -83,7 +83,7 @@ function findMode() {
     let dim = state.attributes.find((a: Attribute) => a.key === 'dim')
     if (!dim) return;
     if (hue && cct && dim) {
-        if (moment(hue).isAfter(cct.requested)) {
+        if (moment(hue.request).isAfter(cct.requested)) {
             state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim?.value) / 100.0 * 50}%, 0.5)`
         } else {
             state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`

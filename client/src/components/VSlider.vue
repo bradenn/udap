@@ -90,13 +90,13 @@ function draw(c: CanvasRenderingContext2D): void {
 
     c.fillStyle = `rgba(255, 149, 0, 0.3)`
     c.beginPath()
-    c.roundRect(0, state.pos.y, state.thumb.w, state.slider.h - state.pos.y, 0);
+    // c.roundRect(0, state.pos.y, state.thumb.w, state.slider.h - state.pos.y, 0);
 
     c.stroke()
     c.fill()
     c.closePath()
     c.beginPath()
-    c.roundRect(state.thumb.w / 2 - state.thumb.w / 4 / 2, state.pos.y + 16, state.thumb.w / 4, 10, 12);
+    // c.roundRect(state.thumb.w / 2 - state.thumb.w / 4 / 2, state.pos.y + 16, state.thumb.w / 4, 10, 12);
     c.stroke()
     c.fill()
     c.closePath()
