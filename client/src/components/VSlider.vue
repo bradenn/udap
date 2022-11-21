@@ -4,8 +4,15 @@
 
 import {inject, onBeforeUnmount, onMounted, reactive, watchEffect} from "vue";
 import type {Preferences} from "@/types";
-import canvas from "@/composables/canvas";
+import {useCanvas} from "@/composables/canvas";
+import {v4 as uuidv4} from "uuid";
 import core from "@/core";
+
+interface Props {
+    change: (a: number) => void
+}
+
+defineProps<Props>()
 
 const state = reactive({
     thumb: {
@@ -28,9 +35,12 @@ const state = reactive({
     value: 0,
     result: 0,
     hold: 0,
-    notches: 50
+    notches: 50,
+    uuid: uuidv4()
 })
+
 const haptics = core.haptics()
+
 
 function requestHaptic() {
     if (Date.now().valueOf() - state.lastHaptic >= 25) {
@@ -40,7 +50,7 @@ function requestHaptic() {
     }
 }
 
-function draw(c: CanvasRenderingContext2D) {
+function draw(c: CanvasRenderingContext2D): void {
     c.strokeStyle = "rgba(0,0,0,0.125)"
     c.fillStyle = "rgba(255,255,255,0.25)"
     c.lineWidth = 2
@@ -77,17 +87,23 @@ function draw(c: CanvasRenderingContext2D) {
     //     // c.stroke()
     //     c.closePath()
     // }
-    
-    c.fillStyle = `rgba(255, 255, 255, 0.025)`
+
+    c.fillStyle = `rgba(255, 149, 0, 0.3)`
     c.beginPath()
-    c.roundRect(0, state.pos.y, state.thumb.w, state.slider.h - state.pos.y, 12);
+    c.roundRect(0, state.pos.y, state.thumb.w, state.slider.h - state.pos.y, 0);
+
+    c.stroke()
+    c.fill()
+    c.closePath()
+    c.beginPath()
+    c.roundRect(state.thumb.w / 2 - state.thumb.w / 4 / 2, state.pos.y + 16, state.thumb.w / 4, 10, 12);
     c.stroke()
     c.fill()
     c.closePath()
 }
 
 function mouseDrag() {
-    const element = document.getElementById(`${canvas.uuid}`) as HTMLCanvasElement
+    const element = document.getElementById(`${state.uuid}`) as HTMLCanvasElement
     if (!element) return;
     let rect = element.getBoundingClientRect()
 
@@ -97,7 +113,7 @@ function mouseDrag() {
     state.slider.w = rect.width * 2
 
     state.thumb.w = state.slider.w
-    state.thumb.h = state.slider.h / state.notches
+    state.thumb.h = state.slider.h
     state.thumb.x = 0
     state.thumb.y = 0
 
@@ -106,45 +122,25 @@ function mouseDrag() {
 }
 
 function moveSlider(ev: MouseEvent) {
-
-
-    let adjustedPosition = ev.offsetY * 2
-
-    let dx = state.slider.h / state.notches
-    let np = adjustedPosition - state.thumb.h / 2
-
-    if (np / dx < 0) {
-        state.value = 0
-
-        state.pos.y = state.value * dx
-        requestHaptic()
-    } else if (np > state.slider.h - state.thumb.h * 4) {
-        state.value = state.notches
-
-        state.pos.y = state.value * dx
-        requestHaptic()
-    } else {
-        state.value = Math.floor(np / dx)
-
-        state.pos.y = state.value * dx
-    }
-
-
+    state.pos.y = ev.offsetY * 2
 }
 
 
 onMounted(() => {
     mouseDrag()
-    canvas.setupCanvas(draw)
+    useCanvas(state.uuid, draw)
 })
 
 onBeforeUnmount(() => {
-    canvas.dispose()
 })
 
 watchEffect(() => {
     if (state.hold == state.value) return
-    state.hold = state.value
+
+    if (state.hold - state.value) {
+        state.hold = state.value
+    }
+
     requestHaptic()
     state.result = state.notches - state.value
     return state.value
@@ -156,13 +152,13 @@ const preferences = inject("preferences") as Preferences
 </script>
 
 <template>
+    {{ state.result }}
     <div class="element v-slider p-0">
-
         <div class="h-100" style="outline: 1px solid white">
-            <canvas :id="`${canvas.uuid}`" style="height: 100%; width: 96px !important;"></canvas>
+            <canvas :id="`${state.uuid}`" style="height: 100%; width: 128px !important;"></canvas>
         </div>
     </div>
-    {{ Math.round((state.result / state.notches) * 100) }}
+
 </template>
 
 <style lang="scss" scoped>

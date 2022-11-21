@@ -2,7 +2,7 @@
 
 <script lang="ts" setup>
 
-import {inject, onMounted, reactive, watchEffect} from "vue";
+import {inject, onMounted, onUpdated, reactive} from "vue";
 import {v4 as uuidv4} from "uuid";
 import type {Preferences} from "@/types";
 
@@ -25,11 +25,9 @@ const state = reactive({
 
 onMounted(() => {
     setupCanvas()
-    drawTicks()
 })
 
-watchEffect(() => {
-    drawTicks()
+onUpdated(() => {
     redraw()
 })
 
@@ -95,6 +93,7 @@ function setupCanvas() {
     const ctx = chart.getContext('2d')
     if (!ctx) return
     state.ctx = ctx
+
     let scale = 1
     ctx.scale(scale, scale)
 
@@ -114,7 +113,6 @@ function setupCanvas() {
 
 <template>
     <div>
-
         <canvas :id="`tick-canvas-${state.uuid}`" style="width: 100%; height: 100%;"></canvas>
     </div>
 </template>

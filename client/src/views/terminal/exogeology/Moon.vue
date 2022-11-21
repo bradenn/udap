@@ -7,8 +7,10 @@ import VSlider from "@/components/VSlider.vue";</script>
         <h4>Demo UI Elements</h4>
         <div style="width: 45rem; height: 100%">
             <div class="label-c1 label-w400 label-o4 px-2 mb-1">Vertical Sliders</div>
-            <div class="d-flex" style="height: 20rem">
-                <VSlider></VSlider>
+            <div class="d-flex gap-1" style="height: 20rem">
+                <VSlider :key="1" :change="() => {}"></VSlider>
+                <VSlider :key="2" :change="() => {}"></VSlider>
+                <VSlider :key="3" :change="() => {}"></VSlider>
             </div>
 
         </div>

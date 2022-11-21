@@ -1,52 +1,52 @@
 // Copyright (c) 2022 Braden Nicholson
 
 import {reactive} from "vue";
-import {v4 as uuidv4} from "uuid";
 
-let state = reactive({
-    animationFrame: 0,
-    width: 0,
-    height: 0,
-    ctx: {} as CanvasRenderingContext2D,
-    uuid: uuidv4(),
-    drawFunc: defaultDraw as (c: CanvasRenderingContext2D) => void,
-})
 
-function animate() {
-    state.animationFrame = requestAnimationFrame(animate)
-    redraw()
-}
+export function useCanvas(uuid: string, draw: (c: CanvasRenderingContext2D) => void) {
 
-function defaultDraw(c: CanvasRenderingContext2D) {
-    let levels = 40
+    let state = reactive({
+        animationFrame: 0,
+        width: 0,
+        height: 0,
+        ctx: {} as CanvasRenderingContext2D,
+        uuid: uuid,
+        drawFunc: defaultDraw as (c: CanvasRenderingContext2D) => void,
+    })
 
-    let dx = Math.ceil(state.height / levels)
 
-    for (let i = 0; i < levels; i++) {
-        c.strokeRect(0, 0, state.width, dx * i)
+    function animate() {
+        state.animationFrame = requestAnimationFrame(animate)
+        redraw()
+    }
+
+    function defaultDraw(c: CanvasRenderingContext2D) {
+        let levels = 40
+
+        let dx = Math.ceil(state.height / levels)
+
+        for (let i = 0; i < levels; i++) {
+            c.strokeRect(0, 0, state.width, dx * i)
+
+        }
+    }
+
+    function redraw() {
+        state.ctx.clearRect(0, 0, state.width, state.height)
+        state.drawFunc(state.ctx)
+    }
+
+    function dispose() {
+        cancelAnimationFrame(state.animationFrame)
+        state.ctx.canvas.remove()
 
     }
 
-}
-
-function redraw() {
-    state.ctx.clearRect(0, 0, state.width, state.height)
-    state.drawFunc(state.ctx)
-}
-
-
-function dispose() {
-    cancelAnimationFrame(state.animationFrame)
-    state.ctx.canvas.remove()
-
-}
-
-function setupCanvas(draw: (c: CanvasRenderingContext2D) => void) {
     const chart = document.getElementById(`${state.uuid}`) as HTMLCanvasElement
-    if (!chart) return;
+    if (!chart) return "";
 
     const ctx = chart.getContext('2d')
-    if (!ctx) return
+    if (!ctx) return ""
 
     state.ctx = ctx
     let scale = 2
@@ -55,6 +55,7 @@ function setupCanvas(draw: (c: CanvasRenderingContext2D) => void) {
     if (draw) {
         state.drawFunc = draw
     }
+
     chart.width = chart.clientWidth * scale
     chart.height = chart.clientHeight * scale
 
@@ -67,11 +68,6 @@ function setupCanvas(draw: (c: CanvasRenderingContext2D) => void) {
 
 
     state.animationFrame = requestAnimationFrame(animate)
-}
 
-export default {
-    setupCanvas,
-    dispose,
-    uuid: state.uuid,
 }
 

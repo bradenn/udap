@@ -21,7 +21,7 @@ import type {
     User,
     Zone
 } from "@/types";
-import {memorySizeOf, PreferenceTypes} from "@/types";
+import {PreferenceTypes} from "@/types";
 import {Preference} from "@/preferences";
 
 function connectionString(): string {
@@ -247,11 +247,11 @@ function handleMessage(target: Target, data: any) {
     } as RemoteRequest
     remote.diagnostics.queue.push(session)
     remote.diagnostics.lastTarget = target
-    if (remote.diagnostics.queue.length > 10) {
+    if (remote.diagnostics.queue.length >= 10) {
         remote.diagnostics.queue = remote.diagnostics.queue.slice(0, remote.diagnostics.queue.length - 2)
     }
 
-    remote.diagnostics.maxRSS = memorySizeOf(remote)
+    // remote.diagnostics.maxRSS = memorySizeOf(remote) || 0
 }
 
 

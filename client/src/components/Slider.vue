@@ -2,11 +2,10 @@
 
 <script lang="ts" setup>
 
-import {onMounted, reactive, watchEffect} from "vue";
+import {onMounted, reactive} from "vue";
 import {v4 as uuidv4} from "uuid";
 import Ticks from "@/components/Ticks.vue";
 import core from "@/core";
-
 
 const props = defineProps<{
     min: number,
@@ -21,111 +20,95 @@ const props = defineProps<{
     confirm?: boolean
 }>()
 
-let state = reactive({
-    value: 0,
-    track: 0,
-    dragging: false,
-    confirm: false,
-    since: 0,
-    target: 0,
-    change: 0,
-    thumbWidth: 0,
-    transform: 0,
-    ready: false,
-    timer: 0,
-    lastSend: 0,
+let ticks = reactive({
+    w: 0,
+    h: 0,
+    x: 0,
+    y: 0,
+})
+
+let slider = reactive({
+    w: 0,
+    h: 0,
+    x: 0,
+    y: 0,
+    stops: 0,
     uuid: uuidv4().toString(),
-    stops: ((props.max - props.min) / props.step) + 1,
-    ws: {} as WebSocket,
+    last: 0
 })
 
-const haptics = core.haptics()
-onMounted(() => {
-
-    let r = document.getElementById(`track-${state.uuid}`) as HTMLElement
-
-    let wa = r.getBoundingClientRect()
-    if (!wa) return
-    let w = wa.width - 51
-    // let np = ev.clientX - r.offsetLeft
-    state.thumbWidth = (w / state.stops)
-    state.transform = (state.stops) * (state.thumbWidth)
-    state.value = Math.floor(props.value / props.step)
-    state.track = Math.floor(state.value * state.thumbWidth) + (state.value !== 0 ? 10 : 0)
-    state.target = state.value
-    state.lastSend = Date.now()
+let thumb = reactive({
+    engaged: false,
+    w: 0,
+    h: 0,
+    x: 0,
+    y: 0,
+    previous: 0,
+    position: 0,
 })
 
-watchEffect(() => {
+const xStop = 51;
 
-    // let ivid = setInterval(() => {
-    //
-    //   state.track = (state.change + state.track) / 2
-    //   console.log("RESOURCES")
-    //   if (Math.abs(state.track - state.change) <= 0.1) {
-    //     clearInterval(ivid)
-    //   }
-    // }, 16)
+function initSlider() {
 
-    state.track = state.change
+    const dom = document.getElementById(`track-${slider.uuid}`) as HTMLElement
+    if (!dom) return;
 
-    return state.change
-})
+    dom.addEventListener("mousemove", handleDrag)
 
-watchEffect(() => {
+    dom.addEventListener("mousedown", handleDrag)
 
-    if (state.target == state.value) return
-    if (state.value % 5 != 0 && Date.now() - state.lastSend <= 40) return
-    if (state.value == 0 || state.value == state.stops - 1) {
+    dom.addEventListener("mouseup", mouseUp)
 
-        // haptics(0, 1, 25)
+    let bounds = dom.getBoundingClientRect()
 
-        haptics.tap(1, 1, 100)
-        // haptics(1, 2, 100)
-    } else {
-        // haptics(1, 1, 10)
-        haptics.tap(1, 2, 25)
+    slider.x = bounds.x
+    slider.y = bounds.y
 
-    }
-    state.target = state.value
+    slider.w = bounds.width - xStop
+    slider.h = bounds.height
 
-    state.lastSend = Date.now()
-    // tick(1, 2)
-    return state.value
-})
+    slider.stops = (props.max - props.min) / props.step + 1
+
+    thumb.w = slider.w / slider.stops
+
+    thumb.position = Math.floor(props.value / props.step)
+    thumb.x = thumb.position * thumb.w
+
+    ticks.x = 0
+    ticks.w = slider.w
+
+
+}
 
 function handleDrag(ev: MouseEvent) {
-    state.since = Date.now()
-    if (!state.dragging) return
-    let r = document.getElementById(`track-${state.uuid}`) as HTMLElement
+    if (Date.now() - slider.last < 50) return
+    slider.last = Date.now()
+    let mouseX = ev.clientX - slider.x - 25
 
-    let w = r.getBoundingClientRect().width - 50 + 16
-    let dx = (w / state.stops)
-    let np = ev.clientX - r.offsetLeft - 10
-    state.thumbWidth = dx
-    if (np / dx < 0) {
+    let protoPos = Math.floor((mouseX / slider.w) * slider.stops)
 
-    } else if (np > w) {
-
-    } else {
-        state.value = Math.floor(np / dx)
-        state.change = Math.floor(np / dx) * dx
+    if (protoPos >= 0 && protoPos < slider.stops) {
+        thumb.position = protoPos
+        thumb.x = thumb.position * thumb.w
     }
-}
-
-function mouseDown() {
-    state.dragging = true
 
 }
 
-function stopDrag() {
-    if (state.dragging) {
-        if (!props.confirm && props.change) {
-            props.change(state.value * props.step)
-        } else {
-            state.confirm = true
-        }
-        state.dragging = false
+const haptics = core.haptics()
+
+onMounted(() => {
+
+    initSlider()
+
+})
+
+
+function mouseUp() {
+    if (!props.confirm && props.change) {
+        props.change(props.min + thumb.position * props.step)
+    } else {
+
     }
 }
 
@@ -133,31 +116,28 @@ function stopDrag() {
 
 <template>
     <div class="d-flex justify-content-center w-100">
-        <div :id="`track-${state.uuid}`" class="element p-0" style="width: 100%"
-             @mousedown="mouseDown" @mouseleave="stopDrag"
-             @mousemove="handleDrag" @mouseup="stopDrag">
+        <div :id="`track-${slider.uuid}`" class="element p-0" style="width: 100%">
+
             <div class="d-flex justify-content-between lh-1 " style="padding-top:4px">
                 <div class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">{{ props.name }}</div>
                 <div v-if="props?.tags" class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
-                    {{ props.tags[state.value] }}
+                    {{ props.tags[thumb.position] }}
                 </div>
                 <div v-else class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
-                    {{ props.min + state.value * props.step }}{{ props.unit }}
+                    {{ props.min + thumb.position * props.step }}{{ props.unit }}
                 </div>
             </div>
-            <Ticks v-if="state.transform > 0" :active="state.value" :min="props.min" :series="5" :step="props.step"
-                   :style="`width: ${state.transform}px; top: 0px;left: ${10}px; position:relative; height:1.25rem;`"
-                   :tags="tags" :ticks="state.stops"></Ticks>
+            <Ticks v-if="ticks.w > 0" :active="thumb.position" :min="props.min" :series="5" :step="props.step"
+                   :style="`width: ${ticks.w}px; left: ${ticks.x}px; position:relative; height:1.25rem;`"
+                   :tags="tags" :ticks="slider.stops"></Ticks>
             <div class="shuttle-path subplot"></div>
-            <div :style="`left: ${state.track}px;  position: relative; width: ${state.thumbWidth + 50}px;`"
+            <div :style="`left: ${thumb.x}px;  position: relative; width: ${thumb.w + 50}px;`"
                  class="shuttle-cock subplot m-1 mt-1">
                 <div class="shuttle"></div>
                 <div class="shuttle-center">􀌇</div>
 
 
             </div>
-            <!--    <input type="range" class="subplot slider slider-small" min="0" max="100" v-model="state.value"/>-->
-
 
         </div>
     </div>
