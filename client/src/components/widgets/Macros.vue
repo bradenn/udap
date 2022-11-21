@@ -158,7 +158,7 @@ function changeGlobalCCT() {
             <Button :active="false" text="ON" @click="() => setAttributes('on', 'true')"></Button>
             <Button :active="false" text="􀆫" @click="() => setAttributes('dim', '20')"></Button>
             <Button :active="false" text="􀆮" @click="() => setAttributes('dim', '60')"></Button>
-            <Button :active="!state.colorMenu" text="􀎘" @click="() => openMenu()"></Button>
+            <Button :active="!state.colorMenu" :to="`/terminal/remote`" text="􀎘"></Button>
         </Plot>
 
     </div>

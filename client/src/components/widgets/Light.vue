@@ -129,7 +129,7 @@ function toggleMenu(): void {
 }
 
 
-</script>xw
+</script>
 
 <template>
     <ControlLight v-if="state.showMenu" :entity="props.entity" @click="state.showMenu = false"></ControlLight>

@@ -264,8 +264,15 @@ function mouseDown(m: MouseEvent) {
 
 <style lang="scss">
 
-.accent-selected {
-  outline: 2px solid rgba(255, 149, 0, 0.4) !important;
+.accent-selected:before {
+  border: 2px solid rgba(255, 149, 0, 0.4) !important;
+  content: ' ';
+  position: absolute;
+  border-radius: inherit;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .tactile-button:active {

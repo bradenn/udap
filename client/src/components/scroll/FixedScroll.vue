@@ -121,9 +121,9 @@ function dragStop(e: MouseEvent) {
     if (!element) return;
 
     state.xDecelerate = setInterval(() => {
-        state.xVelocity = state.xVelocity * 0.80
-        element.scrollLeft -= state.xVelocity * 20
-        state.xStart = state.xStart * 0.8
+        state.xVelocity = state.xVelocity * 0.9
+        element.scrollLeft -= state.xVelocity * 50
+        state.xStart = state.xStart * 0.9
 
         if (Math.abs(state.xVelocity) <= 0.01 && state.xStart <= 0.1) {
             state.xVelocity = 0

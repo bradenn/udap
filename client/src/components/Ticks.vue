@@ -56,7 +56,7 @@ function drawTicks() {
             let infill = 0;
             if (i == 0) {
                 if (ms.width / 2 > offset) {
-                    infill = ms.width / 2 - offset
+                    infill = ms.width / 2 - offset / 2
                 }
             }
             ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (19 / 3))
@@ -66,7 +66,7 @@ function drawTicks() {
             let infill = 0;
             if (i == 0) {
                 if (ms.width / 2 > offset) {
-                    infill = ms.width / 2 - offset
+                    infill = ms.width - offset
                 }
             }
             ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (15 / 3))

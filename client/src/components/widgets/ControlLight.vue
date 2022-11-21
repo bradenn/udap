@@ -57,7 +57,12 @@ watchEffect(() => {
 
 // Compare the defined order to sort the lights
 function compareOrder(a: any, b: any): number {
-    return a.order - b.order
+    if (a.order >= b.order) {
+        return 1
+    } else if (a.order < b.order) {
+        return -1
+    }
+    return 0
 }
 
 function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
@@ -210,6 +215,15 @@ function setCCT(attribute: Attribute) {
 
                         </div>
                         <div v-else-if="attribute.key === 'api'">
+                            <div class="element p-2">
+                                <div class="label-c2 label-w400 label-o4">
+                                    Rate limit:
+                                </div>
+                                <div class="label-c2 label-w400 label-o4">
+                                    {{ state.rateLimit.remaining }} /
+                                    {{ state.rateLimit.limit }}
+                                </div>
+                            </div>
 
                         </div>
                     </div>
