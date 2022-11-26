@@ -58,6 +58,7 @@ onMounted(() => {
 watchEffect(() => {
     updateLight(remote.attributes)
     findMode()
+    return remote.attributes
 })
 
 
@@ -82,7 +83,7 @@ function findMode() {
     let dim = state.attributes.find((a: Attribute) => a.key === 'dim')
     if (hue && cct && dim) {
         if (moment(hue.requested).isAfter(cct.requested)) {
-            state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim?.value) / 100.0 * 50}%, 0.5)`
+            state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim.value) / 100.0 * 50}%, 0.5)`
         } else {
             state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`
         }
@@ -134,7 +135,7 @@ function toggleMenu(): void {
 <template>
     <ControlLight v-if="state.showMenu" :entity="props.entity" @click="state.showMenu = false"></ControlLight>
     <div class="element light" @click="state.showMenu = !state.showMenu">
-        <div :style="`color: ${state.activeColor}!important;`" class="icon ">
+        <div :style="`color: ${state.activeColor} !important;`" class="icon ">
             {{ (props.entity.icon || '􀛭') }}
         </div>
         <div class="metadata">

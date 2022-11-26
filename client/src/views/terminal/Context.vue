@@ -2,6 +2,18 @@
 
 <script lang="ts" setup>
 
+import {onMounted, onUnmounted} from "vue";
+import core from "@/core";
+
+const ctx = core.context()
+onMounted(() => {
+    ctx.showContext()
+})
+
+onUnmounted(() => {
+    ctx.hideContext()
+})
+
 </script>
 
 <template>
@@ -30,7 +42,7 @@
   width: 100vw;
   height: 100vh;
 
-  z-index: 3 !important;
+  z-index: 6 !important;
   display: grid;
   grid-column-gap: 0;
   grid-template-columns: repeat(15, minmax(4rem, 1fr));

@@ -122,7 +122,7 @@ function mouseUp() {
 
             <div class="d-flex justify-content-between lh-1 " style="padding-top:4px">
                 <div class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">{{ props.name }}</div>
-                <div v-if="props?.tags" class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
+                <div v-if="props.tags" class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
                     {{ props.tags[thumb.position] }}
                 </div>
                 <div v-else class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">

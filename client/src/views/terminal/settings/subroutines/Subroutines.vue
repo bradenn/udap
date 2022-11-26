@@ -7,7 +7,6 @@ import MenuSection from "@/components/menu/MenuSection.vue";
 import ToolbarButton from "@/components/ToolbarButton.vue";
 import Create from "@/views/terminal/settings/subroutines/pages/Create.vue";
 import moment from "moment";
-import FixedScroll from "@/components/scroll/FixedScroll.vue";
 import Toolbar from "@/components/toolbar/Toolbar.vue";
 import type {Remote} from "@/remote";
 
@@ -144,16 +143,6 @@ function createSubroutine() {
                                 v-on:click.stop></Subroutine>
                 </div>
             </MenuSection>
-            <FixedScroll style="max-height: 10rem; overflow-y: scroll">
-                <div class="macro-grid">
-                    <div v-for="macro in remote.macros.slice(0, 6)"
-                         class="element label-c3 label-o3 label-w500 d-flex align-items-center justify-content-center"
-                         style="height: 2.25rem">
-                        <div class="label-c3 label-w700 label-r label-o4 ">{{ macro.name }}</div>
-
-                    </div>
-                </div>
-            </FixedScroll>
             <Create v-if="state.createSubroutine" :done="() => state.createSubroutine = false"></Create>
 
         </div>
@@ -205,7 +194,7 @@ function createSubroutine() {
 .button-sep {
   width: 3px;
   height: 32px;
-  background-color: rgba(255, 255, 255, 0.3);
+
 }
 
 .macro-grid > .element {

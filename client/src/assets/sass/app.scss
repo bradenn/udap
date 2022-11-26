@@ -207,10 +207,10 @@ $fontColors: (
   height: 100vh;
   display: flex;
   overflow: hidden;
-  backdrop-filter: blur(38px);
+  backdrop-filter: blur(8px);
   padding: 4.5rem 1rem 1rem;
   transition: all 100ms ease;
-  z-index: 22 !important;
+  z-index: 5 !important;
 }
 
 

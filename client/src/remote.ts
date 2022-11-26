@@ -174,6 +174,8 @@ function createOrUpdate(target: any[], data: Identifiable): any[] {
     return target
 }
 
+// const sys = inject("system")
+
 // Handle and route incoming messages to the local cache
 function handleMessage(target: Target, data: any) {
     remote.diagnostics.lastUpdate = new Date().valueOf()
@@ -184,7 +186,7 @@ function handleMessage(target: Target, data: any) {
             return
 
         case Target.Metadata:
-            // system.udap.system = data.system as Metadata
+
             remote.metadata = data as Metadata
             dx = 1
             break

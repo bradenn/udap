@@ -4,7 +4,7 @@
 
 import Plot from "@/components/plot/Plot.vue";
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import type {Attribute, Entity, Zone} from "@/types";
+import type {Attribute, Entity, Macro, Zone} from "@/types";
 import Light from "@/components/widgets/Light.vue";
 import Select from "@/components/plot/Select.vue";
 import attributeService from "@/services/attributeService";
@@ -38,6 +38,7 @@ let state = reactive({
     zone: {} as Zone,
     zones: [] as Zone[],
     lights: {} as Entity[],
+    macros: {} as Macro[],
     globalColor: 0,
     globalDim: 50,
     globalCCT: 6500,
@@ -80,6 +81,7 @@ function sortZones(a: Zone, b: Zone): number {
 function handleUpdates(remote: Remote) {
     state.lights = remote.entities.filter((entity: Entity) => state.targets.includes(entity.id)).sort(sortLights)
     state.zones = remote.zones.filter((zone: Zone) => !zone.deleted).sort(sortZones)
+    state.macros = remote.macros
     state.loading = false
 
     if (!state.zone.name) {
@@ -130,7 +132,7 @@ function changeGlobalCCT() {
 <template>
     <div v-if="!state.loading" class="d-flex flex-column gap-1">
         <div>
-            <Select :selected="`${state.zone.name?.charAt(0).toUpperCase()}${state.zone.name?.substring(1)}`">
+            <Select :selected="`${state.zone.name.charAt(0).toUpperCase()}${state.zone.name.substring(1)}`">
                 <div v-for="zone in state.zones" :class="state.zone.name !== zone.name?'subplot-inline':''"
                      class="subplot"
                      @click="() => switchZone(zone.name)">
@@ -153,6 +155,7 @@ function changeGlobalCCT() {
                    :key="light.id"
                    :entity="light"></Light>
         </div>
+
         <Plot :cols="5" :rows="1" style="width: 100%;">
             <Button :active="false" text="OFF" @click="() => setAttributes('on', 'false')"></Button>
             <Button :active="false" text="ON" @click="() => setAttributes('on', 'true')"></Button>
@@ -221,6 +224,15 @@ function changeGlobalCCT() {
 
 <style lang="scss" scoped>
 
+.macro-cell {
+  aspect-ratio: 4/2;
+  //outline: 1px solid white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .light-grid {
   width: 100%;
   height: 100%;
@@ -239,9 +251,10 @@ function changeGlobalCCT() {
   display: grid;
   grid-column-gap: 0.125rem;
   grid-row-gap: 0.125rem;
+  grid-auto-flow: column;
   //grid-template-rows: repeat(5, 1fr);
-  grid-template-columns: repeat(2, minmax(4rem, 1fr));
-  grid-template-rows: repeat(3, minmax(2rem, 1fr));
+
+  grid-template-rows: repeat(1, minmax(1rem, 2.5rem));
 }
 
 .context-container {

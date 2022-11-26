@@ -5,7 +5,7 @@
 import {reactive} from "vue";
 
 const props = defineProps<{
-    color: string
+    color: number
     selected?: boolean
 }>()
 

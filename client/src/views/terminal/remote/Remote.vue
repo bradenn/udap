@@ -8,7 +8,7 @@ import Switch from "@/components/Switch.vue";
 import attributeService from "@/services/attributeService";
 import moment from "moment";
 import type {Remote} from "@/remote";
-import FixedScroll from "@/components/scroll/FixedScroll.vue";
+import type Core from "@/core";
 import core from "@/core";
 import MenuSection from "@/components/menu/MenuSection.vue";
 import ColorPicker from "@/components/ColorPicker.vue";
@@ -16,12 +16,14 @@ import ColorPicker from "@/components/ColorPicker.vue";
 const state = reactive({
     entities: [] as EntityType[],
     selected: [] as string[],
-    types: {} as any,
+    types: [] as any[],
 
     target: {} as EntityType,
     attributes: [] as Attribute[],
 })
 
+
+let ctx = core.context()
 
 const remote = inject("remote") as Remote
 const prefs = inject("preferences") as Preferences
@@ -51,7 +53,8 @@ onMounted(() => {
 
 watchEffect(() => {
     updateData()
-    return remote.entities
+    fetchAttributes()
+    return remote.attributes
 })
 
 function updateData() {
@@ -100,6 +103,9 @@ function fetchAttributes() {
         state.attributes = Object.values(grouped) as Attribute[]
         state.attributes = state.attributes.sort(compareOrder)
 
+    } else {
+
+        state.selected = []
     }
 }
 
@@ -117,7 +123,7 @@ function attributeRequestAll(key: string, value: string) {
             notify.fail("Core", `Could not change '${attr.key}'to '${attr.request}'`, err)
         })
     }
-    notify.success("Core", `Changed ${key} to '${value}'`)
+    // notify.success("Core", `Changed ${key} to '${value}'`)
 
 
 }
@@ -167,52 +173,57 @@ function timeSince(time: string): string {
 </script>
 
 <template>
-    <div class="remote-grid h-100">
-        <div style="grid-column: 1 / span 3; grid-row: 1 / span 6; ">
-            <FixedScroll style="overflow-y: scroll">
-                <div class="d-flex flex-column" style="">
-                    <MenuSection v-for="(v, k) in state.types" :key="k" :title="k">
-                        <div class="entity-grid mb-1">
-                            <Entity v-for="entity in v" :key="entity.id" :entity="entity"
-                                    :selected="state.selected.includes(entity.id)"
-                                    @mousedown="() => selectEntity(entity.id)">
+    <div class="remote-grid h-100 mt-4">
+        <div style="grid-column: 2 / span 3; grid-row: 1 / span 6; ">
+            <!--            <FixedScroll style="overflow-y: scroll">-->
+            <div class="d-flex flex-column" style="">
+                <MenuSection v-for="(v, k) in state.types" :key="k" :title="`${k}`">
+                    <div class="entity-grid mb-1">
+                        <Entity v-for="entity in v" :key="entity.id" :entity="entity"
+                                :selected="state.selected.includes(entity.id)"
+                                @mousedown="() => selectEntity(entity.id)">
 
-                            </Entity>
-                        </div>
-                    </MenuSection>
-                </div>
-            </FixedScroll>
-        </div>
-        <div class="d-flex flex-column gap-1" style="grid-column: 4 / span 6; grid-row: 1 / span 6;">
-            <div v-for="attribute in state.attributes" :key="`${attribute.id}`">
-                <Switch v-if="attribute.key === 'on'"
-                        :active="attribute.value === 'true'"
-                        :change="(val) => attributeRequestAll(attribute.key, `${val?'true':'false'}`)"
-                        name="Power"></Switch>
-                <Slider v-else-if="attribute.key === 'dim'"
-                        :change="(val) => {attributeRequestAll(attribute.key, `${val}`)}" :live="false"
-                        :max="100"
-                        :min="0"
-                        :step="5"
-                        :value="parseInt(attribute.request)" name="Brightness" unit="%"></Slider>
-                <div v-else-if="attribute.key === 'cct'" class="">
-                    <Slider :change="(val) => {attributeRequestAll(attribute.key, `${colorTemps[val].value}`)}"
-                            :live="false"
-                            :max="colorTemps.length-1" :min="0" :step="1"
-                            :tags="colorTemps.map(c => c.name)"
-                            :value="0" name="Color Temperature" unit="K"></Slider>
-
-                </div>
-                <div v-else-if="attribute.key === 'hue'">
-                    <ColorPicker :change="(val) => {attributeRequestAll(attribute.key, `${val}`)}"
-                                 :selected="parseInt(attribute.request)"></ColorPicker>
-                </div>
-                <div v-else-if="attribute.key === 'api'">
-
-                </div>
-                <div v-else style="display: none;"></div>
+                        </Entity>
+                    </div>
+                </MenuSection>
             </div>
+            <!--            </FixedScroll>-->
         </div>
+        <div style="grid-column: 5 / span 7; grid-row: 1 / span 8;">
+            <MenuSection :title="'Control'">
+                <div class="d-flex gap-1 flex-column">
+                    <div v-for="attribute in state.attributes" :key="`${attribute.id}`">
+                        <Switch v-if="attribute.key === 'on'"
+                                :active="attribute.value === 'true'"
+                                :change="(val) => attributeRequestAll(attribute.key, `${val?'true':'false'}`)"
+                                name="Power"></Switch>
+                        <Slider v-else-if="attribute.key === 'dim'"
+                                :change="(val) => {attributeRequestAll(attribute.key, `${val}`)}" :live="false"
+                                :max="100"
+                                :min="0"
+                                :step="5"
+                                :value="parseInt(attribute.request)" name="Brightness" unit="%"></Slider>
+                        <div v-else-if="attribute.key === 'cct'" class="">
+                            <Slider :change="(val) => {attributeRequestAll(attribute.key, `${colorTemps[val].value}`)}"
+                                    :live="false"
+                                    :max="colorTemps.length-1" :min="0" :step="1"
+                                    :tags="colorTemps.map(c => c.name)"
+                                    :value="0" name="Color Temperature" unit="K"></Slider>
+
+                        </div>
+                        <div v-else-if="attribute.key === 'hue'">
+                            <ColorPicker :change="(val) => {attributeRequestAll(attribute.key, `${val}`)}"
+                                         :selected="parseInt(attribute.value)"></ColorPicker>
+
+                        </div>
+                        <div v-else-if="attribute.key === 'api'">
+                        </div>
+                        <div v-else style="display: none;"></div>
+                    </div>
+                </div>
+            </MenuSection>
+        </div>
+
     </div>
 </template>
 
@@ -244,7 +255,7 @@ function timeSince(time: string): string {
 
 .remote-grid {
     display: grid;
-    grid-column-gap: 0.25rem;
+    grid-column-gap: 0.5rem;
     grid-row-gap: 0.25rem;
     grid-template-rows: repeat(12, 1fr);
     grid-template-columns: repeat(12, 1fr);

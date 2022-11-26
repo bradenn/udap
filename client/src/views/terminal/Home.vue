@@ -105,7 +105,7 @@ function getRoutes() {
 
             <div v-if="false"
                  style="grid-column: 1/span 11; grid-row: 10 / span 4; "
-                 @click="() => {notify.success('Your mom', 'After a day\'s work, I fucked your mom.')}">
+                 @click="">
                 <div class="label-c1 label-w600 label-o4 px-1 mb-1"
                      style="font-family: 'SF Pro Display', sans-serif">
                     <span class="label-o2">􀎪</span>
@@ -114,10 +114,11 @@ function getRoutes() {
                 <div class="mc-grid"
                 >
 
-                    <div v-for="macro in remote.macros.sort((a, b) => new Date(a.updated).valueOf() >= new Date(b.updated).valueOf() ? -1 : 1).slice(0, 10)"
-                         class="element d-flex justify-content-between align-items-center py-0">
+                    <div
+                            v-for="macro in remote.macros.sort((a, b) => new Date(a.updated).valueOf() >= new Date(b.updated).valueOf() ? -1 : 1).slice(0, 4)"
+                            class="element d-flex justify-content-between align-items-center py-0">
                         <div style="padding-left: 0.125rem">
-                            <div class="label-c2 label-o3 label-w500 lh-1">
+                            <div class="label-c2 label-o3 label-w600 lh-1">
                                 {{ macro.name }}
                             </div>
                             <div class="label-c3 label-o2 label-w500 lh-1">
@@ -139,8 +140,8 @@ function getRoutes() {
                     <div>
                         <div class="app-grid">
                             <App v-for="i in state.apps" :key="i.name" :icon="i.icon || 'fa-square'"
-                                 :img="i?.meta?.icon"
-                                 :name="i.name" :status="i?.meta?.status"
+                                 :img="i.meta?i.meta.icon:''"
+                                 :name="i.name" :status="i.meta?i.meta.status:''"
                                  style="grid-column: span 1"
                                  @click="router.push(i.path)"></App>
                         </div>
