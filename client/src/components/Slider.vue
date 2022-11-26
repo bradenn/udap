@@ -130,12 +130,12 @@ function mouseUp() {
                 </div>
             </div>
             <Ticks v-if="ticks.w > 0" :active="thumb.position" :min="props.min" :series="5" :step="props.step"
-                   :style="`width: ${ticks.w}px; left: ${ticks.x}px; position:relative; height:1.25rem;`"
+                   :style="`width: ${ticks.w}px; left: ${ticks.x + (thumb.w+25)/2 - 10}px; position:relative; height:1.25rem;`"
                    :tags="tags" :ticks="slider.stops"></Ticks>
             <div class="shuttle-path subplot"></div>
             <div :style="`left: ${thumb.x}px;  position: relative; width: ${thumb.w + 50}px;`"
                  class="shuttle-cock subplot m-1 mt-1">
-                <div class="shuttle"></div>
+                <div :style="`left: ${(thumb.w+25)/2}px;`" class="shuttle"></div>
                 <div class="shuttle-center">􀌇</div>
 
 
@@ -180,7 +180,7 @@ function mouseUp() {
   border-radius: 3px;
   position: relative;
 
-  top: -28px
+  top: -28px;
 }
 
 .shuttle-center {

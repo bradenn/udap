@@ -49,13 +49,13 @@ function toggle(pos: boolean) {
         </div>
         <div class="switch-path subplot"></div>
         <div class="switch-spots">
-            <div :class="`${state.active?'subplot switch-space-active switch-left':''}`" class="switch-space"
-                 @click="() => toggle(true)">
-                􀥤
-            </div>
             <div :class="`${!state.active?'subplot switch-space-active switch-right':''}`" class="switch-space"
                  @click="() => toggle(false)">
                 􀥥
+            </div>
+            <div :class="`${state.active?'subplot switch-space-active switch-left':''}`" class="switch-space"
+                 @click="() => toggle(true)">
+                􀥤
             </div>
         </div>
     </div>

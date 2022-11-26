@@ -37,7 +37,7 @@ function drawTicks() {
     let ctx = state.ctx
     let series = props.series
     ctx.lineWidth = 1
-    let offset = 22;
+    let offset = 32;
     let dx = ctx.canvas.width / (props.ticks);
     let step = props.step ? props.step : 1
     for (let i = 0; i < props.ticks; i++) {
@@ -51,7 +51,7 @@ function drawTicks() {
         if (props.active == i) {
             ctx.fillStyle = `rgba(${preferences.ui.accent}, 0.8)`
             ctx.strokeStyle = `rgba(${preferences.ui.accent}, 0.4)`
-            ctx.font = "400 19px SF Pro"
+            ctx.font = "500 20px SF Compact Display"
             let ms = ctx.measureText(text)
             let infill = 0;
             if (i == 0) {
@@ -59,9 +59,9 @@ function drawTicks() {
                     infill = ms.width / 2 - offset / 2
                 }
             }
-            ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (19 / 3))
+            ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (19 / 3) + 1)
         } else {
-            ctx.font = "400 15px SF Pro"
+            ctx.font = "500 15px SF Compact Display"
             let ms = ctx.measureText(`${text}`)
             let infill = 0;
             if (i == 0) {
@@ -69,7 +69,7 @@ function drawTicks() {
                     infill = ms.width - offset
                 }
             }
-            ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (15 / 3))
+            ctx.fillText(`${text}`, offset + i * (dx) - ms.width / 2 + infill, height / 2 + (15 / 3) + 1)
         }
 
 

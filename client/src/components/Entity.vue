@@ -71,8 +71,7 @@ const props = defineProps<EntityProps>()
 
         <div :class="props.selected?'accent-selected':''" class="element p-2 h-100">
             <div class="d-flex justify-content-between">
-                <div :style="props.selected?`color: ${state.activeColor} !important;`:''"
-                     class="label-c2 label-o2 label-w500 pb-2">
+                <div class="label-c2 label-o2 label-w500 pb-2">
                     {{ props.entity.icon }}
                 </div>
                 <div v-if="props.selected" class="label-c2 label-o4 label-w500 text-accent">􀷙</div>
