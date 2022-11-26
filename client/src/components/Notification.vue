@@ -43,7 +43,7 @@ function updateNotification() {
                :index="1"
                :message="state.notify.message"
                :severity="state.notify.severity"
-               :time="state.notify.duration"
+               :time="1200"
                :title="state.notify.name"></Toast>
 
     </div>

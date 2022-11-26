@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 
 import router from '@/router'
-import {inject, onMounted, onUnmounted, provide, reactive, watch} from "vue";
+import {inject, onMounted, onUnmounted, provide, reactive, watch, watchEffect} from "vue";
 import "@/types";
 
 import type {Entity, Preferences} from "@/types";
@@ -28,6 +28,9 @@ import _notify from "@/notifications";
 import type {Screensaver} from "@/screensaver";
 import _screensaver from "@/screensaver";
 
+import type {Context} from "@/context";
+import _context from "@/context";
+
 
 /* Remote */
 const remote: Remote = _remote
@@ -45,6 +48,10 @@ provide("screens", screensaver)
 const haptics: Haptics = _haptics
 provide("haptics", haptics)
 
+/* Context */
+const context: Context = _context
+provide("context", context)
+
 
 // Load runtime when the terminal view is loaded
 onMounted(() => {
@@ -57,7 +64,7 @@ onUnmounted(() => {
     // remote.disconnect()
 })
 
-let preferences = inject("preferences") as Preferences
+let preferences: Preferences = inject("preferences") as Preferences
 let system: any = inject("system")
 
 // Stores the changing components of the main terminal
@@ -144,10 +151,10 @@ let meta = reactive({
     dim: 0
 })
 
-// watchEffect(() => {
-//     pollMeta(remote as Remote)
-//     return remote as Remote
-// })
+watchEffect(() => {
+    pollMeta(remote as Remote)
+    return remote as Remote
+})
 
 function pollMeta(rm: Remote): boolean {
     if (!rm) return true
@@ -360,11 +367,21 @@ provide('terminal', state)
 
             </div>
 
+            <div v-if="preferences.ui.watermark" class="watermark">
+                <div class="d-flex gap">
+                    <div v-if="remote.metadata" class="label-r label-w600">{{ remote.metadata?.system?.version }}</div>
+                </div>
+                <div class="float-end">{{ router.currentRoute.value.path }}</div>
+            </div>
+
+
             <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
 
         </div>
 
     </div>
+
+    <div v-if="context.isActive()" class="context" @mousedown="context.hideContext()"></div>
 
     <ScreensaverDom></ScreensaverDom>
 
@@ -376,6 +393,24 @@ provide('terminal', state)
 </template>
 
 <style lang="scss" scoped>
+
+/* Watermark Mode */
+
+.watermark {
+  position: absolute;
+  bottom: 0.3rem;
+  width: calc(100% - 2rem);
+  left: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.6rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  //outline: 1px solid #6f42c1;
+  transition: all 500ms ease;
+}
 
 .terminal {
   z-index: 2;

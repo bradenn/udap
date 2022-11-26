@@ -60,7 +60,9 @@ function currentPageName() {
     state.parent = ""
     if (meta) {
         if (meta.title) {
-            state.page = current?.meta?.title as string
+            if (!current) return
+            if (!current.meta) return
+            state.page = current.meta.title as string
 
             return
         }

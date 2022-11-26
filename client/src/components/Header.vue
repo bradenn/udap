@@ -15,9 +15,9 @@ const props = defineProps<Props>()
 </script>
 
 <template>
-    <div class="nav-grid gap-1 pb-1 w-100 px-2">
+    <div class="nav-grid gap-1 pb-1 w-100 ">
         <div class="d-flex justify-content-start">
-            <div class="label-w500 label-c1 text-accent"
+            <div class="label-w500 label-c1 text-accent element subplot py-1 px-3"
                  @click="() => {if(props.done) props.done()}">􀆉 Back</div>
 
         </div>
@@ -28,7 +28,7 @@ const props = defineProps<Props>()
             </div>
         </div>
         <div class="d-flex justify-content-end">
-            <div class="label-w500 label-c1 text-accent" @click="save">Save</div>
+            <div class="label-w500 label-c1 text-accent element subplot py-1 px-3" @click="save">Save</div>
         </div>
     </div>
 </template>
