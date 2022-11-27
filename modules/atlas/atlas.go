@@ -232,7 +232,7 @@ func (w *Atlas) speak(text string) error {
 	}()
 	// Prepare the command arguments
 	args := []string{"-c", fmt.Sprintf("curl -X POST --data '%s' --output - 10.0.1."+
-		"201:59125/api/tts | play -t wav -", text)}
+		"2:59125/api/tts | play -t wav -", text)}
 	// Initialize the command structure
 	cmd := exec.CommandContext(timeout, "/bin/bash", args...)
 	// Run and get the stdout and stderr from the output
@@ -585,68 +585,69 @@ func (w *Atlas) retort(text string) error {
 	buf.Write(marshal)
 	w.LogF("Heard: %s", text)
 
-	// resp, err := http.Post("http://10.0.1.2:5005/model/parse", "application/json", &buf)
-	// if err != nil {
-	// 	w.ErrF("Neural Network response failed: %s", err.Error())
-	// 	return err
-	// }
-	//
-	// var res bytes.Buffer
-	//
-	// _, err = res.ReadFrom(resp.Body)
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// rasa := RasaResponse{}
-	//
-	// err = json.Unmarshal(res.Bytes(), &rasa)
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// err = resp.Body.Close()
-	// if err != nil {
-	// 	return err
-	// }
-	// w.LogF("Intent: %s (%.2f)", rasa.Intent.Name, rasa.Intent.Confidence)
-	//
-	// switch intent := rasa.Intent.Name; intent {
-	// case "entity":
-	// 	err = w.handleEntity(rasa)
-	// case "cat_laser":
-	// 	err = w.chooseRandom("eof")
-	// case "time":
-	// 	err = w.readTime()
-	// case "date":
-	// 	err = w.readDate()
-	// case "temperature":
-	// 	err = w.readTemperature()
-	// case "weather":
-	// 	err = w.readWeather()
-	// case "define":
-	// 	err = w.chooseRandom("eof")
-	// case "insult":
-	// 	err = w.chooseRandom(intent)
-	// case "pod_bay_doors":
-	// 	err = w.chooseRandom(intent)
-	// case "personal_identity":
-	// 	err = w.chooseRandom(intent)
-	// case "identify":
-	// 	err = w.chooseRandom(intent)
-	// case "creator":
-	// 	err = w.chooseRandom(intent)
-	// default:
-	// 	err = w.chooseRandom("eof")
-	// }
-	//
-	// if err != nil {
-	// 	err = w.failed()
-	// 	if err != nil {
-	// 		w.ErrF("Intent %s failed: %s", rasa.Intent, err.Error())
-	// 		return err
-	// 	}
-	// }
+	resp, err := http.Post("http://10.0.1.2:5005/model/parse", "application/json", &buf)
+	if err != nil {
+		w.ErrF("Neural Network response failed: %s", err.Error())
+		return err
+	}
+
+	var res bytes.Buffer
+
+	_, err = res.ReadFrom(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	rasa := RasaResponse{}
+
+	err = json.Unmarshal(res.Bytes(), &rasa)
+	if err != nil {
+		return err
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	w.LogF("Intent: %s (%.2f)", rasa.Intent.Name, rasa.Intent.Confidence)
+
+	switch intent := rasa.Intent.Name; intent {
+	case "entity":
+		err = w.handleEntity(rasa)
+	case "cat_laser":
+		err = w.chooseRandom("eof")
+	case "time":
+		err = w.readTime()
+	case "date":
+		err = w.readDate()
+	case "temperature":
+		err = w.readTemperature()
+	case "weather":
+		err = w.readWeather()
+	case "define":
+		err = w.chooseRandom("eof")
+	case "insult":
+		err = w.chooseRandom(intent)
+	case "pod_bay_doors":
+		err = w.chooseRandom(intent)
+	case "personal_identity":
+		err = w.chooseRandom(intent)
+	case "identify":
+		err = w.chooseRandom(intent)
+	case "creator":
+		err = w.chooseRandom(intent)
+	default:
+		err = w.chooseRandom("eof")
+	}
+
+	if err != nil {
+		err = w.failed()
+		if err != nil {
+			w.ErrF("Intent %s failed: %s", rasa.Intent, err.Error())
+			return err
+		}
+	}
 
 	return nil
 }
@@ -684,9 +685,8 @@ func (w *Atlas) processRequest(msg string) error {
 		return nil
 	}
 
-	if strings.HasPrefix(msg, "atlas") {
+	if strings.Contains(msg, "atlas") {
 
-		msg = strings.Replace(msg, "atlas ", "", 1)
 		w.alias = "atlas"
 
 		err := w.retort(msg)
@@ -794,7 +794,7 @@ func (w *Atlas) recognize(writer http.ResponseWriter, request *http.Request) {
 		w.Err(err)
 		return
 	}
-
+	fmt.Println("RECV <- " + rec.Text)
 	err = w.processRequest(rec.Text)
 	if err != nil {
 		w.Err(err)
@@ -822,7 +822,7 @@ func (w *Atlas) Run() error {
 	w.status.Synthesizer = "idle"
 
 	go func() {
-		err = http.ListenAndServe(":5055", r)
+		err = http.ListenAndServe("10.0.1.2:5055", r)
 		if err != nil {
 			w.ErrF("Atlas endpoint terminated")
 		}

@@ -113,7 +113,7 @@ function setupCanvas() {
 
 <template>
     <div>
-        <canvas :id="`tick-canvas-${state.uuid}`" style="width: 100%; height: 100%;"></canvas>
+        <canvas :id="`tick-canvas-${state.uuid}`" style="width: 100%; height: 100%; "></canvas>
     </div>
 </template>
 

@@ -1,0 +1,13 @@
+numpy~=1.23.5
+tqdm
+more-itertools
+transformers>=4.19.0
+ffmpeg-python==0.2.0
+click
+pyaudio~=0.2.12
+SpeechRecognition
+pydub~=0.25.1
+git+https://github.com/openai/whisper.git
+--extra-index-url https://download.pytorch.org/whl/cu113
+torch
+requests~=2.28.1

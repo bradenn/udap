@@ -56,7 +56,7 @@ function click() {
 
 div .app-icon.element {
 
-  box-shadow: inset 0 0 1px 2px rgba(255, 255, 255, 0.025), inset 0 0 1px 1px rgba(0, 0, 0, 0.125), inset 0 2px 2px 1px rgba(255, 255, 255, 0.04), inset 0 -2px 2px 1px rgba(128, 128, 128, 0.025) !important;
+  box-shadow: inset 0 0 1px 2px rgba(255, 255, 255, 0.025), inset 0 0 1px 1px rgba(0, 0, 0, 0.125), inset 0 1px 1px 1px rgba(255, 255, 255, 0.04), inset 0 -1px 1px 1px rgba(128, 128, 128, 0.0125) !important;
 }
 
 .app-icon:after {
