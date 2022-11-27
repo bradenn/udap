@@ -62,6 +62,10 @@ const defaults = {
             identifier: "milk",
         },
         {
+            name: "Hexagons",
+            identifier: "bestagon",
+        },
+        {
             name: "Solid White",
             identifier: "white",
         },

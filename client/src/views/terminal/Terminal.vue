@@ -19,48 +19,33 @@ import ScreensaverDom from "@/views/screensaver/Screensaver.vue";
 import type {Remote} from "@/remote";
 import _remote from "@/remote";
 
-import type {Haptics} from "@/haptics";
-import _haptics from "@/haptics";
-
-import type {Notify} from "@/notifications";
-import _notify from "@/notifications";
-
-import type {Screensaver} from "@/screensaver";
-import _screensaver from "@/screensaver";
 
 import type {Context} from "@/context";
 import _context from "@/context";
-
+import type {Screensaver} from "@/screensaver";
+import core from "@/core";
+import type {Haptics} from "@/haptics";
 
 /* Remote */
 const remote: Remote = _remote
 provide("remote", remote)
 
-/* Notify */
-const notify: Notify = _notify
-provide("notify", notify)
-
-/* Screensaver */
-const screensaver: Screensaver = _screensaver
-provide("screens", screensaver)
-
-/* Haptics */
-const haptics: Haptics = _haptics
-provide("haptics", haptics)
 
 /* Context */
 const context: Context = _context
 provide("context", context)
 
 
+const haptics: Haptics = core.haptics()
+const screensaver: Screensaver = core.screensaver()
+
 // Load runtime when the terminal view is loaded
 onMounted(() => {
-    haptics.connect("ws://10.0.1.60/ws")
+
     remote.connect()
 })
 
 onUnmounted(() => {
-    haptics.disconnect()
     // remote.disconnect()
 })
 

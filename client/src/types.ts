@@ -16,6 +16,7 @@ export interface Trigger {
 export enum TaskType {
     String,
     Number,
+    Passcode,
     Object,
     List,
     Radio,

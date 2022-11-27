@@ -183,7 +183,7 @@ function drawZone() {
     state.ctx.lineWidth = 3
     let cx = (state.width / 2) - 160
     let cy = (state.height / 2)
-    let scale = 120;
+    let scale = 200;
 
     let ctx = state.ctx
     state.ctx.strokeStyle = "rgba(255,255,255,0.1)"
@@ -205,11 +205,11 @@ function drawZone() {
 
     ctx.translate(cx, cy)
 
-    ctx.translate(-30, 0)
+    ctx.translate(-100, 0)
     ctx.rotate((Math.PI / 180.0) * 315)
     drawRoom(bedroom, scale)
     ctx.rotate(-(Math.PI / 180.0) * 315)
-    ctx.translate(30, 0)
+    ctx.translate(100, 0)
 
     ctx.translate(-cx, -cy)
     state.ctx.fillStyle = "rgba(255,255,255,0.25)"
@@ -478,12 +478,12 @@ function setupCanvas() {
                 </div>
             </div>
         </div>
-        <div class="element " style="width: 14rem">
+        <div class="element " style="width: 40rem">
 
             <div class="d-flex justify-content-between">
 
             </div>
-            <canvas id="zone-canvas" style="height: 16rem; width: 100%"></canvas>
+            <canvas id="zone-canvas" style="height: 24rem; width: 100%"></canvas>
         </div>
     </div>
 </template>
@@ -493,7 +493,7 @@ function setupCanvas() {
   width: 100%;
   display: grid;
   grid-gap: 0.25rem;
-  grid-template-columns: repeat(12, minmax(2.5rem, 1fr));
+  grid-template-columns: repeat(12, minmax(1rem, 1fr));
   grid-template-rows: repeat(5, minmax(2.5rem, 1fr));
 }
 

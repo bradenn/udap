@@ -1,9 +1,18 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
-import {onMounted, provide, reactive} from "vue";
+import {onMounted, onUnmounted, provide, reactive} from "vue";
 import {version} from "../package.json";
 import {usePersistent} from "@/persistent";
 import core from "@/core";
+
+import type {Haptics} from "@/haptics";
+import _haptics from "@/haptics";
+
+import type {Notify} from "@/notifications";
+import _notify from "@/notifications";
+
+import type {Screensaver} from "@/screensaver";
+import _screensaver from "@/screensaver";
 
 let system = reactive({
     nexus: {
@@ -18,50 +27,31 @@ let system = reactive({
     }
 })
 
+/* Haptics */
+const haptics: Haptics = _haptics
+provide("haptics", haptics)
+
+/* Notify */
+const notify: Notify = _notify
+provide("notify", notify)
+
+/* Screensaver */
+const screensaver: Screensaver = _screensaver
+provide("screens", screensaver)
+
+
 const router = core.router()
 
 const preferences = usePersistent()
 
 onMounted(() => {
-    resetCountdown()
+    haptics.connect("ws://10.0.1.60/ws")
+
 })
 
-let screensaver = reactive({
-    show: false,
-    countdown: 0,
-    interval: 0,
-    hideTerminal: false,
-    startScreensaver: forceScreensaver,
+onUnmounted(() => {
+    haptics.disconnect()
 })
-
-provide("screensaver", screensaver)
-
-function forceScreensaver() {
-    screensaver.countdown = 3
-}
-
-function resetCountdown() {
-    screensaver.countdown = preferences.ui.screensaver.countdown
-    screensaver.hideTerminal = false
-    screensaver.show = false
-    if (screensaver.interval !== 0) {
-        clearInterval(screensaver.interval)
-        screensaver.interval = 0
-    }
-    if (!preferences.ui.screensaver.enabled) return
-    screensaver.interval = setInterval(() => {
-        screensaver.countdown -= 1;
-        if (screensaver.countdown <= 0) {
-            screensaver.show = true
-            clearInterval(screensaver.interval)
-            screensaver.interval = 0
-            setTimeout(() => {
-                screensaver.hideTerminal = true
-            }, 500)
-        }
-    }, 1000)
-}
-
 
 provide('system', system)
 
@@ -70,8 +60,7 @@ provide('system', system)
 
 <template>
 
-    <div :class="`root theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} h-100`"
-         @mousedown="() => resetCountdown()">
+    <div :class="`root theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} h-100`">
 
         <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
              :src="`/custom/${preferences.ui.background.image}@4x.png`" alt="" class="backdrop "/>

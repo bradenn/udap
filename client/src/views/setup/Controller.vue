@@ -1,114 +1,153 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {config} from "@/config"
-import type {Controller} from "@/types"
-import {PreferenceTypes} from "@/types";
+import type {Controller, Task} from "@/types"
+import {PreferenceTypes, TaskType} from "@/types"
 import axios from "axios"
 import {Preference} from "@/preferences"
-import {onMounted, reactive} from "vue"
-import PaneInputBox from "@/components/pane/PaneInputBox.vue";
+import {onMounted, reactive, ref} from "vue"
+import TaskManager from "@/components/task/TaskManager.vue";
+
+
+const tasks = [
+    {
+        title: "Controller",
+        description: "Which core should the terminal authenticate with?",
+        type: TaskType.Radio,
+        options: [
+            {title: "Primary", description: "10.0.1.2", value: "10.0.1.2"},
+            {title: "Backup", description: "10.0.1.18", value: "10.0.1.18"},
+            {title: "Development", description: "10.0.1.11", value: "10.0.1.11"},
+        ],
+        value: "10.0.1.2",
+        preview: "10.0.1.2"
+    },
+    {
+        title: "Activation Code",
+        description: "Enter the terminals designated activation code",
+        type: TaskType.Passcode,
+        value: "",
+        preview: "---"
+    },
+]
+
+
 // The local state of the component
 let state = reactive({
-  selected: getController(),
-  auto: getController(),
-  controllers: config.controllers
+    selected: getController(),
+    auto: getController(),
+    controllers: config.controllers,
+    tasks: tasks
 });
 
 // When the view is mounted, test the default controllers to see which are live
 onMounted(() => {
-  // Access each controller
-  for (let controller of state.controllers) {
-    // Test its connectivity and update it's internal state to reflect it
-    testController(controller)
-  }
+    // Access each controller
+    for (let controller of state.controllers) {
+        // Test its connectivity and update it's internal state to reflect it
+        testController(controller)
+    }
 })
 
 // Verify a controller is up and running, update the controller if it is
 function testController(controller: Controller) {
 
-  // Send a get request to the heartbeat endpoint of the provided controller app
-  axios.get(`https://${controller.address}/status`, {
-    httpsAgent: {
-      rejectUnauthorized: false
-    }
-  }).then(res => {
-    // Set the controller's status to reflect the successful request
-    controller.status = true
-    // Select the current controller, this will ensure a live controller will be selected by default (if possible)
-    suggestController(controller.address)
-  }).catch(err => {
-    // Set the controller to reflect its down status
-    controller.status = false
-  })
+    // Send a get request to the heartbeat endpoint of the provided controller app
+    axios.get(`https://${controller.address}/status`, {
+        httpsAgent: {
+            rejectUnauthorized: false
+        }
+    }).then(res => {
+        // Set the controller's status to reflect the successful request
+        controller.status = true
+        // Select the current controller, this will ensure a live controller will be selected by default (if possible)
+        suggestController(controller.address)
+    }).catch(err => {
+        // Set the controller to reflect its down status
+        controller.status = false
+    })
 
 }
 
 // Recommend a working app controller to the user, typically the production node
 function suggestController(address: string) {
-  // Update the state to reflect the suggested address
-  state.auto = address
+    // Update the state to reflect the suggested address
+    state.auto = address
 }
 
 // Set the preferred controller
 function setController(address: string) {
-  // Store the preferred controller in localStorage
-  new Preference(PreferenceTypes.Controller).set(address);
-  // Update the local state to reflect the selection
-  state.selected = address
+    // Store the preferred controller in localStorage
+    new Preference(PreferenceTypes.Controller).set(address);
+    // Update the local state to reflect the selection
+    state.selected = address
 }
 
 // Get the controller stored in localStorage
 function getController() {
-  return new Preference(PreferenceTypes.Controller).get()
+    return new Preference(PreferenceTypes.Controller).get()
+}
+
+// Errors incurred during verification
+let errorMessage = ref("")
+
+function authenticate(controller: string, key: string) {
+    // Generated endpoint registration url using the security code and controller address
+    let url = `https://${controller}:3020/endpoints/register/${key}`
+    // Make the request to the controller app
+    axios.get(url).then(res => {
+        // Set the token in localStorage
+        new Preference(PreferenceTypes.Token).set(res.data.token)
+        // Redirect the user to the authenticated portal
+        window.location.href = "/terminal"
+    }).catch(err => {
+        // Notify of failures
+        errorMessage.value = "Invalid security code. Try again."
+        // Reset the input dialog
+    })
+}
+
+function finish(tasks: Task[]) {
+    state.tasks = tasks
+
+    const controller = tasks.find(t => t.title === "Controller");
+    if (!controller) return;
+
+    const code = tasks.find(t => t.title === "Activation Code");
+    if (!code) return;
+
+    setController(controller.value)
+
+    authenticate(controller.value, code.value)
+
+
 }
 
 function next() {
-  window.location.href = "/#/setup/authentication"
+    window.location.href = "/#/setup/authentication"
 }
 
 </script>
 
 <template>
 
-  <div class="d-flex justify-content-center" style="margin-top: 6.25%">
-    <PaneInputBox :apply="() => next()" :begin="true" style="width: 26rem !important;"
-                  title="Authentication">
-      <div class="label-sm label-o5 label-w600 lh-sm px-2">Controller</div>
+    <div class="d-flex justify-content-center w-100" style="margin-top: 6.25%;">
+        <div style="width: 28rem">
+            <TaskManager :on-complete="finish" :tasks="state.tasks" title="Wow">
 
-      <div class="label-o3 label-c1 lh-1 px-2">Please select a control nexus from the list below.</div>
-      <div class="d-flex flex-column gap-2 mt-2 px-2 pb-2">
-        <div v-for="controller in state.controllers" :key="controller.address"
-             :class="`${state.selected === controller.address?'border border-fog':'border border-transparent'}`"
-             class="subplot d-flex justify-content-between px-3 py-2" @click="setController(controller.address)">
-          <div class="d-flex flex-column justify-content-start">
-            <div class="label-md label-o5 label-w500">{{ controller.name }}</div>
-            <div class="label-o3 label-w500 label-sm">
-                  <span v-if="controller.status" class="text-success"><i
-                      class="fa-solid fa-circle-check fa-fw"></i></span>
-              <span v-else class="text-warning"><i class="fa-solid fa-triangle-exclamation fa-fw"></i></span>
-              {{ controller.address }}
-            </div>
-          </div>
-          <div v-if="state.selected === controller.address" class="d-flex align-items-end flex-column">
-            <div class="label-o4 label-w600">Selected</div>
-            <div v-if="!controller.status" class="label-o4 label-w300 label-sm text-danger">Unresponsive</div>
-          </div>
-          <div v-else-if="state.auto === controller.address" class="label-o2 label-w600">Suggested</div>
+            </TaskManager>
         </div>
-
-      </div>
-    </PaneInputBox>
-  </div>
+    </div>
 
 </template>
 
 
 <style scoped>
 .border-fog {
-  border-color: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 .border-transparent {
-  border-color: transparent !important;
+    border-color: transparent !important;
 }
 </style>

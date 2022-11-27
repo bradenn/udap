@@ -2,12 +2,11 @@
 <script lang="ts" setup>
 import type {Task} from "@/types";
 import {TaskType} from "@/types";
-import {inject, onMounted, reactive, watchEffect} from "vue";
+import {onMounted, reactive, watchEffect} from "vue";
 import Keyboard from "@/components/Keyboard.vue";
 import FixedScroll from "@/components/scroll/FixedScroll.vue";
 import core from "@/core";
 import Item from "@/components/element/Item.vue";
-import type {Haptics} from "@/haptics";
 
 interface Tasks {
     title: string,
@@ -37,11 +36,9 @@ onMounted(() => {
     }
 })
 
-const remote = core.remote()
-
 let props = defineProps<Tasks>()
 
-const haptics = inject("haptics") as Haptics
+const haptics = core.haptics()
 
 function selectRadio(value: any, preview: string) {
     haptics.tap(2, 3, 100)
@@ -113,6 +110,7 @@ function enterKey(key: string) {
     }
 
     updateLocal()
+    if (state.current.type == TaskType.Passcode && def.length > 8) return
     state.current.value = def;
     state.current.preview = def;
 
@@ -240,6 +238,14 @@ function mouseDown(m: MouseEvent) {
                                 </div>
                             </div>
                         </div>
+                        <div v-else-if="state.current.type === TaskType.Passcode">
+                            <div class="d-flex flex-row gap justify-content-between mt-1 p-2">
+                                <div v-for="(v, k) in Array(8).keys()" :key=k
+                                     :class="`${state.cursor === k?'border-fog':'border-transparent'}`"
+                                     class="subplot character border label-o4">{{ state.current.value[v] }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </FixedScroll>
                 <div class="d-flex justify-content-between align-items-center mt-1">
@@ -256,13 +262,24 @@ function mouseDown(m: MouseEvent) {
 
         </div>
     </div>
-    <Keyboard v-if="state.current.type === TaskType.String && state.textbox" :input="enterKey" keySet="d"
-              keyboardClass="simple-keyboard"></Keyboard>
+    <Keyboard
+            v-if="(state.current.type === TaskType.String && state.textbox) || state.current.type === TaskType.Passcode"
+            :input="enterKey" keySet="d"
+            keyboardClass="simple-keyboard"></Keyboard>
 
 </template>
 
 
 <style lang="scss">
+div.character {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.6rem;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+}
 
 .accent-selected:before {
   border: 2px solid rgba(255, 149, 0, 0.4) !important;

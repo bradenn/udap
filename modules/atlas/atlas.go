@@ -794,7 +794,7 @@ func (w *Atlas) recognize(writer http.ResponseWriter, request *http.Request) {
 		w.Err(err)
 		return
 	}
-	fmt.Println("RECV <- " + rec.Text)
+
 	err = w.processRequest(rec.Text)
 	if err != nil {
 		w.Err(err)
