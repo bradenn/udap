@@ -66,6 +66,7 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 	if err != nil {
 		return err
 	}
+	e.UpdatedAt = time.Now()
 	err = a.repository.Update(e)
 	if err != nil {
 		return err

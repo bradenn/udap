@@ -3,11 +3,15 @@
 <script lang="ts" setup>
 
 import {onMounted, reactive} from "vue";
-import axios from "axios";
+
 import wtf from 'wtf_wikipedia'
 // @ts-ignore
 import wtf_html from 'wtf-plugin-html'
 import FixedScroll from "@/components/scroll/FixedScroll.vue";
+
+
+const sections = ["Culture", "Geography", "Health", "History", "Human activities", "Mathematics", "Nature", "People", "Philosophy", "Religion", "Society", "Technology"]
+
 
 wtf.extend(wtf_html)
 
@@ -21,21 +25,82 @@ onMounted(() => {
   fetch()
 })
 
+function loadArticle(doc: Document) {
+
+}
+
 function fetch() {
-  axios.get("https://en.wikipedia.org/w/api.php?action=query&format=xml&origin=*&export=1&titles=Cat").then(res => {
-    state.data = wtf(res.data).json()
+
+
+  wtf.fetch("cat").then(doc => {
     // @ts-ignore
-    state.dom = wtf(res.data).html()
-  }).catch(err => {
-    state.dom = err
+    state.dom = doc.html()
   })
+  // axios.get("https://en.wikipedia.org/w/api.php?action=query&format=xml&origin=*&export=1&titles=Cat").then(res => {
+  //     // @ts-ignore
+  //     state.dom = wtf(res.data).html()
+  // }).catch(err => {
+  //     state.dom = err
+  // })
 }
 
 </script>
 
 <template>
   <div class="h-100">
-    <div class="element p-2 " style="height: 100%;">
+    <div class="">
+      <div class="hex-row">
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">Culture</div>
+          <div class="bottom"></div>
+        </div>
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">Geography</div>
+          <div class="bottom"></div>
+        </div>
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">Health</div>
+          <div class="bottom"></div>
+        </div>
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">History</div>
+          <div class="bottom"></div>
+        </div>
+      </div>
+      <div class="hex-row even">
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">Activities</div>
+          <div class="bottom"></div>
+        </div>
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">Mathematics</div>
+          <div class="bottom"></div>
+        </div>
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">Nature</div>
+          <div class="bottom"></div>
+        </div>
+        <div class="hex">
+          <div class="top"></div>
+          <div class="middle">People</div>
+          <div class="bottom"></div>
+        </div>
+      </div>
+    </div>
+    <div class="menu-grid">
+      <div v-for="s in sections"
+           class="element d-flex justify-content-center label-c1 align-items-center">
+        <div class="label-c1 label-w600 py-2">{{ s }}</div>
+      </div>
+    </div>
+    <div v-if=false class="element p-2 " style="height: 100%;">
       <FixedScroll class="" style=" height: 100%; overflow-y: scroll;">
         <div class=" " v-html="state.dom"></div>
       </FixedScroll>
@@ -43,8 +108,63 @@ function fetch() {
   </div>
 </template>
 
-<style>
+<style lang="scss">
 
+$width: 5.5rem;
+$width2: $width/2;
+$width4: $width/4;
+$height: $width*0.5769230769;
+$height2: $height/2;
+
+.hex {
+  float: left;
+  margin-left: 4px;
+  margin-bottom: -$width4 - 0.125rem;
+
+}
+
+.hex .top {
+  width: 0;
+
+  border-bottom: $height2 solid rgba(255, 255, 255, 0.1);
+  border-left: $width2 solid transparent;
+  border-right: $width2 solid transparent;
+}
+
+.hex .middle {
+  width: $width;
+  height: $height;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.7rem;
+  display: flex;
+  font-weight: 500;
+  justify-content: center;
+
+  align-items: center;
+}
+
+.hex .bottom {
+  width: 0;
+  border-top: $height2 solid rgba(255, 255, 255, 0.1);
+  border-left: $width2 solid transparent;
+  border-right: $width2 solid transparent;
+}
+
+.hex-row {
+  clear: left;
+}
+
+.hex-row.even {
+  margin-left: calc($width / 2) + 0.05rem;
+}
+
+div.menu-grid {
+  display: grid;
+  grid-column-gap: 0.5rem;
+  grid-row-gap: 0.25rem;
+  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(8, 1fr);
+}
 
 td {
   font-size: 0.75rem !important;
@@ -56,8 +176,8 @@ td .sentence {
 }
 
 .infobox {
-  border-radius: 0.5rem;
-  border: 1px solid #a2a9b1;
+  border-radius: 0.525rem;
+  background-color: rgba(255, 255, 255, 0.05);
   border-spacing: 3px;
   margin: 0.5em 0.5rem 0.5em 1em;
   padding: 0.2em;

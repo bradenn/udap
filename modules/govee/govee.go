@@ -212,7 +212,7 @@ func (g *Govee) sendApiRequest(method string, path string, body json.RawMessage)
 
 	c := http.Client{}
 	defer c.CloseIdleConnections()
-	c.Timeout = time.Millisecond * 500
+	c.Timeout = time.Millisecond * 3000
 	p := fmt.Sprintf("https://developer-api.govee.com/v1/devices%s", path)
 	request, err := http.NewRequest(method, p, &buf)
 	if err != nil {
@@ -580,8 +580,10 @@ func (g *Govee) Run() error {
 	if err != nil {
 		return err
 	}
+
 	devices, err := g.fetchDevices()
 	if err != nil {
+		g.Err(err)
 		return err
 	}
 	g.immutable = make(chan domain.Attribute)

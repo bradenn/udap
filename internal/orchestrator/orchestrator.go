@@ -207,21 +207,21 @@ func (o *orchestrator) Run() error {
 		}
 	}()
 
-	t := time.NewTimer(o.maxTick + time.Millisecond*100)
+	t := time.NewTimer(o.maxTick + time.Millisecond*500)
 
 	go func() {
 		defer wg.Done()
 
 		for {
 			pulse.Begin("update")
-			t.Reset(o.maxTick + time.Millisecond*100)
+			t.Reset(o.maxTick + time.Millisecond*500)
 			select {
 			case <-o.done:
 				log.Event("Event loop exiting...")
 				o.Terminate()
 				return
 			case <-t.C:
-				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*100).String())
+				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*500).String())
 				log.Event("Currently %d threads.", runtime.NumGoroutine())
 				pulse.End("update")
 				continue
