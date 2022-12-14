@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/core/ports"
-	"udap/internal/log"
 )
 
 type attributeRouter struct {
@@ -41,7 +40,9 @@ func (r *attributeRouter) request(w http.ResponseWriter, req *http.Request) {
 	if id != "" && key != "" {
 		err = r.service.Request(id, key, buf.String())
 		if err != nil {
-			log.ErrF(err, "Funny Business:")
+			w.Write([]byte(err.Error()))
+			w.WriteHeader(500)
+			//log.ErrF(err, "Funny Business:")
 		}
 	}
 	w.Write([]byte("OK"))

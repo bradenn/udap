@@ -6,7 +6,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 	"udap/internal/core/domain"
@@ -23,6 +25,8 @@ type Sentry struct {
 	beam            Beam
 	positionChannel chan domain.Attribute
 	beamChannel     chan domain.Attribute
+	done            chan bool
+	session         *websocket.Conn
 }
 
 type Beam struct {
@@ -52,7 +56,7 @@ func (p *Position) Marshal() string {
 	return string(marshal)
 }
 
-const sentryUrl = "10.0.1.60"
+const sentryUrl = "10.0.1.76"
 
 func init() {
 	config := plugin.Config{
@@ -66,11 +70,32 @@ func init() {
 	Module.Config = config
 }
 
+func (v *Sentry) connect() {
+	u := url.URL{Scheme: "ws", Host: sentryUrl, Path: "/ws"}
+
+	var err error
+	v.session, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		v.Err(err)
+	}
+
+	go func() {
+		for {
+			_, _, err = v.session.ReadMessage()
+			if err != nil {
+				v.session = nil
+				return
+			}
+		}
+	}()
+}
+
 func (v *Sentry) Setup() (plugin.Config, error) {
 	err := v.UpdateInterval(2000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
+	v.connect()
 	return v.Config, nil
 }
 
@@ -99,26 +124,38 @@ func mapRange(value float64, low1 float64, high1 float64, low2 float64, high2 fl
 }
 
 func (v *Sentry) requestPosition(position SetPosition) error {
-	marshal, err := json.Marshal(position)
-	if err != nil {
-		return err
-	}
-	reader := bytes.NewReader(marshal)
+	//marshal, err := json.Marshal(position)
+	//if err != nil {
+	//	return err
+	//}
+	//reader := bytes.NewReader(marshal)
+	//
+	//
+	//
+	//client := http.Client{}
+	//client.Timeout = time.Millisecond * 250
+	//defer client.CloseIdleConnections()
+	//resp, err := client.Post(fmt.Sprintf("http://%s/position", sentryUrl), "application/json", reader)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//
+	//var buf bytes.Buffer
+	//_, err = buf.ReadFrom(resp.Body)
+	//if err != nil {
+	//	return err
+	//}
+	//_ = resp.Body.Close()
 
-	client := http.Client{}
-	client.Timeout = time.Millisecond * 250
-	defer client.CloseIdleConnections()
-	resp, err := client.Post(fmt.Sprintf("http://%s/position", sentryUrl), "application/json", reader)
-	if err != nil {
-		return err
+	if v.session == nil {
+		v.connect()
 	}
 
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(resp.Body)
+	err := v.session.WriteJSON(position)
 	if err != nil {
 		return err
 	}
-	_ = resp.Body.Close()
 
 	return nil
 }
@@ -276,7 +313,7 @@ func (v *Sentry) Update() error {
 	if v.Ready() {
 		err := v.pull()
 		if err != nil {
-			return err
+			v.Err(err)
 		}
 	}
 	return nil
