@@ -10,6 +10,7 @@ import {useRouter} from "vue-router";
 import moduleService from "@/services/moduleService";
 import Toolbar from "@/components/toolbar/Toolbar.vue";
 import type {Remote} from "@/remote";
+import Performance from "@/components/Performance.vue";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -98,17 +99,22 @@ function editModule(id: string) {
                         <!--              }}-->
 
 
-                        <div class="label-c3 label-o4 d-flex flex-column justify-content-end align-items-end">
-                            <div :class="`${module.enabled?'text-success':''}`" class="label-o3 text-uppercase">
-                                &nbsp;{{ module.enabled ? module.state : 'Disabled' }}
-                            </div>
-                            <div v-if="state.histories"
-                                 class="label-c3 label-o3 d-flex flex-row align-items-end time-marker-line">
-                                <div v-for="marker in state.histories.get(module.id)?.map(d => d / 1000)"
-                                     :style="`height:${Math.log(marker)}px;`"
-                                     class="time-marker"></div>
-                            </div>
+                      <div
+                          class="label-c3 label-o4 d-flex flex-column justify-content-end align-items-end">
+                        <div :class="`${module.enabled?'text-success':''}`"
+                             class="label-o3 text-uppercase">
+                          &nbsp;{{ module.enabled ? module.state : 'Disabled' }}
                         </div>
+                        <div v-if="state.histories.get(module.id)"
+                             class="label-c3 label-o3 d-flex flex-row">
+                          <!--                                <div v-for="marker in state.histories.get(module.id)?.map(d => d / 1000)"-->
+                          <!--                                     :style="`height:${Math.log(marker)}px;`"-->
+                          <!--                                     class="time-marker"></div>-->
+
+                          <Performance :bars="20"
+                                       :values="state.histories.get(module.id)?.map(d => d / 1000) || []"></Performance>
+                        </div>
+                      </div>
                     </div>
                     <div class="d-flex gap-1 text-success justify-content-center">
                         <Confirm v-if="!module.enabled" :fn="() => toggleEnabled(module.id, !module.enabled)" icon="􀊃"
@@ -214,7 +220,6 @@ function editModule(id: string) {
   height: 20px;
   width: 75px;
   align-items: center;
-  gap: 1px;
   border-radius: 6px;
   background-color: hsla(214, 9%, 28%, 0.2);
   padding: 6px
