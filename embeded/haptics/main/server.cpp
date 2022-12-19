@@ -4,313 +4,225 @@
 
 #include "server.h"
 #include <esp_event.h>
-#include <esp_system.h>
 #include <esp_log.h>
-#include <nvs_flash.h>
-#include <sys/param.h>
 #include "esp_netif.h"
 #include "esp_eth.h"
 #include <esp_http_server.h>
-#include "wifi.h"
 #include "haptic.h"
 #include <cJSON.h>
 #include <esp_timer.h>
 #include <hal/ledc_types.h>
-#include <driver/ledc.h>
-#include <thread>
 
 
 static const char *TAG = "HTTP";
 
-
-struct async_resp_arg {
-    httpd_handle_t hd;
-    int fd;
-};
-
-/*
- * async send function, which we put into the httpd work queue
- */
-static void ws_async_send(void *arg) {
-    static const char *data = "Async data";
-    struct async_resp_arg *resp_arg = static_cast<async_resp_arg *>(arg);
-    httpd_handle_t hd = resp_arg->hd;
-    int fd = resp_arg->fd;
-    httpd_ws_frame_t ws_pkt;
-    memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
-    ws_pkt.payload = (uint8_t *) data;
-    ws_pkt.len = strlen(data);
-    ws_pkt.type = HTTPD_WS_TYPE_TEXT;
-
-    httpd_ws_send_frame_async(hd, fd, &ws_pkt);
-    free(resp_arg);
-}
-
-static esp_err_t trigger_async_send(httpd_handle_t handle, httpd_req_t *req) {
-    struct async_resp_arg *resp_arg = static_cast<async_resp_arg *>(malloc(
-            sizeof(struct async_resp_arg)));
-    resp_arg->hd = req->handle;
-    resp_arg->fd = httpd_req_to_sockfd(req);
-    return httpd_queue_work(handle, ws_async_send, resp_arg);
-}
-
-/* An HTTP GET handler */
-static esp_err_t getStatusHandler(httpd_req_t *req) {
+// Endpoint handler for `GET /status`
+static esp_err_t status_get_handler(httpd_req_t *req) {
+    // Send payload type header
     httpd_resp_set_type(req, "application/json");
-    // CORS Headers
+    // Allow Cross-Origin Access
     httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "*");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-
-    char *resp_str = formatJson();
+    // Format the status into JSON
+    char *resp_str = status_format_json();
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
     free(resp_str);
     return ESP_OK;
 }
 
-static const httpd_uri_t status = {
+// Endpoint handler for `OPTIONS /status`
+// Handles all preflight checks for browser related requests
+static esp_err_t status_options_handler(httpd_req_t *req) {
+    // Send payload type header
+    httpd_resp_set_type(req, "application/json");
+    // Allow Cross-Origin Access
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "*");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    // Send the status OK message
+    httpd_resp_set_status(req, HTTPD_200);
+    // Return without error
+    return ESP_OK;
+}
+
+static const httpd_uri_t status_get = {
         .uri       = "/status",
         .method    = HTTP_GET,
-        .handler   = getStatusHandler,
+        .handler   = status_get_handler,
         .user_ctx = nullptr,
-        /* Let's pass response string in user
-         * context to demonstrate it's usage */
 };
 
-void respondError(httpd_req_t *req, char *msg) {
-    httpd_resp_send(req, msg, (int) strlen(msg));
-}
-
-static esp_err_t popOptionsHandler(httpd_req_t *req) {
-
-    httpd_resp_set_type(req, "application/json");
-    /* Set CORS header */
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "*");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-
-    char *resp_str = formatJson();
-    httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
-    httpd_resp_set_status(req, HTTPD_200);
-    free(resp_str);
-    return ESP_OK;
-}
-
-/* An HTTP PUT handler */
-static esp_err_t popHandler(httpd_req_t *req) {
-
-    httpd_resp_set_type(req, "application/json");
-    /* Set CORS header */
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "*");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+static const httpd_uri_t status_options = {
+        .uri       = "/status",
+        .method    = HTTP_OPTIONS,
+        .handler   = status_options_handler,
+        .user_ctx = nullptr,
+};
 
 
-    char content[100];
-
-    /* Truncate if content length larger than the buffer */
-    size_t recv_size = MIN(req->content_len, sizeof(content));
-
-    int ret = httpd_req_recv(req, content, recv_size);
-    if (ret <= 0) {  /* 0 return value indicates connection closed */
-        /* Check if timeout occurred */
-        if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
-            /* In case of timeout one can choose to retry calling
-             * httpd_req_recv(), but to keep it simple, here we
-             * respond with an HTTP 408 (Request Timeout) error */
-            httpd_resp_send_408(req);
-        }
-        /* In case of error, returning ESP_FAIL will
-         * ensure that the underlying socket is closed */
-        return ESP_FAIL;
-    }
-
-    cJSON *request = cJSON_Parse(content);
-
-    int f = cJSON_GetObjectItem(request, "freq")->valueint;
-    int a = cJSON_GetObjectItem(request, "amplitude")->valueint;
-    int c = cJSON_GetObjectItem(request, "power")->valueint;
-    auto h = Haptic::instance();
-    h.pulseCustom(f, a, c);
-//    switch (c) {
-//        case 0:
-//            h.pulse();
-//            break;
-//        case 1:
-//            h.lightPulse();
-//            break;
-//        case 2:
-//            h.pulse();
-//            h.lightPulse();
-//            break;
-//        default:
-//            break;
-//    }
-
-    cJSON_Delete(request);
-    char *resp_str = formatJson();
-    httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
-    free(resp_str);
-    return ESP_OK;
-}
-
-#define MAX_PAYLOAD_LEN 128
-
-/* An HTTP GET handler */
-static esp_err_t socketHandler(httpd_req_t *req) {
+// Socket handler is the http method handler for requests made to the /ws endpoint
+static esp_err_t socket_get_handler(httpd_req_t *req) {
+    // If the connection is a http GET request, initialize a new connection
     if (req->method == HTTP_GET) {
+        // Log the connection
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
+        // Return from the handler
         return ESP_OK;
     }
-
-    uint8_t *buffer = nullptr;
+    // Instantiate a websocket frame
     httpd_ws_frame_t ws_pkt;
-
+    // Clear the packet
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+    // Set the type to websocket text
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
-
+    // Check to make sure the frame is ready by receiving zero bytes
     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "httpd_ws_recv_frame failed with %d", ret);
         return ret;
     }
-
+    // If the frame is not empty
     if (ws_pkt.len) {
-
-        buffer = (uint8_t *) calloc(1, ws_pkt.len + 1);
+        // Allocate memory for the incoming buffer
+        auto buffer = (uint8_t *) calloc(1, ws_pkt.len + 1);;
+        // Set the packet payload pointer to the buffer
         ws_pkt.payload = buffer;
-
+        // Receive the rest of the data
         ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "httpd_ws_recv_frame failed with %d", ret);
             free(buffer);
             return ret;
         }
-//        ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
-
-//        ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
+        // If the packet type remains text, parse it.
         if (ws_pkt.type == HTTPD_WS_TYPE_TEXT) {
-            cJSON *request = cJSON_Parse((char *)(ws_pkt.payload));
+            // Parse the text as JSON data
+            cJSON *request = cJSON_Parse((char *) (ws_pkt.payload));
+            // Extract the frequency
             int f = cJSON_GetObjectItem(request, "freq")->valueint;
+            // Extract the amplitude
             int a = cJSON_GetObjectItem(request, "amplitude")->valueint;
+            // Extract the power
             int c = cJSON_GetObjectItem(request, "power")->valueint;
+            // Get an instance of the haptic engine
             auto h = Haptic::instance();
+            // Send the pulse
             h.pulseCustom(f, a, c);
+            // Free the JSON memory
             cJSON_Delete(request);
-            free(buffer);
-            return 0;
         }
+        // Free the buffer allocated earlier
         free(buffer);
     }
-
-
+    // Return normally
     return 0;
 }
 
 
-static const httpd_uri_t websockets = {
+static const httpd_uri_t socket_get = {
         .uri       = "/ws",
         .method    = HTTP_GET,
-        .handler   = socketHandler,
-        .user_ctx = nullptr,
-        .is_websocket = true,               // Mandatory: set to `true` to handler websocket protocol
+        .handler   = socket_get_handler,
+        .is_websocket = true,
 };
 
-
-static const httpd_uri_t pop = {
-        .uri       = "/pop",
-        .method    = HTTP_POST,
-        .handler   = popHandler,
-        .user_ctx = nullptr,
-};
-
-static const httpd_uri_t popOptions = {
-        .uri       = "/pop",
-        .method    = HTTP_OPTIONS,
-        .handler   = popOptionsHandler,
-        .user_ctx = nullptr,
-};
-
+// Handle invalid http endpoint requests
 esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err) {
-    /* For any other URI send 404 and close socket */
-    httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Some 404 error message");
+    // Send a message to the client
+    httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Unauthorized request. This incident has been logged.");
+    // Return an error code
     return ESP_FAIL;
 }
 
-static httpd_handle_t start_webserver(void) {
-    httpd_handle_t server = NULL;
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+esp_err_t Server::start_webserver() {
+    // Make sure the server is not running
+    if (server != nullptr) {
+        return ESP_FAIL;
+    }
+
+    server = nullptr;
+    config = HTTPD_DEFAULT_CONFIG();
 
     esp_err_t ret = httpd_start(&server, &config);
     if (ESP_OK != ret) {
         ESP_LOGI(TAG, "Error starting server!");
-        return NULL;
+        return ret;
     }
+
+
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
-    httpd_register_uri_handler(server, &status);
-    httpd_register_uri_handler(server, &popOptions);
-    httpd_register_uri_handler(server, &websockets);
-    httpd_register_uri_handler(server, &pop);
 
-    return server;
+    httpd_register_uri_handler(server, &status_get);
+    httpd_register_uri_handler(server, &socket_get);
+
+    httpd_register_uri_handler(server, &status_options);
+
+    httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, &http_404_error_handler);
+
+    running = true;
+
+    return ESP_OK;
 }
 
-static esp_err_t stop_webserver(httpd_handle_t server) {
-    return httpd_stop(server);
+esp_err_t Server::stop_webserver() {
+    auto err = httpd_stop(server);
+    if (err == ESP_OK) {
+        server = nullptr;
+        running = false;
+    }
+    return err;
 }
 
-static void disconnect_handler(void *arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data) {
-    auto *server = (httpd_handle_t *) arg;
-    if (*server) {
+static void connect_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *srv) {
+    ESP_LOGI(TAG, "Wi-Fi Connected:");
+    auto server = (Server *) srv;
+    if (!server->is_running()) {
+        ESP_LOGI(TAG, "Starting webserver");
+        server->start_webserver();
+    }
+}
+
+static void disconnect_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *srv) {
+    ESP_LOGI(TAG, "Wi-Fi Disconnected:");
+    auto server = (Server *) srv;
+    if (server->is_running()) {
         ESP_LOGI(TAG, "Stopping webserver");
-        if (stop_webserver(*server) == ESP_OK) {
-            *server = NULL;
-        } else {
+        if (server->stop_webserver() != ESP_OK) {
             ESP_LOGE(TAG, "Failed to stop http server");
         }
     }
 }
 
-static void connect_handler(void *arg, esp_event_base_t event_base,
-                            int32_t event_id, void *event_data) {
-    auto *server = (httpd_handle_t *) arg;
-    if (*server == NULL) {
-        ESP_LOGI(TAG, "Starting webserver");
-        *server = start_webserver();
-    }
-}
-
-void setupServer() {
-
-    ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    /* Register event handlers to stop the server when Wi-Fi or Ethernet is disconnected,
-     * and re-start it upon connection.
-     */
-
-    wifiInit();
-
-    static httpd_handle_t server = NULL;
-    ESP_ERROR_CHECK(
-            esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
-                                       &connect_handler, &server));
-    ESP_ERROR_CHECK(
-            esp_event_handler_register(WIFI_EVENT,
-                                       WIFI_EVENT_STA_DISCONNECTED,
-                                       &disconnect_handler, &server));
-    server = start_webserver();
-
-    /* Start the server for the first time */
-
-}
-
-char *formatJson() {
+// Returns a string containing the system status. The string must be freed after use to prevent memory leaks.
+char *status_format_json() {
+    // Instantiate an object
     auto obj = cJSON_CreateObject();
+    // Add a status key to the object
     cJSON_AddItemToObject(obj, "status", cJSON_CreateString("OK"));
-
+    // Write the object to a string
     auto val = cJSON_Print(obj);
+    // Delete the  object
     cJSON_Delete(obj);
+    // Return the string
     return val;
+}
 
+// Create an instance of the server when first called
+Server &Server::instance() {
+    static Server the_instance;
+    return the_instance;
+}
+
+// Initialize the server object
+Server::Server() {
+    // Set up the event handlers
+    esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, this);
+    esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, this);
+    // Start the webserver
+    start_webserver();
+}
+
+// Returns true if the server is running
+bool Server::is_running() const {
+    return running;
 }
