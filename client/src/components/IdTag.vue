@@ -89,18 +89,23 @@ function reload() {
       <div class="d-flex align-items-center justify-content-between"
            style=" width: 18rem;">
         <div class="label-c0 label-w700 label-o4 px-1">Notifications</div>
+
         <ToolbarButton :accent="true" :active="false" class="text-accent"
                        style="height: 1.4rem;"
                        text="Clear" @click.stop="() => {notify.clearLog()}"
         ></ToolbarButton>
       </div>
       <div class="d-flex gap-1 flex-column" @click.stop>
-        <Toast v-for="log in state.logs" :key="log.uuid"
+        <Toast v-for="log in state.logs.slice(0, 5)" :key="log.uuid"
                :index="1"
                :message="log.message"
                :severity="log.severity"
                :time="-1"
                :title="log.name"></Toast>
+        <div v-if="state.logs.length > 5"
+             class="label-c1 label-o4 px-1 subplot p-2 py-1 px-2">
+          + {{ state.logs.length }} more
+        </div>
         <div v-if="state.logs.length === 0">
           <div
               class="label-c1 label-o4 px-1 subplot p-2 py-1 px-2">No notifications</div>
@@ -114,7 +119,7 @@ function reload() {
         class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1 px-2"
         style="height: 2rem !important; width: 12rem" @mousedown="open">
       <div class="id-icon">
-        <span v-if="state.connected">􀙇</span>
+        <span v-if="true">􀙇</span>
         <span v-else>􀙈</span>
       </div>
       <div class="id-icon">
@@ -122,9 +127,10 @@ function reload() {
         <span v-else>􀌐</span>
 
       </div>
-      <div v-if="remote.connecting">
-        <Loader></Loader>
-      </div>
+
+      <Loader v-if="!state.connected"></Loader>
+
+
       <div class="flex-grow-1"></div>
       <div class="label-c2 label-o2 px-0">
         <div v-if="state.menu">

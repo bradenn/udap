@@ -34,6 +34,8 @@ export interface Notify {
 
     current(): NotifyBody
 
+    queued(): number
+
     logs(): NotifyBody[]
 
     clearLog(): void
@@ -50,6 +52,9 @@ let state = reactive<NotifyState>({
     currentWait: 0,
 })
 
+function queued(): number {
+    return state.queue.length
+}
 
 function logs(): NotifyBody[] {
     return state.log
@@ -62,7 +67,6 @@ function clearLog() {
 
 // Promotes the first element in the queue to the new current
 function dequeue() {
-
     // Pop an element from the front of the queue
     let next = state.queue.shift()
     // Make sure the element is not null
@@ -70,6 +74,9 @@ function dequeue() {
     // Update the current element
     state.current = next
     state.log.push(next)
+    if (state.log.length > 10) {
+        state.log.slice(1)
+    }
     // Update the start time
     state.begin = Date.now().valueOf()
     // Update the countdown duration
@@ -180,6 +187,7 @@ export default {
     current,
     isActive,
     logs,
+    queued,
     clearLog
 }
 

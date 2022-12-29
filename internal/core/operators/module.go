@@ -125,7 +125,7 @@ func (m *moduleRuntime) Build(module string, uuid string) error {
 		return err
 	}
 	// Create a timeout to prevent modules from taking too long to build
-	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*25)
 	// Cancel the timeout of it exits before the timeout is up
 	defer cancelFunc()
 	// Prepare the command arguments

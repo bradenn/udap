@@ -211,6 +211,11 @@ function handleMessage(target: Target, data: any) {
             break
         case Target.Trigger:
             remote.triggers = createOrUpdate(remote.triggers, data)
+            let trigger = data as Trigger
+            let last = new Date(trigger.lastTrigger)
+            if (new Date().valueOf() - last.valueOf() < 2000) {
+                // notifications.show(`Trigger: ${trigger.name}`, trigger.description, 1, 2500)
+            }
             break
         case Target.Attribute:
             remote.attributes = createOrUpdate(remote.attributes, data)

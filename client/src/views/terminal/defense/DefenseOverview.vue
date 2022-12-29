@@ -13,6 +13,7 @@ import type {
 import Sentry from "@/components/rendered/Sentry.vue";
 import type {Remote} from "@/remote";
 import attributeService from "@/services/attributeService";
+import Attenuation from "@/components/Attenuation.vue";
 
 
 let room = [
@@ -437,7 +438,8 @@ function laserRun() {
   let tick = 0;
   let dir = false;
 
-  let steps = 250;
+  let steps = 500;
+  let method = false;
 
   let speed = 1
 
@@ -470,15 +472,17 @@ function laserRun() {
     let bounds = 10
 
 
-    laserPanTilt(map_range(Math.sin(div * tick * 2), -1, 1, 90 - bounds, 90 + bounds * 2), map_range(tick, 0, steps, 10, 45))
+    laserPanTilt(map_range(method ? Math.sin(div * tick * 2) : Math.cos(div * tick * 2), -1, 1, 90 - bounds, 90 + bounds * 2), map_range(tick, 0, steps, 10, 45))
 
     let op = Math.floor(Math.random() * 100);
     if (op > 95) {
       dir = !dir;
-    } else if (op > 20 && op < 40) {
+    } else if (op > 25 && op < 40) {
       speed = 0;
     } else if (op < 10) {
-      speed = 0.5 + Math.random() * 4
+      speed = 0.5 + Math.random() * 3
+    } else if (op > 15 && op < 18) {
+      method = !method
     }
 
     // moveBeamToXYZ(0, 0, 0);
@@ -529,131 +533,133 @@ function laserStop() {
 </script>
 
 <template>
-  <div class="d-flex w-100 h-100 gap-2 mt-1 pb-4">
-    <div class="d-flex flex-column gap flex-wrap">
-      <Plot :cols="3" :rows="2" style="width:13rem;" title="Location">
-        <div class="label-w600 label-r label-o4 label-c2 text-center">
-          X: {{ Math.round(state.x * 10) / 10 }}
-        </div>
-        <div class="label-w600 label-r label-o4 label-c2 text-center">
-          Y: {{ Math.round(state.y * 10) / 10 }}
-        </div>
-        <div class="label-w600 label-r label-o4 label-c2 text-center">
-          Z: {{ Math.round(state.z * 10) / 10 }}
-        </div>
-        <div class="label-w600 label-r label-o4 label-c2 text-center">
-          P: {{ Math.round(state.pan * 10) / 10 }}
-        </div>
-        <div class="label-w600 label-r label-o4 label-c2 text-center">
-          T: {{ Math.round(state.tilt * 10) / 10 }}
-        </div>
-        <div class="label-w600 label-r label-o4 label-c2 text-center">
-          Z: {{ Math.round(state.zoom * 10) / 10 }}
-        </div>
-      </Plot>
-
-      <sentry :beam="state.laser" :pan="state.pan" :tilt="state.tilt"
-              color="rgba(255,0, 0, 1)">
-      </sentry>
-
-      <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
-        <Subplot :active="true" :fn="() => moveBeamToXYZ(0, 0, 0)"
-                 name="0,0"></Subplot>
-        <Subplot :active="true" :fn="() => laserPan(state.pan-1)"
-                 :theme="state.pan <= 0?'disabled':''"
-                 name="􀄫"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)"
-                 :theme="state.tilt >= 180?'disabled':''"
-                 name="􀄨"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)"
-                 :theme="state.tilt <= 0?'disabled':''"
-                 name="􀄩"></Subplot>
-      </Plot>
-      <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
-        <Subplot :active="true" :fn="() => laserPan(state.pan+1)"
-                 :theme="state.pan >= 180?'disabled':''"
-                 name="􀄪"></Subplot>
-        <Subplot :active="true" :fn="() => laserPan(state.pan-1)"
-                 :theme="state.pan <= 0?'disabled':''"
-                 name="􀄫"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)"
-                 :theme="state.tilt >= 180?'disabled':''"
-                 name="􀄨"></Subplot>
-        <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)"
-                 :theme="state.tilt <= 0?'disabled':''"
-                 name="􀄩"></Subplot>
-      </Plot>
-      <Plot v-if="false" :cols="1" :rows="2" style="width: 13rem;"
-            title="Programmed">
-        <div>
-          <div class="d-flex justify-content-between label-xs label-r px-1">
-            <div class="label-w500">Pan (X)</div>
-            <div class="label-w600 label-o3">{{ state.pan }}°</div>
+  <div class="h-100 d-flex flex-column">
+    <div class="d-flex w-100 h-100 gap-2 mt-1 pb-4">
+      <div class="d-flex flex-column gap flex-wrap">
+        <Plot :cols="3" :rows="2" style="width:13rem;" title="Location">
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            X: {{ Math.round(state.x * 10) / 10 }}
           </div>
-          <input
-              id="pan"
-              v-model="state.pan"
-              :max="180"
-              :min="0"
-              :step="1"
-              class="slider element "
-              type="range"
-              v-on:mouseup="() => laserPan(state.pan)">
-        </div>
-
-        <div>
-          <div class="d-flex justify-content-between label-xs label-r px-1">
-            <div class="label-w500">Tilt (Y)</div>
-            <div class="label-w600 label-o3">{{ state.tilt }}°</div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            Y: {{ Math.round(state.y * 10) / 10 }}
           </div>
-          <input
-              id="tilt"
-              v-model="state.tilt"
-              :max="180"
-              :min="0"
-              :step="1"
-              class="slider element"
-              type="range"
-              v-on:mouseup="() => laserTilt(state.tilt)">
-        </div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            Z: {{ Math.round(state.z * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            P: {{ Math.round(state.pan * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            T: {{ Math.round(state.tilt * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            Z: {{ Math.round(state.zoom * 10) / 10 }}
+          </div>
+        </Plot>
 
-      </Plot>
+        <sentry :beam="state.laser" :pan="state.pan" :tilt="state.tilt"
+                color="rgba(255,0, 0, 1)">
+        </sentry>
+
+        <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
+          <Subplot :active="true" :fn="() => moveBeamToXYZ(0, 0, 0)"
+                   name="0,0"></Subplot>
+          <Subplot :active="true" :fn="() => laserPan(state.pan-1)"
+                   :theme="state.pan <= 0?'disabled':''"
+                   name="􀄫"></Subplot>
+          <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)"
+                   :theme="state.tilt >= 180?'disabled':''"
+                   name="􀄨"></Subplot>
+          <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)"
+                   :theme="state.tilt <= 0?'disabled':''"
+                   name="􀄩"></Subplot>
+        </Plot>
+        <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
+          <Subplot :active="true" :fn="() => laserPan(state.pan+1)"
+                   :theme="state.pan >= 180?'disabled':''"
+                   name="􀄪"></Subplot>
+          <Subplot :active="true" :fn="() => laserPan(state.pan-1)"
+                   :theme="state.pan <= 0?'disabled':''"
+                   name="􀄫"></Subplot>
+          <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)"
+                   :theme="state.tilt >= 180?'disabled':''"
+                   name="􀄨"></Subplot>
+          <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)"
+                   :theme="state.tilt <= 0?'disabled':''"
+                   name="􀄩"></Subplot>
+        </Plot>
+        <Plot v-if="false" :cols="1" :rows="2" style="width: 13rem;"
+              title="Programmed">
+          <div>
+            <div class="d-flex justify-content-between label-xs label-r px-1">
+              <div class="label-w500">Pan (X)</div>
+              <div class="label-w600 label-o3">{{ state.pan }}°</div>
+            </div>
+            <input
+                id="pan"
+                v-model="state.pan"
+                :max="180"
+                :min="0"
+                :step="1"
+                class="slider element "
+                type="range"
+                v-on:mouseup="() => laserPan(state.pan)">
+          </div>
+
+          <div>
+            <div class="d-flex justify-content-between label-xs label-r px-1">
+              <div class="label-w500">Tilt (Y)</div>
+              <div class="label-w600 label-o3">{{ state.tilt }}°</div>
+            </div>
+            <input
+                id="tilt"
+                v-model="state.tilt"
+                :max="180"
+                :min="0"
+                :step="1"
+                class="slider element"
+                type="range"
+                v-on:mouseup="() => laserTilt(state.tilt)">
+          </div>
+
+        </Plot>
+      </div>
+      <div id="room-container" class=" element h-100 w-100">
+      </div>
+      <div class="d-flex flex-column gap flex-wrap">
+        <Plot :cols="2" :rows="1" style="width: 13rem" title="Sentry Selection">
+          <Subplot :active="true" :fn="() => {}" name="Bedroom"></Subplot>
+          <Subplot :active="true" :fn="() => {}" name="Living Room"
+                   theme="disabled"></Subplot>
+        </Plot>
+        <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
+          <Confirm :active="state.laser" :disabled="state.laser"
+                   :fn="laserToggle"
+                   :title="`${state.laser?'DISABLE':'ENABLE'} LASER`"></Confirm>
+          <Subplot :active="true" :fn="laserStopAll" name="STOP ALL"
+                   theme="danger"></Subplot>
+          <Subplot :active="true" :fn="() => laserHome()" name="Home"></Subplot>
+          <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
+          <Subplot :active="true" :fn="() => laserStop()"
+                   :theme="state.runner !== 0?'':'disabled'"
+                   name="Halt"></Subplot>
+        </Plot>
+        <Plot :cols="1" :rows="2" style="width:13rem;" title="Beams">
+          <Subplot :fn="() => {}" active alt="650nm @ 5 mW"
+                   name="Pointer"></Subplot>
+          <Subplot :fn="() => {}" alt="850nm @ 3 mW" name="Targeting"
+                   theme="disabled"></Subplot>
+        </Plot>
+        <Plot :cols="3" :rows="1" style="width:13rem;" title="Attenuation">
+          <Subplot :fn="() => {}" active name="􀅽"></Subplot>
+          <Subplot :fn="() => {}" name="5 mW"></Subplot>
+          <Subplot :fn="() => {}" active name="􀅼"></Subplot>
+        </Plot>
+
+
+      </div>
     </div>
-    <div id="room-container" class=" element h-100 w-100">
-
-    </div>
-    <div class="d-flex flex-column gap flex-wrap">
-      <Plot :cols="2" :rows="1" style="width: 13rem" title="Sentry Selection">
-        <Subplot :active="true" :fn="() => {}" name="Bedroom"></Subplot>
-        <Subplot :active="true" :fn="() => {}" name="Living Room"
-                 theme="disabled"></Subplot>
-      </Plot>
-      <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
-        <Confirm :active="state.laser" :disabled="state.laser"
-                 :fn="laserToggle"
-                 :title="`${state.laser?'DISABLE':'ENABLE'} LASER`"></Confirm>
-        <Subplot :active="true" :fn="laserStopAll" name="STOP ALL"
-                 theme="danger"></Subplot>
-        <Subplot :active="true" :fn="() => laserHome()" name="Home"></Subplot>
-        <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
-        <Subplot :active="true" :fn="() => laserStop()"
-                 :theme="state.runner !== 0?'':'disabled'"
-                 name="Halt"></Subplot>
-      </Plot>
-      <Plot :cols="1" :rows="2" style="width:13rem;" title="Beams">
-        <Subplot :fn="() => {}" active alt="650nm @ 5 mW"
-                 name="Pointer"></Subplot>
-        <Subplot :fn="() => {}" alt="850nm @ 3 mW" name="Targeting"
-                 theme="disabled"></Subplot>
-      </Plot>
-      <Plot :cols="3" :rows="1" style="width:13rem;" title="Attenuation">
-        <Subplot :fn="() => {}" active name="􀅽"></Subplot>
-        <Subplot :fn="() => {}" name="5 mW"></Subplot>
-        <Subplot :fn="() => {}" active name="􀅼"></Subplot>
-      </Plot>
-
-    </div>
-
+    <Attenuation duty="" frequency="" percent=""></Attenuation>
   </div>
   <!--  <div v-else>-->
   <!--    <DefenseAuth></DefenseAuth>-->

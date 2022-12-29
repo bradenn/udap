@@ -182,9 +182,9 @@ $macro-height: 2rem;
 .app-grid {
 
   display: grid;
-  padding: 0.75rem 0.5rem 0.5rem;
+  padding: 0.75rem 0rem 0rem;
   flex-grow: 1;
-  grid-gap: 0.75rem;
+  grid-gap: 1rem;
   grid-template-rows: repeat(8, 1fr);
   grid-template-columns: repeat(4, 1fr);
 }

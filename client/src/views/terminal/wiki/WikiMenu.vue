@@ -32,7 +32,7 @@ function loadArticle(doc: Document) {
 function fetch() {
 
 
-  wtf.fetch("cat").then(doc => {
+  wtf.fetch("maser").then(doc => {
     // @ts-ignore
     state.dom = doc.html()
   })
@@ -48,7 +48,7 @@ function fetch() {
 
 <template>
   <div class="h-100">
-    <div class="">
+    <div v-if="false" class="">
       <div class="hex-row">
         <div class="hex">
           <div class="top"></div>
@@ -94,13 +94,13 @@ function fetch() {
         </div>
       </div>
     </div>
-    <div class="menu-grid">
+    <div v-if="false" class="menu-grid">
       <div v-for="s in sections"
            class="element d-flex justify-content-center label-c1 align-items-center">
         <div class="label-c1 label-w600 py-2">{{ s }}</div>
       </div>
     </div>
-    <div v-if=false class="element p-2 " style="height: 100%;">
+    <div v-if=true class="element p-2 " style="height: 100%;">
       <FixedScroll class="" style=" height: 100%; overflow-y: scroll;">
         <div class=" " v-html="state.dom"></div>
       </FixedScroll>
