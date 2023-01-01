@@ -16,8 +16,13 @@ const state = reactive({
 let props = defineProps<{
   percent: number
   frequency: number,
+  scale: number,
   duty: number,
 }>();
+
+function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
 
 onMounted(() => {
   configureCanvas()
@@ -39,6 +44,7 @@ function configureCanvas() {
 
 watchEffect(() => {
   draw()
+  return props.percent
 })
 
 const barWidth = 2;
@@ -61,24 +67,52 @@ function squareWave(f: number, a: number, d: number) {
   }
 }
 
+const xPadding = 8;
+const yPadding = 8;
+const extent = -10;
+
+function drawTimeSample() {
+  let ctx = state.ctx
+  let canvas = ctx.canvas
+
+  // Set the stroke style
+  ctx.strokeStyle = "rgba(255,255,255,0.125)"
+  ctx.fillStyle = "rgba(255,255,255,0.3)"
+
+
+  // Begin a new path
+  ctx.beginPath();
+  ctx.moveTo(xPadding, canvas.height - yPadding + extent)
+  ctx.lineTo(xPadding, canvas.height - yPadding)
+  ctx.lineTo(canvas.width - xPadding, canvas.height - yPadding)
+  ctx.lineTo(canvas.width - xPadding, canvas.height - yPadding + extent)
+  ctx.stroke();
+  ctx.closePath();
+
+
+  ctx.font = "500 16px SF Pro Display"
+  let metrics = ctx.measureText("1 ms")
+  ctx.fillText("1 ms", canvas.width / 2 - metrics.width / 2, canvas.height - yPadding * 1.5)
+}
+
 function drawSquareWave(amplitude: number, frequency: number, dutyCycle: number, offset: number) {
 
   let ctx = state.ctx
   let canvas = ctx.canvas
 
   // Set the stroke style
-  ctx.strokeStyle = "rgba(255,255,255,0.25)"
+  ctx.strokeStyle = "rgba(255,128,1,0.7)"
+  ctx.lineWidth = 2
 
   // Begin a new path
   ctx.beginPath();
 
   // Set the starting position
-  ctx.moveTo(0, canvas.height / 2);
 
   let wave = squareWave(frequency, 1, dutyCycle)
 
   // Set the initial x-position
-  let x = 0;
+  let x = offset;
 
   // Set the step size
   const step = 0.01;
@@ -87,19 +121,17 @@ function drawSquareWave(amplitude: number, frequency: number, dutyCycle: number,
   let y = 0;
 
   // Set the loop limit
-  const limit = canvas.width;
+  const limit = canvas.width - xPadding * 2;
 
   // Loop through the canvas width
   for (x = 0; x < limit; x += step) {
     // Calculate the y-position based on the duty cycle
     y = wave(x / limit);
-    // if ((x / (1 / f)) % ((1 / f) / dutyCycle) < ((1 / f) / dutyCycle)) {
-    // } else {
-    //   y = -a;
-    // }
-
     // Draw a line to the new position
-    ctx.lineTo(x, canvas.height / 2 - y * (canvas.height / 4));
+    if (x == 0) {
+      ctx.moveTo(offset + x, canvas.height / 2 - y * (canvas.height / 4));
+    }
+    ctx.lineTo(offset + x, canvas.height / 2 - y * (canvas.height / 4));
   }
   // Stroke the path
   ctx.stroke();
@@ -119,7 +151,8 @@ function draw() {
   let ctx = state.ctx
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   ctx.strokeStyle = "rgba(255,255,255,0.25)"
-  drawSquareWave(0, 60, 0.126, 0);
+  drawSquareWave(0, props.frequency / props.scale, props.percent, 8);
+  drawTimeSample();
 
 
 }

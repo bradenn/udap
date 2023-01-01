@@ -30,9 +30,9 @@ type Sentry struct {
 }
 
 type Beam struct {
-	Target string `json:"target"`
-	Active int    `json:"active"`
-	Power  int    `json:"power"`
+	Target string  `json:"target"`
+	Active int     `json:"active"`
+	Power  float64 `json:"power"`
 }
 
 func (b *Beam) Marshal() string {
@@ -108,8 +108,14 @@ type Status struct {
 		Tilt int `json:"tilt"`
 	} `json:"servos"`
 	Beams struct {
-		Primary   bool `json:"primary"`
-		Secondary bool `json:"secondary"`
+		Primary struct {
+			Active bool    `json:"active"`
+			Power  float64 `json:"power"`
+		} `json:"primary"`
+		Secondary struct {
+			Active bool    `json:"active"`
+			Power  float64 `json:"power"`
+		} `json:"secondary"`
 	} `json:"beams"`
 }
 
@@ -162,7 +168,6 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 
 func (v *Sentry) requestBeam(beam Beam) error {
 	beam.Target = "primary"
-	beam.Power = 15
 	marshal, err := json.Marshal(beam)
 	if err != nil {
 		return err
@@ -291,12 +296,13 @@ func (v *Sentry) UpdateData(buf bytes.Buffer) error {
 
 	b := Beam{}
 	b.Target = "primary"
-	if s.Beams.Primary {
+	if s.Beams.Primary.Active {
 		b.Active = 1
 	} else {
 		b.Active = 0
 	}
-	b.Power = 15
+
+	b.Power = s.Beams.Primary.Power
 
 	marshal, err = json.Marshal(b)
 	if err != nil {

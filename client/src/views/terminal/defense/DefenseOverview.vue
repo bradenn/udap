@@ -14,6 +14,7 @@ import Sentry from "@/components/rendered/Sentry.vue";
 import type {Remote} from "@/remote";
 import attributeService from "@/services/attributeService";
 import Attenuation from "@/components/Attenuation.vue";
+import Slider from "@/components/Slider.vue";
 
 
 let room = [
@@ -402,6 +403,16 @@ function onPointerMove(event: MouseEvent) {
 
 }
 
+function setDuty(percent: number) {
+
+  if (!state.entity) return
+  if (!state.laserBeam) return
+  let beam = state.laserBeam
+  beam.power = percent
+  state.beam.request = JSON.stringify(beam)
+  attributeService.request(state.beam)
+}
+
 function laserStopAll() {
   clearInterval(state.runner)
   state.runner = 0
@@ -555,25 +566,20 @@ function laserStop() {
           <div class="label-w600 label-r label-o4 label-c2 text-center">
             Z: {{ Math.round(state.zoom * 10) / 10 }}
           </div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            mW: {{ state.laserBeam.power }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            T: {{ Math.round(state.tilt * 10) / 10 }}
+          </div>
+          <div class="label-w600 label-r label-o4 label-c2 text-center">
+            Z: {{ Math.round(state.zoom * 10) / 10 }}
+          </div>
         </Plot>
 
         <sentry :beam="state.laser" :pan="state.pan" :tilt="state.tilt"
                 color="rgba(255,0, 0, 1)">
         </sentry>
-
-        <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
-          <Subplot :active="true" :fn="() => moveBeamToXYZ(0, 0, 0)"
-                   name="0,0"></Subplot>
-          <Subplot :active="true" :fn="() => laserPan(state.pan-1)"
-                   :theme="state.pan <= 0?'disabled':''"
-                   name="􀄫"></Subplot>
-          <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)"
-                   :theme="state.tilt >= 180?'disabled':''"
-                   name="􀄨"></Subplot>
-          <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)"
-                   :theme="state.tilt <= 0?'disabled':''"
-                   name="􀄩"></Subplot>
-        </Plot>
         <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
           <Subplot :active="true" :fn="() => laserPan(state.pan+1)"
                    :theme="state.pan >= 180?'disabled':''"
@@ -624,14 +630,9 @@ function laserStop() {
 
         </Plot>
       </div>
-      <div id="room-container" class=" element h-100 w-100">
+      <div id="room-container" class=" element w-100" style="height: 70%">
       </div>
       <div class="d-flex flex-column gap flex-wrap">
-        <Plot :cols="2" :rows="1" style="width: 13rem" title="Sentry Selection">
-          <Subplot :active="true" :fn="() => {}" name="Bedroom"></Subplot>
-          <Subplot :active="true" :fn="() => {}" name="Living Room"
-                   theme="disabled"></Subplot>
-        </Plot>
         <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
           <Confirm :active="state.laser" :disabled="state.laser"
                    :fn="laserToggle"
@@ -640,16 +641,13 @@ function laserStop() {
                    theme="danger"></Subplot>
           <Subplot :active="true" :fn="() => laserHome()" name="Home"></Subplot>
           <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
+          <Subplot :active="true" :fn="() => moveBeamToXYZ(0,0,0)"
+                   name="0, 0"></Subplot>
           <Subplot :active="true" :fn="() => laserStop()"
                    :theme="state.runner !== 0?'':'disabled'"
                    name="Halt"></Subplot>
         </Plot>
-        <Plot :cols="1" :rows="2" style="width:13rem;" title="Beams">
-          <Subplot :fn="() => {}" active alt="650nm @ 5 mW"
-                   name="Pointer"></Subplot>
-          <Subplot :fn="() => {}" alt="850nm @ 3 mW" name="Targeting"
-                   theme="disabled"></Subplot>
-        </Plot>
+
         <Plot :cols="3" :rows="1" style="width:13rem;" title="Attenuation">
           <Subplot :fn="() => {}" active name="􀅽"></Subplot>
           <Subplot :fn="() => {}" name="5 mW"></Subplot>
@@ -657,9 +655,16 @@ function laserStop() {
         </Plot>
 
 
+        <Attenuation :duty="4096" :frequency="4096"
+                     :percent="state.laserBeam.power/15.0"
+                     :scale="1000"></Attenuation>
       </div>
     </div>
-    <Attenuation duty="" frequency="" percent=""></Attenuation>
+    <div>
+    </div>
+    <Slider :change="setDuty" :max="15" :min="0" :step="0.5" :value="0"
+            name="Beam"
+            unit=" mW"></Slider>
   </div>
   <!--  <div v-else>-->
   <!--    <DefenseAuth></DefenseAuth>-->
