@@ -52,17 +52,21 @@ function updateTime() {
         <div>:</div>
         <div>{{ moment(state.timer.current).format('S') }}</div>
       </div>
-
     </div>
     <div class="d-flex gap mt-1">
       <Plot :cols="2" :rows="2" style="width: 12rem">
-        <Radio :active="false" :fn="() => setDuration(1000 * 60)" title="1 min"></Radio>
-        <Radio :active="false" :fn="() => setDuration(5 * 1000 * 60)" title="5 min"></Radio>
-        <Radio :active="false" :fn="() => setDuration(15 * 1000 * 60)" title="15 min"></Radio>
-        <Radio :active="false" :fn="() => setDuration(30 * 1000 * 60)" title="30 min"></Radio>
+        <Radio :active="false" :fn="() => setDuration(1000 * 60)"
+               title="1 min"></Radio>
+        <Radio :active="false" :fn="() => setDuration(5 * 1000 * 60)"
+               title="5 min"></Radio>
+        <Radio :active="false" :fn="() => setDuration(15 * 1000 * 60)"
+               title="15 min"></Radio>
+        <Radio :active="false" :fn="() => setDuration(30 * 1000 * 60)"
+               title="30 min"></Radio>
       </Plot>
       <Plot :cols="2" :rows="2" name="Drinks" style="width: 12rem">
-        <Radio :active="false" :fn="() => setDuration(4*1000 * 60)" title="Earl Grey, Hot"></Radio>
+        <Radio :active="false" :fn="() => setDuration(4*1000 * 60)"
+               title="Earl Grey, Hot"></Radio>
       </Plot>
     </div>
 
