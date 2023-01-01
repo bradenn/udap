@@ -21,8 +21,18 @@ func NewAttributeRepository(db *gorm.DB) ports.AttributeRepository {
 	}
 }
 
-func (u *attributeRepo) Register(attribute *domain.Attribute) error {
+func (u *attributeRepo) Log(attribute *domain.Attribute) error {
+	if attribute.Type == "media" {
+		return nil
+	}
+	err := u.db.Model(&domain.AttributeLog{}).Create(attribute.ToLog()).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
+func (u *attributeRepo) Register(attribute *domain.Attribute) error {
 	err := u.db.Model(&domain.Attribute{}).Where("entity = ? AND key = ?", attribute.Entity, attribute.Key).FirstOrCreate(attribute).Error
 	if err != nil {
 		return err

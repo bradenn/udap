@@ -470,6 +470,9 @@ export interface User {
     first: string;
     middle: string;
     last: string;
+    residency: string;
+    classification: string;
+    photo: string;
     password: string;
 }
 

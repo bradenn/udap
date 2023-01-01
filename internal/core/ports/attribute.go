@@ -12,6 +12,7 @@ type AttributeRepository interface {
 	common.Persist[domain.Attribute]
 	FindAllByEntity(entity string) (*[]domain.Attribute, error)
 	FindByComposite(entity string, key string) (*domain.Attribute, error)
+	Log(attribute *domain.Attribute) error
 	Register(*domain.Attribute) error
 }
 
@@ -30,6 +31,7 @@ type AttributeService interface {
 	FindById(id string) (*domain.Attribute, error)
 	Create(*domain.Attribute) error
 	Register(*domain.Attribute) error
+
 	Request(entity string, key string, value string) error
 	Set(entity string, key string, value string) error
 	Update(entity string, key string, value string, stamp time.Time) error
