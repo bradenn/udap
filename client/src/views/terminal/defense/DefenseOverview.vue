@@ -42,7 +42,9 @@ let state = reactive({
   runner: 0,
   speed: 1,
   laser: false,
-  laserBeam: {} as Beam,
+  laserBeam: {
+    power: 0
+  } as Beam,
   auth: false,
   entity: {} as Entity,
   position: {} as Attribute,
@@ -409,6 +411,7 @@ function setDuty(percent: number) {
   if (!state.laserBeam) return
   let beam = state.laserBeam
   beam.power = percent
+  state.laserBeam.power = percent
   state.beam.request = JSON.stringify(beam)
   attributeService.request(state.beam)
 }
@@ -545,9 +548,9 @@ function laserStop() {
 
 <template>
   <div class="h-100 d-flex flex-column">
-    <div class="d-flex w-100 h-100 gap-2 mt-1 pb-4">
-      <div class="d-flex flex-column gap flex-wrap">
-        <Plot :cols="3" :rows="2" style="width:13rem;" title="Location">
+    <div class="d-flex w-100 h-100 gap-2 mt-1 pb-2">
+      <div class="d-flex flex-column gap-1">
+        <Plot :cols="3" :rows="2" style="" title="Location">
           <div class="label-w600 label-r label-o4 label-c2 text-center">
             X: {{ Math.round(state.x * 10) / 10 }}
           </div>
@@ -566,34 +569,12 @@ function laserStop() {
           <div class="label-w600 label-r label-o4 label-c2 text-center">
             Z: {{ Math.round(state.zoom * 10) / 10 }}
           </div>
-          <div class="label-w600 label-r label-o4 label-c2 text-center">
-            mW: {{ state.laserBeam.power }}
-          </div>
-          <div class="label-w600 label-r label-o4 label-c2 text-center">
-            T: {{ Math.round(state.tilt * 10) / 10 }}
-          </div>
-          <div class="label-w600 label-r label-o4 label-c2 text-center">
-            Z: {{ Math.round(state.zoom * 10) / 10 }}
-          </div>
         </Plot>
 
         <sentry :beam="state.laser" :pan="state.pan" :tilt="state.tilt"
                 color="rgba(255,0, 0, 1)">
         </sentry>
-        <Plot :cols="4" :rows="1" style="width: 13rem;" title="Fine Control">
-          <Subplot :active="true" :fn="() => laserPan(state.pan+1)"
-                   :theme="state.pan >= 180?'disabled':''"
-                   name="􀄪"></Subplot>
-          <Subplot :active="true" :fn="() => laserPan(state.pan-1)"
-                   :theme="state.pan <= 0?'disabled':''"
-                   name="􀄫"></Subplot>
-          <Subplot :active="true" :fn="() => laserTilt(state.tilt+1)"
-                   :theme="state.tilt >= 180?'disabled':''"
-                   name="􀄨"></Subplot>
-          <Subplot :active="true" :fn="() => laserTilt(state.tilt-1)"
-                   :theme="state.tilt <= 0?'disabled':''"
-                   name="􀄩"></Subplot>
-        </Plot>
+
         <Plot v-if="false" :cols="1" :rows="2" style="width: 13rem;"
               title="Programmed">
           <div>
@@ -629,10 +610,16 @@ function laserStop() {
           </div>
 
         </Plot>
+        <div id="room-container" class=" element w-100 flex-grow-1">
+        </div>
       </div>
-      <div id="room-container" class=" element w-100" style="height: 70%">
+      <div class="d-flex flex-column gap-1 flex-grow-1">
+        <Slider :change="setDuty" :max="15" :min="0" :step="1"
+                :value="Math.round(state.laserBeam.power * 100) / 100"
+                name="Optical Output"
+                unit=" mW"></Slider>
       </div>
-      <div class="d-flex flex-column gap flex-wrap">
+      <div class="d-flex flex-column gap">
         <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
           <Confirm :active="state.laser" :disabled="state.laser"
                    :fn="laserToggle"
@@ -648,7 +635,8 @@ function laserStop() {
                    name="Halt"></Subplot>
         </Plot>
 
-        <Plot :cols="3" :rows="1" style="width:13rem;" title="Attenuation">
+        <Plot :alt="`${Math.round(state.laserBeam.power * 100) / 100} mW`" :cols="3" :rows="1" style="width:13rem;"
+              title="Attenuation">
           <Subplot :fn="() => {}" active name="􀅽"></Subplot>
           <Subplot :fn="() => {}" name="5 mW"></Subplot>
           <Subplot :fn="() => {}" active name="􀅼"></Subplot>
@@ -659,12 +647,13 @@ function laserStop() {
                      :percent="state.laserBeam.power/15.0"
                      :scale="1000"></Attenuation>
       </div>
+
     </div>
+
     <div>
+
     </div>
-    <Slider :change="setDuty" :max="15" :min="0" :step="0.5" :value="0"
-            name="Beam"
-            unit=" mW"></Slider>
+
   </div>
   <!--  <div v-else>-->
   <!--    <DefenseAuth></DefenseAuth>-->

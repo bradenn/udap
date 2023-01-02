@@ -5,6 +5,7 @@
 import {v4 as uuidv4} from "uuid";
 
 import {onMounted, reactive, watchEffect} from "vue";
+import Plot from "@/components/plot/Plot.vue";
 
 const state = reactive({
   uuid: uuidv4(),
@@ -69,7 +70,7 @@ function squareWave(f: number, a: number, d: number) {
 
 const xPadding = 8;
 const yPadding = 8;
-const extent = -10;
+const extent = -6;
 
 function drawTimeSample() {
   let ctx = state.ctx
@@ -82,17 +83,19 @@ function drawTimeSample() {
 
   // Begin a new path
   ctx.beginPath();
-  ctx.moveTo(xPadding, canvas.height - yPadding + extent)
-  ctx.lineTo(xPadding, canvas.height - yPadding)
-  ctx.lineTo(canvas.width - xPadding, canvas.height - yPadding)
-  ctx.lineTo(canvas.width - xPadding, canvas.height - yPadding + extent)
+  ctx.moveTo(xPadding, canvas.height - yPadding * 3 + extent)
+  ctx.lineTo(xPadding, canvas.height - yPadding * 3)
+  ctx.lineTo(canvas.width - xPadding, canvas.height - yPadding * 3)
+  ctx.lineTo(canvas.width - xPadding, canvas.height - yPadding * 3 + extent)
   ctx.stroke();
   ctx.closePath();
 
 
   ctx.font = "500 16px SF Pro Display"
   let metrics = ctx.measureText("1 ms")
-  ctx.fillText("1 ms", canvas.width / 2 - metrics.width / 2, canvas.height - yPadding * 1.5)
+  ctx.fillText("0 ms", xPadding / 2, canvas.height - yPadding / 2)
+  metrics = ctx.measureText("1 ms")
+  ctx.fillText("1 ms", canvas.width - metrics.width - xPadding / 2, canvas.height - yPadding / 2)
 }
 
 function drawSquareWave(amplitude: number, frequency: number, dutyCycle: number, offset: number) {
@@ -129,9 +132,9 @@ function drawSquareWave(amplitude: number, frequency: number, dutyCycle: number,
     y = wave(x / limit);
     // Draw a line to the new position
     if (x == 0) {
-      ctx.moveTo(offset + x, canvas.height / 2 - y * (canvas.height / 4));
+      ctx.moveTo(offset + x, canvas.height / 2 - y * amplitude - yPadding);
     }
-    ctx.lineTo(offset + x, canvas.height / 2 - y * (canvas.height / 4));
+    ctx.lineTo(offset + x, canvas.height / 2 - y * amplitude - yPadding);
   }
   // Stroke the path
   ctx.stroke();
@@ -151,8 +154,9 @@ function draw() {
   let ctx = state.ctx
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   ctx.strokeStyle = "rgba(255,255,255,0.25)"
-  drawSquareWave(0, props.frequency / props.scale, props.percent, 8);
+  drawSquareWave(20, props.frequency / props.scale, props.percent, 8);
   drawTimeSample();
+  // ctx.strokeRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
 
 }
@@ -161,15 +165,17 @@ function draw() {
 </script>
 
 <template>
-  <div class="canvas-container element">
+  <Plot :alt="`${Math.round((Math.round(props.percent*100)/100)*100.0)}%`" :cols="1" :rows="1"
+        title="Duty Cycle">
     <canvas :id="`attenuation-${state.uuid}`" class="inner-canvas"></canvas>
-  </div>
+
+  </Plot>
 </template>
 
 <style lang="scss" scoped>
 .inner-canvas {
   width: 100%;
-  height: 100%;
+  height: 3rem;
 
 }
 
@@ -177,7 +183,7 @@ function draw() {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  height: 4rem;
+  height: 3rem;
   width: 100%;
   align-items: center;
   border-radius: 6px;
