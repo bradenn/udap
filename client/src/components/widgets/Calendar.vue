@@ -68,7 +68,7 @@ function isToday(cal: Calendar): boolean {
   let current = new Date(cal.end).setHours(now.getHours(), now.getMinutes(), now.getSeconds())
   let reallyIsToday = moment(cal.start).day() == new Date().getDay() && !moment(now).isAfter(cal.end);
 
-  return (days.includes(today) || reallyIsToday) && !moment(current).isAfter(cal.end)
+  return (days.includes(today) || reallyIsToday) && !moment(current).isAfter(cal.end) && moment(cal.rule.split(';')[1].replace("UNTIL=", "")).isAfter(moment())
 }
 
 

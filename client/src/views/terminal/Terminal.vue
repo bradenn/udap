@@ -2,7 +2,15 @@
 <script lang="ts" setup>
 
 import router from '@/router'
-import {inject, onMounted, onUnmounted, provide, reactive, watch, watchEffect} from "vue";
+import {
+  inject,
+  onMounted,
+  onUnmounted,
+  provide,
+  reactive,
+  watch,
+  watchEffect
+} from "vue";
 import "@/types";
 
 import type {Entity, Preferences} from "@/types";
@@ -179,37 +187,39 @@ function dragContinue(e: MouseEvent) {
     // If the user is dragging, and the drag intent has been established
     state.isDragging = true;
     if (state.verified) {
-        // Record the current position
-        let dragB = {x: e.screenX, y: e.screenY}
+      // Record the current position
+      let dragB = {x: e.screenX, y: e.screenY}
 
-        if (!e.view) return
+      if (!e.view) return
 
-        let height = e.view.screen.availHeight;
-        let width = e.view.screen.availWidth;
-        let thresholdOffset = 80;
+      let height = e.view.screen.availHeight;
+      let width = e.view.screen.availWidth;
+      let thresholdOffset = 50;
+      let thresholdOffsetX = 128;
 
-        let isBottom = e.screenY > height - thresholdOffset;
-        let isTop = e.screenY <= thresholdOffset;
+      let isCenter = e.screenX > (width / 2 - thresholdOffsetX) && e.screenX < (width / 2 + thresholdOffsetX);
+      let isBottom = e.screenY < height - thresholdOffset;
+      let isTop = e.screenY <= thresholdOffset;
 
-        let isRight = state.dragA.x > width - thresholdOffset;
+      let isRight = state.dragA.x > width - thresholdOffset;
 
-        let topPull = dragB.y - state.dragA.y;
-        let bottomPull = state.dragA.y - dragB.y;
-        let rightPull = state.dragA.x - dragB.x;
-        let gestureThreshold = 30;
+      let topPull = dragB.y - state.dragA.y;
+      let bottomPull = state.dragA.y - dragB.y;
+      let rightPull = state.dragA.x - dragB.x;
+      let gestureThreshold = 20;
 
 
-        if (isBottom) {
-            if (bottomPull > gestureThreshold) {
-                state.verified = false
-                haptics.tap(2, 1, 50)
-                state.locked = false
-                router.push("/terminal/home")
-            }
-            state.scrollY = height - e.clientY
-        } else if (isTop) {
-            if (topPull > gestureThreshold) {
-                screensaver.start()
+      if (isBottom && isCenter) {
+        if (bottomPull > gestureThreshold) {
+          state.verified = false
+          haptics.tap(3, 1, 50)
+          state.locked = false
+          router.push("/terminal/home")
+        }
+        state.scrollY = height - e.clientY
+      } else if (isTop) {
+        if (topPull > gestureThreshold) {
+          screensaver.start()
             }
         } else {
         }
@@ -227,7 +237,7 @@ const animation = reactive({
     lastFrame: Date.now(),
 })
 
-const frameInterval = 1000.0 / 30.0;
+const frameInterval = 1000.0 / 60.0;
 
 // Animate the retraction of the home bar
 function animate() {
@@ -259,7 +269,7 @@ function decelerate() {
     // Stop if the user is currently dragging
     if (state.isDragging) return
     // Decrease the scroll position
-    state.scrollY = state.scrollY * 0.5
+  state.scrollY -= state.scrollY * 0.5
 
     // If the item is close enough to its original position, reset it
     if (Math.abs(state.scrollY) <= 0.05) {
@@ -298,59 +308,67 @@ provide('terminal', state)
              v-on:mousemove="dragContinue"
              v-on:mouseup="dragStop">
 
-            <div class="d-flex flex-column h-100 ">
-                <div>
-                    <ContextBar v-if="!state.showClock">
-                        <div style="grid-column: span 3">
-                            <Clock :small="!state.showClock"></Clock>
-                        </div>
-
-                        <div style="grid-column: 9 / span 8">
-                            <Notification></Notification>
-                        </div>
-
-                        <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
-                            <IdTag></IdTag>
-                        </div>
-
-                    </ContextBar>
-                    <ContextBar v-else>
-
-                        <div class=" d-flex align-content-center align-items-center justify-content-start px-1"
-                             style="grid-column: span 3">
-                            <Clock :small="!state.showClock"></Clock>
-                        </div>
-
-                        <div style="grid-column: 9 / span 8">
-                            <Notification></Notification>
-
-                        </div>
-
-                        <div class="d-flex align-items-end justify-content-end" style="grid-column: 20 / span 5">
-                            <IdTag></IdTag>
-                        </div>
-                    </ContextBar>
+          <div class="d-flex flex-column h-100 ">
+            <div>
+              <ContextBar v-if="!state.showClock">
+                <div style="grid-column: span 3">
+                  <Clock :small="!state.showClock"></Clock>
                 </div>
 
-                <div class="mt-1" style="height: calc(100% - 3.5rem);">
-                    <router-view/>
+                <div style="grid-column: 9 / span 8">
+                  <Notification></Notification>
                 </div>
 
-                <div class="justify-content-center d-flex align-items-center align-content-center">
-                    <div v-if="$route.matched.length > 1" @click.prevent="state.scrollY!==0">
-                        <div v-if="$route.matched[1].children.length > 1">
-                            <Plot :cols="$route.matched[1].children.length" :rows="1"
-                                  class="bottom-nav">
-                                <Subplot v-for="route in ($route.matched[1].children as any[])"
-                                         :icon="route.icon || 'earth-americas'"
-                                         :name="route.name"
-                                         :to="route.path"></Subplot>
-                            </Plot>
-                        </div>
-                    </div>
+                <div class="d-flex align-items-end justify-content-end"
+                     style="grid-column: 20 / span 5">
+                  <IdTag></IdTag>
                 </div>
 
+              </ContextBar>
+              <ContextBar v-else>
+
+                <div
+                    class=" d-flex align-content-center align-items-center justify-content-start px-1"
+                    style="grid-column: span 3">
+                  <Clock :small="!state.showClock"></Clock>
+                </div>
+
+                <div style="grid-column: 9 / span 8">
+                  <Notification></Notification>
+
+                </div>
+
+                <div class="d-flex align-items-end justify-content-end"
+                     style="grid-column: 20 / span 5">
+                  <IdTag></IdTag>
+                </div>
+              </ContextBar>
             </div>
+
+            <div class="mt-1 h-100">
+              <router-view/>
+            </div>
+
+            <div class="bottom-nav">
+
+              <div
+                  class="justify-content-center d-flex align-items-center align-content-center">
+                <div v-if="$route.matched.length > 1"
+                     @click.prevent="state.scrollY!==0">
+                  <div v-if="$route.matched[1].children.length > 1">
+                    <Plot :cols="$route.matched[1].children.length" :rows="1"
+                    >
+                      <Subplot
+                          v-for="route in ($route.matched[1].children as any[])"
+                          :name="route.name"
+                          :sf="route.icon || '?'"
+                          :to="route.path"></Subplot>
+                    </Plot>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
             <div v-if="preferences.ui.watermark" class="watermark">
                 <div class="d-flex gap">
@@ -413,7 +431,8 @@ provide('terminal', state)
 }
 
 .bottom-nav {
-
+  position: absolute;
+  width: 100%;
   z-index: 0 !important;
   animation: dock-in 125ms ease-in forwards;
   bottom: 1.5rem;

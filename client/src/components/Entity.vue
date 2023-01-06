@@ -9,13 +9,14 @@ import core from "@/core";
 import moment from "moment/moment";
 
 interface EntityProps {
-    entity: Entity,
-    selected?: boolean
+  entity: Entity,
+  selected?: boolean
+  noselect?: boolean
 }
 
 const state = reactive({
-    toggle: false,
-    activeColor: ""
+  toggle: false,
+  activeColor: ""
 })
 
 const router = useRouter()
@@ -23,42 +24,42 @@ const haptics = core.haptics()
 const remote = core.remote()
 
 onMounted(() => {
-    findMode()
+  findMode()
 })
 
 watchEffect(() => {
-    findMode()
-    return remote.attributes
+  findMode()
+  return remote.attributes
 })
 
 function click() {
-    haptics.tap(1, 1, 25)
+  haptics.tap(1, 1, 25)
 }
 
 function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
-    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
 }
 
 
 function cctToRgb(cct: number) {
-    return [map_range(cct, 2000, 8000, 255, 227),
-        map_range(cct, 2000, 8000, 138, 233),
-        map_range(cct, 2000, 8000, 18, 255)]
+  return [map_range(cct, 2000, 8000, 255, 227),
+    map_range(cct, 2000, 8000, 138, 233),
+    map_range(cct, 2000, 8000, 18, 255)]
 }
 
 function findMode() {
-    let hue = remote.attributes.find((a: Attribute) => a.key === 'hue')
-    let cct = remote.attributes.find((a: Attribute) => a.key === 'cct')
-    let dim = remote.attributes.find((a: Attribute) => a.key === 'dim')
-    if (hue && cct && dim) {
-        if (moment(hue.requested).isAfter(cct.requested)) {
-            state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim.value) / 100.0 * 50}%, 0.5)`
-        } else {
-            state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`
-        }
+  let hue = remote.attributes.find((a: Attribute) => a.key === 'hue')
+  let cct = remote.attributes.find((a: Attribute) => a.key === 'cct')
+  let dim = remote.attributes.find((a: Attribute) => a.key === 'dim')
+  if (hue && cct && dim) {
+    if (moment(hue.requested).isAfter(cct.requested)) {
+      state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim.value) / 100.0 * 50}%, 0.5)`
     } else {
-        state.activeColor = 'rgba(255,255,255,0.5)'
+      state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`
     }
+  } else {
+    state.activeColor = 'rgba(255,255,255,0.5)'
+  }
 }
 
 const props = defineProps<EntityProps>()
@@ -67,30 +68,32 @@ const props = defineProps<EntityProps>()
 </script>
 
 <template>
-    <div @mousedown="() => click()">
+  <div @mousedown="() => click()">
 
-        <div :class="props.selected?'accent-selected':''" class="element p-2 h-100">
-            <div class="d-flex justify-content-between">
-                <div class="label-c2 label-o2 label-w500 pb-2">
-                    {{ props.entity.icon }}
-                </div>
-                <div v-if="props.selected" class="label-c2 label-o4 label-w500 text-accent">􀷙</div>
-                <div v-else class="label-c2 label-o1 label-w500">􀓞</div>
-            </div>
-
-            <div class="label-c2 label-o4 label-w700 lh-1">
-                {{ props.entity.name }}
-            </div>
-            <div class="label-c3 label-o3 label-w400">{{ props.entity.module }}
-            </div>
-
+    <div :class="props.selected?'accent-selected':''" class="element p-2 h-100">
+      <div class="d-flex justify-content-between">
+        <div class="label-c2 label-o2 label-w500 pb-2">
+          {{ props.entity.icon }}
         </div>
-        <div v-if="state.toggle" class="element element-menu">
-            <div class="grid-element">
+        <div v-if="props.selected"
+             class="label-c2 label-o4 label-w500 text-accent">􀷙</div>
+        <div v-else-if="!props.noselect"
+             class="label-c2 label-o1 label-w500">􀓞</div>
+      </div>
 
-            </div>
-        </div>
+      <div class="label-c2 label-o4 label-w700 lh-1">
+        {{ props.entity.alias || props.entity.name }}
+      </div>
+      <div class="label-c3 label-o3 label-w400">{{ props.entity.module }}
+      </div>
+
     </div>
+    <div v-if="state.toggle" class="element element-menu">
+      <div class="grid-element">
+
+      </div>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>

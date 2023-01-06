@@ -21,6 +21,7 @@ type EntityService interface {
 	FindByName(name string) (*domain.Entity, error)
 	Create(*domain.Entity) error
 	ChangeIcon(id string, icon string) error
+	ChangeAlias(id string, icon string) error
 	Config(id string, value string) error
 	FindOrCreate(*domain.Entity) error
 	Register(*domain.Entity) error

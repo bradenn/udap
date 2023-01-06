@@ -67,6 +67,7 @@ func init() {
 		Author:      "Braden Nicholson",
 	}
 	Module.eId = ""
+	Module.session = nil
 	Module.Config = config
 }
 
@@ -77,10 +78,14 @@ func (v *Sentry) connect() {
 	v.session, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		v.Err(err)
+		return
 	}
 
 	go func() {
 		for {
+			if v.session == nil {
+				return
+			}
 			_, _, err = v.session.ReadMessage()
 			if err != nil {
 				v.session = nil
@@ -95,7 +100,6 @@ func (v *Sentry) Setup() (plugin.Config, error) {
 	if err != nil {
 		return plugin.Config{}, err
 	}
-	v.connect()
 	return v.Config, nil
 }
 

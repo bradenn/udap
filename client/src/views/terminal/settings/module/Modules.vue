@@ -39,7 +39,7 @@ function handleUpdates(remote: Remote) {
     let cand = t.delta / 1000
     if (local.includes(cand)) return
     local.push(cand)
-    if (local.length > 20) {
+    if (local.length > 30) {
       local = local.slice(1)
     }
     state.histories.set(t.pointer, local)
@@ -77,7 +77,7 @@ function editModule(id: string) {
 
         <Plot v-for="(module, index) in state.modules" :key="module.id"
               :cols="2" :rows="1"
-              :style="`animation-delay:${index*2.5}ms;`">
+              :style="`animation-delay:${index*20}ms !important;`">
           <div class="subplot subplot-inline px-0">
             <div
                 :style="`background-color: rgba(${module.enabled?'25, 135, 84':'135, 100, 2'}, 0.53);`"

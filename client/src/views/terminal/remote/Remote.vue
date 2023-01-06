@@ -58,7 +58,7 @@ watchEffect(() => {
 })
 
 function updateData() {
-  state.entities = remote.entities.filter(e => e.module === 'govee' || e.module === 'macmeta' || e.module === 'hs100').sort(sortByModule)
+  state.entities = remote.entities.filter(e => e.module === 'tuya' || e.module === 'macmeta' || e.module === 'hs100').sort(sortByModule)
   sortEntities()
 }
 

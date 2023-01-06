@@ -10,7 +10,6 @@ function getEndpoint(id: string, path: string): string {
 export default {
     async setAlias(id: string, alias: string): Promise<void> {
         const url = getEndpoint(id, "/alias")
-
         return await request.post(url, alias)
     },
     async setIcon(id: string, icon: string): Promise<void> {

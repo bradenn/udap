@@ -7,12 +7,13 @@ import module from "@/views/terminal/settings/module";
 import Endpoints from "@/views/terminal/settings/endpoint/Endpoints.vue";
 import Zone from "@/views/terminal/settings/zone/Zone.vue";
 import Zones from "@/views/terminal/settings/zone/Zones.vue";
-import Entities from "@/views/terminal/settings/entity/Entities.vue";
 import Devices from "@/views/terminal/settings/device/Device.vue";
-import DeviceOverview from "@/views/terminal/settings/device/DeviceOverview.vue";
+import DeviceOverview
+    from "@/views/terminal/settings/device/DeviceOverview.vue";
 import DeviceMonitor from "@/views/terminal/settings/device/DeviceMonitor.vue";
 import RenameDevice from "@/views/terminal/settings/device/RenameDevice.vue";
 import subroutines from "@/views/terminal/settings/subroutines";
+import entities from "@/views/terminal/settings/entity";
 
 export default {
     routes: {
@@ -28,7 +29,7 @@ export default {
             {
                 path: '/terminal/settings/preferences',
                 name: 'Preferences',
-                icon: 'bars-progress',
+                icon: '􀐗',
 
                 meta: {
                     order: 0,
@@ -38,7 +39,7 @@ export default {
             {
                 path: '/terminal/settings/connection',
                 name: 'Connection',
-                icon: 'cloud',
+                icon: '􀇃',
                 meta: {
                     order: 1,
                 },
@@ -49,25 +50,17 @@ export default {
             {
                 path: '/terminal/settings/endpoints',
                 name: 'Endpoints',
-                icon: 'expand',
+                icon: '􁅀',
                 meta: {
                     order: 4,
                 },
                 component: Endpoints
             },
-            {
-                path: '/terminal/settings/entities',
-                name: 'Entities',
-                icon: 'clone',
-                meta: {
-                    order: 5,
-                },
-                component: Entities
-            },
+            entities,
             {
                 path: '/terminal/settings/devices',
                 name: 'Devices',
-                icon: 'share-nodes',
+                icon: '􁆬',
                 meta: {
                     order: 5,
                 },
@@ -106,7 +99,7 @@ export default {
             {
                 path: '/terminal/settings/zones',
                 name: 'Zone',
-                icon: 'map',
+                icon: '􀟻',
                 meta: {
                     order: 6,
                 },

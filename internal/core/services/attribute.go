@@ -49,7 +49,6 @@ func (a *attributeService) Register(attribute *domain.Attribute) error {
 	if err != nil {
 		return err
 	}
-
 	err = a.Emit(*attribute)
 	if err != nil {
 		return err
