@@ -635,7 +635,8 @@ function laserStop() {
                    name="Halt"></Subplot>
         </Plot>
 
-        <Plot :alt="`${Math.round(state.laserBeam.power * 100) / 100} mW`" :cols="3" :rows="1" style="width:13rem;"
+        <Plot :alt="`${Math.round(state.laserBeam.power * 100) / 100} mW`"
+              :cols="3" :rows="1" style="width:13rem;"
               title="Attenuation">
           <Subplot :fn="() => {}" active name="􀅽"></Subplot>
           <Subplot :fn="() => {}" name="5 mW"></Subplot>

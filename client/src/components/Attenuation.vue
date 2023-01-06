@@ -165,7 +165,8 @@ function draw() {
 </script>
 
 <template>
-  <Plot :alt="`${Math.round((Math.round(props.percent*100)/100)*100.0)}%`" :cols="1" :rows="1"
+  <Plot :alt="`${Math.round((Math.round(props.percent*100)/100)*100.0)}%`"
+        :cols="1" :rows="1"
         title="Duty Cycle">
     <canvas :id="`attenuation-${state.uuid}`" class="inner-canvas"></canvas>
 
