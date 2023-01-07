@@ -15,6 +15,17 @@ html {
 
 }
 
+code {
+
+  font-family: "JetBrains Mono", serif;
+
+  border-radius: 8px !important;
+  line-height: 0.5rem;
+  height: 0.5rem;
+  color: rgba(255, 149, 0, 0.6);
+  font-weight: 600;
+}
+
 .page-grid {
   width: 100%;
 

@@ -360,6 +360,16 @@ export interface Attribute {
     order: number;
 }
 
+export interface AttributeLog {
+    created: string;
+    id: string;
+    time: string;
+    attribute: string;
+    from: string;
+    to: string;
+    updated: string;
+}
+
 export interface Utilization {
     memory: {
         total: number;

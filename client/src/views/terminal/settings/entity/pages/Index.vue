@@ -7,12 +7,12 @@ import PaneMenu from "@/components/pane/PaneMenu.vue";
 import PaneMenuItem from "@/components/pane/PaneMenuItem.vue";
 import PaneDialogue from "@/components/pane/PaneDialogue.vue";
 import PanePopup from "@/components/pane/PanePopup.vue";
-import entityService from "@/services/entityService";
 import type {Remote} from "@/remote";
 import Input from "@/views/Input.vue";
 import MenuSection from "@/components/menu/MenuSection.vue";
 import EntityView from "@/components/Entity.vue";
 import FixedScroll from "@/components/scroll/FixedScroll.vue";
+import {useRouter} from "vue-router";
 
 let remote = inject('remote') as Remote
 let preferences = inject('preferences')
@@ -55,93 +55,38 @@ function groupBy<T>(xs: T[], key: string): T[] {
   }, {});
 }
 
-function selectModule(module: string) {
-  closePopup()
-  state.selectedModule = module
-  let entities = remote.entities.filter(e => e.module === module)
-  if (!entities) return
-  state.moduleEntities = entities
 
+const router = useRouter();
+
+function goToEntity(entityId: string) {
+  router.push(`/terminal/settings/entities/${entityId}`)
 }
 
-function selectEntity(entity: string) {
-  closePopup()
-  const find = remote.entities.find(e => e.id === entity)
-  if (!find) return
-  state.selectedEntity = find
-  const attrs = remote.attributes.filter(e => e.entity === entity)
-  if (!attrs) return
-  state.selectedAttributes = attrs
-}
 
-function setConfig(conf: string) {
-  state.configOption = conf
-}
-
-function closePopup(): void {
-  state.configOption = ''
-}
-
-function isOpen(key: string): boolean {
-  return state.configOption === key
-}
-
-function setAlias(a: string) {
-  state.selectedEntity.alias = a
-  entityService.setAlias(state.selectedEntity.id, state.selectedEntity.alias).then(res => {
-    state.error = JSON.stringify(res)
-  }).catch(err => {
-    state.error = JSON.stringify(err)
-  })
-}
-
-function setIcon() {
-  entityService.setIcon(state.selectedEntity.id, state.selectedEntity.icon).then(res => {
-    state.error = JSON.stringify(res)
-  }).catch(err => {
-    state.error = JSON.stringify(err)
-  })
-}
-
-function parsePosition(pos: string) {
-  interface pos {
-    x: number
-    y: number
-  }
-
-  let pso = JSON.parse(pos) as pos
-
-  return `X: ${pso.x}, Y: ${pso.y}`
-}
 </script>
 
 <template>
-  <div class="layout-grid">
-    <div class="layout-body">
-      <!--      <Toolbar class="mb-1" icon="􀐟" title="Entities">-->
+  <div class="h-100">
+    <FixedScroll
+        style="overflow-y: scroll !important; height: 100%; max-height: 100% !important;">
+      <div v-for="(entities, module) in state.modules"
+           class="d-flex flex-column gap-1">
+        <MenuSection :title="module">
+          <FixedScroll :horizontal="true"
+                       style="max-width: 100%; overflow-x: scroll">
+            <div class="d-flex flex-row gap-1">
+              <EntityView
+                  v-for="entity in entities"
+                  :entity="entity"
+                  :noselect="true"
+                  style="min-width: 6rem"
+                  @click="() => goToEntity(entity.id)"></EntityView>
+            </div>
+          </FixedScroll>
+        </MenuSection>
 
-      <!--      </Toolbar>-->
-      <FixedScroll
-          style="overflow-y: scroll !important;  height: 100%; max-height: calc(100% - 4rem) !important;">
-        <div v-for="(entities, module) in state.modules"
-             class="d-flex flex-column gap-1">
-          <MenuSection :title="module">
-            <FixedScroll :horizontal="true"
-                         style="max-width: 100%; overflow-x: scroll">
-              <div class="d-flex flex-row gap-1">
-                <EntityView
-                    v-for="entity in entities"
-                    :entity="entity"
-                    :noselect="true"
-                    style="min-width: 6rem"></EntityView>
-              </div>
-            </FixedScroll>
-          </MenuSection>
-
-        </div>
-      </FixedScroll>
-    </div>
-
+      </div>
+    </FixedScroll>
 
     <div v-if="false" class="entity-grid">
 
@@ -291,7 +236,7 @@ function parsePosition(pos: string) {
   grid-column-gap: 0.25rem;
   grid-row-gap: 0.25rem;
   grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: repeat(1, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .layout-sidebar {
@@ -299,9 +244,10 @@ function parsePosition(pos: string) {
 }
 
 .layout-body {
-  grid-column: 1 / span 12;
 
-  grid-row: 1 / span 3;
+  grid-column: 0 / span 11;
+
+  grid-row: 0 / span 2;
 }
 
 </style>

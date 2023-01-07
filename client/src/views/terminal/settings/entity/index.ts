@@ -2,6 +2,7 @@
 
 import Index from "@/views/terminal/settings/entity/pages/Index.vue";
 import Entities from "@/views/terminal/settings/entity/Entities.vue";
+import Entity from "@/views/terminal/settings/entity/pages/Entity.vue";
 
 const routes = {
     path: '/terminal/settings/entities',
@@ -17,6 +18,12 @@ const routes = {
             name: 'EntityIndex',
             icon: '􀩶',
             component: Index
+        },
+        {
+            path: '/terminal/settings/entities/:entityId',
+            name: 'EditEntity',
+            icon: '􀩶',
+            component: Entity
         },
     ],
     component: Entities

@@ -32,6 +32,7 @@ watchEffect(() => {
   return remote.attributes
 })
 
+
 function click() {
   haptics.tap(1, 1, 25)
 }

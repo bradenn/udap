@@ -2,7 +2,7 @@
 
 import {useRouter} from "vue-router";
 
-interface RouteMeta {
+export interface RouteMeta {
     icon: string
     order: number
 }

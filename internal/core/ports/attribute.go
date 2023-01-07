@@ -12,8 +12,9 @@ type AttributeRepository interface {
 	common.Persist[domain.Attribute]
 	FindAllByEntity(entity string) (*[]domain.Attribute, error)
 	FindByComposite(entity string, key string) (*domain.Attribute, error)
-	Log(attribute *domain.Attribute) error
+	Log(attribute *domain.Attribute) (*domain.AttributeLog, error)
 	Register(*domain.Attribute) error
+	FindRecentLogs() (*[]domain.AttributeLog, error)
 }
 
 type AttributeOperator interface {

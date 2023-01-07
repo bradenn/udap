@@ -4,6 +4,7 @@ import {reactive} from "vue";
 import {Nexus, Target} from "@/views/terminal/nexus";
 import type {
     Attribute,
+    AttributeLog,
     Device,
     Endpoint,
     Entity,
@@ -42,6 +43,7 @@ export interface Remote {
     macros: Macro[],
     triggers: Trigger[],
     attributes: Attribute[],
+    attributeLogs: AttributeLog[],
     users: User[],
     devices: Device[],
     networks: Network[],
@@ -65,6 +67,7 @@ const remote = reactive<Remote>({
     metadata: {} as Metadata,
     entities: [] as Entity[],
     attributes: [] as Attribute[],
+    attributeLogs: [] as AttributeLog[],
     devices: [] as Device[],
     networks: [] as Network[],
     endpoints: [] as Endpoint[],
@@ -219,6 +222,9 @@ function handleMessage(target: Target, data: any) {
             break
         case Target.Attribute:
             remote.attributes = createOrUpdate(remote.attributes, data)
+            break
+        case Target.AttributeLog:
+            remote.attributeLogs = createOrUpdate(remote.attributeLogs, data)
             break
         case Target.User:
             remote.users = createOrUpdate(remote.users, data)

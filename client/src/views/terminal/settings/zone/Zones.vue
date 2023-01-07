@@ -511,7 +511,8 @@ function setupCanvas() {
       </CreateZone>
     </div>
     <div class="zone-grid">
-      <div v-for="z in state.zones" :key="z.id" class="element d-flex gap-1 flex-column  p-2"
+      <div v-for="z in state.zones" :key="z.id"
+           class="element d-flex gap-1 flex-column  p-2"
            style="grid-column: span 2;"
            @click="() => selectZone(z.id)">
         <div class="d-flex gap-1">

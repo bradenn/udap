@@ -198,7 +198,7 @@ function dragContinue(e: MouseEvent) {
       let thresholdOffsetX = 128;
 
       let isCenter = e.screenX > (width / 2 - thresholdOffsetX) && e.screenX < (width / 2 + thresholdOffsetX);
-      let isBottom = e.screenY < height - thresholdOffset;
+      let isBottom = e.screenY > height - thresholdOffset;
       let isTop = e.screenY <= thresholdOffset;
 
       let isRight = state.dragA.x > width - thresholdOffset;
@@ -303,23 +303,24 @@ provide('terminal', state)
 
     <div v-if="!screensaver.active()" class="h-100 w-100">
 
-        <div class="terminal w-100 h-100"
-             v-on:mousedown="dragStart"
-             v-on:mousemove="dragContinue"
-             v-on:mouseup="dragStop">
+      <div class="terminal w-100 h-100"
+           v-on:mousedown="dragStart"
+           v-on:mousemove="dragContinue"
+           v-on:mouseup="dragStop">
 
-          <div class="d-flex flex-column h-100 ">
-            <div>
-              <ContextBar v-if="!state.showClock">
-                <div style="grid-column: span 3">
-                  <Clock :small="!state.showClock"></Clock>
-                </div>
+        <div :style="$route.matched.length > 1?`height: calc(100% - 3.75rem); max-height: calc(100% - 3.75rem) !important;`:'max-height: 100% !important;'"
+             class="d-flex flex-column gap-1">
+          <div>
+            <ContextBar v-if="!state.showClock">
+              <div style="grid-column: span 3">
+                <Clock :small="!state.showClock"></Clock>
+              </div>
 
-                <div style="grid-column: 9 / span 8">
-                  <Notification></Notification>
-                </div>
+              <div style="grid-column: 9 / span 8">
+                <Notification></Notification>
+              </div>
 
-                <div class="d-flex align-items-end justify-content-end"
+              <div class="d-flex align-items-end justify-content-end"
                      style="grid-column: 20 / span 5">
                   <IdTag></IdTag>
                 </div>
@@ -343,44 +344,48 @@ provide('terminal', state)
                   <IdTag></IdTag>
                 </div>
               </ContextBar>
-            </div>
+          </div>
 
-            <div class="mt-1 h-100">
-              <router-view/>
-            </div>
+          <div
+              style="height: 100%; max-height: 100% !important; overflow-y: clip !important;">
+            <router-view v-slot="{ Component }">
+              <component :is="Component"/>
+            </router-view>
+          </div>
 
-            <div class="bottom-nav">
-
-              <div
-                  class="justify-content-center d-flex align-items-center align-content-center">
-                <div v-if="$route.matched.length > 1"
-                     @click.prevent="state.scrollY!==0">
-                  <div v-if="$route.matched[1].children.length > 1">
-                    <Plot :cols="$route.matched[1].children.length" :rows="1"
-                    >
-                      <Subplot
-                          v-for="route in ($route.matched[1].children as any[])"
-                          :name="route.name"
-                          :sf="route.icon || '?'"
-                          :to="route.path"></Subplot>
-                    </Plot>
-                  </div>
-                </div>
+        </div>
+        <div v-if="$route.matched.length > 1" class="bottom-nav">
+          <div
+              class="justify-content-center d-flex align-items-center align-content-center">
+            <div
+                @click.prevent="state.scrollY!==0">
+              <div v-if="$route.matched[1].children.length > 1">
+                <Plot :cols="$route.matched[1].children.length" :rows="1"
+                >
+                  <Subplot
+                      v-for="route in ($route.matched[1].children as any[])"
+                      :name="route.name"
+                      :sf="route?.icon || '?'"
+                      :to="route.path"></Subplot>
+                </Plot>
               </div>
             </div>
           </div>
-
-            <div v-if="preferences.ui.watermark" class="watermark">
-                <div class="d-flex gap">
-                    <div v-if="remote.metadata" class="label-r label-w600">{{ remote.metadata?.system?.version }}</div>
-                </div>
-                <div class="float-end">{{ router.currentRoute.value.path }}</div>
-            </div>
-
-
-            <div :style="`transform: translateY(${-state.scrollY}px);`" class="home-bar top"></div>
-
         </div>
+        <div v-if="preferences.ui.watermark" class="watermark">
+          <div class="d-flex gap">
+            <div v-if="remote.metadata" class="label-r label-w600">
+              {{ remote.metadata?.system?.version }}
+            </div>
+          </div>
+          <div class="float-end">{{ router.currentRoute.value.path }}</div>
+        </div>
+
+
+        <div :style="`transform: translateY(${-state.scrollY}px);`"
+             class="home-bar top"></div>
+
+      </div>
 
     </div>
 

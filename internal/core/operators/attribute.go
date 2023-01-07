@@ -47,7 +47,6 @@ func (a *attributeOperator) Request(attribute *domain.Attribute, s string) error
 	if attribute.Request != attribute.Value || time.Since(attribute.UpdatedAt) >= time.Second*1 {
 
 		channel <- *attribute
-
 		attribute.Requested = time.Now()
 
 		err := a.Set(attribute, s)
@@ -62,7 +61,6 @@ func (a *attributeOperator) Set(attribute *domain.Attribute, s string) error {
 	// If the attribute handler is not set, return an error
 
 	attribute.Request = s
-
 	attribute.Value = s
 	attribute.UpdatedAt = time.Now()
 

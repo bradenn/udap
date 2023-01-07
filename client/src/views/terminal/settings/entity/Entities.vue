@@ -3,17 +3,23 @@
 <script lang="ts" setup>
 
 import Toolbar from "@/components/toolbar/Toolbar.vue";
-import {useRouteMeta} from "@/composables/routeMeta";
+import type {RouteMeta} from "@/composables/routeMeta.ts";
+import {useRouteMeta} from "@/composables/routeMeta.ts";
 
-const meta = useRouteMeta()
+let meta: RouteMeta = useRouteMeta()
 
 </script>
 
 <template>
-  <Toolbar :icon="meta.icon" class="mb-1"
-           title="Entities">
-  </Toolbar>
-  <router-view></router-view>
+  <div class="h-100 d-flex flex-column gap-1">
+    <Toolbar :icon="meta.icon" class="flex-shrink-0"
+             title="Entities">
+    </Toolbar>
+    <div class="flex-grow-1"
+         style="height: calc(100% - 2rem)">
+      <router-view></router-view>
+    </div>
+  </div>
 </template>
 
 <style scoped>

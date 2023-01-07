@@ -18,6 +18,7 @@ export enum Target {
     Entity = "entity",
     User = "user",
     Attribute = "attribute",
+    AttributeLog = "attributelog",
     Macro = "macro",
     SubRoutine = "subroutine",
     Trigger = "trigger",

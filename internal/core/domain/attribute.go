@@ -9,10 +9,11 @@ import (
 )
 
 type AttributeLog struct {
+	common.Persistent
 	Attribute string    `json:"attribute"`
 	From      string    `json:"from"`
 	To        string    `json:"to"`
-	Time      time.Time `json:"updated"`
+	Time      time.Time `json:"time"`
 }
 
 type Attribute struct {

@@ -112,17 +112,11 @@ function dragStop(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="d-flex flex-row align-content-start align-items-start gap h-100"
-       style="height: calc(100% - 4rem) !important;">
-    <div class="flex-grow-1 h-100">
-      <router-view v-slot="{ Component }" class="h-100">
-        <component :is="Component"/>
 
-        <!--        <transition :name="state.transitionName"-->
-        <!--                    mode="out-in">-->
-        <!--        </transition>-->
-      </router-view>
-    </div>
+  <div style="height: 100%">
+    <router-view v-slot="{ Component }">
+      <component :is="Component"/>
+    </router-view>
   </div>
 </template>
 
