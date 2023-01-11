@@ -97,7 +97,7 @@ function drag(e: MouseEvent) {
     state.xLastPos = e.clientX
     state.xLastPoll = poll
   } else {
-    clearInterval(state.yDecelerate)
+    cancelAnimationFrame(afY)
     let poll = new Date().valueOf()
     let dt = state.yLastPoll - poll
     let dx = state.yLastPos - e.clientY
@@ -175,10 +175,11 @@ function animateY(): void {
   state.yTime += 1000 / 60
 
   state.yVelocity *= 0.95
-  state.target.scrollTop -= state.yVelocity * 12
+  state.target.scrollTop -= state.yVelocity * 10
 
   if (Math.abs(state.yVelocity) <= 0.01) {
     state.yVelocity = 0;
+    state.yTime = 0
     cancelAnimationFrame(afY);
   }
 
@@ -238,9 +239,9 @@ function dragStop(e: MouseEvent) {
   // }, 16)
 
 
-  setTimeout(() => {
-    state.dragging = false
-  }, 250)
+  // setTimeout(() => {
+  //   state.dragging = false
+  // }, 250)
 
 }
 
@@ -255,6 +256,7 @@ function click(e: MouseEvent) {
 <template>
 
   <div v-on:mousedown="dragStart" v-on:mousemove="drag" v-on:mouseup="dragStop"
+       class="scroll-box" style="padding-right: 0.25rem"
        v-on:click.capture="click">
     <slot></slot>
 
@@ -263,5 +265,13 @@ function click(e: MouseEvent) {
 
 
 <style scoped>
+.scroll-box {
+  backface-visibility: hidden;
+  perspective: 1000;
 
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+
+  transform: translate3d(0, 0, 0);
+}
 </style>

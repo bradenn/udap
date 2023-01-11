@@ -241,7 +241,9 @@ function parseDate(dt: string) {
             <div class="v-sep"></div>
             <Confirm
                 :active="true"
-                :fn="() => {}" class="label-w500 label-c1 text-accent element subplot py-1 px-3" icon="􀈑"
+                :fn="() => {}"
+                class="label-w500 label-c1 text-accent element subplot py-1 px-3"
+                icon="􀈑"
                 style="height: 1.6rem" title="Clear"></Confirm>
           </div>
         </div>

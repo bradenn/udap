@@ -61,7 +61,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second,
-		mutations:  make(chan domain.Mutation, 8),
+		mutations:  make(chan domain.Mutation, 16),
 	}, nil
 }
 

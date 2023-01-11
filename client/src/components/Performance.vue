@@ -4,7 +4,7 @@
 <script lang="ts" setup>
 import {v4 as uuidv4} from "uuid";
 
-import {onMounted, reactive, watchEffect} from "vue";
+import {onMounted, onUnmounted, reactive, watchEffect} from "vue";
 
 const state = reactive({
   uuid: uuidv4(),
@@ -20,6 +20,10 @@ let props = defineProps<{
 
 onMounted(() => {
   configureCanvas()
+})
+
+onUnmounted(() => {
+  state.ctx.canvas.remove()
 })
 
 function configureCanvas() {
