@@ -81,7 +81,7 @@ void Haptic::sinPulseHigh() {
 
     int steps = 20;
     double dr = (M_PI * 2) / steps;
-    int dt = 1563 / steps;
+    int dt = 3125 / steps;
     for (int j = 0; j < steps; j++) {
         double r = pow(cos((j * dr)), 2) * 4095.0;
         ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, floor(r));
