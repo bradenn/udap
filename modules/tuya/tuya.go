@@ -611,7 +611,7 @@ func init() {
 		Name:        "tuya",
 		Type:        "daemon",
 		Description: "Tuya Device interface",
-		Version:     "0.1.0 beta",
+		Version:     "0.1.1",
 		Author:      "Braden Nicholson",
 	}
 }
@@ -771,12 +771,13 @@ func (t *Tuya) Run() error {
 	}()
 
 	go func() {
+
 		err := system.Scan(time.Second * 5)
 		if err != nil {
 			return
 		}
 
-		for ip, light := range system.Lights {
+		for _, light := range system.Lights {
 
 			entity := &domain.Entity{
 				Name:   light.GwId,
@@ -791,8 +792,6 @@ func (t *Tuya) Run() error {
 				log.Err(err)
 				continue
 			}
-
-			fmt.Println(entity.Id)
 
 			t.entities[entity.Id] = light.GwId
 
@@ -836,7 +835,6 @@ func (t *Tuya) Run() error {
 				Channel: t.receiver,
 			})
 
-			fmt.Printf("Registered %s (%s) = [%s] \n", ip, light.GwId, light.LocalId)
 		}
 		t.devices = system.Lights
 		t.ready = true

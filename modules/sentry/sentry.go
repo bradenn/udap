@@ -71,14 +71,13 @@ func init() {
 	Module.Config = config
 }
 
-func (v *Sentry) connect() {
+func (v *Sentry) connect() error {
 	u := url.URL{Scheme: "ws", Host: sentryUrl, Path: "/ws"}
 
 	var err error
 	v.session, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		v.Err(err)
-		return
+		return err
 	}
 
 	go func() {
@@ -93,6 +92,8 @@ func (v *Sentry) connect() {
 			}
 		}
 	}()
+
+	return nil
 }
 
 func (v *Sentry) Setup() (plugin.Config, error) {
@@ -159,7 +160,10 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 	//_ = resp.Body.Close()
 
 	if v.session == nil {
-		v.connect()
+		err := v.connect()
+		if err != nil {
+			return err
+		}
 	}
 
 	err := v.session.WriteJSON(position)
