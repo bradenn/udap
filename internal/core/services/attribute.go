@@ -84,7 +84,7 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 
 	e.Request = value
 	log, err := a.repository.Log(&(*e))
-	if err != nil || log == nil {
+	if err != nil {
 		return err
 	}
 
@@ -99,11 +99,12 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 		return err
 	}
 
-	err = a.Logs.Emit(*log)
-	if err != nil {
-		return err
+	if log != nil {
+		err = a.Logs.Emit(*log)
+		if err != nil {
+			return err
+		}
 	}
-
 	err = a.Emit(*e)
 	if err != nil {
 		return err
