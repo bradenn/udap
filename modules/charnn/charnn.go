@@ -5,7 +5,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"gonum.org/v1/gonum/mat"
 	"gonum.org/v1/gonum/stat/distuv"
 	"math"
@@ -318,17 +317,18 @@ func (c *CharNN) parseQuery(attribute domain.Attribute) error {
 	}
 
 	output := c.network.Predict(inputs)
-	max := 0.0
-	value := 0
+	kv := map[int]float64{}
 	for i := 0; i < c.network.Outputs(); i++ {
 		a := output.At(i, 0)
-		if a > max {
-			max = a
-			value = i
-		}
+		kv[i] = a
 	}
 
-	err = c.Attributes.Update(c.entityId, "result", fmt.Sprintf("%d", value), time.Now())
+	marshal, err := json.Marshal(kv)
+	if err != nil {
+		return err
+	}
+
+	err = c.Attributes.Update(c.entityId, "result", string(marshal), time.Now())
 	if err != nil {
 		return err
 	}
@@ -409,7 +409,7 @@ func (c *CharNN) Run() error {
 		return err
 	}
 
-	net := NewNetwork(784, 250, 10, 0.1)
+	net := NewNetwork(784, 200, 10, 0.01)
 	c.network = &net
 
 	err = Load(c.network)

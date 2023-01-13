@@ -75,7 +75,7 @@ function drawPixel(e: MouseEvent) {
   let x = Math.floor((e.offsetX * 2) / div)
   let y = Math.floor((e.offsetY * 2) / div)
 
-  let sl = 8
+  let sl = 5
   for (let i = 0; i < sl; i++) {
     let dv = (Math.PI * 2) / sl
     let dx = Math.round(x + Math.cos(dv * i))
@@ -181,6 +181,7 @@ function redrawGrid() {
   state.ctx.clearRect(0, 0, state.ctx.canvas.width || 0, state.ctx.canvas.height || 0);
   const pad = 4
 
+
   let div = Math.floor((state.ctx.canvas.width) / CELLS)
   for (let i = 0; i < CELLS; i++) {
     state.ctx.beginPath()
@@ -243,7 +244,6 @@ function redrawGrid() {
     <canvas :id="`draw-${state.uuid}`" class="inner-canvas"
             @mousedown="mouseDown" @mousemove="drawPixel"
             @mouseout="mouseUp" @mouseup="mouseUp"></canvas>
-
   </div>
 </template>
 

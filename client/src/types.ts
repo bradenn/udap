@@ -297,7 +297,7 @@ export function memorySizeOf(obj: any) {
     var bytes = 0;
 
     function sizeOf(obj: any, max: number) {
-        if (max > 2) return
+        if (max > 10) return
         if (obj !== null && obj !== undefined) {
             switch (typeof obj) {
                 case 'number':

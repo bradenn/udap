@@ -51,9 +51,15 @@ const operators = [
   }
 ]
 
+interface Value {
+  key: number
+  value: number
+}
+
 let state = reactive({
   cursor: 0,
   value: 0,
+  data: [] as Value[],
   response: {} as Attribute,
   registers: {
     values: "",
@@ -76,6 +82,14 @@ function calculate() {
 
 watchEffect(() => {
   state.response = remote.attributes.find(a => a.key == "result") as Attribute
+  let value = state.response.value
+  if (!value) return
+  let data = JSON.parse(value)
+  Object.keys(data).forEach(k => {
+    state.data[parseInt(k)] = {key: parseInt(k), value: data[k]} as Value
+  })
+
+  return state.response
 })
 
 function addValue(input: string) {
@@ -157,11 +171,22 @@ function addValue(input: string) {
     </div>
     <div class="element d-flex align-items-center justify-content-center"
          style="width: 13rem">
-      <div>
-        {{ state.response.value }}
-      </div>
+
       <Draw style="width: 12rem; height: 12rem;"></Draw>
     </div>
+    <div class="element d-flex flex-column gap-1">
+      <div v-for="entry in state.data" class="d-flex flex-row align-items-center gap-1 subplot"
+           style="width: 7rem">
+        <div class="label-c1 label-o4">
+          {{ entry.key }}
+        </div>
+        <div style="width: 100%">
+          <div
+              :style="`width:${entry.value*100}%; background-color: rgba(255,128,1,0.8); height: 8px; border-radius: 8px`"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 

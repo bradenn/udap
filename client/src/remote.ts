@@ -264,7 +264,7 @@ function handleMessage(target: Target, data: any) {
         remote.diagnostics.queue = remote.diagnostics.queue.slice(0, remote.diagnostics.queue.length - 2)
     }
 
-    // remote.diagnostics.maxRSS = memorySizeOf(remote) || 0
+    // remote.diagnostics.maxRSS = memorySizeOf(remote) as number
 }
 
 
