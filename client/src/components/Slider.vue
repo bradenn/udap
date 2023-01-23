@@ -2,147 +2,158 @@
 
 <script lang="ts" setup>
 
-import {onMounted, reactive} from "vue";
+import {onMounted, reactive, watch} from "vue";
 import {v4 as uuidv4} from "uuid";
 import Ticks from "@/components/Ticks.vue";
 import core from "@/core";
 
 const props = defineProps<{
-    min: number,
-    max: number,
-    step: number,
-    unit?: string,
-    name: string,
-    value: number,
-    tags?: string[],
-    change?: (a: number) => void
-    live?: boolean
-    confirm?: boolean
+  min: number,
+  max: number,
+  step: number,
+  unit?: string,
+  name: string,
+  value: number,
+  tags?: string[],
+  change?: (a: number) => void
+  live?: boolean
+  confirm?: boolean
 }>()
 
 let ticks = reactive({
-    w: 0,
-    h: 0,
-    x: 0,
-    y: 0,
+  w: 0,
+  h: 0,
+  x: 0,
+  y: 0,
 })
 
 let slider = reactive({
-    w: 0,
-    h: 0,
-    x: 0,
-    y: 0,
-    stops: 0,
-    uuid: uuidv4().toString(),
-    last: 0
+  w: 0,
+  h: 0,
+  x: 0,
+  y: 0,
+  stops: 0,
+  uuid: uuidv4().toString(),
+  last: 0
 })
 
 let thumb = reactive({
-    engaged: false,
-    w: 0,
-    h: 0,
-    x: 0,
-    y: 0,
-    previous: 0,
-    position: 0,
+  engaged: false,
+  w: 0,
+  h: 0,
+  x: 0,
+  y: 0,
+  previous: 0,
+  position: 0,
 })
 
 const xStop = 51;
 
 function initSlider() {
 
-    const dom = document.getElementById(`track-${slider.uuid}`) as HTMLElement
-    if (!dom) return;
+  const dom = document.getElementById(`track-${slider.uuid}`) as HTMLElement
+  if (!dom) return;
 
-    dom.addEventListener("mousemove", handleDrag)
+  let bounds = dom.getBoundingClientRect()
 
-    dom.addEventListener("mousedown", handleDrag)
+  slider.x = bounds.x
+  slider.y = bounds.y
 
-    dom.addEventListener("mouseup", mouseUp)
+  slider.w = bounds.width - xStop
+  slider.h = bounds.height
 
-    let bounds = dom.getBoundingClientRect()
+  slider.stops = (props.max - props.min) / props.step + 1
 
-    slider.x = bounds.x
-    slider.y = bounds.y
+  thumb.w = slider.w / slider.stops
 
-    slider.w = bounds.width - xStop
-    slider.h = bounds.height
+  thumb.position = Math.floor(props.value / props.step)
+  thumb.x = thumb.position * thumb.w
 
-    slider.stops = (props.max - props.min) / props.step + 1
-
-    thumb.w = slider.w / slider.stops
-
-    thumb.position = Math.floor(props.value / props.step)
-    thumb.x = thumb.position * thumb.w
-
-    ticks.x = 0
-    ticks.w = slider.w
+  ticks.x = 0
+  ticks.w = slider.w
 
 
 }
 
 function handleDrag(ev: MouseEvent) {
-    if (Date.now() - slider.last < 50) return
-    slider.last = Date.now()
-    let mouseX = ev.clientX - slider.x - 25
+  if (Date.now() - slider.last < 50) return
+  slider.last = Date.now()
+  let mouseX = ev.clientX - slider.x - 25
 
-    let protoPos = Math.floor((mouseX / slider.w) * slider.stops)
+  let protoPos = Math.floor((mouseX / slider.w) * slider.stops)
 
-    if (protoPos >= 0 && protoPos < slider.stops) {
-        if (thumb.position == protoPos) return
-        thumb.position = protoPos
-        thumb.x = thumb.position * thumb.w
-        haptics.tap(2, 1, 25)
-    }
+  if (protoPos >= 0 && protoPos < slider.stops) {
+    if (thumb.position == protoPos) return
+    thumb.position = protoPos
+    thumb.x = thumb.position * thumb.w
+    haptics.tap(2, 1, 25)
+  }
 
 }
 
 const haptics = core.haptics()
 
-onMounted(() => {
+watch(props, (old, newVal) => {
+  initSlider()
+})
 
-    initSlider()
+onMounted(() => {
+  const dom = document.getElementById(`track-${slider.uuid}`) as HTMLElement
+  if (!dom) return;
+
+  dom.addEventListener("mouseup", mouseUp)
+  dom.addEventListener("mousedown", handleDrag)
+
+  dom.addEventListener("mousemove", handleDrag)
+
+  initSlider()
 
 })
 
 
 function mouseUp() {
-    if (!props.confirm && props.change) {
-        props.change(props.min + thumb.position * props.step)
-    } else {
+  if (!props.confirm && props.change) {
+    props.change(props.min + thumb.position * props.step)
+  } else {
 
-    }
+  }
 }
 
 </script>
 
 <template>
-    <div class="d-flex justify-content-center w-100">
-        <div :id="`track-${slider.uuid}`" class="element p-0" style="width: 100%">
+  <div class="d-flex justify-content-center w-100">
+    <div :id="`track-${slider.uuid}`" class="element p-0" style="width: 100%">
 
-            <div class="d-flex justify-content-between lh-1 " style="padding-top:4px">
-                <div class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">{{ props.name }}</div>
-                <div v-if="props.tags" class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
-                    {{ props.tags[thumb.position] }}
-                </div>
-                <div v-else class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
-                    {{ props.min + thumb.position * props.step }}{{ props.unit }}
-                </div>
-            </div>
-            <Ticks v-if="ticks.w > 0" :active="thumb.position" :min="props.min" :series="5" :step="props.step"
-                   :style="`width: ${ticks.w}px; left: ${ticks.x + (thumb.w+25)/2 - 10}px; position:relative; height:1.25rem;`"
-                   :tags="tags" :ticks="slider.stops"></Ticks>
-            <div class="shuttle-path subplot"></div>
-            <div :style="`left: ${thumb.x}px;  position: relative; width: ${thumb.w + 50}px;`"
-                 class="shuttle-cock subplot m-1 mt-1">
-                <div :style="`left: ${(thumb.w+25)/2}px;`" class="shuttle"></div>
-                <div class="shuttle-center">􀌇</div>
-
-
-            </div>
-
+      <div class="d-flex justify-content-between lh-1 " style="padding-top:4px">
+        <div class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">{{
+            props.name
+          }}
         </div>
+        <div v-if="props.tags"
+             class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
+          {{ props.tags[thumb.position] }}
+        </div>
+        <div v-else class="label-c1 label-o3 label-w500 p-1 px-2 pb-0">
+          {{ props.min + thumb.position * props.step }}{{ props.unit }}
+        </div>
+      </div>
+      <Ticks v-if="ticks.w > 0" :active="thumb.position" :min="props.min"
+             :series="5" :step="props.step"
+             :style="`width: ${ticks.w}px; left: ${ticks.x + (thumb.w+25)/2 - 10}px; position:relative; height:1.25rem;`"
+             :tags="tags" :ticks="slider.stops"></Ticks>
+      <div class="shuttle-path subplot"></div>
+      <div
+          :style="`left: ${thumb.x}px;  position: relative; width: ${thumb.w + 50}px;`"
+          class="shuttle-cock subplot m-1 mt-1">
+        <div :style="`left: ${(thumb.w+25)/2}px;`" class="shuttle"></div>
+        <div class="shuttle-center">􀌇</div>
+
+
+      </div>
+
     </div>
+  </div>
 
 </template>
 

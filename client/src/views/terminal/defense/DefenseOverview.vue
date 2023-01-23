@@ -37,7 +37,9 @@ let state = reactive({
     y: 0
   },
   pan: 90,
+  panFine: 90,
   tilt: 180,
+  tiltFine: 180,
   zoom: 0,
   runner: 0,
   speed: 1,
@@ -351,8 +353,20 @@ function laserTilt(value: number) {
     tilt: Math.round(value)
   })
   attributeService.request(state.position)
+  state.tiltFine = 0
   // remote.nexus.requestAttribute(state.entity.id, "position", payload)
 }
+
+function laserPanFine(value: number) {
+  laserPan(state.pan + value)
+  state.panFine = 0
+}
+
+function laserTiltFine(value: number) {
+  laserTilt(state.tilt + value)
+  state.tiltFine = 0
+}
+
 
 function laserPan(value: number) {
   if (!state.entity) return
@@ -361,6 +375,7 @@ function laserPan(value: number) {
     tilt: Math.round(state.tilt)
   })
   attributeService.request(state.position)
+  state.panFine = 0
 }
 
 function laserSafe() {
@@ -529,15 +544,18 @@ function laserCircle() {
     }
 
     // 0 - 180
-    let panTo = map_range(Math.cos((2 * Math.PI / 1000) * tick), -1, 1, 75, 105)
+    let panTo = map_range(tick, 0, 1000, 3.1, 3.1)
     // 90 - 180
-    let tiltTo = map_range(Math.sin((2 * Math.PI / 1000) * tick), -1, 1, 85, 95)
+    let tiltTo = map_range(tick, 0, 1000, 3.4 - 0.5, 3.4 + 0.5)
 
-    laserPanTilt(panTo, tiltTo)
+    goToXYZ(tiltTo, panTo, 5)
 
-  }, 65)
+  }, 30)
 
 }
+
+// 34 -> 62
+// 54 -> 68
 
 function laserStop() {
   clearInterval(state.runner)
@@ -588,7 +606,7 @@ function laserStop() {
                 :max="180"
                 :min="0"
                 :step="1"
-                class="slider element "
+                class="slider element"
                 type="range"
                 v-on:mouseup="() => laserPan(state.pan)">
           </div>
@@ -618,6 +636,22 @@ function laserStop() {
                 :value="Math.round(state.laserBeam.power * 100) / 100"
                 name="Optical Output"
                 unit=" mW"></Slider>
+        <Slider :change="laserPan" :max="180" :min="0" :step="10"
+                :value="state.pan"
+                name="Pan"
+                unit=" deg"></Slider>
+        <Slider :change="laserPanFine" :max="5" :min="-5" :step="1"
+                :value="state.panFine"
+                name="Pan Fine"
+                unit=" deg"></Slider>
+        <Slider :change="laserTilt" :max="180" :min="0" :step="10"
+                :value="state.tilt"
+                name="Tilt"
+                unit=" deg"></Slider>
+        <Slider :change="laserTiltFine" :max="5" :min="-5" :step="1"
+                :value="state.tiltFine"
+                name="Tilt Fine"
+                unit=" deg"></Slider>
       </div>
       <div class="d-flex flex-column gap">
         <Plot :cols="2" :rows="2" style="width: 13rem" title="Sentry">
@@ -627,7 +661,8 @@ function laserStop() {
           <Subplot :active="true" :fn="laserStopAll" name="STOP ALL"
                    theme="danger"></Subplot>
           <Subplot :active="true" :fn="() => laserHome()" name="Home"></Subplot>
-          <Subplot :active="true" :fn="() => laserRun()" name="Run"></Subplot>
+          <Subplot :active="true" :fn="() => laserCircle()"
+                   name="Run"></Subplot>
           <Subplot :active="true" :fn="() => moveBeamToXYZ(0,0,0)"
                    name="0, 0"></Subplot>
           <Subplot :active="true" :fn="() => laserStop()"

@@ -175,7 +175,8 @@ function addValue(input: string) {
       <Draw style="width: 12rem; height: 12rem;"></Draw>
     </div>
     <div class="element d-flex flex-column gap-1">
-      <div v-for="entry in state.data" class="d-flex flex-row align-items-center gap-1 subplot"
+      <div v-for="entry in state.data"
+           class="d-flex flex-row align-items-center gap-1 subplot"
            style="width: 7rem">
         <div class="label-c1 label-o4">
           {{ entry.key }}
