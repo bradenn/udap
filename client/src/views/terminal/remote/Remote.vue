@@ -23,7 +23,7 @@ const state = reactive({
 })
 
 
-let ctx = core.context()
+// let ctx = core.context()
 
 const remote = inject("remote") as Remote
 const prefs = inject("preferences") as Preferences
