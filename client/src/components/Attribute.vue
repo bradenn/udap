@@ -69,7 +69,7 @@ function cctToRgb(cct: number) {
         <div
             class="label-c1 label-o2 label-w500 px-1 d-flex justify-content-center"
             style="width: 1.5rem">
-          {{ typeMap.get(props.attribute.key).icon }}
+          {{ typeMap.get(props.attribute.key)?.icon }}
         </div>
         <div class="d-flex flex-column gap-0"
         >
@@ -80,7 +80,7 @@ function cctToRgb(cct: number) {
                style="max-width: 7rem;  white-space: nowrap ; overflow: hidden; text-overflow: ellipsis; padding-right: 0.125rem">
             {{
               props.attribute.value
-            }}{{ typeMap.get(props.attribute.key).unit }}
+            }}{{ typeMap.get(props.attribute.key)?.unit }}
           </div>
         </div>
       </div>

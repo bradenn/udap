@@ -178,12 +178,7 @@ function home() {
                 Left
               </div>
             </div>
-            <div v-for="msg in Array(10).keys()" v-if=false
-                 class="d-flex gap-1 label-c1 label-o4 label-w500 label-r font-monospace">
-              ({{ (msg.a > 0) ? '+' : '' }}{{ msg.a }}, {{
-                (msg.b > 0) ? '+' : ''
-              }}{{ msg.b }})
-            </div>
+           
           </div>
         </div>
       </div>

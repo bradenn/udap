@@ -4,11 +4,9 @@
 
 import {onMounted, reactive, watchEffect} from "vue";
 import type {Attribute, Entity} from "@/types";
-import Subroutine from "@/views/terminal/settings/subroutines/Subroutine.vue";
 import EntityDom from "@/components/Entity.vue";
 import AttributeDom from "@/components/Attribute.vue";
 import Button from "@/components/Button.vue";
-import subroutineService from "@/services/subroutineService";
 import core from "@/core";
 import moment from "moment";
 import type {Notify} from "@/notifications";
@@ -80,7 +78,7 @@ watchEffect(() => {
 
 function sync() {
   let logs = [] as Log[]
-  const logRepo = remote.attributeLogs.sort((a, b) => new Date(b.time) - new Date(a.time))
+  const logRepo = remote.attributeLogs.sort((a, b) => new Date(b.time).valueOf() - new Date(a.time).valueOf())
   if (remote.attributes.length <= 0) return
   for (let i = 0; i < remote.attributeLogs.length; i++) {
     for (let j = 0; j < state.attributes.length; j++) {
@@ -95,7 +93,7 @@ function sync() {
             request: l.to + data.unit,
             date: moment(l.time).format("dddd, HH:MM:ss").replace(moment().format("dddd"), "Today"),
             time: moment(l.time).fromNow()
-          })
+          } as Log)
         }
       }
     }
@@ -110,37 +108,12 @@ function goBack() {
 
 const notify: Notify = core.notify()
 
-function triggerSubroutine() {
-  subroutineService.triggerManual(state.subroutine.id).then(res => {
-    notify.success("Subroutine", `Subroutine '${state.subroutine.description}' triggered.`)
-  }).catch(err => {
-    notify.fail("Subroutine", `Subroutine '${state.subroutine.description}' could not be triggered.`)
-  })
-}
-
-function deleteSubRoutine() {
-  subroutineService.deleteSubroutine(state.subroutine.id).then(res => {
-    notify.success("Subroutine", `Subroutine '${state.subroutine.description}' deleted.`)
-    goBack();
-  }).catch(err => {
-    notify.fail("Subroutine", `Subroutine '${state.subroutine.description}' could not be deleted.`)
-  })
-}
-
 function timeSince(time: string): string {
   return moment(time).fromNow()
 }
 
-function addMacro(id: string) {
-  subroutineService.addMacro(state.subroutine.id, id)
-}
-
 function showEntity() {
   state.showEntity = true
-}
-
-function removeMacro(id: string) {
-  subroutineService.removeMacro(state.subroutine.id, id)
 }
 
 function calcDuration(min: number) {
@@ -186,7 +159,7 @@ function parseDate(dt: string) {
         <div class="d-flex gap-1">
           <Button :active="true" class="element flex-grow-1" icon="􀈑"
                   style="height: 1.8rem" text="Delete"
-                  @click="deleteSubRoutine"></Button>
+                  @click="() => {}"></Button>
         </div>
         <div class="element d-flex flex-column gap-1 p-2">
           <div class="d-flex justify-content-between">
@@ -256,7 +229,7 @@ function parseDate(dt: string) {
                 <div
                     class="label-c1 label-o2 label-w500 px-1 d-flex justify-content-center"
                     style="width: 1.5rem">
-                  {{ typeMap.get(log.key).icon }}
+                  {{ typeMap.get(log.key)?.icon }}
                 </div>
                 <div>
                   <div class="label-c2 label-o4 label-w700 lh-1">

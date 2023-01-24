@@ -317,7 +317,7 @@ function setupCanvas() {
 
 <template>
   <Toolbar class="mb-1" icon="􀐘" title="Zones">
-    <ToolbarButton :active="false" :disabled="state.select" class=" px-3"
+    <ToolbarButton :active="false" :disabled="false" class=" px-3"
                    style="height: 1.4rem"
                    text="Select"
                    @click="() => {}"></ToolbarButton>

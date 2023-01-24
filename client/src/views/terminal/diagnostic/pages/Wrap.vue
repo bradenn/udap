@@ -165,7 +165,8 @@ function makeTransform() {
           props.frequency
         }}Hz
       </div>
-      <div v-else class="label-c2 label-o3 label-w600 px-1">Frequencies: {{
+      <div v-else-if="props.frequencies"
+           class="label-c2 label-o3 label-w600 px-1">Frequencies: {{
           props.frequencies.join("Hz, ")
         }}Hz
       </div>

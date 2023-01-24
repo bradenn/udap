@@ -82,9 +82,10 @@ function finish(tasks: Task[]) {
   const position = tasks.find(t => t.title === "Position");
   if (!position) return;
 
-  props.entity.alias = alias
-  props.entity.icon = icon
-  props.entity.position = position
+  let en = props.entity
+  en.alias = alias.value
+  en.icon = icon.value
+  en.position = position.value
 
   entityService.update(props.entity).then(res => {
     if (props.done) {

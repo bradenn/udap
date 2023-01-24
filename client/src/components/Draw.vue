@@ -24,7 +24,6 @@ const state = reactive({
   ready: false
 })
 
-let props = defineProps<{}>();
 const remote = core.remote();
 
 

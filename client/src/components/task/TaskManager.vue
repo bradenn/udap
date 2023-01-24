@@ -270,7 +270,7 @@ function mouseDown(m: MouseEvent) {
             <div v-else-if="state.current.type === TaskType.Passcode">
               <div class="d-flex flex-row gap justify-content-between mt-1 p-2">
                 <div v-for="(v, k) in Array(8).keys()" :key=k
-                     :class="`${state.cursor === k?'border-fog':'border-transparent'}`"
+                     :class="`${(state.current.value.length) === k?'border-fog':'border-transparent'}`"
                      class="subplot character border label-o4">
                   {{ state.current.value[v] }}
                 </div>
