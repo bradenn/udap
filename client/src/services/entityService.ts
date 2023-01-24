@@ -2,15 +2,20 @@
 
 
 import request from "@/services/request";
+import type {Entity} from "@/types";
 
 function getEndpoint(id: string, path: string): string {
     return `/entities/${id}${path}`
 }
 
 export default {
+    async update(entity: Entity): Promise<void> {
+        const url = getEndpoint(entity.id, "/update")
+        let payload = JSON.stringify(entity)
+        return await request.post(url, payload)
+    },
     async setAlias(id: string, alias: string): Promise<void> {
         const url = getEndpoint(id, "/alias")
-
         return await request.post(url, alias)
     },
     async setIcon(id: string, icon: string): Promise<void> {

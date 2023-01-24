@@ -118,9 +118,9 @@ const viewModes = [{
 
 const satellites = [
   {
-    name: "GOES 17",
+    name: "GOES 18",
     alt: "West",
-    key: "GOES17",
+    key: "GOES18",
   },
   {
     name: "GOES 16",
@@ -181,7 +181,8 @@ function buildURL() {
 </script>
 
 <template>
-  <div class="d-flex flex-row justify-content-start align-items-start align-items-start w-100">
+  <div
+      class="d-flex flex-row justify-content-start align-items-start align-items-start w-100">
 
     <div class="d-flex  p-2 px-1 w-100">
 
@@ -203,18 +204,28 @@ function buildURL() {
               <!-- The path tp the current photo -->
               <div class="flex-shrink-0">
                 <div class="label-c2 label-w500 label-o5 lh-sm">Path</div>
-                <div class="d-flex gap-2 align-items-center justify-content-center flex-grow-1">
+                <div
+                    class="d-flex gap-2 align-items-center justify-content-center flex-grow-1">
 
                   <div class="d-flex gap">
-                    <div class="label-c2 label-w300 label-o4 lh-1">{{ state.satellite }}</div>
-                    <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                    <div class="label-c2 label-w300 label-o4 lh-1">
+                      {{ state.satellite }}
+                    </div>
+                    <div class="label-c2 label-o4 lh-1"><i
+                        class="fa-solid fa-caret-right"></i></div>
                   </div>
                   <div class="d-flex gap">
-                    <div class="label-c2 label-w300 label-o4 lh-1">{{ state.section }}</div>
-                    <div class="label-c2 label-o4 lh-1"><i class="fa-solid fa-caret-right"></i></div>
+                    <div class="label-c2 label-w300 label-o4 lh-1">
+                      {{ state.section }}
+                    </div>
+                    <div class="label-c2 label-o4 lh-1"><i
+                        class="fa-solid fa-caret-right"></i></div>
                   </div>
                   <div class="d-flex gap">
-                    <div class="label-c2 label-w300 label-o4 lh-1">{{ state.mode }}</div>
+                    <div class="label-c2 label-w300 label-o4 lh-1">{{
+                        state.mode
+                      }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -223,15 +234,22 @@ function buildURL() {
             <div class="d-flex justify-content-around w-100">
               <!-- Last update from the headers of the photo -->
               <div class="flex-shrink-0">
-                <div class="label-c2 label-w500 label-o5 lh-sm">Last updated</div>
-                <div class="label-c2 label-w300 label-o4 lh-1">{{ state.lastUpdated }}</div>
+                <div
+                    class="label-c2 label-w500 label-o5 lh-sm">Last updated</div>
+                <div class="label-c2 label-w300 label-o4 lh-1">
+                  {{ state.lastUpdated }}
+                </div>
               </div>
 
               <div class="v-sep"></div>
               <!-- Last update from the headers of the photo -->
               <div class="flex-shrink-0">
-                <div class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
-                <div class="label-c2 label-w300 label-o4 lh-1">{{ state.progress }}</div>
+                <div
+                    class="label-c2 label-w500 label-o5 lh-sm">Next update</div>
+                <div class="label-c2 label-w300 label-o4 lh-1">{{
+                    state.progress
+                  }}
+                </div>
               </div>
             </div>
 
@@ -254,20 +272,23 @@ function buildURL() {
                 class="subplot p-1 px-2 d-flex flex-row justify-content-center align-content-center align-items-center flex-grow-0"
                 @click="buildURL()">
               <div class="label-c2 label-w500 label-o4"><i
-                  class="fa-solid fa-arrow-rotate-right fa-fw"></i> Force Reload</div>
+                  class="fa-solid fa-arrow-rotate-right fa-fw"></i> Force Reload
+              </div>
 
             </div>
 
           </div>
           <!-- Disk -->
-          <div class="d-flex justify-content-center align-items-center align-content-center earth-background element">
+          <div
+              class="d-flex justify-content-center align-items-center align-content-center earth-background element">
             <div v-if="state.section === 'FD'">
               <div v-if="state.loading"
                    :style="`background-image: url('${state.currentImage}');`"
                    class="earth-full-disk">
                 <Loader v-if="state.loading"></Loader>
               </div>
-              <div v-else :style="`background-image: url('${state.currentImage}');`"
+              <div v-else
+                   :style="`background-image: url('${state.currentImage}');`"
                    class="earth-full-disk">
               </div>
             </div>
@@ -278,30 +299,37 @@ function buildURL() {
                 <Loader v-if="state.loading"></Loader>
               </div>
 
-              <div v-else :style="`background-image: url('${state.currentImage}');`"
+              <div v-else
+                   :style="`background-image: url('${state.currentImage}');`"
                    class="preview p-5">
               </div>
             </div>
 
           </div>
           <div class="d-flex flex-column gap w-25  flex-grow-0">
-            <div class="label-o4 label-sm label-r label-w500 lh-1">Satellite</div>
+            <div
+                class="label-o4 label-sm label-r label-w500 lh-1">Satellite</div>
             <Plot :cols="2" :rows="1">
-              <Subplot v-for="sat in satellites" :active="state.satellite===sat.key" :alt="''"
+              <Subplot v-for="sat in satellites"
+                       :active="state.satellite===sat.key" :alt="''"
                        :fn="() => selectSatellite(sat.key)"
                        :name="sat.name"
                        icon="satellite"></Subplot>
             </Plot>
-            <div class="label-o4 label-sm label-r label-w500 lh-1">Perspective</div>
+            <div
+                class="label-o4 label-sm label-r label-w500 lh-1">Perspective</div>
             <Plot :cols="2" :rows="2">
-              <Subplot v-for="sect in sections" :active="sect.key === state.section || state.toggles.section"
+              <Subplot v-for="sect in sections"
+                       :active="sect.key === state.section || state.toggles.section"
                        :alt="sect.alt" :fn="() => selectSection(sect.key)"
                        :name="sect.name"
                        icon="satellite"></Subplot>
             </Plot>
-            <div class="label-o4 label-sm label-r label-w500 lh-1">Wavelengths</div>
+            <div
+                class="label-o4 label-sm label-r label-w500 lh-1">Wavelengths</div>
             <Plot :cols="3" :rows="2">
-              <Subplot v-for="mode in viewModes" :active="state.mode === mode.key"
+              <Subplot v-for="mode in viewModes"
+                       :active="state.mode === mode.key"
                        :fn="() => selectMode(mode.key)"
                        :name="mode.name"></Subplot>
             </Plot>

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi"
 	"math"
 	"math/rand"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"strings"
 	"time"
 	"udap/internal/core/domain"
-	"udap/internal/log"
 	"udap/internal/plugin"
 	"udap/platform/atlas"
 )
@@ -232,7 +232,7 @@ func (w *Atlas) speak(text string) error {
 	}()
 	// Prepare the command arguments
 	args := []string{"-c", fmt.Sprintf("curl -X POST --data '%s' --output - 10.0.1."+
-		"201:59125/api/tts | play -t wav -", text)}
+		"2:59125/api/tts | play -t wav -", text)}
 	// Initialize the command structure
 	cmd := exec.CommandContext(timeout, "/bin/bash", args...)
 	// Run and get the stdout and stderr from the output
@@ -515,10 +515,6 @@ type RasaResponse struct {
 	} `json:"response_selector"`
 }
 
-func map_range(value float64, low1 float64, high1 float64, low2 float64, high2 float64) float64 {
-	return low2 + (high2-low2)*(value-low1)/(high1-low1)
-}
-
 type Phrase struct {
 	Text string `json:"text"`
 }
@@ -578,7 +574,7 @@ func (w *Atlas) handleEntity(rasa RasaResponse) error {
 }
 
 func (w *Atlas) retort(text string) error {
-	return nil
+
 	p := Phrase{}
 	p.Text = text
 	marshal, err := json.Marshal(p)
@@ -613,6 +609,7 @@ func (w *Atlas) retort(text string) error {
 	if err != nil {
 		return err
 	}
+
 	w.LogF("Intent: %s (%.2f)", rasa.Intent.Name, rasa.Intent.Confidence)
 
 	switch intent := rasa.Intent.Name; intent {
@@ -655,61 +652,19 @@ func (w *Atlas) retort(text string) error {
 	return nil
 }
 
-// w.stopLaserRoutine = make(chan bool)
-// go func() {
-// 	defer close(w.stopLaserRoutine)
-// 	timeout := time.After(time.Minute * 1)
-// 	pan := 90
-// 	tilt := 40
-// 	t := 0
-// 	for {
-// 		t = (t + 1) % 1000
-// 		select {
-// 		case <-timeout:
-// 			err := w.laserState(false)
-// 			if err != nil {
-// 				return
-// 			}
-// 			err = w.laserMove(180, 180)
-// 			if err != nil {
-// 				return
-// 			}
-// 			return
-// 		case <-w.stopLaserRoutine:
-// 			err := w.laserState(false)
-// 			if err != nil {
-// 				return
-// 			}
-// 			err = w.laserMove(180, 180)
-// 			if err != nil {
-// 				return
-// 			}
-// 			return
-// 		default:
-// 			time.Sleep(time.Millisecond * 60)
-// 		}
-// 		tilt = int(math.Floor(map_range(float64(t), 0, 1000, 43, 0)))
-// 		pan = int(math.Floor(map_range(math.Sin(float64(t)*math.Pi/100.0), -1, 1, 100, 80)))
-// 		err := w.laserMove(pan, tilt)
-// 		if err != nil {
-// 			return
-// 		}
-// 	}
-//
-// }()
 func (w *Atlas) listen() {
 	for {
 		select {
 		case res := <-w.voiceChannel:
 			w.voice = res.Request
-			err := w.speak("That quick beige fox jumped in the air over each thin dog. Look out, I shout, for he's foiled you again, creating chaos.")
+			err := w.speak("Hello, my name is atlas.")
 			if err != nil {
-				log.Err(err)
+				w.Err(err)
 			}
 		case res := <-w.bufferChannel:
 			err := w.speak(res.Request)
 			if err != nil {
-				log.Err(err)
+				w.Err(err)
 			}
 		case <-w.statusChannel:
 			continue
@@ -719,64 +674,22 @@ func (w *Atlas) listen() {
 			if err != nil {
 				return
 			}
-		case rec := <-w.listenChannel:
-			err := w.processRequest(rec)
-			if err != nil {
-				log.Err(err)
-			}
+
 		}
 	}
 }
 
-func (w *Atlas) processRequest(req atlas.Response) error {
+func (w *Atlas) processRequest(msg string) error {
 
-	if len(req.Text) < 1 {
+	if len(msg) < 1 {
 		return nil
 	}
-	log.Event("HEARD: %s", req.Text)
-	msg := req.Text
-	if strings.HasPrefix(msg, "atlas") {
-		marshal, err := json.Marshal(req)
-		if err != nil {
-			return err
-		}
-		msg = strings.Replace(msg, "atlas ", "", 1)
-		err = w.Attributes.Set(w.eId, "buffer", string(marshal))
-		if err != nil {
-			return err
-		}
+
+	if strings.Contains(msg, "atlas") {
+
 		w.alias = "atlas"
-		err = w.retort(msg)
-		if err != nil {
-			return err
-		}
-	} else if strings.HasPrefix(msg, "hey atlas") {
-		marshal, err := json.Marshal(req)
-		if err != nil {
-			return err
-		}
-		msg = strings.Replace(msg, "hey atlas ", "", 1)
-		err = w.Attributes.Set(w.eId, "buffer", string(marshal))
-		if err != nil {
-			return err
-		}
-		w.alias = "atlas"
-		err = w.retort(msg)
-		if err != nil {
-			return err
-		}
-	} else if strings.HasPrefix(msg, "nova") {
-		marshal, err := json.Marshal(req)
-		if err != nil {
-			return err
-		}
-		msg = strings.Replace(msg, "nova ", "", 1)
-		err = w.Attributes.Set(w.eId, "buffer", string(marshal))
-		if err != nil {
-			return err
-		}
-		w.alias = "nova"
-		err = w.retort(msg)
+
+		err := w.retort(msg)
 		if err != nil {
 			return err
 		}
@@ -864,6 +777,34 @@ func (w *Atlas) register() error {
 	return nil
 }
 
+type Recognized struct {
+	Text string `json:"text"`
+}
+
+func (w *Atlas) recognize(writer http.ResponseWriter, request *http.Request) {
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(request.Body)
+	if err != nil {
+		w.Err(err)
+		return
+	}
+	rec := Recognized{}
+	err = json.Unmarshal(buf.Bytes(), &rec)
+	if err != nil {
+		w.Err(err)
+		return
+	}
+
+	err = w.processRequest(rec.Text)
+	if err != nil {
+		w.Err(err)
+		return
+	}
+
+	writer.WriteHeader(200)
+
+}
+
 func (w *Atlas) Run() error {
 
 	err := w.register()
@@ -871,115 +812,22 @@ func (w *Atlas) Run() error {
 		return err
 	}
 
-	// cfg := sphinx.NewConfig(
-	// 	sphinx.HMMDirOption("/usr/local/share/pocketsphinx/model/en-us/en-us"),
-	// 	sphinx.DictFileOption("/usr/local/share/pocketsphinx/model/en-us/cmudict-en-us.dict"),
-	// 	sphinx.LMFileOption("/usr/local/share/pocketsphinx/model/en-us/en-us.lm.bin"),
-	// 	sphinx.SampleRateOption(16000),
-	// )
-	//
-	// dec, err := sphinx.NewDecoder(cfg)
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// in := make([]int16, 8196)
-	//
-	// stream, err := portaudio.OpenDefaultStream(1, 0, 16000, len(in), in)
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// err = stream.Start()
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// for {
-	// 	err = stream.Read()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	_, ok := dec.ProcessRaw(in, false, false)
-	// 	if !ok {
-	// 		continue
-	// 	}
-	//
-	// 	fmt.Printf("Listening: %s", dec.IsInSpeech())
-	//
-	// 	hyp, _ := dec.Hypothesis()
-	//
-	// 	fmt.Println(hyp)
-	// }
+	r := chi.NewRouter()
+	r.Post("/recognized", w.recognize)
+
 	w.done = make(chan bool)
 	sp := false
 	w.speaking = &sp
 	w.status.Recognizer = "offline"
 	w.status.Synthesizer = "idle"
 
-	recognizer := atlas.NewRecognizer(w.listenChannel, w.recognizerStatusChannel, w.speaking)
-	done, err := recognizer.Connect("10.0.1.11")
-	if err != nil {
-		w.ErrF("Failed to connect to remote host: %s", err.Error())
-		return err
-	}
-
 	go func() {
-		for {
-			select {
-			case <-w.done:
-				done <- true
-				return
-			default:
-				err = recognizer.Listen()
-				if err != nil {
-					w.WarnF("%s", err.Error())
-				}
-			}
-
+		err = http.ListenAndServe("10.0.1.2:5055", r)
+		if err != nil {
+			w.ErrF("Atlas endpoint terminated")
 		}
-
 	}()
 
-	// go func() {
-	// 	for {
-	// 		err = atlas.BeginListening(w.listenChannel, w.recognizerStatusChannel)
-	// 		if err != nil {
-	// 			log.Err(err)
-	// 			continue
-	// 		}
-	// 	}
-	// }()
-
-	// u := url.URL{Scheme: "ws", Host: "localhost" + ":" + "2700", Path: ""}
-	//
-	// // Opening websocket connection
-	// c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	// if err != nil {
-	// 	return nil
-	// }
-	//
-	// defer func() {
-	// 	w.status.Recognizer = "offline"
-	// 	c.Close()
-	// }()
-	//
-	// for {
-	// 	msg := Message{}
-	// 	w.status.Recognizer = "idle"
-	// 	err = c.ReadJSON(&msg)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	w.status.Recognizer = "recognizing"
-	// 	err = w.Attributes.Set(w.eId, "buffer", msg.Text)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-
-	// }
 	return nil
 
 }

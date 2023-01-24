@@ -6,6 +6,7 @@ import {reactive} from "vue";
 interface ScreenSaverState {
     active: boolean
     current: string
+    delay: number
     lastReset: number
     countdown: number
     interval: number
@@ -22,12 +23,15 @@ export interface Screensaver {
 
     current(): string
 
+    delay(): number
+
     countdown(): number
 }
 
 const state = reactive<ScreenSaverState>({
     active: false,
     current: "warp",
+    delay: 1000 * 60 * 5,
     lastReset: 0,
     countdown: 0,
     interval: 0,
@@ -51,7 +55,7 @@ function resetCountdown() {
     if (state.interval != 0) return;
     state.interval = setInterval(() => {
         state.countdown = (Date.now() - state.lastReset)
-        if ((Date.now() - state.lastReset) >= 1000 * 60 * 5) {
+        if ((Date.now() - state.lastReset) >= state.delay) {
             state.active = true
             clearInterval(state.interval)
             state.interval = 0

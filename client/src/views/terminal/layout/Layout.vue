@@ -2,11 +2,11 @@
 <script lang="ts" setup>
 
 
-</script>
+import LayoutFlat from "@/views/terminal/layout/LayoutFlat.vue";</script>
 
 <template>
   <div class="h-100">
-    <router-view/>
+    <LayoutFlat></LayoutFlat>
   </div>
 </template>
 

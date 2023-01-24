@@ -41,6 +41,7 @@ func (c *CalDav) Run() error {
 	err := c.InitConfig("server", "https://example.com")
 	if err != nil {
 		c.ErrF("%s", err)
+		return nil
 	}
 	c.receiver = make(chan domain.Attribute, 1)
 	entity := &domain.Entity{
@@ -120,10 +121,10 @@ func (c *CalDav) poll() {
 	link := os.Getenv("calDav")
 	cli := http.Client{}
 	get, err := cli.Get(link)
-	defer get.Body.Close()
 	if err != nil {
 		return
 	}
+	defer get.Body.Close()
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(get.Body)
 	if err != nil {

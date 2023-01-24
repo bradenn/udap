@@ -17,7 +17,7 @@ import Config from "@/views/terminal/settings/module/pages/Config.vue";
 const routes = {
     path: '/terminal/settings/modules',
     name: 'Modules',
-    icon: 'layer-group',
+    icon: '􀐟',
     meta: {
         order: 2,
     },

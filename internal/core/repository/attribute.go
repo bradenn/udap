@@ -14,6 +14,15 @@ type attributeRepo struct {
 	db *gorm.DB
 }
 
+func (u *attributeRepo) FindRecentLogs() (*[]domain.AttributeLog, error) {
+	var logs []domain.AttributeLog
+	err := u.db.Model(&domain.AttributeLog{}).Limit(100).Find(&logs).Error
+	if err != nil {
+		return nil, err
+	}
+	return &logs, nil
+}
+
 func NewAttributeRepository(db *gorm.DB) ports.AttributeRepository {
 	return &attributeRepo{
 		db:    db,
@@ -21,8 +30,19 @@ func NewAttributeRepository(db *gorm.DB) ports.AttributeRepository {
 	}
 }
 
-func (u *attributeRepo) Register(attribute *domain.Attribute) error {
+func (u *attributeRepo) Log(attribute *domain.Attribute) (*domain.AttributeLog, error) {
+	if attribute.Type == "media" {
+		return nil, nil
+	}
+	log := attribute.ToLog()
+	err := u.db.Model(&log).Create(&log).Error
+	if err != nil {
+		return nil, err
+	}
+	return &log, nil
+}
 
+func (u *attributeRepo) Register(attribute *domain.Attribute) error {
 	err := u.db.Model(&domain.Attribute{}).Where("entity = ? AND key = ?", attribute.Entity, attribute.Key).FirstOrCreate(attribute).Error
 	if err != nil {
 		return err

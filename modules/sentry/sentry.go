@@ -6,7 +6,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 	"udap/internal/core/domain"
@@ -23,12 +25,14 @@ type Sentry struct {
 	beam            Beam
 	positionChannel chan domain.Attribute
 	beamChannel     chan domain.Attribute
+	done            chan bool
+	session         *websocket.Conn
 }
 
 type Beam struct {
-	Target string `json:"target"`
-	Active int    `json:"active"`
-	Power  int    `json:"power"`
+	Target string  `json:"target"`
+	Active int     `json:"active"`
+	Power  float64 `json:"power"`
 }
 
 func (b *Beam) Marshal() string {
@@ -52,7 +56,7 @@ func (p *Position) Marshal() string {
 	return string(marshal)
 }
 
-const sentryUrl = "10.0.1.60"
+const sentryUrl = "10.0.1.76"
 
 func init() {
 	config := plugin.Config{
@@ -63,7 +67,33 @@ func init() {
 		Author:      "Braden Nicholson",
 	}
 	Module.eId = ""
+	Module.session = nil
 	Module.Config = config
+}
+
+func (v *Sentry) connect() error {
+	u := url.URL{Scheme: "ws", Host: sentryUrl, Path: "/ws"}
+
+	var err error
+	v.session, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			if v.session == nil {
+				return
+			}
+			_, _, err = v.session.ReadMessage()
+			if err != nil {
+				v.session = nil
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (v *Sentry) Setup() (plugin.Config, error) {
@@ -83,8 +113,14 @@ type Status struct {
 		Tilt int `json:"tilt"`
 	} `json:"servos"`
 	Beams struct {
-		Primary   bool `json:"primary"`
-		Secondary bool `json:"secondary"`
+		Primary struct {
+			Active bool    `json:"active"`
+			Power  float64 `json:"power"`
+		} `json:"primary"`
+		Secondary struct {
+			Active bool    `json:"active"`
+			Power  float64 `json:"power"`
+		} `json:"secondary"`
 	} `json:"beams"`
 }
 
@@ -99,33 +135,47 @@ func mapRange(value float64, low1 float64, high1 float64, low2 float64, high2 fl
 }
 
 func (v *Sentry) requestPosition(position SetPosition) error {
-	marshal, err := json.Marshal(position)
-	if err != nil {
-		return err
-	}
-	reader := bytes.NewReader(marshal)
+	//marshal, err := json.Marshal(position)
+	//if err != nil {
+	//	return err
+	//}
+	//reader := bytes.NewReader(marshal)
+	//
+	//
+	//
+	//client := http.Client{}
+	//client.Timeout = time.Millisecond * 250
+	//defer client.CloseIdleConnections()
+	//resp, err := client.Post(fmt.Sprintf("http://%s/position", sentryUrl), "application/json", reader)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//
+	//var buf bytes.Buffer
+	//_, err = buf.ReadFrom(resp.Body)
+	//if err != nil {
+	//	return err
+	//}
+	//_ = resp.Body.Close()
 
-	client := http.Client{}
-	client.Timeout = time.Millisecond * 250
-	defer client.CloseIdleConnections()
-	resp, err := client.Post(fmt.Sprintf("http://%s/position", sentryUrl), "application/json", reader)
-	if err != nil {
-		return err
+	if v.session == nil {
+		err := v.connect()
+		if err != nil {
+			return err
+		}
 	}
 
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(resp.Body)
+	err := v.session.WriteJSON(position)
 	if err != nil {
 		return err
 	}
-	_ = resp.Body.Close()
 
 	return nil
 }
 
 func (v *Sentry) requestBeam(beam Beam) error {
 	beam.Target = "primary"
-	beam.Power = 15
 	marshal, err := json.Marshal(beam)
 	if err != nil {
 		return err
@@ -254,12 +304,13 @@ func (v *Sentry) UpdateData(buf bytes.Buffer) error {
 
 	b := Beam{}
 	b.Target = "primary"
-	if s.Beams.Primary {
+	if s.Beams.Primary.Active {
 		b.Active = 1
 	} else {
 		b.Active = 0
 	}
-	b.Power = 15
+
+	b.Power = s.Beams.Primary.Power
 
 	marshal, err = json.Marshal(b)
 	if err != nil {
@@ -276,7 +327,7 @@ func (v *Sentry) Update() error {
 	if v.Ready() {
 		err := v.pull()
 		if err != nil {
-			return err
+			v.Err(err)
 		}
 	}
 	return nil

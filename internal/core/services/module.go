@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
@@ -64,7 +65,18 @@ func (u *moduleService) EmitAll() error {
 	return nil
 }
 
-// Update all the running modules
+// Panic handles a panic state
+func (u *moduleService) Panic(module domain.Module) error {
+	log.Recovered("Module '%s' panicked; module entering safe-mode", module.Name)
+	err := u.Dispose(module.Id)
+	if err != nil {
+		log.Err(fmt.Errorf("module disposal failed, runtime must be flushed to resume operation: %s",
+			err.Error()))
+		return err
+	}
+	return nil
+}
+
 func (u *moduleService) Update(id string) error {
 	// Find the local module from the repository
 	module, err := u.repository.FindById(id)
@@ -79,11 +91,8 @@ func (u *moduleService) Update(id string) error {
 	defer func() {
 		// Attempt to recover from a panic
 		if r := recover(); r != nil {
-			log.Recovered("Module '%s' panicked; module entering safe-mode", module.Name)
-			err = u.Dispose(module.Id)
+			err = u.Panic(*module)
 			if err != nil {
-				log.Err(fmt.Errorf("module disposal failed, runtime must be flushed to resume operation: %s",
-					err.Error()))
 				return
 			}
 		}
@@ -115,6 +124,16 @@ func (u *moduleService) Run(id string) error {
 	if err != nil {
 		return err
 	}
+	// Catch any panics that may occur when running the run function
+	defer func() {
+		// Attempt to recover from a panic
+		if r := recover(); r != nil {
+			err = u.Panic(*module)
+			if err != nil {
+				return
+			}
+		}
+	}()
 	// Attempt to run the module
 	err = u.operator.Run(module.UUID)
 	if err != nil {
@@ -144,6 +163,17 @@ func (u *moduleService) Load(id string) error {
 	if err != nil {
 		return err
 	}
+	// Catch any panics that may occur when running the run function
+	defer func() {
+		// Attempt to recover from a panic
+		if r := recover(); r != nil {
+			err = u.Panic(*module)
+			if err != nil {
+				return
+			}
+		}
+	}()
+	start := time.Now()
 	// Attempt to load the module
 	config, err := u.operator.Load(module.Name, module.UUID)
 	if err != nil {
@@ -155,6 +185,8 @@ func (u *moduleService) Load(id string) error {
 	module.Type = config.Type
 	module.Author = config.Author
 	module.Running = false
+	log.Event("Module '%s' @ 0x%s loaded. (%s)", module.Name, module.SessionId(),
+		time.Since(start).Truncate(time.Millisecond).String())
 	err = u.repository.Update(module)
 	if err != nil {
 		return err
@@ -164,6 +196,7 @@ func (u *moduleService) Load(id string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -183,8 +216,8 @@ func (u *moduleService) Build(id string) error {
 	if err != nil {
 		return err
 	}
-	// log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
-	// 	time.Since(start).Truncate(time.Millisecond).String())
+	//log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
+	//	time.Since(start).Truncate(time.Millisecond).String())
 	return nil
 }
 
@@ -202,7 +235,7 @@ func (u *moduleService) Dispose(id string) error {
 	if err != nil {
 		return err
 	}
-	// start := time.Now()
+	start := time.Now()
 	// Attempt to dispose of the module (only works if the module developer plays nicely)
 	err = u.operator.Dispose(module.Name, module.UUID)
 	if err != nil {
@@ -210,8 +243,8 @@ func (u *moduleService) Dispose(id string) error {
 	}
 	// Set the module as not running, so it is not updated
 	module.Running = false
-	// log.Event("Module '%s' @ 0x%s unloaded. (%s)", module.Name, module.SessionId(),
-	// 	time.Since(start).Truncate(time.Millisecond).String())
+	log.Event("Module '%s' @ 0x%s unloaded. (%s)", module.Name, module.SessionId(),
+		time.Since(start).Truncate(time.Millisecond).String())
 	module.UUID = ""
 	// Mark the module as stopped if the disposal was successful
 	err = u.setState(module.Id, STOPPED)
@@ -535,12 +568,14 @@ func (u *moduleService) Reload(name string) error {
 	if err != nil {
 		return err
 	}
-	if !target.Enabled || !target.Running {
+	if !target.Enabled {
 		return fmt.Errorf("module must be enabled and running to reload")
 	}
-	err = u.Dispose(target.Id)
-	if err != nil {
-		return err
+	if target.Running {
+		err = u.Dispose(target.Id)
+		if err != nil {
+			return err
+		}
 	}
 	err = u.Build(target.Id)
 	if err != nil {

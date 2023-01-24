@@ -22,6 +22,7 @@ require (
 	gocv.io/x/gocv v0.31.0
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129
+	gonum.org/v1/gonum v0.12.0
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15
 )
@@ -58,6 +59,7 @@ require (
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/xiam/to v0.0.0-20191116183551-8328998fc0ed // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
+	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
 	golang.org/x/text v0.3.7 // indirect

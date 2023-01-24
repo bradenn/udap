@@ -7,7 +7,7 @@ import Toast from "@/components/Toast.vue";
 import type {Notify, NotifyBody} from "@/notifications";
 
 interface Loader {
-    size?: string
+  size?: string
 }
 
 let props = defineProps<Loader>()
@@ -16,21 +16,24 @@ let notify: Notify = inject("notify") as Notify
 
 
 let state = reactive({
-    notify: {} as NotifyBody
+  notify: {} as NotifyBody,
+  queued: 0
 })
 
 onMounted(() => {
-    updateNotification()
+  updateNotification()
+  state.queued = notify.queued()
 })
 
 
 watchEffect(() => {
-    updateNotification()
-    return notify.current()
+  updateNotification()
+  state.queued = notify.queued()
+  return notify.current()
 })
 
 function updateNotification() {
-    state.notify = notify.current()
+  state.notify = notify.current()
 }
 
 
@@ -38,15 +41,16 @@ function updateNotification() {
 
 <template>
 
-    <div v-if="notify.isActive()" class="toast-stack ">
-        <Toast :key="state.notify.uuid"
-               :index="1"
-               :message="state.notify.message"
-               :severity="state.notify.severity"
-               :time="state.notify.duration"
-               :title="state.notify.name"></Toast>
+  <div v-if="notify.isActive()" class="toast-stack ">
+    <Toast :key="state.notify.uuid"
+           :index="1"
+           :message="state.notify.message"
+           :more="state.queued"
+           :severity="state.notify.severity"
+           :time="state.notify.duration"
+           :title="state.notify.name"></Toast>
 
-    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>

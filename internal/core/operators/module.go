@@ -125,7 +125,7 @@ func (m *moduleRuntime) Build(module string, uuid string) error {
 		return err
 	}
 	// Create a timeout to prevent modules from taking too long to build
-	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*25)
 	// Cancel the timeout of it exits before the timeout is up
 	defer cancelFunc()
 	// Prepare the command arguments
@@ -138,6 +138,40 @@ func (m *moduleRuntime) Build(module string, uuid string) error {
 		return fmt.Errorf("module build failed: \n%s", out)
 	}
 	return nil
+}
+
+// Cleanup deletes all compiled binaries in the module folder (.so)
+func (m *moduleRuntime) Cleanup(module string) error {
+	// Get the path to the target directory
+	directory := fmt.Sprintf("%s/%s", PATH, module)
+	// Read the directory, get an array of all file entries
+	dir, err := os.ReadDir(directory)
+	if err != nil {
+		return err
+	}
+	// Create an array to store the filenames
+	var toDelete []string
+	// Go through each entry and find out if it is a binary
+	for _, entry := range dir {
+		// Check if the filename ends with the extension '.so'
+		if strings.HasSuffix(entry.Name(), ".so") {
+			// Append to delete list with the path
+			toDelete = append(toDelete, entry.Name())
+		}
+	}
+	// Go through each of the selected files and delete them
+	for _, name := range toDelete {
+		// Form the path to the target file
+		path := fmt.Sprintf("%s/%s/%s", PATH, module, name)
+		// Remove the file
+		err = os.Remove(path)
+		if err != nil {
+			return err
+		}
+	}
+	// Exit normally
+	return nil
+
 }
 
 // Load is used to find a pre-built plugin file, and load it into the local system.
@@ -211,11 +245,16 @@ func (m *moduleRuntime) Dispose(module string, uuid string) error {
 			log.Err(err)
 			return
 		}
+		err = m.Cleanup(module)
+		if err != nil {
+			return
+		}
 	}()
 	err = m.removeModule(uuid)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

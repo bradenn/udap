@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi"
 	"net/http"
 	"udap/internal/core/ports"
-	"udap/internal/log"
 )
 
 type attributeRouter struct {
@@ -29,6 +28,7 @@ func NewAttributeRouter(service ports.AttributeService) Routable {
 }
 
 func (r *attributeRouter) request(w http.ResponseWriter, req *http.Request) {
+
 	id := chi.URLParam(req, "id")
 	key := chi.URLParam(req, "key")
 	buf := bytes.Buffer{}
@@ -37,11 +37,15 @@ func (r *attributeRouter) request(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.Write([]byte(err.Error()))
 		w.WriteHeader(400)
+		return
 	}
 	if id != "" && key != "" {
 		err = r.service.Request(id, key, buf.String())
 		if err != nil {
-			log.ErrF(err, "Funny Business:")
+			w.Write([]byte(err.Error()))
+			w.WriteHeader(500)
+			return
+			//log.ErrF(err, "Funny Business:")
 		}
 	}
 	w.Write([]byte("OK"))

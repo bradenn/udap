@@ -1,0 +1,7 @@
+services:
+  mimic3:
+    image: mycroftai/mimic3:latest
+    volumes:
+      - ~/.local/share/mycroft/mimic3:/home/mimic3/.local/share/mycroft/mimic3
+    ports:
+      - "59125:59125"

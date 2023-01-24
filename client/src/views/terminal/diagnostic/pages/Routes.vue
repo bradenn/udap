@@ -2,145 +2,249 @@
 
 <script lang="ts" setup>
 
-import {inject, reactive, watchEffect} from "vue";
-import type {RemoteRequest, TerminalDiagnostics, Timing} from "@/types";
-import {useRouter} from "vue-router";
-import type {Remote} from "@/remote";
+import Plot from "@/components/plot/Plot.vue";
+import {onMounted, reactive} from "vue";
+import PanTilt from "@/components/PanTilt.vue";
 
-const remote = inject("remote") as Remote
-
-const state = reactive({
-    terminal: {} as TerminalDiagnostics,
-    terminalDeltas: {
-        lastUpdate: ""
-    },
-    sortedQueue: [] as RemoteRequest[],
-    loaded: false,
-    diffs: new Map<string, number>(),
-    maxRSSHistory: [] as number[],
-    maxRSSHistoryDisplay: [] as number[],
-    timings: [] as Timing[],
-    timingsRange: {
-        min: 10E88,
-        max: -1000
-    },
-    avgInterval: 0,
-    intervalBuffer: new Date().valueOf(),
-    avgIntervalHistory: Array(96).fill(0),
-    intervalHistory: [] as number[],
-
-})
-
-// let timeInterval = 0;
-//
-// onMounted(() => {
-//   timeInterval = setInterval(updateTimes, 100)
-// })
-//
-// onUnmounted(() => {
-//   clearInterval(timeInterval)
-// })
-//
-// function updateTimes() {
-//   for (let queueElement of state.terminal.queue) {
-//     if (queueElement.id) {
-//       state.diffs.set(queueElement.id, Date.now() - queueElement.time)
-//     }
-//   }
-//   let keys = state.diffs.keys()
-//   for (let key of keys) {
-//     if (!state.terminal.queue.find(q => q.id === key)) {
-//       state.diffs.delete(key)
-//     }
-//   }
-//
-//
-//   state.sortedQueue = state.terminal.queue.sort((a, b) => b.time - a.time)
-// }
-
-watchEffect(() => {
-    updateStats()
-    updateDeltas()
-
-})
-
-function updateDeltas() {
-    let dt = new Date().valueOf() - state.terminal.lastUpdate
-    state.terminalDeltas.lastUpdate = `${dt} ms`
-    return state.terminalDeltas
+interface Position {
+  a: number,
+  b: number,
+  time: number
 }
 
-function updateStats() {
+function setOrigin() {
+  state.ws.send(JSON.stringify({mode: "origin", a: 0, b: 0}))
+  state.pos.a = 0
+  state.pos.b = 0
+  home();
+}
 
-    state.terminal = remote.diagnostics
-    state.timings = remote.timings.filter(f => f.complete).sort((a, b) => {
-        if (state.timingsRange.max < b.startNano) state.timingsRange.max = b.startNano
-        if (state.timingsRange.min > b.startNano) state.timingsRange.min = b.startNano
-        return a.startNano < b.startNano ? -1 : 1
+function sendCommand(a: number, b: number, absolute: boolean) {
+  state.ws.send(JSON.stringify({
+    mode: absolute ? "absolute" : "relative",
+    a: a,
+    b: b
+  }))
+}
+
+let state = reactive({
+  speed: 64,
+  pan: 0,
+  tilt: 0,
+  pos: {a: 0, b: 0} as Position,
+  messages: [] as Position[],
+  ws: {} as WebSocket,
+  connected: false,
+  interval: 0,
+})
+
+
+onMounted(() => {
+  state.ws = new WebSocket("ws://10.0.1.85/ws")
+  state.ws.onopen = (e: Event) => {
+    state.connected = true
+  }
+  state.ws.onmessage = (e: MessageEvent) => {
+    state.connected = true
+    let data = JSON.parse(e.data) as Position
+    data.time = new Date().valueOf()
+    state.pos = data
+    state.messages.push(data)
+    state.messages.sort((a: Position, b: Position) => {
+      return a.time - b.time
     })
+  }
+  state.ws.onclose = (e: Event) => {
+    state.connected = false
+  }
+})
 
-    // if (new Date().valueOf() - state.intervalBuffer >= 100) {
-    //
-    //   state.intervalHistory.push(new Date().valueOf() - state.intervalBuffer)
-    //
-    //   if (state.intervalHistory.length >= 2) {
-    //     state.intervalHistory = state.intervalHistory.slice(1, state.intervalHistory.length - 1)
-    //   }
-    //
-    //   state.avgInterval = state.intervalHistory.reduce((a, b) => a += b, 0) / state.intervalHistory.length
-    //
-    //   state.avgIntervalHistory.push(state.avgInterval)
-    //
-    //   if (state.avgIntervalHistory.length >= 96) {
-    //     state.avgIntervalHistory = state.avgIntervalHistory.slice(1, state.avgIntervalHistory.length - 1)
-    //   }
-    //   state.intervalBuffer = new Date().valueOf()
-    // }
+let iv = 0;
 
-    if (state.maxRSSHistory.length >= 128) {
-        state.maxRSSHistory = state.maxRSSHistory.slice(1, state.maxRSSHistory.length - 1)
+function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
+  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
+function circle() {
+  let px = 0, py = 0;
+  home();
+  let steps = 80;
+  let dv = (Math.PI * 2) / steps
+  let step = 0;
+  state.interval = setInterval(() => {
+    if (state.interval === 0) return
+    if (step >= steps) {
+      clearInterval(state.interval)
+      state.interval = 0
     }
-    // updateTimes()
-    state.sortedQueue = state.terminal.queue.sort((a, b) => b.time - a.time)
-    state.maxRSSHistory.push(state.terminal.maxRSS)
+    let cx = Math.sin(step * dv) * 64
+    let cy = 0
 
-    state.loaded = true
+    sendCommand(cx, cy, true)
+
+
+    if (step + 1 >= steps) return
+    step = (step + 1) % steps
+  }, 40)
+
 
 }
 
-const router = useRouter()
+function halt() {
+  clearInterval(state.interval)
+  state.interval = 0
+}
+
+function moveDelta(a: number, b: number) {
+  sendCommand(a, b, false)
+}
+
+function speedDelta(delta: number) {
+  state.speed += delta
+}
+
+interface Output {
+  pan: number,
+  tilt: number,
+}
+
+function fx(a: number, b: number): string {
+  let pan = Math.round(Math.sin(a) * 1000) / 1000
+  let tilt = Math.round(Math.cos(b) * 1000) / 1000
+  return `[${a}, ${b}] => (${pan}, ${tilt})`
+}
+
+function home() {
+  sendCommand(0, 0, true)
+}
 
 </script>
 
 <template>
-    <div class="page-grid">
+  <div class="d-flex gap-1 h-100">
+    <div class="w-100">
+      <div class="d-flex gap-1">
+        <div class="element" style="width: 13rem">
+          <div class="d-flex justify-content-between label-c0 label-o3 px-1">
+            <div>Connected</div>
+            <div>{{ state.connected }}</div>
+          </div>
+          <div class="d-flex justify-content-between label-c0 label-o3 px-1">
+            <div>A</div>
+            <div>{{ state.pos.a }}</div>
+          </div>
+          <div class="d-flex justify-content-between label-c0 label-o3 px-1">
+            <div>B</div>
+            <div>{{ state.pos.b }}</div>
+          </div>
+          <div class="d-flex justify-content-between label-c0 label-o3 px-1">
+            <div>Speed</div>
+            <div>{{ state.speed }} steps</div>
+          </div>
+        </div>
+        <div class="flex-fill d-flex flex-column gap-1">
+          <div class="element">
+            <div
+                class="label-c2 label-o3 label-w600">Relative Pan-Tilt
+            </div>
+            <div>
+              <PanTilt :a="(state.pan/512)*90"
+                       :b="(state.tilt/512)*90-90"></PanTilt>
+            </div>
+            <div class="d-flex justify-content-between">
+              <div class="label-c2 label-o3 label-w600 w-50 text-center">
+                Pan
+              </div>
 
+              <div class="label-c2 label-o3 label-w600 w-50 text-center">
+                Tilt
+              </div>
+            </div>
+          </div>
+          <div class="element">
+            <div
+                class="label-c2 label-o3 label-w600">Motor Absolute Position
+            </div>
+            <div>
+              <PanTilt :a="(state.pos.a/512)*90"
+                       :b="-(state.pos.b/512)*90"></PanTilt>
+            </div>
+            <div class="d-flex justify-content-between">
+              <div class="label-c2 label-o3 label-w600 w-50 text-center">
+                Right
+              </div>
+
+              <div class="label-c2 label-o3 label-w600 w-50 text-center">
+                Left
+              </div>
+            </div>
+           
+          </div>
+        </div>
+      </div>
     </div>
+    <div class="w-100 ">
+      <div class="d-flex  gap-1">
+
+
+        <Plot :cols="2" :rows="3" style="width: 13rem">
+          <div class="subplot arrow-button"
+               @click="(e) => {setOrigin()}">Set Origin
+          </div>
+          <div class="subplot arrow-button"
+               @click="(e) => {home()}">Go To Origin
+          </div>
+          <div class="subplot arrow-button"
+               @click="(e) => {state.speed=state.speed/2}">Speed -1
+          </div>
+          <div class="subplot arrow-button"
+               @click="(e) => {state.speed=state.speed*2}">Speed +1
+          </div>
+          <div class="subplot arrow-button"
+               @click="(e) => {circle()}">Circle
+          </div>
+          <div class="subplot arrow-button"
+               @click="(e) => {halt()}">HALT
+          </div>
+        </Plot>
+        <div class="button-box element" style="width: 13rem">
+          <div></div>
+          <div class="subplot arrow-button"
+               @click="(e) => {sendCommand(-state.speed, state.speed, false)}">􀄨
+          </div>
+          <div></div>
+          <div class="subplot arrow-button"
+               @click="(e) => {sendCommand(state.speed*2, state.speed*2, false)}">􀰌
+          </div>
+          <div class="subplot arrow-button"
+               @click="(e) => {sendCommand(state.speed, -state.speed, false)}">􀄩
+          </div>
+          <div class="subplot arrow-button"
+               @click="(e) => {sendCommand(-state.speed*2, -state.speed*2, false)}">􀰑
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<style scoped>
-
-.work-box {
-    width: 100%;
-    height: 1px;
-    background-color: #0a58ca;
+<style lang="scss" scoped>
+.arrow-button {
+  display: flex;
+  justify-content: center;
 }
 
-.pane-fill {
-    position: relative;
-    grid-column: 2 / 4;
-    grid-row: 1 / 1;
-    display: flex;
-    flex-direction: column;
+.button-box {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  grid-gap: 0.25rem;
 }
 
-.page-grid {
-    width: 100%;
-    height: 100%;
-    display: grid;
-    grid-column-gap: 0.25rem;
-    grid-row-gap: 0.25rem;
-    grid-template-rows: repeat(1, 1fr);
-    grid-template-columns: repeat(4, 1fr);
+.nav-bar {
+  height: 2rem;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(1, 1fr);
 }
 </style>

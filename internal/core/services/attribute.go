@@ -20,6 +20,12 @@ type attributeService struct {
 	repository ports.AttributeRepository
 	operator   ports.AttributeOperator
 	generic.Watchable[domain.Attribute]
+	Logs generic.Watchable[domain.AttributeLog]
+}
+
+func (a *attributeService) Watch(ref chan<- domain.Mutation) {
+	a.Watchable.Watch(ref)
+	a.Logs.Watch(ref)
 }
 
 func (a *attributeService) EmitAll() error {
@@ -33,7 +39,21 @@ func (a *attributeService) EmitAll() error {
 			return err
 		}
 	}
+	logs, err := a.FindRecentLogs()
+	if err != nil {
+		return err
+	}
+	for _, log := range *logs {
+		err = a.Logs.Emit(log)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (a *attributeService) FindRecentLogs() (*[]domain.AttributeLog, error) {
+	return a.repository.FindRecentLogs()
 }
 
 func (a *attributeService) FindAllByEntity(entity string) (*[]domain.Attribute, error) {
@@ -49,7 +69,6 @@ func (a *attributeService) Register(attribute *domain.Attribute) error {
 	if err != nil {
 		return err
 	}
-
 	err = a.Emit(*attribute)
 	if err != nil {
 		return err
@@ -62,13 +81,29 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 	if err != nil {
 		return err
 	}
+
+	e.Request = value
+	log, err := a.repository.Log(&(*e))
+	if err != nil {
+		return err
+	}
+
 	err = a.operator.Request(e, value)
 	if err != nil {
 		return err
 	}
+
+	e.UpdatedAt = time.Now()
 	err = a.repository.Update(e)
 	if err != nil {
 		return err
+	}
+
+	if log != nil {
+		err = a.Logs.Emit(*log)
+		if err != nil {
+			return err
+		}
 	}
 	err = a.Emit(*e)
 	if err != nil {

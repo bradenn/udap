@@ -7,12 +7,12 @@
 import {reactive} from "vue";
 
 interface Props {
-  title?: string
-  subtext?: string
-  sublink?: string
-  rows?: number
-  cols?: number
-  scroll?: boolean
+    title?: string
+    subtext?: string
+    sublink?: string
+    rows?: number
+    cols?: number
+    scroll?: boolean
 }
 
 let props = defineProps<Props>()
@@ -23,20 +23,20 @@ let state = reactive({})
 
 
 <template>
-  <div>
-    <div class="element p-1">
-      <div v-if="props.title" class="element-header">
-        <div class="element-label">{{ props.title }}</div>
-        <div :class="`${props.sublink ? 'text-accent':''}`" class="element-subtext">{{
-            props.subtext
-          }}
+    <div>
+        <div class="element">
+            <div v-if="props.title" class="element-header">
+                <div class="element-label">{{ props.title }}</div>
+                <div :class="`${props.sublink ? 'text-accent':''}`" class="element-subtext">{{
+                        props.subtext
+                    }}
+                </div>
+            </div>
+            <div :class="`${props.cols || props.rows ? 'element-grid':'element-flex'}`">
+                <slot></slot>
+            </div>
         </div>
-      </div>
-      <div :class="`${props.cols || props.rows ? 'element-grid':'element-flex'}`">
-        <slot></slot>
-      </div>
     </div>
-  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -45,7 +45,7 @@ let state = reactive({})
   border-bottom: 1px solid rgba(255, 149, 0, 0.3);
 }
 
-.element {
+div.element {
 
   .element-header {
     display: flex;

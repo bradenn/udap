@@ -1,19 +1,22 @@
 // Copyright (c) 2022 Braden Nicholson
 
-import SubroutineView from "@/views/terminal/settings/subroutines/SubroutineView.vue";
+import SubroutineView
+    from "@/views/terminal/settings/subroutines/SubroutineView.vue";
 
 // Overview
 import Subroutines from "@/views/terminal/settings/subroutines/Subroutines.vue";
 import Create from "@/views/terminal/settings/subroutines/pages/Create.vue";
-import EditSubroutine from "@/views/terminal/settings/subroutines/pages/EditSubroutine.vue";
-import Trigger from "@/views/terminal/settings/subroutines/pages/NewTrigger.vue";
+import EditSubroutine
+    from "@/views/terminal/settings/subroutines/pages/EditSubroutine.vue";
+import Trigger
+    from "@/views/terminal/settings/subroutines/pages/NewTrigger.vue";
 import Macro from "@/views/terminal/settings/subroutines/pages/CreateMacro.vue";
 import Zone from "@/views/terminal/settings/subroutines/pages/CreateZone.vue";
 
 const routes = {
     path: '/terminal/settings/subroutines',
     name: 'Subroutines',
-    icon: 'timeline',
+    icon: '􀐠',
     meta: {
         order: 3,
     },

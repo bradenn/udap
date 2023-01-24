@@ -4,85 +4,93 @@
 
 
 import {onMounted, reactive, watchEffect} from "vue";
-import moment from "moment";
 import Countdown from "@/components/Countdown.vue";
 
 
 interface ToastProps {
-    title: string
-    message: string
-    severity: number
-    time: number
-    index?: number
+  title: string
+  message: string
+  severity: number
+  time: number
+  index?: number
+  more?: number
 }
 
 const props = defineProps<ToastProps>()
 
 
 const state = reactive({
-    start: 0,
-    time: "",
+  start: 0,
+  diff: 0,
+  time: "",
 })
 
 let iconMap = new Map<number, any>(
     [
-        [
-            0, {icon: "􀅴", color: "10,132,255,0.6"}
-        ],
-        [
-            1, {icon: "􀁢", color: "48,209,88,0.6"}
-        ],
-        [
-            2, {icon: "􀇾", color: "255,149,0,0.6"}
-        ],
-        [
-            3, {icon: "􀘯", color: "255, 69, 58,0.6"}
-        ]
+      [
+        0, {icon: "􀅴", color: "10,132,255,0.6"}
+      ],
+      [
+        1, {icon: "􀁢", color: "48,209,88,0.6"}
+      ],
+      [
+        2, {icon: "􀇾", color: "255,149,0,0.6"}
+      ],
+      [
+        3, {icon: "􀘯", color: "255, 69, 58,0.6"}
+      ]
     ]
 )
 
 onMounted(() => {
-    state.start = props.time
+  state.start = props.time
 })
 
 watchEffect(() => {
-    state.time = moment(props.time).fromNow()
+  return props.time
 })
 
 
 </script>
 
 <template>
-    <div :class="`${props.time <= 300 && props.time !== -1 ? 'toast-dissolve' : ''}`" :style="`z-index: ${index || 2};`"
-         class="element toast"
-         style="width: 18rem; height: 2.25rem; ">
-        <div class="d-flex align-items-start px-1">
-            <div class="w-100 d-flex flex-column justify-content-start align-items-start">
-                <div class="d-flex justify-content-between align-content-center align-items-center w-100">
-                    <div class="d-flex align-items-center align-content-center justify-content-start ">
-                        <div :style="`color: rgba(${iconMap.get(props.severity).color})`"
-                             class="label-o2 label-c1 label-w500"
-                             style="padding-right: 0.225rem">
-                            {{ iconMap.get(props.severity).icon }}
-                        </div>
-                        <div class="label-c2 label-c1 label-o5 label-w600 lh-1">
-
-                            {{ props.title }}
-                        </div>
-                    </div>
-                    <div v-if="props.time > 0" class="lh-1">
-                        <Countdown :percent="props.time/state.start"></Countdown>
-                    </div>
-                </div>
-                <div class="label-c3 label-o3 label-w500 lh-1 px-3" style="letter-spacing: 0.3px">{{
-                        props.message
-                    }}
-                </div>
+  <div
+      :class="`${props.time <= 300 && props.time !== -1 ? 'toast-dissolve' : ''}`"
+      :style="`z-index: ${index || 2};`"
+      class="element toast"
+      style="width: 18rem; height: 2rem; ">
+    <div class="d-flex align-items-start px-1">
+      <div
+          class="w-100 d-flex flex-column justify-content-start align-items-start">
+        <div
+            class="d-flex justify-content-between align-content-center align-items-center w-100">
+          <div
+              class="d-flex align-items-center align-content-center justify-content-start ">
+            <div :style="`color: rgba(${iconMap.get(props.severity).color})`"
+                 class="label-o2 label-c1 label-w500 lh-1"
+                 style="padding-right: 0.225rem">
+              {{ iconMap.get(props.severity).icon }}
             </div>
+            <div class="label-c2 label-c1 label-o5 label-w600 lh-1">
+
+              {{ props.title }}
+            </div>
+          </div>
+          <div v-if="props.time > 0" class="lh-1">
+            <Countdown :more="more"
+                       :percent=" props.time/state.start "></Countdown>
+          </div>
         </div>
-
-
+        <div class="label-c3 label-o3 label-w500 lh-1 px-3"
+             style="letter-spacing: 0.3px">{{
+            props.message
+          }}
+        </div>
+      </div>
     </div>
+
+
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -91,7 +99,7 @@ watchEffect(() => {
 .toast-dissolve.toast.element {
 
   z-index: 10 !important;
-  animation: toast-dissolves 125ms linear forwards !important;
+  animation: toast-dissolves 200ms linear forwards !important;
 }
 
 @keyframes toast-dissolves {
@@ -102,17 +110,17 @@ watchEffect(() => {
   75% {
     transform: scale(0.92) translateY(0);
     opacity: 0.9;
-    filter: blur(12px);
+
   }
   85% {
     transform: scale(0.60) translateY(-10px);
     opacity: 0.1;
-    filter: blur(18px);
+
   }
   100% {
     opacity: 0.0;
     transform: translateY(-15px);
-    filter: blur(32px);
+    filter: blur(24px);
 
   }
 }
@@ -125,18 +133,16 @@ watchEffect(() => {
   0% {
     opacity: 0.0;
     transform: translateY(-20px);
-    filter: blur(36px);
+    filter: blur(24px);
 
   }
   15% {
     transform: scale(0.60) translateY(-20px);
     opacity: 0.1;
-    filter: blur(24px);
   }
   25% {
     transform: scale(0.92) translateY(0);
     opacity: 0.9;
-    filter: blur(12px);
   }
   100% {
     transform: scale(1) translateY(0);

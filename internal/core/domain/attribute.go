@@ -8,6 +8,14 @@ import (
 	"udap/internal/core/domain/common"
 )
 
+type AttributeLog struct {
+	common.Persistent
+	Attribute string    `json:"attribute"`
+	From      string    `json:"from"`
+	To        string    `json:"to"`
+	Time      time.Time `json:"time"`
+}
+
 type Attribute struct {
 	common.Persistent
 	Value     string         `json:"value"`
@@ -79,6 +87,15 @@ func (a *Attribute) AsInt() int {
 		return 0
 	}
 	return int(parsed)
+}
+
+func (a *Attribute) ToLog() AttributeLog {
+	return AttributeLog{
+		Attribute: a.Id,
+		To:        a.Request,
+		From:      a.Value,
+		Time:      time.Now(),
+	}
 }
 
 func (a *Attribute) AsFloat() float64 {

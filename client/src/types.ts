@@ -16,6 +16,7 @@ export interface Trigger {
 export enum TaskType {
     String,
     Number,
+    Passcode,
     Object,
     List,
     Radio,
@@ -123,7 +124,7 @@ export interface Preferences {
         outlines: boolean
     },
     appdata: {
-        colors: string[]
+        colors: number[]
     }
 }
 
@@ -296,7 +297,7 @@ export function memorySizeOf(obj: any) {
     var bytes = 0;
 
     function sizeOf(obj: any, max: number) {
-        if (max > 2) return
+        if (max > 10) return
         if (obj !== null && obj !== undefined) {
             switch (typeof obj) {
                 case 'number':
@@ -357,6 +358,16 @@ export interface Attribute {
     key: string;
     type: string;
     order: number;
+}
+
+export interface AttributeLog {
+    created: string;
+    id: string;
+    time: string;
+    attribute: string;
+    from: string;
+    to: string;
+    updated: string;
 }
 
 export interface Utilization {
@@ -469,6 +480,9 @@ export interface User {
     first: string;
     middle: string;
     last: string;
+    residency: string;
+    classification: string;
+    photo: string;
     password: string;
 }
 

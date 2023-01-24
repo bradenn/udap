@@ -14,7 +14,8 @@ public:
 
     Haptic &operator=(const Haptic &) = delete;
 
-    void sinPulse();
+    void sinPulseHigh();
+    void sinPulseLow();
 
     void pulseCustom(int freq, int amp, int max);
 

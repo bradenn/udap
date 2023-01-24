@@ -61,7 +61,7 @@ void Haptic::allocateGpio() {
     ESP_ERROR_CHECK(ledc_channel_config(&highFrequency));
 }
 
-void Haptic::sinPulse() {
+void Haptic::sinPulseLow() {
 
     int steps = 20;
     double dr = (M_PI * 2) / steps;
@@ -77,6 +77,22 @@ void Haptic::sinPulse() {
 
 }
 
+void Haptic::sinPulseHigh() {
+
+    int steps = 20;
+    double dr = (M_PI * 2) / steps;
+    int dt = 3125 / steps;
+    for (int j = 0; j < steps; j++) {
+        double r = pow(cos((j * dr)), 2) * 4095.0;
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, floor(r));
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+        usleep(dt);
+    }
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+
+}
+
 void Haptic::pulseCustom(int freq, int amp, int max) {
     if (freq == 0) {
         for (int j = 0; j < max; j++) {
@@ -89,7 +105,9 @@ void Haptic::pulseCustom(int freq, int amp, int max) {
             pulseHigh(0);
         }
     } else if (freq == 2) {
-        sinPulse();
+        sinPulseLow();
+    }else if (freq == 3) {
+        sinPulseHigh();
     }
 }
 

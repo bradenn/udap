@@ -6,6 +6,7 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/log"
 )
 
 func NewEntityService(repository ports.EntityRepository) ports.EntityService {
@@ -70,6 +71,20 @@ func (u *entityService) Register(entity *domain.Entity) error {
 	if err != nil {
 		return err
 	}
+	log.Event("Entity '%s' registered.", entity.Name)
+	return nil
+}
+
+func (u *entityService) ChangeAlias(id string, alias string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	byId.Alias = alias
+	err = u.mutate(byId)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -112,6 +127,6 @@ func (u *entityService) Update(entity *domain.Entity) error {
 	return u.repository.Update(entity)
 }
 
-func (u entityService) Delete(entity *domain.Entity) error {
+func (u *entityService) Delete(entity *domain.Entity) error {
 	return u.repository.Delete(entity)
 }

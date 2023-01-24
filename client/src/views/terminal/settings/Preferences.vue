@@ -6,6 +6,7 @@ import Plot from "@/components/plot/Plot.vue";
 import Subplot from "@/components/plot/Subplot.vue";
 import FixedScroll from "@/components/scroll/FixedScroll.vue";
 import core from "@/core";
+import Toolbar from "@/components/toolbar/Toolbar.vue";
 
 const haptics = core.haptics()
 
@@ -60,6 +61,18 @@ const defaults = {
     {
       name: "Milky Way",
       identifier: "milk",
+    },
+    {
+      name: "Hexagons",
+      identifier: "bestagon",
+    },
+    {
+      name: "Solid White",
+      identifier: "white",
+    },
+    {
+      name: "Solid Black",
+      identifier: "black",
     }
   ],
   touchModes: [
@@ -142,7 +155,8 @@ function changeBlur(blurred: boolean) {
 
 <template>
   <div class="h-100">
-
+    <Toolbar class="mb-1" icon="􀌆" title="Preferences">
+    </Toolbar>
     <div class="">
       <div class="element">
         <div class="d-flex align-items-center justify-content-between">
@@ -152,12 +166,15 @@ function changeBlur(blurred: boolean) {
 
         <FixedScroll :horizontal="true" class="d-flex gap-1"
                      style="max-width: calc(100vw - 2.5rem); overflow-x: scroll;">
-          <div v-for="background in defaults.backgrounds" class=" w-100" style="min-width: 8rem;"
+          <div v-for="background in defaults.backgrounds" class=" w-100"
+               style="min-width: 8rem;"
                @click="changeBackground(background.identifier)">
-            <div class=" w-100 d-flex justify-content-start subplot " style="padding: 0.125rem;">
-              <div :class="`${preferences.ui.background.image === background.identifier?'active':''}`"
-                   :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
-                   class="background-preview ">
+            <div class=" w-100 d-flex justify-content-start subplot "
+                 style="padding: 0.125rem;">
+              <div
+                  :class="`${preferences.ui.background.image === background.identifier?'active':''}`"
+                  :style="`background-image: url('/custom/${background.identifier}@2x.png');`"
+                  class="background-preview ">
                 <div class="label-xxs label-w500 label-o5 pb-1">
                   {{ background.name }}
                 </div>
@@ -174,14 +191,16 @@ function changeBlur(blurred: boolean) {
       <div class="d-flex w-100 gap justify-content-between mt-2">
 
         <Plot :cols="2" :rows="1" class="flex-grow-1" title="Themes">
-          <Subplot v-for="theme in defaults.themes" :active="preferences.ui.theme === theme.identifier"
+          <Subplot v-for="theme in defaults.themes"
+                   :active="preferences.ui.theme === theme.identifier"
                    :fn="() => changeTheme(theme.identifier)"
                    :name="theme.name" @click="">
           </Subplot>
         </Plot>
 
         <Plot :cols="2" :rows="1" class="flex-grow-1" title="Touch Mode">
-          <Subplot v-for="mode in defaults.touchModes" :active="preferences.ui.mode === mode.identifier"
+          <Subplot v-for="mode in defaults.touchModes"
+                   :active="preferences.ui.mode === mode.identifier"
                    :fn="() => changeTouchmode(mode.identifier)"
                    :name="mode.name" @click="">
           </Subplot>
@@ -195,7 +214,8 @@ function changeBlur(blurred: boolean) {
           </Subplot>
         </Plot>
         <Plot :cols="2" :rows="1" class="flex-grow-1" title="Themes">
-          <Subplot v-for="theme in defaults.blurModes" :active="preferences.ui.background.blur === theme.identifier"
+          <Subplot v-for="theme in defaults.blurModes"
+                   :active="preferences.ui.background.blur === theme.identifier"
                    :fn="() => changeBlur(theme.identifier)"
                    :name="theme.name" @click="">
           </Subplot>

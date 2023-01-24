@@ -1,6 +1,6 @@
 $fog: rgba(255, 255, 255, 0.10);
 
-$font-family-base: 'SF Pro Text';
+$font-family-base: 'Arial';
 
 
 $body-color: rgba(255, 255, 255, 0.8);
@@ -13,6 +13,27 @@ html {
   user-select: none !important;
   height: 100%;
 
+}
+
+code {
+
+  font-family: "JetBrains Mono", serif;
+
+  border-radius: 8px !important;
+  line-height: 0.5rem;
+  height: 0.5rem;
+  color: rgba(255, 149, 0, 0.6);
+  font-weight: 600;
+}
+
+.page-grid {
+  width: 100%;
+
+  display: grid;
+  grid-column-gap: 0.25rem;
+  grid-row-gap: 0.25rem;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 
 .cursor-blink {
@@ -207,10 +228,10 @@ $fontColors: (
   height: 100vh;
   display: flex;
   overflow: hidden;
-  backdrop-filter: blur(38px);
+  backdrop-filter: blur(8px);
   padding: 4.5rem 1rem 1rem;
   transition: all 100ms ease;
-  z-index: 22 !important;
+  z-index: 5 !important;
 }
 
 

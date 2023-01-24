@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"time"
 	"udap/internal/core/domain"
 	"udap/internal/plugin"
 )
@@ -112,7 +113,9 @@ func (v *Weather) fetchWeather() error {
 	if err != nil {
 		return err
 	}
+
 	cli := http.Client{}
+	cli.Timeout = time.Second * 2
 	defer cli.CloseIdleConnections()
 	do, err := cli.Do(request)
 	if err != nil {

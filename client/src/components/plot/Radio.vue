@@ -7,6 +7,7 @@ interface Toggle {
   icon?: string
   sf?: string
   active: boolean
+  disabled?: boolean
   fn: () => void
 }
 
@@ -47,9 +48,14 @@ function up() {
 </script>
 
 <template>
-  <div :class="`${props.active?'active':''}`" class="radio subplot d-flex justify-content-center"
-       @click="(e) => props.fn()">
-    <div><span v-if="props.icon"><i :class="`fa-${props.icon}`" class="fa-solid "></i>&nbsp;</span>{{ props.title }}
+  <div
+      :class="`${props.active?'active':props.disabled===true?'disabled-radio':''}`"
+      class="radio subplot d-flex justify-content-center"
+      @click="(e) => props.fn()">
+    <div><span v-if="props.icon"><i :class="`fa-${props.icon}`"
+                                    class="fa-solid "></i>&nbsp;</span>{{
+        props.title
+      }}
       <div v-if="props.sf" class="label-o3 label-c2" v-html="props.sf"></div>
     </div>
     <slot></slot>
@@ -59,6 +65,10 @@ function up() {
 <style scoped>
 .radio.subplot:active {
   animation: click 100ms ease forwards;
+}
+
+.radio.subplot.disabled-radio {
+  opacity: 0.5 !important;
 }
 
 @keyframes click {

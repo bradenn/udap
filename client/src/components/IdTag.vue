@@ -13,14 +13,14 @@ import ToolbarButton from "@/components/ToolbarButton.vue";
 import type {Remote} from "@/remote";
 
 let state = reactive({
-    menu: false,
-    reloading: true,
-    connected: false,
-    link: false,
-    zoneEntity: {} as Entity,
-    zoneAttribute: {} as Attribute,
-    status: {} as Status,
-    logs: [] as NotifyBody[]
+  menu: false,
+  reloading: true,
+  connected: false,
+  link: false,
+  zoneEntity: {} as Entity,
+  zoneAttribute: {} as Attribute,
+  status: {} as Status,
+  logs: [] as NotifyBody[]
 })
 
 let preferences: Preferences = inject("preferences") as Preferences
@@ -29,159 +29,186 @@ let system: any = inject('system')
 let notify: Notify = core.notify()
 
 onMounted(() => {
-    update()
-    state.logs = notify.logs()
-    state.reloading = false
+  update()
+  state.logs = notify.logs()
+  state.reloading = false
 })
 
 watchEffect(() => {
-    state.connected = remote.connected
-    update()
+  state.connected = remote.connected
+  update()
 
-    return state.zoneAttribute
+  return state.zoneAttribute
 })
 
 watchEffect(() => {
-    state.logs = notify.logs()
-    return notify.logs()
+  state.logs = notify.logs()
+  return notify.logs()
 })
 
 function update() {
-    let entity = remote.entities.find(e => e.name === 'faces')
-    if (!entity) return
-    state.zoneEntity = entity
+  let entity = remote.entities.find(e => e.name === 'faces')
+  if (!entity) return
+  state.zoneEntity = entity
 
-    let attr = remote.attributes.find(e => e.key === 'deskFace')
-    if (!attr) return
-    state.zoneAttribute = attr
+  let attr = remote.attributes.find(e => e.key === 'deskFace')
+  if (!attr) return
+  state.zoneAttribute = attr
 
-    let stat = JSON.parse(attr.value) as Status
-    if (!stat) return
+  let stat = JSON.parse(attr.value) as Status
+  if (!stat) return
 
-    state.status = stat
+  state.status = stat
 
 }
 
 const haptics = core.haptics()
 
 function open() {
-    haptics.tap(2, 1, 100)
-    state.menu = !state.menu
+  haptics.tap(2, 1, 100)
+  state.menu = !state.menu
 }
 
 function toggleMenu() {
-    state.menu = !state.menu
+  state.menu = !state.menu
 }
 
 function reload() {
-    state.reloading = true
-    document.location.reload()
+  state.reloading = true
+  document.location.reload()
 }
 
 
 </script>
 
 <template>
-    <div v-if="state.menu" class="context context-id d-flex justify-content-start align-items-center flex-column"
-         @click="state.menu = false">
-        <div>
-            <div class="d-flex align-items-center justify-content-between">
-                <div class="label-c0 label-w700 label-o4 px-1">Notifications</div>
-                <ToolbarButton :accent="true" :active="false" class="text-accent" style="height: 1.4rem"
-                               text="Clear" @click.stop="() => {notify.clearLog()}"
-                ></ToolbarButton>
-            </div>
-            <div class="d-flex gap-1 flex-column" @click.stop>
-                <Toast v-for="log in state.logs" :key="log.uuid"
-                       :index="1"
-                       :message="log.message"
-                       :severity="log.severity"
-                       :time="-1"
-                       :title="log.name"></Toast>
-            </div>
+  <div v-if="state.menu"
+       class="context context-id d-flex justify-content-start align-items-center flex-column"
+       @click="state.menu = false">
+    <div>
+      <div class="d-flex align-items-center justify-content-between"
+           style=" width: 18rem;">
+        <div class="label-c0 label-w700 label-o4 px-1">Notifications</div>
+
+        <ToolbarButton :accent="true" :active="false" class="text-accent"
+                       style="height: 1.4rem;"
+                       text="Clear" @click.stop="() => {notify.clearLog()}"
+        ></ToolbarButton>
+      </div>
+      <div class="d-flex gap-1 flex-column" @click.stop>
+        <Toast v-for="log in state.logs.slice(0, 5)" :key="log.uuid"
+               :index="1"
+               :message="log.message"
+               :severity="log.severity"
+               :time="-1"
+               :title="log.name"></Toast>
+        <div v-if="state.logs.length > 5"
+             class="label-c1 label-o4 px-1 subplot p-2 py-1 px-2">
+          + {{ state.logs.length }} more
         </div>
+        <div v-if="state.logs.length === 0">
+          <div
+              class="label-c1 label-o4 px-1 subplot p-2 py-1 px-2">No notifications</div>
+        </div>
+      </div>
     </div>
-    <div class="d-flex flex-column align-items-start justify-content-start h-100">
+  </div>
+  <div class="d-flex flex-column align-items-start justify-content-start h-100">
 
-        <div class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1"
-             style="height: 2rem !important; width: 12rem" @mousedown="open">
-            <div class="id-icon">
-                <span v-if="state.connected">􀙇</span>
-                <span v-else>􀙈</span>
-            </div>
-            <div class="id-icon">
-                <span v-if="state.connected">􀌌</span>
-                <span v-else>􀌐</span>
+    <div
+        class="tag-container element d-flex align-items-center align-content-center justify-content-start gap-1 px-2"
+        style="height: 2rem !important; width: 12rem" @mousedown="open">
+      <div class="id-icon">
+        <span v-if="true">􀙇</span>
+        <span v-else>􀙈</span>
+      </div>
+      <div class="id-icon">
+        <span v-if="state.connected">􀌌</span>
+        <span v-else>􀌐</span>
 
-            </div>
-            <div v-if="remote.connecting">
-                <Loader></Loader>
-            </div>
-            <div class="flex-grow-1"></div>
-            <div class="label-c2 label-o2 px-0">
-                <div v-if="state.menu">
-                    <i class="fa-solid fa-caret-down "></i>
-                </div>
-                <div v-else>
-                    <i class="fa-solid fa-caret-left px-1"></i>
-                </div>
-            </div>
+      </div>
+
+      <Loader v-if="!state.connected"></Loader>
+
+
+      <div class="flex-grow-1"></div>
+      <div class="label-c2 label-o2 px-0">
+        <div v-if="state.menu">
+          <i class="fa-solid fa-caret-down "></i>
         </div>
-        <div v-if="state.menu" class="position-absolute tag-summary d-flex flex-column gap-1 " style="top:2.625rem">
-
-            <Plot :cols="4" :rows="1" @click="state.menu = false">
-                <Button :active="true" text="􀎟" @click="$router.push('/terminal/home')"></Button>
-                <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
-                <Button :active="true" text="􀅈" @click="reload"></Button>
-                <Button :active="true" text="􀍟" @click="$router.push('/terminal/settings')"></Button>
-            </Plot>
-            <Plot :cols="2" :rows="1">
-                <Button :active="true" text="Beta" @click="$router.push('/terminal/home')"></Button>
-                <Button :active="true" text="􀨲" @click="$router.push('/terminal/remote')"></Button>
-            </Plot>
-            <Plot :cols="2" :rows="1">
-                <div class="subplot">
-                    <div class="label-c3">Wi-Fi</div>
-                    <div class="d-flex justify-content-center align-items-center align-content-center">
-                        <div class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-                            <i class="fa-solid fa-circle text-success" style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
-                        </div>
-
-                    </div>
-                </div>
-                <div class="subplot">
-                    <div class="label-c3">NEXUS</div>
-                    <div class="d-flex justify-content-center align-items-center align-content-center">
-                        <div class="d-flex align-items-center lh-1">
-                            <div v-if="remote.nexus.state > 1"
-                                 class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-                                <i class="fa-solid fa-circle text-danger" style="font-size: 8px; line-height: 1.2rem;"
-                                ></i>&nbsp;&nbsp;DOWN
-                            </div>
-                            <div v-else class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
-                                {{ remote.size }}
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            </Plot>
-            <Plot :cols="2" :rows="2">
-                <Toggle :active="preferences.ui.grid" :fn="() => preferences.ui.grid = !preferences.ui.grid"
-                        title="Grid"></Toggle>
-                <Toggle :active="preferences.ui.screensaver.enabled"
-                        :fn="() => preferences.ui.screensaver.enabled = !preferences.ui.screensaver.enabled"
-                        title="Screensaver"></Toggle>
-                <Toggle :active="preferences.ui.watermark"
-                        :fn="() => preferences.ui.watermark = !preferences.ui.watermark"
-                        title="Watermark"></Toggle>
-                <Toggle :active="preferences.ui.background.blur"
-                        :fn="() => preferences.ui.background.blur = !preferences.ui.background.blur"
-                        title="Bg Blur"></Toggle>
-            </Plot>
-
+        <div v-else>
+          <i class="fa-solid fa-caret-left px-1"></i>
         </div>
+      </div>
     </div>
+    <div v-if="state.menu"
+         class="position-absolute tag-summary d-flex flex-column gap-1 "
+         style="top:2.625rem">
+
+      <Plot :cols="4" :rows="1" @click="state.menu = false">
+        <Button :active="true" text="􀎟"
+                @click="$router.push('/terminal/home')"></Button>
+        <Button :active="true" text="􀨲"
+                @click="$router.push('/terminal/remote')"></Button>
+        <Button :active="true" text="􀅈" @click="reload"></Button>
+        <Button :active="true" text="􀍟"
+                @click="$router.push('/terminal/settings')"></Button>
+      </Plot>
+      <Plot :cols="2" :rows="1">
+        <Button :active="true" text="Beta"
+                @click="$router.push('/terminal/home')"></Button>
+        <Button :active="true" text="􀨲"
+                @click="$router.push('/terminal/remote')"></Button>
+      </Plot>
+      <Plot :cols="2" :rows="1">
+        <div class="subplot">
+          <div class="label-c3">Wi-Fi</div>
+          <div
+              class="d-flex justify-content-center align-items-center align-content-center">
+            <div class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+              <i class="fa-solid fa-circle text-success"
+                 style="font-size: 8px; line-height: 1rem;"></i>&nbsp;&nbsp;OK
+            </div>
+
+          </div>
+        </div>
+        <div class="subplot">
+          <div class="label-c3">NEXUS</div>
+          <div
+              class="d-flex justify-content-center align-items-center align-content-center">
+            <div class="d-flex align-items-center lh-1">
+              <div v-if="remote.nexus.state > 1"
+                   class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+                <i class="fa-solid fa-circle text-danger"
+                   style="font-size: 8px; line-height: 1.2rem;"
+                ></i>&nbsp;&nbsp;DOWN
+              </div>
+              <div v-else
+                   class="d-flex align-items-center label-o4 label-c3 lh-1 px-1">
+                {{ remote.size }}
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </Plot>
+      <Plot :cols="2" :rows="2">
+        <Toggle :active="preferences.ui.grid"
+                :fn="() => preferences.ui.grid = !preferences.ui.grid"
+                title="Grid"></Toggle>
+        <Toggle :active="preferences.ui.screensaver.enabled"
+                :fn="() => preferences.ui.screensaver.enabled = !preferences.ui.screensaver.enabled"
+                title="Screensaver"></Toggle>
+        <Toggle :active="preferences.ui.watermark"
+                :fn="() => preferences.ui.watermark = !preferences.ui.watermark"
+                title="Watermark"></Toggle>
+        <Toggle :active="preferences.ui.background.blur"
+                :fn="() => preferences.ui.background.blur = !preferences.ui.background.blur"
+                title="Bg Blur"></Toggle>
+      </Plot>
+
+    </div>
+  </div>
 
 </template>
 
