@@ -100,7 +100,7 @@ let meta: RouteMeta = useRouteMeta()
 
 <template>
   <div class="h-100 d-flex flex-column gap-1">
-    <Toolbar :icon="meta.icon" class="flex-shrink-0"
+    <Toolbar :icon="meta?.icon" class="flex-shrink-0"
              title="Entities">
       <div class="flex-fill"></div>
 

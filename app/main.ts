@@ -21,7 +21,9 @@ function createWindow() {
         hiddenInset: true
     });
 
+
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
     win.webContents.setZoomFactor(1)
     win.loadURL('http://localhost:5002')
 }

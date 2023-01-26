@@ -12,6 +12,7 @@ const routes = {
         order: 3,
         icon: '􀩶'
     },
+    component: Entities,
     children: [
         {
             path: '/terminal/settings/entities',
@@ -26,7 +27,7 @@ const routes = {
             component: Entity
         },
     ],
-    component: Entities
+
 }
 
 export default routes

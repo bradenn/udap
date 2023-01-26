@@ -14,7 +14,6 @@ let props = defineProps<Loader>()
 
 let notify: Notify = inject("notify") as Notify
 
-
 let state = reactive({
   notify: {} as NotifyBody,
   queued: 0
@@ -22,17 +21,18 @@ let state = reactive({
 
 onMounted(() => {
   updateNotification()
-  state.queued = notify.queued()
 })
 
 
 watchEffect(() => {
   updateNotification()
-  state.queued = notify.queued()
+
   return notify.current()
 })
 
 function updateNotification() {
+  if (!notify.queued) return;
+  state.queued = notify.queued()
   state.notify = notify.current()
 }
 
