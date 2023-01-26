@@ -35,7 +35,9 @@ let zones = [
 
 
 let state = reactive({
-  zone: {} as Zone,
+  zone: {
+    name: ""
+  } as Zone,
   zones: [] as Zone[],
   lights: {} as Entity[],
   macros: {} as Macro[],
@@ -128,7 +130,7 @@ function changeGlobalCCT() {
   <div v-if="!state.loading" class="d-flex flex-column gap-1">
     <div>
       <Select
-          :selected="`${state.zone.name.charAt(0).toUpperCase()}${state.zone.name.substring(1)}`">
+          :selected="`${state.zone.name}`">
         <div v-for="zone in state.zones"
              :class="state.zone.name !== zone.name?'subplot-inline':''"
              class="subplot"

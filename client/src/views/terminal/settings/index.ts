@@ -8,8 +8,7 @@ import Endpoints from "@/views/terminal/settings/endpoint/Endpoints.vue";
 import Zone from "@/views/terminal/settings/zone/Zone.vue";
 import Zones from "@/views/terminal/settings/zone/Zones.vue";
 import Devices from "@/views/terminal/settings/device/Device.vue";
-import DeviceOverview
-    from "@/views/terminal/settings/device/DeviceOverview.vue";
+import DeviceOverview from "@/views/terminal/settings/device/DeviceOverview.vue";
 import DeviceMonitor from "@/views/terminal/settings/device/DeviceMonitor.vue";
 import RenameDevice from "@/views/terminal/settings/device/RenameDevice.vue";
 import subroutines from "@/views/terminal/settings/subroutines";
@@ -30,7 +29,6 @@ export default {
                 path: '/terminal/settings/preferences',
                 name: 'Preferences',
                 icon: '􀐗',
-
                 meta: {
                     order: 0,
                 },

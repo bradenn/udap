@@ -7,7 +7,7 @@
 
     <div class="flex-grow-1"
          style="height: calc(100% - 2rem)">
-      <router-view></router-view>
+      <RouterView></RouterView>
     </div>
   </div>
 </template>
