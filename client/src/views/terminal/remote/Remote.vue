@@ -1,7 +1,8 @@
 <!-- Copyright (c) 2022 Braden Nicholson -->
 <script lang="ts" setup>
 import {inject, onMounted, reactive, watchEffect} from "vue";
-import type {Attribute, Entity as EntityType, Preferences} from "@/types";
+import type {Attribute, Entity as EntityType, Macro, Preferences} from "@/types";
+import MacroDom from "@/components/Macro.vue";
 import Slider from "@/components/Slider.vue";
 import Entity from "@/components/Entity.vue";
 import Switch from "@/components/Switch.vue";
@@ -12,9 +13,11 @@ import type Core from "@/core";
 import core from "@/core";
 import MenuSection from "@/components/menu/MenuSection.vue";
 import ColorPicker from "@/components/ColorPicker.vue";
+import macroService from "@/services/macroService";
 
 const state = reactive({
   entities: [] as EntityType[],
+  macros: [] as Macro[],
   selected: [] as string[],
   types: [] as any[],
 
@@ -95,6 +98,7 @@ function sortEntities() {
 }
 
 function fetchAttributes() {
+  state.macros = remote.macros
   if (state.selected.length > 0) {
     let a = remote.attributes.filter(a => state.selected.includes(a.entity))
     if (!a) return
@@ -113,7 +117,7 @@ function fetchAttributes() {
 const notify = core.notify()
 
 function attributeRequestAll(key: string, value: string) {
-  let attrs = remote.attributes.filter(a => state.selected.includes(a.entity) && a.key === key) as Attribute[]
+  let attrs = remote.attributes.filter(a => state.selected.includes(a.entity) && a.key === key && a.value !== value) as Attribute[]
   if (!attrs) return;
 
   for (let attr of attrs) {
@@ -131,6 +135,15 @@ function attributeRequestAll(key: string, value: string) {
 
 function applyState(attribute: Attribute) {
   attributeRequestAll(attribute.key, attribute.value)
+}
+
+function triggerMacro(macro: Macro) {
+  macroService.runMacro(macro.id).then(r => {
+    notify.success('Remote', `Macro '${macro.name}' has been triggered.`)
+
+  }).catch(err => {
+    notify.fail('Remote', `Macro '${macro.name}' has been triggered.`)
+  })
 }
 
 const colorTemps = [
@@ -177,6 +190,11 @@ function timeSince(time: string): string {
     <div style="grid-column: 2 / span 3; grid-row: 1 / span 6; ">
       <!--            <FixedScroll style="overflow-y: scroll">-->
       <div class="d-flex flex-column" style="">
+        <!--        <div style="width: 6rem">-->
+
+        <!--          <Button :fill="true" :active="true" text="Clear" :accent="true" @mousedown="state.selected = []"></Button>-->
+
+        <!--        </div>-->
         <MenuSection v-for="(v, k) in state.types" :key="k" :title="`${k}`">
           <div class="entity-grid mb-1">
             <Entity v-for="entity in v" :key="entity.id" :entity="entity"
@@ -190,7 +208,7 @@ function timeSince(time: string): string {
       <!--            </FixedScroll>-->
     </div>
     <div style="grid-column: 5 / span 7; grid-row: 1 / span 8;">
-      <MenuSection :title="'Control'">
+      <MenuSection v-if="state.selected.length > 0" :title="'Control'">
         <div class="d-flex gap-1 flex-column">
           <div v-for="attribute in state.attributes" :key="`${attribute.id}`">
             <Switch v-if="attribute.key === 'on'"
@@ -227,7 +245,20 @@ function timeSince(time: string): string {
           </div>
         </div>
       </MenuSection>
+      <MenuSection v-else :title="`Macros`">
+        <div style="grid-column: 2 / span 3; grid-row: 1 / span 6; ">
+          <!--            <FixedScroll style="overflow-y: scroll">-->
+          <div class="entity-grid mb-1">
+            <MacroDom v-for="macro in state.macros" :key="macro.id" :macro="macro"
+                      @mousedown="() => triggerMacro(macro)">
+
+            </MacroDom>
+          </div>
+          <!--            </FixedScroll>-->
+        </div>
+      </MenuSection>
     </div>
+
 
   </div>
 </template>
