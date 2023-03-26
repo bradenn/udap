@@ -8,6 +8,7 @@ import {TaskType} from "@/types";
 import {onMounted, reactive, watchEffect} from "vue";
 import TaskManager from "@/components/task/TaskManager.vue";
 import macroService from "@/services/macroService";
+import Button from "@/components/Button.vue";
 
 interface EditMacroProps {
   macro: Macro,
@@ -135,12 +136,28 @@ function finish(tasks: Task[]) {
     id: props.macro.id,
     value: value.value,
   } as Macro).then(res => {
-    if (props.done) {
-      props.done()
-    }
+    notify.success("macro", `Macro '${props.macro.name}' has been updated.`)
+
   }).catch(err => {
+    notify.fail("macro", `Macro '${props.macro.name}' has not been updated.`, err)
     console.log(err)
   })
+  if (props.done) {
+    props.done()
+  }
+}
+
+const notify = core.notify()
+
+function deleteMacro() {
+  macroService.deleteMacro(props.macro.id).then(res => {
+    notify.success("macro", `Macro '${props.macro.name}' has been deleted.`)
+  }).catch(err => {
+    notify.fail("macro", `Macro '${props.macro.name}' has not been deleted.`, err)
+  })
+  if (props.done) {
+    props.done()
+  }
 }
 
 function save() {
@@ -151,19 +168,21 @@ function save() {
 </script>
 
 <template>
-  <div class="ctx ">
+  <div class="ctx " @click="() => {if(props.done) props.done()}">
     <div class="context-grid">
       <div v-if="state.loaded" class="context-pane  d-flex flex-column" style="" @click.stop>
-        <div class="nav-grid gap-1 pb-1 w-100 px-2">
+        <div class="nav-grid gap-1 pb-1 w-100">
           <div class="d-flex justify-content-start">
-            <div class="label-w500 label-c1 text-accent" @click="() => {if(props.done) props.done()}">􀆉 Back</div>
-
+            <Button active color="text-accent" fill icon="􀆉" text="Back"
+                    @click="() => {if(props.done) props.done()}"></Button>
           </div>
           <div class="d-flex justify-content-center">
             <div class="label-w500 label-c1 label-w600 align-self-center">Edit Macro</div>
           </div>
-          <div class="d-flex justify-content-end">
-            <div class="label-w500 label-c1 text-accent" @click="save">Save</div>
+          <div class="d-flex justify-content-end gap-1 align-items-center">
+            <Button active color="text-danger" fill icon="􀈑" text="Delete" @click="deleteMacro"></Button>
+            <!--            <div class="v-sep" style="height: 1rem"></div>-->
+            <Button active color="text-success" fill icon="􀆅" text="Save" @click="save"></Button>
           </div>
         </div>
 
