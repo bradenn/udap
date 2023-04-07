@@ -4,6 +4,12 @@
 [![Go CodeQL](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml)
 [![Typescript](https://github.com/bradenn/udap/actions/workflows/ts.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/ts.yml)
 
+Line Count
+
+```git ls-files ./**/*.go ./**/*.vue ./client/src/**/*.ts ./embeded/**/*.cpp ./embeded/**/*.h ./embeded/**/*.c ./pkg/**/*.py ./client/**/*.scss | xargs wc -l```
+
+`> 46603`
+
 ## Universal Device Aggregation Platform
 
 Udap aims to efficiently link and aggregate many unlike interfaces into a heuristic model that can be manipulated and

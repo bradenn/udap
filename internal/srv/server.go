@@ -4,6 +4,7 @@ package srv
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 	"net/http"
 	"time"
 	"udap/internal/port/routes"
@@ -19,6 +20,9 @@ type Server struct {
 func NewServer() Server {
 	srv := Server{}
 	srv.router = router.New()
+	crs := cors.AllowAll()
+
+	srv.router.Use(crs.Handler)
 
 	srv.server = &http.Server{
 		Addr:              ":3020",
@@ -51,7 +55,11 @@ func (s *Server) AddRoutes(routable ...routes.Routable) {
 }
 
 func (s *Server) Run() error {
-	err := s.server.ListenAndServeTLS("./certs/ca.crt", "./certs/ca.key")
+	//err := s.server.ListenAndServeTLS("./certs/ca.crt", "./certs/ca.key")
+	//if err != nil {
+	//	return err
+	//}
+	err := s.server.ListenAndServe()
 	if err != nil {
 		return err
 	}

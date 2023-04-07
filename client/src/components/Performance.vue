@@ -7,44 +7,44 @@ import {v4 as uuidv4} from "uuid";
 import {onMounted, onUnmounted, reactive, watchEffect} from "vue";
 
 const state = reactive({
-  uuid: uuidv4(),
-  canvas: {} as HTMLCanvasElement,
-  ctx: {} as CanvasRenderingContext2D,
-  ready: false
+    uuid: uuidv4(),
+    canvas: {} as HTMLCanvasElement,
+    ctx: {} as CanvasRenderingContext2D,
+    ready: false
 })
 
 let props = defineProps<{
-  bars: number,
-  values: number[]
+    bars: number,
+    values: number[]
 }>();
 
 onMounted(() => {
-  configureCanvas()
+    configureCanvas()
     draw()
 })
 
 onUnmounted(() => {
-  state.ctx.canvas.remove()
+    state.ctx.canvas.remove()
 
 })
 
 function configureCanvas() {
-  const _canvas = document.getElementById(`perf-canvas-${state.uuid}`)
-  state.canvas = _canvas as HTMLCanvasElement
-  state.ctx = state.canvas.getContext("2d") as CanvasRenderingContext2D
-  let scale = 1
-  state.ctx.scale(scale, scale)
+    const _canvas = document.getElementById(`perf-canvas-${state.uuid}`)
+    state.canvas = _canvas as HTMLCanvasElement
+    state.ctx = state.canvas.getContext("2d") as CanvasRenderingContext2D
+    let scale = 1
+    state.ctx.scale(scale, scale)
 
-  state.ready = true
-  state.canvas.width = state.canvas.clientWidth * scale
-  state.canvas.height = state.canvas.clientHeight * scale
+    state.ready = true
+    state.canvas.width = state.canvas.clientWidth * scale
+    state.canvas.height = state.canvas.clientHeight * scale
 
-  draw()
+    draw()
 }
 
 watchEffect(() => {
-  draw()
-  return props.values
+    draw()
+    return props.values
 })
 
 const barWidth = 2;
@@ -57,38 +57,38 @@ function lerp(a: number, b: number, t: number): number {
 
 function draw() {
 
-  let ctx = state.ctx;
+    let ctx = state.ctx;
     if (!ctx.canvas) return
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  ctx.beginPath();
-  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
 
-  let minY = Math.min(...props.values);
-  let maxY = Math.max(...props.values);
+    let minY = Math.min(...props.values);
+    let maxY = Math.max(...props.values);
 
-  let lastX = 0;
-  let lastY = ctx.canvas.height - (props.values[0] - minY) / (maxY - minY) * ctx.canvas.height;
+    let lastX = 0;
+    let lastY = ctx.canvas.height - (props.values[0] - minY) / (maxY - minY) * ctx.canvas.height;
 
-  for (let i = 1; i < props.values.length; i++) {
-    let x = i * (barWidth + barSpacing);
-    let y = ctx.canvas.height - (props.values[i] - minY) / (maxY - minY) * ctx.canvas.height;
+    for (let i = 1; i < props.values.length; i++) {
+        let x = i * (barWidth + barSpacing);
+        let y = ctx.canvas.height - (props.values[i] - minY) / (maxY - minY) * ctx.canvas.height;
 
-    for (let t = 0; t < 1; t += 0.01) {
-      let interpolatedX = lerp(lastX, x, t);
-      let interpolatedY = lerp(lastY, y, t);
-      // ctx.strokeStyle = getColor(lerp(props.values[i - 1], props.values[i], t), minY, maxY);
-      ctx.lineTo(interpolatedX, interpolatedY);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(interpolatedX, interpolatedY);
+        for (let t = 0; t < 1; t += 0.01) {
+            let interpolatedX = lerp(lastX, x, t);
+            let interpolatedY = lerp(lastY, y, t);
+            // ctx.strokeStyle = getColor(lerp(props.values[i - 1], props.values[i], t), minY, maxY);
+            ctx.lineTo(interpolatedX, interpolatedY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(interpolatedX, interpolatedY);
+        }
+
+        lastX = x;
+        lastY = y;
     }
 
-    lastX = x;
-    lastY = y;
-  }
-
-  ctx.stroke();
+    ctx.stroke();
 }
 
 // function draw() {
@@ -124,9 +124,9 @@ function draw() {
 </script>
 
 <template>
-  <div class="canvas-container">
-    <canvas :id="`perf-canvas-${state.uuid}`" class="inner-canvas"></canvas>
-  </div>
+    <div class="canvas-container">
+        <canvas :id="`perf-canvas-${state.uuid}`" class="inner-canvas"></canvas>
+    </div>
 </template>
 
 <style lang="scss" scoped>
