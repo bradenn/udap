@@ -10,7 +10,6 @@ import TaskManager from "@/components/task/TaskManager.vue";
 import macroService from "@/services/macroService";
 import type {Remote} from "@/remote";
 import Button from "@/components/Button.vue";
-import core from "@/core";
 
 const router = useRouter()
 
@@ -37,8 +36,12 @@ watchEffect(() => {
 function setOptions() {
     if (!remote) return;
 
-    let zones: TaskOption[] = remote.zones.filter(z => !z.deleted).map(t => {
-        return {title: t.name, description: t.entities.map(e => e.name).join(", "), value: t.id}
+    let entities: TaskOption[] = remote.entities.filter(e => e.type === "spectrum").map(t => {
+        return {
+            title: t.alias ? t.alias : t.module,
+            description: remote.attributes.filter(a => a.entity === t.id).map(a => a.key).join(", "),
+            value: t.id
+        }
     }) as TaskOption[]
 
     state.tasks = [
@@ -57,12 +60,12 @@ function setOptions() {
             preview: ""
         },
         {
-            title: "Zone",
+            title: "Devices",
             description: "What devices should this macro interact with?",
-            type: TaskType.Radio,
-            options: zones,
-            value: zones.length > 0 ? zones[0].value : '',
-            preview: zones.length > 0 ? zones[0].title : ''
+            type: TaskType.List,
+            options: entities,
+            value: [],
+            preview: ""
         },
         {
             title: "Attribute",
@@ -105,36 +108,21 @@ function goBack() {
     router.push("/terminal/settings/subroutines")
 }
 
-const notify = core.notify()
-
 function finish(tasks: Task[]) {
     const name = tasks.find(t => t.title === "Name");
-    if (!name) {
-        notify.fail("Macro", "Invalid macro name")
-        return;
-    }
+    if (!name) return;
 
     const description = tasks.find(t => t.title === "Description");
-    if (!description) {
-        notify.fail("Macro", "Invalid description")
-        return;
-    }
+    if (!description) return;
 
     const zone = tasks.find(t => t.title === "Zone");
-    if (!zone) {
-        notify.fail("Macro", "Invalid zone")
-        return;
-    }
+    if (!zone) return;
+
     const attributeTarget = tasks.find(t => t.title === "Attribute");
-    if (!attributeTarget) {
-        notify.fail("Macro", "Invalid attributeTarget")
-        return;
-    }
+    if (!attributeTarget) return;
+
     const value = tasks.find(t => t.title === "Value");
-    if (!value) {
-        notify.fail("Macro", "Invalid value")
-        return;
-    }
+    if (!value) return;
 
     macroService.createMacro({
         name: name.value as string,

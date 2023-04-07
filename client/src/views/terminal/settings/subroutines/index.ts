@@ -1,17 +1,15 @@
 // Copyright (c) 2022 Braden Nicholson
 
-import SubroutineView
-    from "@/views/terminal/settings/subroutines/SubroutineView.vue";
+import SubroutineView from "@/views/terminal/settings/subroutines/SubroutineView.vue";
 
 // Overview
 import Subroutines from "@/views/terminal/settings/subroutines/Subroutines.vue";
 import Create from "@/views/terminal/settings/subroutines/pages/Create.vue";
-import EditSubroutine
-    from "@/views/terminal/settings/subroutines/pages/EditSubroutine.vue";
-import Trigger
-    from "@/views/terminal/settings/subroutines/pages/NewTrigger.vue";
+import EditSubroutine from "@/views/terminal/settings/subroutines/pages/EditSubroutine.vue";
+import Trigger from "@/views/terminal/settings/subroutines/pages/NewTrigger.vue";
 import Macro from "@/views/terminal/settings/subroutines/pages/CreateMacro.vue";
 import Zone from "@/views/terminal/settings/subroutines/pages/CreateZone.vue";
+import CreateScene from "@/views/terminal/settings/subroutines/pages/CreateScene.vue";
 
 const routes = {
     path: '/terminal/settings/subroutines',
@@ -37,6 +35,12 @@ const routes = {
             name: 'Create A Macro',
             icon: 'timeline',
             component: Macro
+        },
+        {
+            path: '/terminal/settings/subroutines/scenes/create',
+            name: 'Create A Scene',
+            icon: 'scenes',
+            component: CreateScene
         },
         {
             path: '/terminal/settings/subroutines/macros/:macroId/edit',

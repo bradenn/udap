@@ -29,11 +29,9 @@ function apply() {
 }
 
 function toggle(pos: boolean) {
-    if (pos != state.active) {
-        state.active = pos
-        haptics.tap(2, 1, 100)
-        apply()
-    }
+    state.active = pos
+    haptics.tap(2, 1, 100)
+    apply()
 }
 
 

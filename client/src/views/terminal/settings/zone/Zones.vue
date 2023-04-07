@@ -11,16 +11,18 @@ import FixedScroll from "@/components/scroll/FixedScroll.vue";
 import type {Remote} from "@/remote";
 import Toolbar from "@/components/toolbar/Toolbar.vue";
 import ToolbarButton from "@/components/ToolbarButton.vue";
+import core from "@/core";
+import zoneService from "@/services/zoneService";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
 
 let state = reactive({
-  zones: {} as Zone[],
-  entities: [] as Entity[],
-  deleted: {} as Zone[],
-  selected: "",
-  selectedZone: {} as Zone,
+    zones: {} as Zone[],
+    entities: [] as Entity[],
+    deleted: {} as Zone[],
+    selected: "",
+    selectedZone: {} as Zone,
   showDeleted: false,
   animationFrame: 0,
   loading: true,
@@ -78,29 +80,39 @@ function setMode(mode: string) {
 }
 
 function selectZone(id: string) {
-  state.selected = id
-  let target = state.zones.find(z => z.id === id)
-  if (!target) return
-  state.selectedZone = target
+    if (state.selected === id) {
+        state.selected = ""
+        state.selectedZone = {} as Zone
+        return;
+    }
+    let target = state.zones.find(z => z.id === id)
+    if (!target) return
+    state.selectedZone = target
+    state.selected = state.selectedZone.id
 }
 
 function toggleShowDeleted() {
-  state.showDeleted = !state.showDeleted
+    state.showDeleted = !state.showDeleted
 }
 
 function setListMode(value: string) {
-  state.listMode = value
+    state.listMode = value
 }
 
+const notify = core.notify()
+
 function deleteZone() {
-  let local = state.selectedZone
-  if (!local) return
-  axios.post(`http://10.0.1.2:3020/zones/${local.id}/delete`)
-      .then((r) => {
-        state.selectedZone.deleted = true
-      })
+    let local = state.selectedZone
+    if (!local) return
+    zoneService.setDeleted(local.id, true)
+        .then((r) => {
+            state.selectedZone.deleted = true
+            notify.success("Zone Deleted", `Zone '${local.name}' has been deleted.`)
+
+        })
       .catch((r) => {
-        console.log(r)
+          notify.fail("Zone Deleted", `Zone '${local.name}' has not been deleted. `, r)
+          console.log(r)
       })
 }
 
@@ -192,26 +204,27 @@ function drawZone() {
   ctx.beginPath()
   ctx.moveTo(0, state.height / 2)
   ctx.lineTo(state.width, state.height / 2)
-  ctx.closePath()
-  ctx.stroke()
+    ctx.closePath()
+    ctx.stroke()
 
-  state.ctx.strokeStyle = "rgba(255,149,0,0.6)"
-  state.ctx.fillStyle = "rgba(255,255,255,0.025)"
+    state.ctx.strokeStyle = "rgba(255,149,0,0.6)"
+    state.ctx.fillStyle = "rgba(255,255,255,0.025)"
 
-  drawRoom(bedroom, scale)
+    drawRoom(bedroom, scale)
 
-  state.ctx.fillStyle = "rgba(255,255,255,0.25)"
-  ctx.font = "500 32px SF Pro Display"
-  ctx.fillText(state.selectedZone.name, 10, 36)
+    state.ctx.fillStyle = "rgba(255,255,255,0.25)"
+    ctx.font = "500 32px SF Pro Display"
+    if (!state.selectedZone) return
+    ctx.fillText(state.selectedZone?.name || "", 10, 36)
 
-  for (let i = 0; i < state.selectedZone.entities.length; i++) {
-    let ent = state.selectedZone.entities[i]
-    ctx.fillText(ent.name, 10, 36 + 50 + 30 * i)
-    if (ent.position != "{}") {
-      ctx.fillText(ent.position, 200, 36 + 50 + 30 * i)
-      let pos = JSON.parse(ent.position);
-      // ctx.fillText(pos.x, 500, 36 + 50 + 30 * i)
-      ctx.fillRect((pos.x / 100) * state.ctx.canvas.width, (pos.y / 100) * state.ctx.canvas.height, 10, 10)
+    for (let i = 0; i < state.selectedZone.entities.length; i++) {
+        let ent = state.selectedZone.entities[i]
+        ctx.fillText(ent.name, 10, 36 + 50 + 30 * i)
+        if (ent.position != "{}") {
+            ctx.fillText(ent.position, 200, 36 + 50 + 30 * i)
+            let pos = JSON.parse(ent.position);
+            // ctx.fillText(pos.x, 500, 36 + 50 + 30 * i)
+            ctx.fillRect((pos.x / 100) * state.ctx.canvas.width, (pos.y / 100) * state.ctx.canvas.height, 10, 10)
 
     }
   }
@@ -322,11 +335,11 @@ function setupCanvas() {
                    text="Select"
                    @click="() => {}"></ToolbarButton>
     <div class="button-sep"></div>
-    <ToolbarButton :active="false" :disabled="state.selected.length === 0"
-                   class="  px-3"
-                   style="height: 1.5rem"
-                   text="Delete"
-                   to="/terminal/settings/subroutines/create"></ToolbarButton>
+      <ToolbarButton :active="false" :disabled="state.selected.length === 0"
+                     class="  px-3"
+                     style="height: 1.5rem"
+                     text="Delete"
+                     @click="() => {deleteZone()}"></ToolbarButton>
     <div class="flex-grow-1"></div>
 
     <div class="button-sep"></div>
@@ -355,7 +368,6 @@ function setupCanvas() {
 
     </div>
     <div v-if="state.loading">
-
       <div class="element p-2">
         <div class="label-c1 label-o4 d-flex align-content-center gap-1">
           <div>
@@ -378,11 +390,18 @@ function setupCanvas() {
                 <span class="label-c4 label-o2 lh-1 pt-1"
                       style="width: 0.4rem; margin-top: 6px;"><span
                     v-if="zone.pinned">􀎧</span></span>
+
                 <div class="py-1 px-1">
-                  <div
-                      class="label-c1 text-capitalize label-w600 label-o5 lh-1">
-                    {{ zone.name }}
-                  </div>
+                    <div
+                            class="label-c1 text-capitalize label-w600 label-o5 lh-1">
+                        {{ zone.name }}
+                        <div v-if="true"
+                             class="label-c2 label-o4 label-w500 text-accent">􀷙
+                        </div>
+                        <div v-else
+                             class="label-c2 label-o1 label-w500">􀓞
+                        </div>
+                    </div>
 
                   <div class="label-c3 label-w600 label-o3">
                     {{ zone.entities.length }} items
@@ -507,41 +526,59 @@ function setupCanvas() {
     </div>
     <div v-else-if="state.mode === 'create'"
          class="d-flex justify-content-center btn-outline-primary">
-      <CreateZone :done="() => state.mode = 'list'">
-      </CreateZone>
+        <CreateZone :done="() => state.mode = 'list'">
+        </CreateZone>
     </div>
-    <div class="zone-grid">
-      <div v-for="z in state.zones" :key="z.id"
-           class="element d-flex gap-1 flex-column  p-2"
-           style="grid-column: span 2;"
-           @click="() => selectZone(z.id)">
-        <div class="d-flex gap-1">
-          <div>
-            <div class="label-c2 label-o3 label-w500 text-capitalize">􀟻</div>
+      <div class="zone-grid">
+          <div v-for="z in state.zones" :key="z.id"
+               :class="state.selected === z.id?'accent-selected':''"
+               class="element haptic d-flex gap-1 flex-column  p-2"
+               style="grid-column: span 2;"
+               @click="() => selectZone(z.id)">
+              <div class="d-flex gap-1">
+                  <div class="d-flex flex-row justify-content-between w-100">
+                      <div v-if=z.name class="label-c2 label-o4 label-w500 label-r text-capitalize"
+                           style="">
+                          {{ z.name }}
+                      </div>
+                      <div v-else class="label-c2 label-o3 label-w500 label-r text-capitalize">
+                          Unnamed
+                      </div>
+                      <div v-if="state.selectedZone?.id === z.id"
+                           class="label-c2 label-o4 label-w500 text-accent">􀷙
+                      </div>
+                      <div v-else
+                           class="label-c2 label-o1 label-w500">􀓞
+                      </div>
+
+                  </div>
+
+
+              </div>
+              <div class="label-c3 label-o3 label-w5002 ">
+                  {{ z.entities.map(e => e.icon).join(' ') }}
+              </div>
           </div>
-          <div class="d-flex flex-column justify-content-between h-100">
-            <div class="label-c2 label-o5 label-w500 label-r text-capitalize">
-              {{ z.name }}
-            </div>
-            <div class="label-c3 label-o3 label-w5002 ">
-              {{ z.entities.map(e => e.icon).join(' ') }}
-            </div>
+      </div>
+      <div v-if=false class="element " style="width: 40rem">
+
+          <div class="d-flex justify-content-between">
+
           </div>
-
-        </div>
+          <canvas id="zone-canvas" style="height: 24rem; width: 100%"></canvas>
       </div>
-    </div>
-    <div class="element " style="width: 40rem">
-
-      <div class="d-flex justify-content-between">
-
-      </div>
-      <canvas id="zone-canvas" style="height: 24rem; width: 100%"></canvas>
-    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+div.element {
+
+}
+
+div.haptic.element:active {
+  transform: scale(98%) !important;
+}
+
 .zone-grid {
   width: 100%;
   display: grid;

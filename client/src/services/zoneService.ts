@@ -10,7 +10,7 @@ function getEndpoint(id: string, path: string): string {
 
 export default {
     async setDeleted(id: string, deleted: boolean): Promise<void> {
-        const url = getEndpoint(id, `/${deleted ? 'restore' : 'delete'}`)
+        const url = getEndpoint(id, `/${!deleted ? 'restore' : 'delete'}`)
         return await request.post(url)
     },
     async setPinned(id: string, pinned: boolean): Promise<void> {

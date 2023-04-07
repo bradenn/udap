@@ -19,37 +19,36 @@ let props = defineProps<{
 }>();
 
 onMounted(() => {
-  configureCanvas()
+    configureCanvas()
 })
 
 onUnmounted(() => {
-  state.ctx.canvas.remove()
+    state.ctx.canvas.remove()
+})
+
+
+function lerp(a: number, b: number, t: number): number {
+    return a + (b - a) * t;
+}
+
+watchEffect(() => {
+    draw()
+    return props
 })
 
 function configureCanvas() {
-  const _canvas = document.getElementById(`signal-${state.uuid}`)
-  state.canvas = _canvas as HTMLCanvasElement
-  state.ctx = state.canvas.getContext("2d") as CanvasRenderingContext2D
-  let scale = 1
-  state.ctx.scale(scale, scale)
+    const _canvas = document.getElementById(`signal-${state.uuid}`)
+    state.canvas = _canvas as HTMLCanvasElement
+    state.ctx = state.canvas.getContext("2d") as CanvasRenderingContext2D
+    let scale = 1
+    state.ctx.scale(scale, scale)
 
-  state.ready = true
-  state.canvas.width = state.canvas.clientWidth * scale
+    state.ready = true
+    state.canvas.width = state.canvas.clientWidth * scale
   state.canvas.height = state.canvas.clientHeight * scale
 
   draw()
 }
-
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-watchEffect(() => {
-  draw()
-  return props
-})
-
 
 function draw() {
   let ctx = state.ctx;

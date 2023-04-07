@@ -23,7 +23,7 @@ let errorMessage = ref("")
 
 function authenticate() {
     // Generated endpoint registration url using the security code and controller address
-    let url = `https://${controller}/endpoints/register/${state.spaces.reduce((a, b) => a + b)}`
+    let url = `http://${controller}/endpoints/register/${state.spaces.reduce((a, b) => a + b)}`
     // Make the request to the controller app
     axios.get(url).then(res => {
         // Set the token in localStorage

@@ -52,6 +52,7 @@ import periodic from "@/views/terminal/periodic";
 import remote from "@/views/terminal/remote";
 import wikiRoutes from "@/views/terminal/wiki";
 import neural from "@/views/terminal/neural";
+import oscilloscope from "@/views/terminal/oscilloscope";
 
 
 const Whiteboard = () => import("@/views/terminal/whiteboard/Whiteboard.vue")
@@ -248,6 +249,7 @@ const terminalRoutes = {
         alienRoutes,
         defenseRoutes,
         layoutRoutes,
+        oscilloscope,
         neural,
         periodic
     ],

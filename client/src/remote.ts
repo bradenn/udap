@@ -31,7 +31,7 @@ function connectionString(): string {
     if (token === "unset") {
         return ""
     }
-    return `wss://${nexus}/socket/${token}`
+    return `ws://${nexus}/socket/${token}`
 }
 
 export interface Remote {

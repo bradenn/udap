@@ -20,10 +20,12 @@ let props = defineProps<{
 
 onMounted(() => {
   configureCanvas()
+    draw()
 })
 
 onUnmounted(() => {
   state.ctx.canvas.remove()
+
 })
 
 function configureCanvas() {
@@ -49,12 +51,14 @@ const barWidth = 2;
 const barSpacing = 1;
 
 function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
+    return (1 - t) * a + t * b;
 }
 
 
 function draw() {
+
   let ctx = state.ctx;
+    if (!ctx.canvas) return
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   ctx.beginPath();
