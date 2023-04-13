@@ -124,7 +124,7 @@ func (u *zoneService) RemoveEntity(id string, entity string) error {
 }
 
 func (u *zoneService) Pin(id string) error {
-	byId, err := u.repository.FindById(id)
+	byId, err := u.repository.FindByIdPopulate(id)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (u *zoneService) Pin(id string) error {
 }
 
 func (u *zoneService) Unpin(id string) error {
-	byId, err := u.repository.FindById(id)
+	byId, err := u.repository.FindByIdPopulate(id)
 	if err != nil {
 		return err
 	}

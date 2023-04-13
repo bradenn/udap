@@ -26,11 +26,12 @@ func NewEndpointRouter(service ports.EndpointService) Routable {
 
 func (r *endpointRouter) RouteExternal(router chi.Router) {
 	router.Get("/endpoints/register/{key}", r.authenticate)
+	router.Post("/endpoints/create", r.create)
 	router.Get("/socket/{token}", r.enroll)
 }
 
 func (r *endpointRouter) RouteInternal(router chi.Router) {
-	router.Post("/endpoints/create/", r.create)
+
 }
 
 func (r *endpointRouter) create(w http.ResponseWriter, req *http.Request) {
