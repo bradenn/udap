@@ -19,6 +19,7 @@ class Preference {
     // Set the value to the predefined default from config.json
     setDefault() {
         // Fetch the default value
+        // @ts-ignore
         let defaultValue = config.defaults[this.kind]
         // Set the default value
         this.set(defaultValue)

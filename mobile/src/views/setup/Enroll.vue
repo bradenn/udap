@@ -15,7 +15,7 @@ const state = reactive({
 
 function authenticate() {
     // Generated endpoint registration url using the security code and controller address
-    let url = `http://10.0.1.2:3020/endpoints/register/${state.token}`
+    let url = `https://api.udap.app/endpoints/register/${state.token}`
     // Make the request to the controller app
     axios.get(url).then(res => {
         // Set the token in localStorage

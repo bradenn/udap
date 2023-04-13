@@ -8,6 +8,19 @@
   src: url('IBMPlexSans-Medium.ttf') format("truetype");
 }
 
+@font-face {
+  font-family: "SF Pro Display";
+  src: url('SF-Pro.ttf') format("truetype");
+}
+
+.text-danger {
+  color: rgb(255, 69, 58) !important;
+}
+
+.text-success {
+  color: rgb(48, 209, 88) !important;
+}
+
 .form-control {
   height: 3rem;
   background-color: transparent;
@@ -18,31 +31,82 @@
   outline: none;
 }
 
+.element {
+  padding: 1rem 0.25rem;
+  backdrop-filter: blur(40px);
+  box-shadow: inset 0 0 1px 1.5px rgba(37, 37, 37, 0.6), 0 0 3px 1px rgba(22, 22, 22, 0.6);
+  /* Note: backdrop-filter has minimal browser support */
+  border-radius: 11.5px;
+  -webkit-backdrop-filter: blur(40px) !important;
+}
+
+.element-surface {
+  padding: 1rem 0.25rem;
+  box-shadow: inset 0 0 1px 1.5px rgba(37, 37, 37, 0.6), 0 0 3px 1px rgba(22, 22, 22, 0.6);
+  border-radius: calc(11.5px - 4.25px);
+  /* Note: backdrop-filter has minimal browser support */
+}
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, sans-serif;
+  //letter-spacing: 0.20rem;
   background-color: #000;
   color: #fff;
+  background-image: url("bg.png");
+  background-size: cover;
 }
 
 .sf {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "SF Pro Display", sans-serif;
+}
+
+.sf-icon {
+  font-family: "SF Pro Display", sans-serif;
+  width: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-accent {
+  color: rgba(255, 128, 12, 0.8);
+  filter: drop-shadow(0px 0px 2px rgba(255, 128, 12, 0.75));
+}
+
+.text-muted {
+  color: rgba(128, 128, 128, 0.2);
+  filter: drop-shadow(0px 0px 2px rgba(128, 128, 128, 0.5));
 }
 
 .element {
+  //display: flex;
+  //flex-direction: row;
+  //align-items: center;
+  //filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
+  //transform: translate3d(0, 0, 0);
+  //background-color: hsla(214, 9%, 28%, 0.2);
+  //color: rgba(255, 255, 255, 0.7);
+  //box-shadow: inset 0 0 1.5px 2px rgba(114, 114, 114, 0.2) !important;
+  //border-radius: 6px;
+  //padding: 12px 18px;
+}
+
+$border: rgba(255, 255, 255, 0.0625);
+.surface {
+  justify-content: center;
   display: flex;
   flex-direction: row;
   align-items: center;
   filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
   transform: translate3d(0, 0, 0);
-  background-color: hsla(214, 9%, 28%, 0.2);
+  border: 1px solid $border;
+  //background-color: hsla(214, 9%, 28%, 0.2);
   color: rgba(255, 255, 255, 0.7);
   box-shadow: inset 0 0 2px 0.5px rgba(255, 255, 255, 0.05) !important;
   border-radius: 6px;
   padding: 12px 18px;
 }
 
-$border: rgba(255, 255, 255, 0.125);
 
 $base: 24px;
 /* Label Sizes */
@@ -101,4 +165,64 @@ $fontColors: (
     color: rgba(255, 255, 255, $i * 0.125);
 
   }
+}
+
+.slider-track.slider::-webkit-slider-thumb {
+  @extend .element;
+  padding: 0;
+  height: 6px !important;
+  width: 6px !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 48px;
+  border-radius: 0.375rem !important;
+  max-height: 6rem;
+  padding-inline: 0.125rem;
+  padding: 0.125rem 0.125rem !important;
+  outline: none;
+  opacity: 1;
+  transition: all 100ms ease-in-out;
+}
+
+.slider-dim {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 1%, rgba(213, 230, 255, 0.75) 100%);
+}
+
+.slider-cct {
+  background: linear-gradient(90deg, rgba(255, 160, 75, 0.75) 0%, rgba(255, 249, 230, 0.5) 50%, rgba(213, 230, 255, 0.5) 100%) !important;
+}
+
+.slider-hue {
+  background: linear-gradient(to right,
+          hsl(0deg, 100%, 40%) 0%,
+          hsl(60deg, 100%, 40%) 16.67%,
+          hsl(120deg, 100%, 40%) 33.33%,
+          hsl(180deg, 100%, 40%) 50%,
+          hsl(240deg, 100%, 40%) 66.67%,
+          hsl(320deg, 100%, 40%) 83.33%,
+          hsl(360deg, 100%, 40%) 100%
+  ) !important;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  mix-blend-mode: overlay;
+  background: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.1), inset 0 0 1px 1px rgba(47, 47, 47, 0.4) !important;
+  //background-color: rgb(153, 153, 153);
+
+  height: 38px;
+  width: 24px;
+  border-radius: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: all 500ms ease;
 }

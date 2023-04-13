@@ -1,6 +1,6 @@
 // Copyright (c) 2023 Braden Nicholson
 
-package chrono
+package main
 
 import (
 	"time"

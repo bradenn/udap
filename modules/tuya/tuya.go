@@ -272,6 +272,7 @@ func (l *Light) setCCT(cct int) error {
 	target := convertRange(math.Min(math.Max(float64(cct), 2700), 6500), 2700, 6500, 0, 1000)
 	return l.sendModeCommandDps(ModeColorTemp, ColorTemp, target)
 }
+
 func (l *Light) setRGB(r, g, b int) error {
 	// The light expects an HSV value in the mode Hue: 0-360, Saturation: 0-1000, and Value: 0-1000
 	h, s, v := RGBToHSV(r, g, b)
@@ -284,6 +285,7 @@ func (l *Light) setRGB(r, g, b int) error {
 
 	return l.sendModeCommandDps(ModeColor, Color, hexVal)
 }
+
 func (l *Light) setHue(r int) error {
 	// The light expects an HSV value in the mode Hue: 0-360, Saturation: 0-1000, and Value: 0-1000
 
@@ -599,6 +601,7 @@ type Tuya struct {
 	devices  map[string]*Light
 	entities map[string]string
 	receiver chan domain.Attribute
+	interval int
 	ready    bool
 }
 
@@ -606,12 +609,13 @@ func init() {
 	Module = Tuya{
 		devices:  map[string]*Light{},
 		entities: map[string]string{},
+		interval: 0,
 	}
 	Module.Config = plugin.Config{
 		Name:        "tuya",
 		Type:        "daemon",
 		Description: "Tuya Device interface",
-		Version:     "0.1.1",
+		Version:     "0.1.2",
 		Author:      "Braden Nicholson",
 	}
 }
@@ -629,14 +633,19 @@ func (t *Tuya) Update() error {
 		return nil
 	}
 	if t.Ready() {
+		t.interval = (t.interval + 1) % 10
+		if t.interval == 0 {
+
+		}
 
 		for _, light := range t.devices {
 
 			eid, _ := t.findEntityIdByLightId(light.GwId)
 			err := light.sendStatusPayload()
 			if err != nil {
-				return nil
+				return err
 			}
+
 			if light.Latest.Dps.On {
 				err = t.Attributes.Set(eid, "on", "true")
 				if err != nil {
@@ -648,14 +657,17 @@ func (t *Tuya) Update() error {
 					log.Err(err)
 				}
 			}
+
 			err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Latest.Dps.Dim/10))
 			if err != nil {
 				log.Err(err)
 			}
+
 			err = t.Attributes.Set(eid, "cct", fmt.Sprintf("%d", int(convertRange(float64(light.Latest.Dps.Cct), 0, 1000, 2700, 6500))))
 			if err != nil {
 				log.Err(err)
 			}
+
 			h := int(0)
 			o := int(0)
 			_, err = fmt.Sscanf(light.Latest.Dps.Color, "%04x%04x%04x", &h, &o, &o)
@@ -726,7 +738,7 @@ func (t *Tuya) handleRequest(attribute domain.Attribute) error {
 		}
 		break
 	default:
-		return nil
+		return fmt.Errorf("invalid attribute key")
 	}
 
 	err = t.Attributes.Set(attribute.Entity, attribute.Key, attribute.Request)
@@ -739,6 +751,7 @@ func (t *Tuya) handleRequest(attribute domain.Attribute) error {
 func (t *Tuya) mux() error {
 	for {
 		if !t.ready {
+			time.Sleep(time.Second)
 			continue
 		}
 		select {
@@ -749,95 +762,106 @@ func (t *Tuya) mux() error {
 					log.Err(err)
 				}
 			}()
-		default:
-
 		}
 	}
+}
+
+func (t *Tuya) runScan() error {
+
+	system := System{
+		Lights: map[string]*Light{},
+	}
+
+	err := system.Scan(time.Second * 5)
+	if err != nil {
+		return err
+	}
+
+	for _, light := range system.Lights {
+
+		entity := &domain.Entity{
+			Name:   light.GwId,
+			Type:   "spectrum",
+			Module: t.Config.Name,
+		}
+
+		light.LocalId = os.Getenv(light.GwId)
+
+		err = t.Entities.Register(entity)
+		if err != nil {
+			log.Err(err)
+			continue
+		}
+
+		t.entities[entity.Id] = light.GwId
+
+		err = t.Attributes.Register(&domain.Attribute{
+			Key:     "on",
+			Value:   "false",
+			Request: "false",
+			Type:    "toggle",
+			Order:   0,
+			Entity:  entity.Id,
+			Channel: t.receiver,
+		})
+
+		err = t.Attributes.Register(&domain.Attribute{
+			Key:     "dim",
+			Value:   "0",
+			Request: "0",
+			Type:    "range",
+			Order:   1,
+			Entity:  entity.Id,
+			Channel: t.receiver,
+		})
+
+		err = t.Attributes.Register(&domain.Attribute{
+			Key:     "cct",
+			Value:   "2000",
+			Request: "2000",
+			Type:    "range",
+			Order:   2,
+			Entity:  entity.Id,
+			Channel: t.receiver,
+		})
+
+		err = t.Attributes.Register(&domain.Attribute{
+			Key:     "hue",
+			Value:   "0",
+			Request: "0",
+			Type:    "range",
+			Order:   3,
+			Entity:  entity.Id,
+			Channel: t.receiver,
+		})
+
+	}
+	t.devices = system.Lights
+	t.ready = true
+	return nil
 }
 
 func (t *Tuya) Run() error {
 	t.ready = false
 
-	system := System{
-		Lights: map[string]*Light{},
-	}
 	t.receiver = make(chan domain.Attribute, 8)
+
 	go func() {
-		err := t.mux()
-		if err != nil {
-			log.Err(fmt.Errorf("odd close of mux in tuya"))
-			return
+		for {
+			err := t.mux()
+			if err != nil {
+				log.Err(err)
+				time.Sleep(time.Second)
+				continue
+			}
 		}
 	}()
 
 	go func() {
-
-		err := system.Scan(time.Second * 5)
+		err := t.runScan()
 		if err != nil {
 			return
 		}
-
-		for _, light := range system.Lights {
-
-			entity := &domain.Entity{
-				Name:   light.GwId,
-				Type:   "spectrum",
-				Module: t.Config.Name,
-			}
-
-			light.LocalId = os.Getenv(light.GwId)
-
-			err = t.Entities.Register(entity)
-			if err != nil {
-				log.Err(err)
-				continue
-			}
-
-			t.entities[entity.Id] = light.GwId
-
-			err = t.Attributes.Register(&domain.Attribute{
-				Key:     "on",
-				Value:   "false",
-				Request: "false",
-				Type:    "toggle",
-				Order:   0,
-				Entity:  entity.Id,
-				Channel: t.receiver,
-			})
-
-			err = t.Attributes.Register(&domain.Attribute{
-				Key:     "dim",
-				Value:   "0",
-				Request: "0",
-				Type:    "range",
-				Order:   1,
-				Entity:  entity.Id,
-				Channel: t.receiver,
-			})
-
-			err = t.Attributes.Register(&domain.Attribute{
-				Key:     "cct",
-				Value:   "2000",
-				Request: "2000",
-				Type:    "range",
-				Order:   2,
-				Entity:  entity.Id,
-				Channel: t.receiver,
-			})
-
-			err = t.Attributes.Register(&domain.Attribute{
-				Key:     "hue",
-				Value:   "0",
-				Request: "0",
-				Type:    "range",
-				Order:   3,
-				Entity:  entity.Id,
-				Channel: t.receiver,
-			})
-
-		}
-		t.devices = system.Lights
-		t.ready = true
 	}()
 
 	return nil

@@ -1,23 +1,64 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
-import Element from "./Element.vue";
 
 const props = defineProps<{
     name: string,
     icon: string,
+    to: string,
 }>()
 
 </script>
 
 <template>
-    <Element :aspect="4" class="d-flex justify-content-center " secondary style="border-radius: 8px">
+    <router-link :to="props.to" active-class="element" class="surface" style="border-radius: 8px">
         <div>{{ props.icon }}</div>
         <div class="app-link-header">{{ props.name }}</div>
-    </Element>
+    </router-link>
 </template>
 
 <style scoped>
+
+.surface {
+    border: none;
+    background: rgba(22, 22, 22, 0.6);
+    backdrop-filter: blur(40px);
+    box-shadow: inset 0 0 1px 1.5px rgba(37, 37, 37, 0.6), 0 0 3px 1px rgba(22, 22, 22, 0.6);
+    /* Note: backdrop-filter has minimal browser support */
+    aspect-ratio: 2.71828183/0.8;
+    border-radius: 11.5px;
+    -webkit-backdrop-filter: blur(40px) !important;
+    display: flex;
+    justify-content: center;
+
+    transition: background-color 100ms;
+
+}
+
+.element {
+
+    background: rgba(37, 37, 37, 0.6);
+    backdrop-filter: blur(40px);
+    box-shadow: inset 0 0 1px 1.5px rgba(37, 37, 37, 0.6), 0 0 3px 1px rgba(22, 22, 22, 0.6);
+    /* Note: backdrop-filter has minimal browser support */
+    aspect-ratio: 2.71828183/0.8;
+    border-radius: 11.5px;
+    -webkit-backdrop-filter: blur(40px) !important;
+    display: flex;
+    justify-content: center;
+
+
+}
+
+.router-link-active {
+    outline: 1px solid red;
+}
+
+
+a {
+    text-decoration: none;
+}
+
 .app-link-header {
     font-size: 1rem;
     font-weight: 400;
