@@ -106,7 +106,8 @@ function mouseUp(e: TouchEvent) {
 </script>
 
 <template>
-    <div :class="`${state.pressed?'pressed':''} ${state.spectrum.on?'on':'off'}`" class="entity px-3 py-2" @touchend="mouseUp"
+    <div :class="`${state.pressed?'pressed':''} ${state.spectrum.on?'on':'off'}`" class="entity px-3 py-2"
+         @touchend="mouseUp"
          @touchstart="mouseDown">
         <div class="d-flex gap-2 justify-content-between align-items-center py-1 gap-3 w-100">
             <div class="d-flex justify-content-center align-items-center gap-3">
