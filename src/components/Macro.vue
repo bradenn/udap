@@ -16,7 +16,7 @@ function runMacro() {
 </script>
 
 <template>
-    <div class="surface px-3" @click="runMacro">
+    <div v-if="props.macro" class="surface px-3" @click="runMacro">
 
         <div>{{ props.macro.name }}</div>
 
