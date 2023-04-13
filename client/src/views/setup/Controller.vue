@@ -53,7 +53,7 @@ onMounted(() => {
 function testController(controller: Controller) {
 
     // Send a get request to the heartbeat endpoint of the provided controller app
-    axios.get(`http://${controller.address}/status`, {
+    axios.get(`https://${controller.address}/status`, {
         httpsAgent: {
             rejectUnauthorized: false
         }
@@ -93,7 +93,7 @@ let errorMessage = ref("")
 
 function authenticate(controller: string, key: string) {
     // Generated endpoint registration url using the security code and controller address
-    let url = `http://${controller}:3020/endpoints/register/${key}`
+    let url = `https://api.udap.app/endpoints/register/${key}`
     // Make the request to the controller app
     axios.get(url).then(res => {
         // Set the token in localStorage
@@ -124,7 +124,7 @@ function finish(tasks: Task[]) {
 }
 
 function next() {
-    window.location.href = "/#/setup/authentication"
+    window.location.href = "/setup/authentication"
 }
 
 </script>

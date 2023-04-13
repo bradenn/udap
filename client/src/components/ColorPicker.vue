@@ -28,6 +28,8 @@ function setColor(color: number) {
 }
 
 const prefs = inject("preferences") as Preferences
+
+
 </script>
 
 <template>
@@ -42,7 +44,7 @@ const prefs = inject("preferences") as Preferences
 
         </div>
         <FixedScroll :horizontal="true" style="overflow-x: scroll">
-            <div class="d-flex gap-1">
+            <div v-if="prefs.appdata" class="d-flex gap-1">
                 <Color v-for="color in prefs.appdata.colors.sort()" :color="color"
                        :selected="props.selected === color"
                        @click="() => setColor(color)">
