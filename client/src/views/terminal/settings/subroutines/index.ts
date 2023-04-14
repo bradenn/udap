@@ -22,7 +22,7 @@ const routes = {
         {
             path: '/terminal/settings/subroutines',
             name: 'Subroutines',
-            icon: 'timeline',
+            icon: '􀐠',
             component: Subroutines
         },
         {
