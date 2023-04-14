@@ -35,15 +35,16 @@ function authenticate() {
     <div class="d-flex flex-column gap-3">
         <h4>Authentication</h4>
         <div class="d-flex flex-column gap-2 w-100">
-            <div class="d-flex flex-column">
-                <input id="name" v-model="state.name" class="form-control" placeholder="First Name" type="text">
-            </div>
-            <input id="cypher" v-model="state.token" class="form-control" placeholder="Access Token" type="text">
+            <input id="cypher" v-model="state.token" :autocapitalize="false" :autocomplete="false" class="form-control"
+                   placeholder="Access Token" type="text">
         </div>
         <div class="element d-flex justify-content-center" @click="authenticate">Authenticate</div>
     </div>
 </template>
 
 <style scoped>
-
+.form-control {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
 </style>

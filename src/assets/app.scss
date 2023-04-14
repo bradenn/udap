@@ -10,7 +10,7 @@
 
 @font-face {
   font-family: "SF Pro Display";
-  src: url('SF-Pro.ttf') format("truetype");
+  src: url('SF-Pro-Display-Regular.otf') format("opentype");
 }
 
 .text-danger {
@@ -19,6 +19,15 @@
 
 .text-success {
   color: rgb(48, 209, 88) !important;
+}
+
+.form-control {
+  padding: 1rem 0.75rem;
+  backdrop-filter: blur(40px);
+  box-shadow: inset 0 0 1px 1.5px rgba(37, 37, 37, 0.6), 0 0 3px 1px rgba(22, 22, 22, 0.6);
+  /* Note: backdrop-filter has minimal browser support */
+  border-radius: 11.5px;
+  -webkit-backdrop-filter: blur(40px) !important;
 }
 
 .form-control {
