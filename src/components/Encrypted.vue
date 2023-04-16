@@ -12,7 +12,8 @@ const remote = core.remote()
 </script>
 
 <template>
-    <div class="d-flex flex-column align-items-center justify-content-center align-content-center">
+    <div class="d-flex flex-column align-items-center justify-content-center align-content-center"
+         style=" z-index: 6 !important;">
         <div class="sf-icon icon-inf">􀎡</div>
         <div :class="remote.connected?'text-success':'text-danger'" class="sf-icon icon-inf">􀯠</div>
     </div>

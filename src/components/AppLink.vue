@@ -11,9 +11,9 @@ const props = defineProps<{
 </script>
 
 <template>
-    <router-link :to="props.to" active-class="element" class="surface" style="border-radius: 8px">
-        <div>{{ props.icon }}</div>
-        <div class="app-link-header">{{ props.name }}</div>
+    <router-link :to="props.to" active-class="element" class="surface px-3" style="border-radius: 8px">
+        <div class="sf-icon label-o4 lh-1">{{ props.icon }}</div>
+        <div class="app-link-header lh-1">{{ props.name }}</div>
     </router-link>
 </template>
 
@@ -31,6 +31,7 @@ const props = defineProps<{
     display: flex;
     justify-content: center;
 
+
     transition: background-color 100ms;
 
 }
@@ -46,7 +47,7 @@ const props = defineProps<{
     -webkit-backdrop-filter: blur(40px) !important;
     display: flex;
     justify-content: center;
-
+    gap: 0.25rem;
 
 }
 
@@ -60,9 +61,9 @@ a {
 }
 
 .app-link-header {
-    font-size: 1rem;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
 
 }
 </style>

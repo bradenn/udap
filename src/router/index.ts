@@ -7,6 +7,8 @@ import SubRoutineList from "@/views/home/SubRoutineList.vue";
 import MacroList from "@/views/home/MacroList.vue";
 import Home from "@/views/Home.vue";
 import EntityEdit from "@/views/home/EntityEdit.vue";
+import MenuPage from "@/views/MenuPage.vue";
+import settings from "@/views/settings";
 
 const mobileRoutes =
     {
@@ -35,11 +37,18 @@ const mobileRoutes =
                 icon: '􀎟',
             },
             {
+                path: '/home/menu',
+                name: 'menu',
+                component: MenuPage,
+                icon: '􀎟',
+            },
+            {
                 path: '/home/macros',
                 name: 'macros',
                 component: MacroList,
                 icon: '􀎟',
             },
+            settings
         ]
     };
 
