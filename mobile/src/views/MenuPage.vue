@@ -27,15 +27,8 @@ watchEffect(() => {
 </script>
 
 <template>
-    <div class="d-flex flex-column gap-2">
-        <!--        <div class="home-grid">-->
-        <!--            <AppLink icon="" name="Home" to="/home/dashboard"></AppLink>-->
-        <!--            <AppLink icon="" name="Subroutines" to="/home/subroutines"></AppLink>-->
-        <!--            <AppLink icon="" name="Macros" to="/home/macros"></AppLink>-->
-        <!--        </div>-->
-        <!--        -->
-        <router-view></router-view>
-
+    <div class="d-flex flex-column gap-3">
+        \This is a menu
     </div>
 </template>
 
@@ -44,7 +37,7 @@ watchEffect(() => {
 .home-grid {
     display: grid;
     gap: 0.25rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: repeat(1, minmax(0, 1fr));
 }
 </style>

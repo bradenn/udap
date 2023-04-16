@@ -19,6 +19,8 @@ const state = reactive({
     dx: 0,
     data: {},
     width: 0,
+    lastEdit: Date.now(),
+    reset: 0
 })
 
 onBeforeMount(() => {
@@ -39,31 +41,36 @@ function locateTouch(value: number): number {
 }
 
 function touchEnd(e: TouchEvent) {
-    props.change(state.value)
+    console.log(state.value)
+    return
+
 }
 
-function handleMove(e: TouchEvent) {
-    let c = e.target as HTMLDivElement
-    let parent = c.parentElement
-    state.width = parent?.clientWidth || 0
-    setup()
-    let w = parent?.clientWidth || 0
-
-    let touches = e.targetTouches.item(0) || {} as Touch
-    c.style.width = `${(state.dx)}px`
-    let tx = locateTouch(touches.clientX - state.dx / 2)
-    let size = 48
-    c.style.marginLeft = `${(tx * state.dx)}px`
-    state.value = tx
-
-    state.data = tx
+function handleUpdate(value: InputEvent) {
+    let input = value.target as HTMLInputElement
+    state.value = parseInt(input.value)
+    state.lastEdit = Date.now()
+    clearTimeout(state.reset)
+    state.reset = setTimeout(() => {
+        if (Date.now() - state.lastEdit > 250) {
+            if (props.change) {
+                props.change(Math.round(state.value))
+            }
+        }
+    }, 250)
+    // let ie = value.target as InputEvent
+    // console.log(ie.target)
+    // state.value = value
 }
 
 </script>
 
 
 <template>
-    <input :class="`slider-${props.bg}`" :value="state.value" class="slider element" type="range" @touchend="touchEnd">
+    <input :class="`slider-${props.bg}`" :max="props.max" :min="props.min" :step="props.step" :value="state.value"
+           class="slider element"
+           type="range" @input="handleUpdate"
+    >
 </template>
 
 <style scoped>

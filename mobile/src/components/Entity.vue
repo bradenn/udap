@@ -141,7 +141,7 @@ function mouseUp(e: TouchEvent) {
 
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
 
 
 .entity.pressed {
@@ -156,6 +156,11 @@ function mouseUp(e: TouchEvent) {
     color: rgba(255, 255, 255, 0.9) !important;
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   }
+
+  .entity-status {
+    color: rgba(255, 255, 255, 0.8) !important;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.4));
+  }
 }
 
 .off {
@@ -163,6 +168,11 @@ function mouseUp(e: TouchEvent) {
 
   .sf-icon {
     color: rgba(255, 255, 255, 0.1) !important;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+  }
+
+  .entity-status {
+    color: rgba(255, 255, 255, 0.2) !important;
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   }
 }

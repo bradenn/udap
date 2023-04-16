@@ -1,16 +1,16 @@
 @font-face {
   font-family: "IBM Plex Sans";
-  src: url('IBMPlexSans-Regular.ttf') format("truetype");
+  src: url('https://static.udap.app/fonts/IBMPlexSans-Regular.ttf') format("truetype");
 }
 
 @font-face {
   font-family: "IBM Plex Sans Medium";
-  src: url('IBMPlexSans-Medium.ttf') format("truetype");
+  src: url('https://static.udap.app/fonts/IBMPlexSans-Medium.ttf') format("truetype");
 }
 
 @font-face {
   font-family: "SF Pro Display";
-  src: url('SF-Pro-Display-Regular.otf') format("opentype");
+  src: url('https://static.udap.app/fonts/SF-Pro-Display-Regular.otf') format("opentype");
 }
 
 .text-danger {
@@ -61,8 +61,9 @@ body {
   //letter-spacing: 0.20rem;
   background-color: #000;
   color: #fff;
-  background-image: url("bg.png");
+  background-image: url("https://static.udap.app/images/bg.png");
   background-size: cover;
+  overflow: hidden;
 }
 
 .sf {
@@ -71,6 +72,7 @@ body {
 
 .sf-icon {
   font-family: "SF Pro Display", sans-serif;
+  text-decoration: none;
   width: 1.5rem;
   display: flex;
   align-items: center;
@@ -79,12 +81,16 @@ body {
 
 .text-accent {
   color: rgba(255, 128, 12, 0.8);
-  filter: drop-shadow(0px 0px 2px rgba(255, 128, 12, 0.75));
+  //filter: drop-shadow(0px 0px 2px rgba(255, 128, 12, 0.75));
+}
+
+.router-link {
+  text-decoration: none !important;
 }
 
 .text-muted {
   color: rgba(128, 128, 128, 0.2);
-  filter: drop-shadow(0px 0px 2px rgba(128, 128, 128, 0.5));
+  //filter: drop-shadow(0px 0px 2px rgba(128, 128, 128, 0.5));
 }
 
 .element {
