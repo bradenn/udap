@@ -9,35 +9,35 @@ import type {Entity as EntityType, Zone} from "@/types";
 const remote = core.remote()
 
 const state = reactive({
-    entities: [] as EntityType[],
-    zones: [] as Zone[],
+  entities: [] as EntityType[],
+  zones: [] as Zone[],
 })
 
 onMounted(() => {
-    state.entities = remote.entities
-    state.zones = remote.zones.filter(z => z.pinned)
+  state.entities = remote.entities
+  state.zones = remote.zones.filter(z => z.pinned)
 })
 
 watchEffect(() => {
-    state.zones = remote.zones.filter(z => z.pinned)
-    return remote.entities
+  state.zones = remote.zones.filter(z => z.pinned)
+  return remote.entities
 })
 
 
 </script>
 
 <template>
-    <div>
-      <router-view></router-view>
-    </div>
+  <div>
+    <router-view></router-view>
+  </div>
 </template>
 
 <style scoped>
 
 .home-grid {
-    display: grid;
-    gap: 0.25rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(1, minmax(0, 1fr));
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(1, minmax(0, 1fr));
 }
 </style>

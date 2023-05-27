@@ -13,30 +13,30 @@ provide("remote", remote)
 const router = core.router();
 
 onMounted(() => {
-    let storedToken = new Preference(PreferenceTypes.Token).get()
-    if (storedToken === "unset") {
-        router.push("/setup/enroll")
-    }
-    remote.connect()
-    router.push("/home")
+  let storedToken = new Preference(PreferenceTypes.Token).get()
+  if (storedToken === "unset") {
+    router.push("/setup/enroll")
+  }
+  remote.connect()
+  router.push("/home")
 })
 
 
 </script>
 
 <template>
-    <div class="d-flex flex-column gap-3 mt-2 px-2" style=" max-height: 99vh;">
-      <div class="d-flex justify-content-between ">
-        <div class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1">
-          <Encrypted></Encrypted>
-          <div class="udap-logo lh-1" style=" z-index: 6 !important;">UDAP</div>
-        </div>
-        <Menu v-if="remote" :name="0"></Menu>
+  <div class="d-flex flex-column gap-3 mt-2 px-2" style=" max-height: 99vh;">
+    <div class="d-flex justify-content-between ">
+      <div class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1">
+        <Encrypted></Encrypted>
+        <div class="udap-logo lh-1" style=" z-index: 6 !important;">UDAP</div>
       </div>
-      <div class="dock-fixed">
-        <router-view></router-view>
-      </div>
+      <Menu v-if="remote" :name="0"></Menu>
     </div>
+    <div class="dock-fixed">
+      <router-view></router-view>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -51,10 +51,10 @@ onMounted(() => {
 }
 
 .label-muted {
-    font-family: "IBM Plex Sans Medium", sans-serif;
-    font-weight: 800;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.25);
+  font-family: "IBM Plex Sans Medium", sans-serif;
+  font-weight: 800;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.25);
 }
 
 

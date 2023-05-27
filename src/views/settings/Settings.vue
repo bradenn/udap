@@ -8,20 +8,20 @@ import Navbar from "@/components/Navbar.vue";
 const router = core.router()
 
 const state = reactive({
-    currentName: ""
+  currentName: ""
 })
 
 
 router.afterEach((to, from, failure) => {
-    if (!to.name) return
-    state.currentName = <string>to.name
+  if (!to.name) return
+  state.currentName = <string>to.name
 })
 
 let transitionName = computed(() => {
-    if (router.currentRoute.value.path === '/home/settings') {
-        return 'slide-reverse'
-    }
-    return 'slide'
+  if (router.currentRoute.value.path === '/home/settings') {
+    return 'slide-reverse'
+  }
+  return 'slide'
 })
 
 </script>
@@ -29,7 +29,8 @@ let transitionName = computed(() => {
 <template>
   <div class=" gap-1 h-100" style="height: 100vh">
     <div class="d-flex">
-      <Navbar v-if="router.currentRoute.value.name" :back="(router.currentRoute.value.path === '/home/settings')?'/home/dashboard':'/home/settings'"
+      <Navbar v-if="router.currentRoute.value.name"
+              :back="(router.currentRoute.value.path === '/home/settings')?'/home/dashboard':'/home/settings'"
               :title="state.currentName">
       </Navbar>
     </div>
@@ -101,29 +102,29 @@ let transitionName = computed(() => {
   to {
     transform: translateX(0) scale(1);
     filter: blur(0px);
-        opacity: 1;
-    }
+    opacity: 1;
+  }
 }
 
 @keyframes slide-out {
-    from {
-        transform: translateX(0) scale(1);
-        filter: blur(0px);
-        opacity: 1;
-    }
-    to {
-      transform: translateX(-5%);
-      filter: blur(4px);
-      opacity: 0;
-    }
+  from {
+    transform: translateX(0) scale(1);
+    filter: blur(0px);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-5%);
+    filter: blur(4px);
+    opacity: 0;
+  }
 }
 
 .slide-enter-active {
-    animation: slide-in 100ms ease-out;
+  animation: slide-in 100ms ease-out;
 }
 
 .slide-leave-active {
-    animation: slide-out 100ms ease-out;
+  animation: slide-out 100ms ease-out;
 }
 
 /*.slide-enter-to {*/

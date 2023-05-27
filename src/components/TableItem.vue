@@ -5,28 +5,28 @@ import {reactive} from "vue";
 import core from "@/core";
 
 const props = defineProps<{
-    title: string
-    icon: string
-    to?: string
+  title: string
+  icon: string
+  to?: string
 }>()
 
 const state = reactive({
-    pressed: false
+  pressed: false
 })
 
 function touchStart(e: TouchEvent) {
-    if (!props.to) return
-    e.preventDefault()
-    state.pressed = true
+  if (!props.to) return
+  e.preventDefault()
+  state.pressed = true
 }
 
 const router = core.router()
 
 function touchEnd(e: TouchEvent) {
-    if (!props.to) return
-    router.push(props.to)
-    e.preventDefault()
-    state.pressed = false
+  if (!props.to) return
+  router.push(props.to)
+  e.preventDefault()
+  state.pressed = false
 }
 
 </script>
