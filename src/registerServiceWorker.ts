@@ -10,4 +10,5 @@ const updateSW = registerSW({
     onOfflineReady() {
         // show a ready to work offline to the user
     },
+
 });

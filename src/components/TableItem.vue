@@ -32,25 +32,26 @@ function touchEnd(e: TouchEvent) {
 </script>
 
 <template>
+  <div class="d-flex flex-column table-element">
     <div :class="`${state.pressed?'pressed':''}`" class="table-link" @touchend="touchEnd"
          @touchstart="touchStart">
-        <div class="d-flex gap-3 align-items-center">
-            <div class="label-o1 label-w600 label-c3 sf-icon" style="padding-left: 0.5rem">{{ props.icon }}</div>
-            <div class="label-o5 label-w500 label-c4">{{ props.title }}</div>
-        </div>
-        <div class="spacer"></div>
-        <slot></slot>
+      <div class="d-flex gap-3 align-items-center">
+        <div class="label-o1 label-w600 label-c3 sf-icon" style="padding-left: 0.5rem">{{ props.icon }}</div>
+        <div class="label-o5 label-w500 label-c4">{{ props.title }}</div>
+      </div>
+      <slot></slot>
     </div>
+    <div class="spacer"></div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.table-link:not(:last-of-type) {
+.table-element:not(:last-of-type) {
   .spacer {
-    position: absolute;
-    margin-top: calc(3.75rem + 5px);
-    margin-left: 2.5rem;
-    width: calc(100% - 4.33rem);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    align-self: end;
+    width: calc(100% - 3rem);
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.05);
   }
 }
 

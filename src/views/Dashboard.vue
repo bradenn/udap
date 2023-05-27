@@ -27,15 +27,8 @@ watchEffect(() => {
 </script>
 
 <template>
-    <div class="d-flex flex-column gap-2">
-        <!--        <div class="home-grid">-->
-        <!--            <AppLink icon="" name="Home" to="/home/dashboard"></AppLink>-->
-        <!--            <AppLink icon="" name="Subroutines" to="/home/subroutines"></AppLink>-->
-        <!--            <AppLink icon="" name="Macros" to="/home/macros"></AppLink>-->
-        <!--        </div>-->
-        <!--        -->
-        <router-view></router-view>
-
+    <div>
+      <router-view></router-view>
     </div>
 </template>
 

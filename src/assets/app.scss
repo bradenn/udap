@@ -61,10 +61,15 @@ body {
   //letter-spacing: 0.20rem;
   background-color: #000;
   color: #fff;
-  background-image: url("https://static.udap.app/images/bg.png");
+  background-image: url("https://static.udap.app/images/bg.jpeg");
   background-size: cover;
-  overflow: hidden;
+  background-repeat: no-repeat;
+  overflow: clip;
 }
+
+//.text-success {
+//  color: rgba(255, 128, 12, 1) !important;
+//}
 
 .sf {
   font-family: "SF Pro Display", sans-serif;

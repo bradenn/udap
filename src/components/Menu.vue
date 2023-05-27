@@ -109,10 +109,11 @@ function toggleMenu() {
 }
 
 .navbar-dropdown {
-    /*border: 1px solid rgba(255, 255, 255, 0.1);*/
-    /*border-radius: 0.5rem;*/
-    padding: 0.25rem 0.70rem;
-    width: 8rem;
+  /*border: 1px solid rgba(255, 255, 255, 0.1);*/
+  /*border-radius: 0.5rem;*/
+  padding: 0.25rem 0.70rem;
+  width: 8rem;
+  height: 2.5rem;
 }
 
 .navbar-dropdown:active {

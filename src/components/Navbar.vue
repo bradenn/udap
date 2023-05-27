@@ -8,17 +8,20 @@ const props = defineProps<{
 </script>
 
 <template>
-    <div class="navbar w-100">
-        <div class="cell justify-content-start">
-            <router-link class="back label-c4" to="/home/settings">
-                <div class="sf-icon label-o1">􀯶</div>
-                <div>Back</div>
-            </router-link>
-        </div>
-        <div class="cell justify-content-center" style="display: flex; justify-content: center;">{{ props.title }}</div>
-        <div class="cell justify-content-end">
-            <slot></slot>
-        </div>
+    <div class="navbar w-100 mb-3">
+      <div class="cell justify-content-start">
+        <router-link :to="props.back" class="back label-c4">
+          <div class="sf-icon label-o1">􀯶</div>
+          <div>Back</div>
+        </router-link>
+      </div>
+      <div class="cell justify-content-center label-w600 text-capitalize label-c4 label-o6">{{
+          props.title
+        }}
+      </div>
+      <div class="cell justify-content-end">
+        <slot></slot>
+      </div>
     </div>
 </template>
 
@@ -34,9 +37,9 @@ const props = defineProps<{
 }
 
 .cell {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
+  width: 33%;
+  display: flex;
+  align-items: center;
 }
 
 .navbar {
@@ -45,6 +48,6 @@ const props = defineProps<{
 }
 
 .navbar > div {
-    outline: 1px solid rebeccapurple;
+  /*outline: 1px solid rebeccapurple;*/
 }
 </style>
