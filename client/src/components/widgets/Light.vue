@@ -139,7 +139,7 @@ function toggleMenu(): void {
             {{ (props.entity.icon || '􀛭') }}
         </div>
         <div class="metadata">
-            <div class="name label-o5">{{ props.entity.name }}</div>
+            <div class="name label-o5">{{ props.entity.alias ? props.entity.alias : props.entity.name }}</div>
             <div class="description label-o3">{{ state.shortStatus }}</div>
         </div>
     </div>

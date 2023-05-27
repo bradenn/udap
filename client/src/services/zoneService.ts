@@ -10,7 +10,7 @@ function getEndpoint(id: string, path: string): string {
 
 export default {
     async setDeleted(id: string, deleted: boolean): Promise<void> {
-        const url = getEndpoint(id, `/${deleted ? 'restore' : 'delete'}`)
+        const url = getEndpoint(id, `/${!deleted ? 'restore' : 'delete'}`)
         return await request.post(url)
     },
     async setPinned(id: string, pinned: boolean): Promise<void> {
@@ -29,6 +29,6 @@ export default {
         return await request.post('/zones/create', zone)
     },
     async updateZone(zone: Zone): Promise<void> {
-        return await request.post('/zones/update', zone)
+        return await request.post(`/zones/${zone.id}/update`, zone)
     },
 }

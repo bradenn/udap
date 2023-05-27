@@ -1,5 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
+import type {RouterOptions} from "vue-router";
 import {createRouter, createWebHashHistory} from "vue-router";
 
 // Settings views
@@ -47,11 +48,8 @@ import LayoutOverview from "@/views/terminal/layout/LayoutOverview.vue";
 
 import Aliens from "@/views/terminal/aliens/Aliens.vue";
 import Drake from "@/views/terminal/aliens/Drake.vue";
-import diagnostic from "@/views/terminal/diagnostic";
 import periodic from "@/views/terminal/periodic";
 import remote from "@/views/terminal/remote";
-import wikiRoutes from "@/views/terminal/wiki";
-import neural from "@/views/terminal/neural";
 
 
 const Whiteboard = () => import("@/views/terminal/whiteboard/Whiteboard.vue")
@@ -234,21 +232,21 @@ const terminalRoutes = {
             component: Energy,
             icon: '􀋦',
         },
-
+        weather,
         settings.routes,
         timingRoutes,
         exogeologyRoutes,
-        diagnostic,
-        weather,
+        // diagnostic,
         remote,
-        wikiRoutes,
+        // wikiRoutes,
         whiteboardRoutes,
         calculatorRoute,
         atlasRoutes,
         alienRoutes,
         defenseRoutes,
-        layoutRoutes,
-        neural,
+        // layoutRoutes,
+        // oscilloscope,
+        // neural,
         periodic
     ],
 }
@@ -271,6 +269,6 @@ const routes = [
 const router = createRouter({
     history: createWebHashHistory(),
     routes: routes,
-})
+} as RouterOptions)
 
 export default router

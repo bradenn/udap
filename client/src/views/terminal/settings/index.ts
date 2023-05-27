@@ -13,6 +13,7 @@ import DeviceMonitor from "@/views/terminal/settings/device/DeviceMonitor.vue";
 import RenameDevice from "@/views/terminal/settings/device/RenameDevice.vue";
 import subroutines from "@/views/terminal/settings/subroutines";
 import entities from "@/views/terminal/settings/entity";
+import macros from "@/views/terminal/settings/macro";
 
 export default {
     routes: {
@@ -54,6 +55,7 @@ export default {
                 },
                 component: Endpoints
             },
+
             entities,
             {
                 path: '/terminal/settings/devices',
@@ -84,16 +86,7 @@ export default {
                     },
                 ]
             },
-            // {
-            //     path: '/terminal/settings/timings',
-            //     name: 'Timings',
-            //     icon: 'clock',
-            //     meta: {
-            //         order: 6,
-            //     },
-            //     component: Timings
-            // },
-
+            macros,
             {
                 path: '/terminal/settings/zones',
                 name: 'Zone',

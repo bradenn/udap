@@ -10,8 +10,6 @@ import Button from "@/components/Button.vue";
 import core from "@/core";
 import moment from "moment";
 import type {Notify} from "@/notifications";
-import ManageEntity
-  from "@/views/terminal/settings/entity/pages/ManageEntity.vue";
 import FixedScroll from "@/components/scroll/FixedScroll.vue";
 import Confirm from "@/components/plot/Confirm.vue";
 
@@ -113,7 +111,7 @@ function timeSince(time: string): string {
 }
 
 function showEntity() {
-  state.showEntity = true
+
 }
 
 function calcDuration(min: number) {
@@ -135,7 +133,8 @@ function parseDate(dt: string) {
     <div v-if="state.loaded" class="d-flex gap-1 h-100">
       <div class="d-flex justify-content-start" style="height: 1.6rem">
         <div class="label-w500 label-c1 text-accent element subplot py-1 px-3"
-             @click="() => {goBack()}">􀆉 Back</div>
+             @click="() => {goBack()}">􀆉 Back
+        </div>
 
       </div>
       <div class="d-flex flex-column gap-1 flex-grow-1">
@@ -146,7 +145,7 @@ function parseDate(dt: string) {
           </div>
           <div class="label-sm label-w600 label-o6">
             {{
-              state.entity.alias || state.entity.name
+              state.entity.alias || state.entity.name.slice(0, 24)
             }}
           </div>
         </div>
@@ -154,7 +153,7 @@ function parseDate(dt: string) {
         <div>
           <Button :active="true" class="element flex-grow-1" icon="􀍟"
                   style="height: 1.8rem" text="Manage"
-                  @click="showEntity"></Button>
+                  :to="`/terminal/settings/entities/${state.entity.id}/manage`"></Button>
         </div>
         <div class="d-flex gap-1">
           <Button :active="true" class="element flex-grow-1" icon="􀈑"
@@ -183,20 +182,21 @@ function parseDate(dt: string) {
         </div>
       </div>
 
-      <div class="d-flex flex-column gap-1 flex-grow-1">
+      <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 40%">
         <div class="d-flex align-items-center">
           <div class="label-sm label-w200 label-o6 px-1"></div>
           <div class="label-sm label-w600 label-o6">
             Attributes
           </div>
         </div>
-        <div class="d-flex flex-column gap-1">
-
-          <div
-              v-for="attr in state.attributes.sort((a, b) => a.order - b.order)">
-            <AttributeDom :attribute="attr" :noselect="true"></AttributeDom>
+        <FixedScroll style="overflow-y: scroll;">
+          <div class="d-flex flex-column gap-1">
+            <div
+                v-for="attr in state.attributes.filter(a => moment(a.lastUpdated).isAfter(moment().subtract(5, `minutes`))).sort((a, b) => a.order - b.order)">
+              <AttributeDom :attribute="attr" :noselect="true"></AttributeDom>
+            </div>
           </div>
-        </div>
+        </FixedScroll>
       </div>
       <div class="d-flex flex-column gap-1 flex-grow-1 h-100">
         <div class="d-flex align-items-end justify-content-between">
@@ -270,9 +270,9 @@ function parseDate(dt: string) {
           </div>
         </FixedScroll>
       </div>
-      <ManageEntity v-if="state.showEntity"
-                    :done="() => {state.showEntity = false}"
-                    :entity="state.entity"></ManageEntity>
+      <!--      <ManageEntity v-if="state.showEntity"-->
+      <!--                    :done="() => {state.showEntity = false}"-->
+      <!--                    :entity="state.entity"></ManageEntity>-->
       <!--    <EditMacro v-if="state.editMacro" :done="doneEditing"-->
       <!--               :macro="state.macro"-->
       <!--               @click="() => {state.editMacro = false;}"></EditMacro>-->

@@ -9,12 +9,12 @@ import core from "@/core";
 import moment from "moment/moment";
 
 interface MacroProps {
-  macro: Macro,
+    macro: Macro,
 }
 
 const state = reactive({
-  toggle: false,
-  activeColor: ""
+    toggle: false,
+    activeColor: ""
 })
 
 const router = useRouter()
@@ -22,43 +22,43 @@ const haptics = core.haptics()
 const remote = core.remote()
 
 onMounted(() => {
-  findMode()
+    findMode()
 })
 
 watchEffect(() => {
-  findMode()
-  return remote.attributes
+    findMode()
+    return remote.attributes
 })
 
 
 function click() {
-  haptics.tap(1, 1, 25)
+    haptics.tap(1, 1, 25)
 }
 
 function map_range(value: number, low1: number, high1: number, low2: number, high2: number) {
-  return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
 }
 
 
 function cctToRgb(cct: number) {
-  return [map_range(cct, 2000, 8000, 255, 227),
-    map_range(cct, 2000, 8000, 138, 233),
-    map_range(cct, 2000, 8000, 18, 255)]
+    return [map_range(cct, 2000, 8000, 255, 227),
+        map_range(cct, 2000, 8000, 138, 233),
+        map_range(cct, 2000, 8000, 18, 255)]
 }
 
 function findMode() {
-  let hue = remote.attributes.find((a: Attribute) => a.key === 'hue')
-  let cct = remote.attributes.find((a: Attribute) => a.key === 'cct')
-  let dim = remote.attributes.find((a: Attribute) => a.key === 'dim')
-  if (hue && cct && dim) {
-    if (moment(hue.requested).isAfter(cct.requested)) {
-      state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim.value) / 100.0 * 50}%, 0.5)`
+    let hue = remote.attributes.find((a: Attribute) => a.key === 'hue')
+    let cct = remote.attributes.find((a: Attribute) => a.key === 'cct')
+    let dim = remote.attributes.find((a: Attribute) => a.key === 'dim')
+    if (hue && cct && dim) {
+        if (moment(hue.requested).isAfter(cct.requested)) {
+            state.activeColor = `hsla(${hue.value}, 100%, ${20 + parseInt(dim.value) / 100.0 * 50}%, 0.5)`
+        } else {
+            state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`
+        }
     } else {
-      state.activeColor = `rgba(${(cctToRgb(parseInt(cct.value)))[0]}, ${(cctToRgb(parseInt(cct.value)))[1]}, ${(cctToRgb(parseInt(cct.value)))[2]}, 0.5)`
+        state.activeColor = 'rgba(255,255,255,0.5)'
     }
-  } else {
-    state.activeColor = 'rgba(255,255,255,0.5)'
-  }
 }
 
 const props = defineProps<MacroProps>()
@@ -67,33 +67,27 @@ const props = defineProps<MacroProps>()
 </script>
 
 <template>
-  <div @mousedown="() => click()">
+    <div @mousedown="() => click()">
 
-    <div class="element p-1 h-100">
+        <div class="element p-1 h-100">
 
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="p-1">
-          <div class="label-c2 label-o4 label-w700 lh-1">
-            {{ props.macro.name }}
-          </div>
-          <div class="label-c3 label-o3 label-w400"
-               style="overflow-x:clip; max-width: 7.75rem; text-overflow: clip; text-wrap: none; white-space: nowrap !important;">
-            {{
-              props.macro.description
-            }}
-          </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="p-2">
+                    <div class="label-c2 label-o4 label-w700 lh-1">
+                        {{ props.macro.name }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div v-if="state.toggle" class="element element-menu">
+            <div class="grid-element">
+
+            </div>
+
         </div>
 
-      </div>
     </div>
-    <div v-if="state.toggle" class="element element-menu">
-      <div class="grid-element">
-
-      </div>
-
-    </div>
-
-  </div>
 </template>
 
 <style lang="scss" scoped>

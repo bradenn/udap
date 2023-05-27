@@ -352,6 +352,7 @@ export interface Attribute {
     id: string;
     value: string;
     updated: string;
+    lastUpdated: string;
     request: string;
     requested: string;
     entity: string;

@@ -20,6 +20,10 @@ let zones = [
     key: "all"
   },
   {
+    name: "Office",
+    key: "Office"
+  },
+  {
     name: "Bedroom",
     key: "bedroom"
   },
@@ -52,7 +56,7 @@ let state = reactive({
 onMounted(() => {
   state.loading = true
   handleUpdates(remote)
-  switchZone("all")
+  switchZone("Office")
 })
 
 
@@ -87,7 +91,7 @@ function handleUpdates(remote: Remote) {
   state.loading = false
 
   if (!state.zone.name) {
-    switchZone("all")
+    switchZone("Office")
   }
 
   return remote.entities
@@ -256,7 +260,7 @@ function changeGlobalCCT() {
   grid-row-gap: 0.25rem;
   //grid-template-rows: repeat(5, 1fr);
   grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(5, 1fr);
+  grid-template-rows: repeat(1, 1fr);
 }
 
 

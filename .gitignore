@@ -43,3 +43,4 @@ spotify.json
 /client/tsconfig.vite-config.tsbuildinfo
 /modules/worldspace/face/known/*
 /modules/worldspace/face/trained_knn_model.clf
+/mobile/src/assets/*.ttf

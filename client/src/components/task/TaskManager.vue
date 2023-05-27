@@ -196,11 +196,14 @@ function mouseDown(m: MouseEvent) {
                  class=" d-flex gap-1 w-100 justify-content-center">
               <div class="d-flex gap-1">
                 <div class="subplot p-1 px-2"
-                     @click="() => selectDuration(-30)">- 30m</div>
+                     @click="() => selectDuration(-30)">- 30m
+                </div>
                 <div class="subplot p-1 px-2"
-                     @click="() => selectDuration(-15)">- 15m</div>
+                     @click="() => selectDuration(-15)">- 15m
+                </div>
                 <div class="subplot p-1 px-2"
-                     @click="() => selectDuration(-1)">- 1m</div>
+                     @click="() => selectDuration(-1)">- 1m
+                </div>
               </div>
               <div class="subplot p-1 px-3">{{
                   calcDuration(state.current.value)
@@ -208,16 +211,19 @@ function mouseDown(m: MouseEvent) {
               </div>
               <div class="d-flex gap-1">
                 <div class="subplot p-1 px-2"
-                     @click="()=> selectDuration(1)">+ 1m</div>
+                     @click="()=> selectDuration(1)">+ 1m
+                </div>
                 <div class="subplot p-1 px-2"
-                     @click="()=> selectDuration(15)">+ 15m</div>
+                     @click="()=> selectDuration(15)">+ 15m
+                </div>
                 <div class="subplot p-1 px-2"
-                     @click="()=> selectDuration(30)">+ 30m</div>
+                     @click="()=> selectDuration(30)">+ 30m
+                </div>
               </div>
 
             </div>
             <div v-else-if="state.current.type === TaskType.Radio">
-              <div class="selection-grid px-1 pt-1">
+              <div v-if="state.current.options" class="selection-grid px-1 pt-1">
                 <div v-for="option in state.current.options"
                      :key="option.title"
                      :class="`${option.value === state.current.value?'accent-selected':''}`"
@@ -231,26 +237,28 @@ function mouseDown(m: MouseEvent) {
                     </div>
                   </div>
                   <div v-if="option.value === state.current.value"
-                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙</div>
+                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙
+                  </div>
                   <div v-else
-                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞</div>
+                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞
+                  </div>
                 </div>
               </div>
             </div>
             <div v-else-if="state.current.type === TaskType.List">
-              <div class="selection-grid px-1 pt-1 pb-2">
+              <div v-if="state.current.options" class="selection-grid px-1 pt-1 pb-2">
                 <Item v-for="option in state.current.options"
                       :class="`${isListSelected(option.value)?'accent-selected':''}`"
                       :description="option.description"
                       :selected="isListSelected(option.value)"
                       :title="`${option.title}`"
-                      :toggle="true"
+                      :toggle="false"
                       @click="() => selectList(option.value)"></Item>
 
               </div>
             </div>
             <div v-else-if="state.current.type === TaskType.Icon">
-              <div class="selection-grid-xs px-1 pt-1">
+              <div v-if="state.current.options" class="selection-grid-xs px-1 pt-1">
                 <div v-for="option in state.current.options"
                      :key="option.title"
                      :class="`${isIconSelected(option.value)?'accent-selected':''}`"
@@ -261,14 +269,17 @@ function mouseDown(m: MouseEvent) {
 
                   </div>
                   <div v-if="isIconSelected(option.value)"
-                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙</div>
+                       class="label-c2 label-o4 label-w500 text-accent lh-1 p-1">􀷙
+                  </div>
                   <div v-else
-                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞</div>
+                       class="label-c2 label-o2 label-w400 lh-1 p-1">􀓞
+                  </div>
                 </div>
               </div>
             </div>
             <div v-else-if="state.current.type === TaskType.Passcode">
-              <div class="d-flex flex-row gap justify-content-between mt-1 p-2">
+              <div v-if="state.current.value"
+                   class="d-flex flex-row gap justify-content-between mt-1 p-2">
                 <div v-for="(v, k) in Array(8).keys()" :key=k
                      :class="`${(state.current.value.length) === k?'border-fog':'border-transparent'}`"
                      class="subplot character border label-o4">
@@ -287,9 +298,11 @@ function mouseDown(m: MouseEvent) {
                @click="() => nextTask()">
             <div
                 v-if="state.tasks.indexOf(state.current) < state.tasks.length-1"
-                class="label-c2 label-w500 label-o3 px-1 lh-1 text-accent">Next 􀯻</div>
+                class="label-c2 label-w500 label-o3 px-1 lh-1 text-accent">Next 􀯻
+            </div>
             <div v-else
-                 class="label-c2 label-w500 label-o3 px-1 lh-1 text-accent">Finish 􀯻</div>
+                 class="label-c2 label-w500 label-o3 px-1 lh-1 text-accent">Finish 􀯻
+            </div>
           </div>
         </div>
 
@@ -316,15 +329,8 @@ div.character {
   justify-content: center;
 }
 
-.accent-selected:before {
-  border: 2px solid rgba(255, 149, 0, 0.4) !important;
-  content: ' ';
-  position: absolute;
-  border-radius: inherit;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+.accent-selected {
+  box-shadow: inset 0px 0px 1px 2px rgba(255, 149, 0, 0.4) !important;
 }
 
 .tactile-button:active {

@@ -25,7 +25,7 @@ const routes = {
         {
             path: '/terminal/settings/modules',
             name: 'Modules',
-            icon: 'layer-group',
+            icon: '􀐟',
             component: Modules
         },
         {

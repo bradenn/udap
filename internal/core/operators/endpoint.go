@@ -258,9 +258,7 @@ func (m *endpointOperator) Enroll(endpoint *domain.Endpoint, conn *websocket.Con
 	if err != nil {
 		return err
 	}
-	endpoint.Connected = true
 	return nil
-
 }
 
 func (m *endpointOperator) Unenroll(endpoint *domain.Endpoint) error {
@@ -269,6 +267,5 @@ func (m *endpointOperator) Unenroll(endpoint *domain.Endpoint) error {
 		return err
 	}
 	endpoint.Connection = nil
-	endpoint.Connected = false
 	return nil
 }
