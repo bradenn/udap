@@ -4,7 +4,7 @@
 import Element from "@/components/Element.vue";
 
 const props = defineProps<{
-    title?: string
+  title?: string
 }>()
 </script>
 
