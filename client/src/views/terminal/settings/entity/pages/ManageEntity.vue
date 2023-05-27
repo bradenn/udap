@@ -9,30 +9,41 @@ import {onMounted, reactive, watchEffect} from "vue";
 import TaskManager from "@/components/task/TaskManager.vue";
 import entityService from "@/services/entityService";
 
-interface ManageEntityProps {
-  entity: Entity,
-  done?: () => void
-}
-
-const props = defineProps<ManageEntityProps>()
-
 onMounted(() => {
-  sync()
-  setOptions()
+  findEntity()
+  if (state.loaded) {
+    sync()
+    setOptions()
+  }
 })
 
 const router = core.router()
 const remote = core.remote()
 const state = reactive({
+  entity: {} as Entity,
   zones: [] as Zone[],
   tasks: [] as Task[],
   loaded: false,
 })
 
-watchEffect(() => {
+function findEntity() {
+  const id = router.currentRoute.value.params["entityId"];
+  if (!id) return;
+  const sr = remote.entities.find(s => s.id === id)
+  if (!sr) return
+  state.entity = sr
+  state.loaded = true
   sync()
   setOptions()
-  return remote.macros
+}
+
+watchEffect(() => {
+
+  if (state.loaded) {
+    sync()
+    setOptions()
+  }
+  return remote
 })
 
 function setOptions() {
@@ -46,23 +57,23 @@ function setOptions() {
       title: "Alias",
       description: "A nickname for the entity",
       type: TaskType.String,
-      value: props.entity.alias,
-      preview: props.entity.alias
+      value: state.entity.alias,
+      preview: state.entity.alias
     },
     {
       title: "Icon",
       description: "Pick an icon to easily identify the entity",
       type: TaskType.Icon,
       options: icons,
-      value: props.entity.icon,
-      preview: props.entity.icon
+      value: state.entity.icon,
+      preview: state.entity.icon
     },
     {
       title: "Position",
       description: "Define a worldspace location for the entity",
       type: TaskType.String,
-      value: props.entity.position,
-      preview: props.entity.position
+      value: state.entity.position,
+      preview: state.entity.position
     },
   ]
   state.loaded = true
@@ -71,6 +82,9 @@ function setOptions() {
 function sync() {
 
 }
+
+const notify = core.notify();
+
 
 function finish(tasks: Task[]) {
   const alias = tasks.find(t => t.title === "Alias");
@@ -82,53 +96,66 @@ function finish(tasks: Task[]) {
   const position = tasks.find(t => t.title === "Position");
   if (!position) return;
 
-  let en = props.entity
+  let en = state.entity as Entity
   en.alias = alias.value
   en.icon = icon.value
   en.position = position.value
 
-  entityService.update(props.entity).then(res => {
-    if (props.done) {
-      props.done()
-    }
-  }).catch(err => {
+
+  entityService.update(en).then((res: any) => {
+    notify.success("Entity", "Entity has been updated.")
+    done()
+  }).catch((err: any) => {
+    notify.fail("Entity", "Entity has NOT been updated.", err)
     console.log(err)
   })
 }
 
 function save() {
-  finish(state.tasks)
+  try {
+    finish(state.tasks)
+  } catch (err) {
+    console.trace(err)
+    console.log(err)
+  }
+}
+
+function done() {
+  router.back()
 }
 
 
 </script>
 
 <template>
-  <div class="ctx ">
-    <div class="context-grid">
-      <div v-if="state.loaded" class="context-pane  d-flex flex-column" style=""
-           @click.stop>
-        <div class="nav-grid gap-1 pb-1 w-100 px-2">
-          <div class="d-flex justify-content-start">
-            <div class="label-w500 label-c1 text-accent"
-                 @click="() => {if(props.done) props.done()}">􀆉 Back</div>
 
+  <div class="context-grid">
+    <div v-if="state.loaded" class="context-pane  d-flex flex-column" style=""
+         @click.stop>
+      <div class="nav-grid gap-1 pb-1 w-100 px-2">
+        <div class="d-flex justify-content-start">
+          <div class="label-w500 label-c1 text-accent"
+               @click="() => {done()}">􀆉 Back
           </div>
-          <div class="d-flex justify-content-center">
-            <div
-                class="label-w500 label-c1 label-w600 align-self-center">Edit Entity</div>
-          </div>
-          <div class="d-flex justify-content-end">
-            <div class="label-w500 label-c1 text-accent"
-                 @click="save">Save</div>
+
+        </div>
+        <div class="d-flex justify-content-center">
+          <div
+              class="label-w500 label-c1 label-w600 align-self-center">Edit Entity
           </div>
         </div>
-
-        <TaskManager :on-complete="finish" :tasks="state.tasks"
-                     :title="`Edit`"></TaskManager>
+        <div class="d-flex justify-content-end">
+          <div class="label-w500 label-c1 text-accent"
+               @click="(e) => {save()}">Save
+          </div>
+        </div>
       </div>
+
+      <TaskManager :on-complete="finish" :tasks="state.tasks"
+                   :title="`Edit`"></TaskManager>
     </div>
   </div>
+
 </template>
 
 <style scoped>
