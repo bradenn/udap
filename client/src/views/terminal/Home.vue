@@ -11,6 +11,7 @@ import Weather from '@/components/widgets/Weather.vue';
 import Calendar from '@/components/widgets/Calendar.vue';
 import Spotify from '@/components/widgets/Spotify.vue'
 import type {Remote} from "@/remote";
+import Thermostat from "@/components/thermostat/Thermostat.vue";
 
 
 // Define the local reactive data for this view
@@ -21,11 +22,13 @@ let state = reactive<{
   shortcuts: any[]
   atlas: string,
   page?: string
+  thermostat: Entity
 }>({
   lights: [],
   hideHome: false,
   apps: [],
   atlas: "",
+  thermostat: {} as Entity,
   shortcuts: [
     {
       name: "Good night",
@@ -55,10 +58,19 @@ onMounted(() => {
   updateLights(remote.entities)
   getRoutes()
   state.hideHome = false
+  let e = remote.entities.find(e => e.name === "thermostat")
+  if (!e) return
+  state.thermostat = e
 })
 
 // Update the Lights based on the remote injection changes
 watchEffect(() => updateLights(remote.entities))
+watchEffect(() => {
+  let e = remote.entities.find(e => e.name === "thermostat")
+  if (!e) return
+  state.thermostat = e
+  return remote.attributes
+})
 
 watchEffect(() => updateAtlas(remote.attributes))
 
@@ -71,11 +83,15 @@ function updateAtlas(attributes: Attribute[]) {
 
 // Update the current set of lights based on the entities provided
 function updateLights(entities: Entity[]) {
+
+
   // Find all applicable entities
   let candidates = entities.filter((f: Entity) => f.type === 'spectrum' || f.type === 'switch' || f.type === 'dimmer');
   candidates = candidates.filter((e: Entity) => remote.attributes.filter((a: Attribute) => a.entity === e.id).length >= 1)
   // Sort and assign them to the reactive object
   state.lights = candidates.sort(compareName)
+
+
   return entities
 }
 
@@ -139,8 +155,9 @@ function getRoutes() {
         <div class="pb-0 d-flex flex-column gap-2">
           <Spotify></Spotify>
           <Weather></Weather>
+          <Thermostat :entity="state.thermostat"></Thermostat>
           <div>
-            <div class="app-grid">
+            <div class="app-grid mx-0 px-0">
               <App v-for="i in state.apps" :key="i.name"
                    :icon="i.icon || 'fa-square'"
                    :img="i.meta?i.meta.icon:''"
@@ -185,11 +202,13 @@ $macro-height: 2rem;
 .app-grid {
 
   display: grid;
-  padding: 0.75rem 0rem 0rem;
+  padding: 0rem 0rem 0rem;
   flex-grow: 1;
-  grid-gap: 1rem;
-  grid-template-rows: repeat(8, 1fr);
-  grid-template-columns: repeat(4, 1fr);
+
+  grid-row-gap: 0.5rem;
+  grid-column-gap: 0.5rem;
+  grid-template-rows: repeat(9, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .home-grid {
