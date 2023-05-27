@@ -10,7 +10,7 @@ const props = defineProps<{
 <template>
   <div class="navbar w-100 mb-3">
     <div class="cell justify-content-start">
-      <router-link :to="props.back" class="back label-c4">
+      <router-link :to="props.back?props.back:'/'" class="back label-c4">
         <div class="sf-icon label-o1">􀯶</div>
         <div>Back</div>
       </router-link>

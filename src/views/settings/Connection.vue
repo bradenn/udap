@@ -34,11 +34,14 @@ function parseJwt(token: string): TokenData {
 }
 
 onBeforeMount(() => {
-  let tokenMeta = parseJwt(token)
+  let tokenMeta = {} as TokenData
+  if (token) tokenMeta = parseJwt(token)
   let ep = remote.endpoints.find(e => e.id === tokenMeta.id)
   if (!ep) return
   state.endpoint = ep
-  state.storage = localStorage.getItem("preferences")
+  let store = localStorage.getItem("preferences")
+  if (store) state.storage = store
+
 
 })
 
