@@ -82,7 +82,11 @@ class HapticEngine {
     private sendPulse(pulse: HapticPulse) {
         if (this.ready) {
             let payload = JSON.stringify(pulse)
-            this.ws.send(payload)
+            try {
+                this.ws.send(payload)
+            } catch (e) {
+
+            }
         }
     }
 

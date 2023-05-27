@@ -29,6 +29,6 @@ export default {
         return await request.post('/zones/create', zone)
     },
     async updateZone(zone: Zone): Promise<void> {
-        return await request.post('/zones/update', zone)
+        return await request.post(`/zones/${zone.id}/update`, zone)
     },
 }
