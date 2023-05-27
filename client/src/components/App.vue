@@ -6,10 +6,10 @@ import {inject} from "vue";
 import type {Haptics} from "@/haptics";
 
 interface App {
-    name: string
-    icon?: string
-    status?: string
-    img?: string
+  name: string
+  icon?: string
+  status?: string
+  img?: string
 }
 
 let props = defineProps<App>()
@@ -17,25 +17,25 @@ let props = defineProps<App>()
 const haptics = inject("haptics") as Haptics
 
 function click() {
-    haptics.tap(2, 2, 100)
-    // haptics.tap(0, 2, 100)
+  haptics.tap(2, 2, 100)
+  // haptics.tap(0, 2, 100)
 }
 
 </script>
 
 <template>
-    <div class="app-container" @mousedown="click">
-        <!--    <img v-if="props.img" :src="`ven/${props.img}`" class="app-icon" alt=""/>-->
-        <div class="app-icon element">
-            <div v-if="props.status === 'wip'" class="marker">•</div>
+  <div class="app-container" @mousedown="click">
+    <!--    <img v-if="props.img" :src="`ven/${props.img}`" class="app-icon" alt=""/>-->
+    <div class="app-icon element">
+      <div v-if="props.status === 'wip'" class="marker">•</div>
 
-            <i v-if="props.icon" :class="props.icon.includes('fa')?`fa-solid ${props.icon} fa-fw '`:' lh-1 label-sm'"
-               class="app-icon-char"
-               v-text="!props.icon.includes('fa')?props.icon:''"></i>
-            <i v-else class="fa-solid fa-circle fa-fw"></i>
-        </div>
-        <div class="app-name pt-1">{{ props.name }}</div>
+      <i v-if="props.icon" :class="props.icon.includes('fa')?`fa-solid ${props.icon} fa-fw '`:' lh-1 label-sm'"
+         class="app-icon-char"
+         v-text="!props.icon.includes('fa')?props.icon:''"></i>
+      <i v-else class="fa-solid fa-circle fa-fw"></i>
     </div>
+    <div class="app-name pt-1">{{ props.name }}</div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -51,6 +51,7 @@ function click() {
   justify-content: center;
   flex-direction: column;
   align-items: center;
+  //outline: 1px solid red;
 
 }
 
@@ -64,8 +65,8 @@ div .app-icon.element {
 }
 
 .app-icon {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 100%;
+  //height: 2.5rem;
   display: flex;
   align-self: center;
   align-items: center;
