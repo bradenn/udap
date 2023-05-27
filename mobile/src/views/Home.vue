@@ -23,7 +23,8 @@ onMounted(() => {
 
 watchEffect(() => {
   state.zones = remote.zones.filter(z => z.pinned)
-  state.thermostat = remote.entities.find(e => e.name === "thermostat")
+  let e = remote.entities.find(e => e.name === "thermostat")
+  if (e) state.thermostat = e
   return remote.entities
 })
 
