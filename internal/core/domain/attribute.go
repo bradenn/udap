@@ -19,7 +19,7 @@ type AttributeLog struct {
 type Attribute struct {
 	common.Persistent
 	Value     string         `json:"value"`
-	Updated   time.Time      `json:"updated"`
+	Updated   time.Time      `json:"lastUpdated"`
 	Request   string         `json:"request"`
 	Requested time.Time      `json:"requested"`
 	Entity    string         `json:"entity"`

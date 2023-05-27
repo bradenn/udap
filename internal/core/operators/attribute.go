@@ -62,7 +62,6 @@ func (a *attributeOperator) Set(attribute *domain.Attribute, s string) error {
 
 	attribute.Request = s
 	attribute.Value = s
-	attribute.UpdatedAt = time.Now()
 
 	return nil
 }
@@ -74,6 +73,7 @@ func (a *attributeOperator) Update(attribute *domain.Attribute, val string, stam
 	// 	return fmt.Errorf("OVERWRITES REQUEST")
 	// }
 	// Set the value
+	attribute.Updated = stamp
 	err := a.Set(attribute, val)
 	if err != nil {
 		return err

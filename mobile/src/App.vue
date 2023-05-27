@@ -25,15 +25,17 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="d-flex flex-column gap-3 mt-2 px-2">
-        <div class="d-flex justify-content-between ">
-            <div class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1">
-                <Encrypted></Encrypted>
-                <div class="udap-logo lh-1">UDAP</div>
-            </div>
-            <Menu v-if="remote" :name="0"></Menu>
+    <div class="d-flex flex-column gap-3 mt-2 px-2" style=" max-height: 99vh;">
+      <div class="d-flex justify-content-between ">
+        <div class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1">
+          <Encrypted></Encrypted>
+          <div class="udap-logo lh-1" style=" z-index: 6 !important;">UDAP</div>
         </div>
+        <Menu v-if="remote" :name="0"></Menu>
+      </div>
+      <div class="dock-fixed">
         <router-view></router-view>
+      </div>
     </div>
 </template>
 
@@ -41,12 +43,11 @@ onMounted(() => {
 
 
 .dock-fixed {
-    position: absolute;
-    display: inline;
-    width: 20rem;
-    bottom: 2rem;
-    height: 1rem;
-    /*filter: blur(20px);*/
+  /*position: relative;*/
+  height: 100%;
+  width: 100%;
+  overflow-y: scroll !important;
+  /*filter: blur(20px);*/
 }
 
 .label-muted {
@@ -58,9 +59,9 @@ onMounted(() => {
 
 
 .udap-logo {
-    font-family: "IBM Plex Sans Medium";
-    font-size: 2.6rem;
-    font-weight: 700;
+  font-family: "IBM Plex Sans Medium", sans-serf;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 </style>

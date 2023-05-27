@@ -11,7 +11,7 @@ import (
 	"udap/internal/orchestrator"
 )
 
-const VERSION = "2.18.3"
+const VERSION = "2.18.5"
 
 func main() {
 

@@ -1,14 +1,8 @@
-# UDAP v2.18.1
+# UDAP v2.18.5
 
 [![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/go.yml)
 [![Go CodeQL](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml)
 [![Typescript](https://github.com/bradenn/udap/actions/workflows/ts.yml/badge.svg)](https://github.com/bradenn/udap/actions/workflows/ts.yml)
-
-Line Count
-
-```git ls-files ./**/*.go ./**/*.vue ./client/src/**/*.ts ./embeded/**/*.cpp ./embeded/**/*.h ./embeded/**/*.c ./pkg/**/*.py ./client/**/*.scss | xargs wc -l```
-
-`> 46603`
 
 ## Universal Device Aggregation Platform
 
@@ -16,6 +10,32 @@ Udap aims to efficiently link and aggregate many unlike interfaces into a heuris
 supplemented from add-on plugins called modules. These modules are written in go and compile during Udap's runtime.
 Modules can be configured to control computer settings, lights, music, air conditioners, phone systems, access points,
 media, or even spaceships.
+
+## Local Domain Configurations
+
+Udap uses a certificate signed by its own certificate authority. New devices need to install a CA root certificate in
+order to access the UDAP platform.
+
+**Routing & Network Details**
+
+```
+User -> DNS (vyos) -> Router (vyos) -> Nginx Server -> Resource Server
+```
+
+**Specified Address Routing**
+
+The domain `udap.app` is owned by me, but only to prevent malicious outside influence should the internal routing be
+temporarily compromised. All protocol communication should be confined to a secured private network.
+
+| Usage          | Address                       | Reverse Proxy Port | TLS      | Notes             |
+|----------------|-------------------------------|--------------------|----------|-------------------|
+| Mobile         | https://udap.app              | 5045               | Required |                   |
+| Terminal       | https://terminal.udap.app     | 5002               | Required |                   |
+| Authentication | https://auth.udap.app         | 6699               | Required |                   |
+| Static         | https://static.udap.app       | ---                | Required | Hosted with NGINX |
+| API            | https://api.udap.app          | 3020               | Required |                   |
+| Google OAuth   | https://google-oauth.udap.app | 8976               | Required |                   |
+| Trigger        | https://trigger.udap.app      | 5058               | Optional |                   |
 
 ## Entities & Attributes
 
@@ -35,13 +55,12 @@ resolving each attribute's status.
 
 ## Glossary
 
-| Command  | Description |
-|----------| --- |
-| U.D.A.P. | Universal Device Aggregation Platform (encompasses all below terms) |
-| Core     | The physical running UDAP program instance |
-| Nexus    | The front-end interface for all of UDAP |
-| Terminal | An authoritative nexus instance (Used for configuration and management) |
-| Pad      | A general use nexus instance, can be used by anyone without authentication if configured by terminal. |
+| Phrase   | Description                                                                                    |
+|----------|------------------------------------------------------------------------------------------------|
+| UDAP     | Universal Device Aggregation Platform (encompasses all below terms)                            |
+| Core     | The primary UDAP program instance, though there can be multiple core instances.                |
+| Terminal | An authoritative udap interface instance (Used for configuration, management, and primary use) |
+| Mobile   | The general purpose mobile app used for interacting with the UDAP platform.                    |
 
 ### Terminal Screenshots
 
@@ -108,4 +127,13 @@ Plots are best used for providing many buttons for easy selection.
 
 ![Plot Buttons](./docs/images/plot_multi.png)
 
+#### Utilities
+
+Line Count
+
+```git ls-files ./**/*.go ./**/*.vue ./client/src/**/*.ts ./embeded/**/*.cpp ./embeded/**/*.h ./embeded/**/*.c ./pkg/**/*.py ./client/**/*.scss | xargs wc -l```
+
+`> 46603`
+
 #### Copyright &copy; 2019-2022 Braden Nicholson
+

@@ -30,6 +30,7 @@ func (r zoneRouter) RouteInternal(router chi.Router) {
 	router.Post("/zones/create", r.create)
 	router.Route("/zones/{id}", func(local chi.Router) {
 		local.Post("/delete", r.delete)
+		local.Post("/update", r.modify)
 		local.Post("/restore", r.restore)
 		local.Post("/pin", r.pin)
 		local.Post("/unpin", r.unpin)

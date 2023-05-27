@@ -772,7 +772,7 @@ func (t *Tuya) runScan() error {
 		Lights: map[string]*Light{},
 	}
 
-	err := system.Scan(time.Second * 5)
+	err := system.Scan(time.Second * 15)
 	if err != nil {
 		return err
 	}
