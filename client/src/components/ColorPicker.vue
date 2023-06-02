@@ -2,7 +2,7 @@
 
 <script lang="ts" setup>
 
-import {inject, reactive} from "vue";
+import {inject, onMounted, reactive} from "vue";
 
 import Color from "@/components/Color.vue";
 import type {Preferences} from "@/types";
@@ -11,53 +11,62 @@ import Loader from "@/components/Loader.vue";
 import ColorSelector from "@/components/ColorSelector.vue";
 
 const props = defineProps<{
-    change?: (a: number) => void
-    selected?: number,
-    loader?: boolean
+  change?: (a: number) => void
+  selected?: number,
+  loader?: boolean
 }>()
 
 const state = reactive({
-    showColorSelector: false
+  showColorSelector: false,
+  prefs: {} as Preferences
 })
 
 
 function setColor(color: number) {
-    if (props.change) {
-        props.change(color)
-    }
+  if (props.change) {
+    props.change(color)
+  }
 }
 
-const prefs = inject("preferences") as Preferences
+onMounted(() => {
+  let prefs = inject("preferences") as Preferences
+  if (!prefs.appdata) {
+    prefs.appdata = {
+      colors: []
+    }
+  }
+  state.prefs = prefs as Preferences
+})
 
 
 </script>
 
 <template>
-    <ColorSelector v-if="state.showColorSelector" :done="() => state.showColorSelector = false"></ColorSelector>
-    <div :class="`${props.selected?'selected':''}`" class="element color-container">
-        <div class="d-flex justify-content-between px-1 pb-1">
-            <div class="label-c1 label-o3 label-w500">Color</div>
-            <div class="label-c1 label-o3 label-w500">
-                <Loader v-if="props.loader"></Loader>
-                {{ props.selected }}
-            </div>
+  <ColorSelector v-if="state.showColorSelector" :done="() => state.showColorSelector = false"></ColorSelector>
+  <div :class="`${props.selected?'selected':''}`" class="element color-container">
+    <div class="d-flex justify-content-between px-1 pb-1">
+      <div class="label-c1 label-o3 label-w500">Color</div>
+      <div class="label-c1 label-o3 label-w500">
+        <Loader v-if="props.loader"></Loader>
+        {{ props.selected }}
+      </div>
 
-        </div>
-        <FixedScroll :horizontal="true" style="overflow-x: scroll">
-            <div v-if="prefs.appdata" class="d-flex gap-1">
-                <Color v-for="color in prefs.appdata.colors.sort()" :color="color"
-                       :selected="props.selected === color"
-                       @click="() => setColor(color)">
-                </Color>
-                <div :class="`${props.selected?'selected':''}`" class="color subplot surface">
-                    <div :style="`background-color: rgba(255,255,255,0.024);`"
-                         class="swatch" @click="() => {state.showColorSelector = !state.showColorSelector}">
-                        􀅼
-                    </div>
-                </div>
-            </div>
-        </FixedScroll>
     </div>
+    <FixedScroll :horizontal="true" style="overflow-x: scroll">
+      <div v-if="state.prefs.appdata" class="d-flex gap-1">
+        <Color v-for="color in state.prefs.appdata.colors.sort()" :color="color"
+               :selected="props.selected === color"
+               @click="() => setColor(color)">
+        </Color>
+        <div :class="`${props.selected?'selected':''}`" class="color subplot surface">
+          <div :style="`background-color: rgba(255,255,255,0.024);`"
+               class="swatch" @click="() => {state.showColorSelector = !state.showColorSelector}">
+            􀅼
+          </div>
+        </div>
+      </div>
+    </FixedScroll>
+  </div>
 </template>
 
 <style lang="scss" scoped>
