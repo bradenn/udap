@@ -37,7 +37,10 @@ function connectionString(): string {
 
 export interface Remote {
     connecting: boolean,
+    attempts: number,
     connected: boolean,
+    interval: number,
+    nextAttempt: number,
     metadata: Metadata,
     entities: Entity[],
     subroutines: SubRoutine[],
@@ -62,8 +65,11 @@ export interface Remote {
     disconnect(): void,
 }
 
-const remote = reactive<Remote>({
+let remote = reactive<Remote>({
     connecting: false,
+    interval: 0,
+    attempts: 0,
+    nextAttempt: 0,
     connected: false,
     metadata: {} as Metadata,
     entities: [] as Entity[],
@@ -110,6 +116,10 @@ interface Message {
 
 
 function connect(): void {
+    if (remote.connected || remote.connecting) return
+    // console.log("connecing")
+    remote.connecting = true
+
     state.ws = new WebSocket(connectionString())
     state.ws.onopen = onOpen
     state.ws.onclose = onClose
@@ -119,7 +129,7 @@ function connect(): void {
 
 function disconnect(): void {
     if (state.ready) {
-        state.ws.close(1001, "Disconnecting")
+        state.ws.close(1000, "Disconnecting")
         remote.connected = false
         remote.connecting = false
     }
@@ -134,16 +144,39 @@ function onOpen(_: Event) {
     state.ready = true
     remote.connected = true
     remote.connecting = false
+    remote.attempts = 0
+
+}
+
+function beginCountdown() {
+    clearInterval(remote.interval)
+    remote.nextAttempt = 2000
+    remote.attempts++
+    //@ts-ignore
+    remote.interval = setInterval(tick, 33)
+}
+
+function tick() {
+    if (remote.nextAttempt >= 33) {
+        remote.nextAttempt -= 33
+    } else {
+        remote.nextAttempt = 0
+        clearInterval(remote.interval)
+        remote.connect()
+    }
 }
 
 function onClose(_: CloseEvent) {
     state.ready = false
     remote.connected = false
     remote.connecting = false
+    remote.disconnect()
+    beginCountdown()
 }
 
 function onMessage(event: MessageEvent) {
     state.ready = true
+    remote.connected = true
     let msg: Message = JSON.parse(event.data) as Message
     if (!msg) {
         console.log("Invalid JSON received")
@@ -156,7 +189,13 @@ function onMessage(event: MessageEvent) {
     remote.connected = true
 }
 
-function onError(_: Event) {
+function onError(err: Event) {
+    console.log(err)
+    if (state.ws.readyState == WebSocket.CLOSED) {
+        state.ready = false
+        remote.connected = false
+        remote.connecting = false
+    }
     state.ready = true
 }
 

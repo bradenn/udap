@@ -329,9 +329,9 @@ export function memorySizeOf(obj: any) {
 
 export function formatByteSize(bytes: number) {
     if (bytes < 1024) return bytes + " bytes";
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(3) + " KB";
-    else if (bytes < 1073741824) return (bytes / 1048576).toFixed(3) + " MB";
-    else return (bytes / 1073741824).toFixed(3) + " GB";
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + " KB";
+    else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + " MB";
+    else return (bytes / 1073741824).toFixed(2) + " GB";
 }
 
 // Preferences
@@ -355,6 +355,7 @@ export interface Attribute {
     updated: string;
     request: string;
     requested: string;
+    lastUpdated: string;
     entity: string;
     key: string;
     type: string;
@@ -439,6 +440,7 @@ export interface Entity {
     updated: string;
     id: string;
     lastPoll: string;
+
     name: string;
     alias: string;
     type: string;

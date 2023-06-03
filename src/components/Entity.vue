@@ -7,137 +7,145 @@ import core from "@/core";
 import attributeService from "@/services/attributeService";
 
 const props = defineProps<{
-    aspect?: number
-    secondary?: boolean
-    entity: Entity
+  aspect?: number
+  secondary?: boolean
+  entity: Entity
 }>()
 
 const state = reactive({
-    attributes: [] as Attribute[],
-    spectrum: {
-        on: false,
-        dim: 0,
-        cct: 0,
-        hue: 0,
-    },
-    pressed: false,
-    holding: false,
-    timeout: 0,
-    down: 0,
+  attributes: [] as Attribute[],
+  online: false,
+  spectrum: {
+    on: false,
+    dim: 0,
+    cct: 0,
+    hue: 0,
+  },
+  pressed: false,
+  holding: false,
+  timeout: 0,
+  down: 0,
 })
 
 const router = core.router();
 const remote = core.remote();
 
 onMounted(() => {
-    updateAttribute()
+  updateAttribute()
 })
 
 watchEffect(() => {
-    updateAttribute()
-    return remote.attributes
+  updateAttribute()
+
+  return remote.attributes
 })
 
 function updateAttribute() {
-    state.attributes = remote.attributes.filter(a => a.entity === props.entity.id)
-    let found = state.attributes.find(a => a.key === 'on')
-    if (!found) return;
-    state.spectrum.on = found.value === "true"
+  state.attributes = remote.attributes.filter(a => a.entity === props.entity.id)
+  let found = state.attributes.find(a => a.key === 'on')
+  if (!found) return;
+  state.spectrum.on = found.value === "true"
+  state.online = state.attributes.map(a => (Date.now().valueOf() - new Date(a.lastUpdated).valueOf()) < (1000 * 60)).some(a => a)
 }
 
 function sendRequest(key: string, value: string) {
-    let found = state.attributes.find(a => a.key === key)
-    if (!found) return
-    found.request = value
-    attributeService.request(found).then(_ => {
+  let found = state.attributes.find(a => a.key === key)
+  if (!found) return
+  found.request = value
+  attributeService.request(found).then(_ => {
 
-    }).catch(err => {
+  }).catch(err => {
 
-    })
+  })
 }
 
 function powerOn(id: string) {
-    sendRequest("on", "true")
+  sendRequest("on", "true")
 }
 
 function powerOff(id: string) {
-    sendRequest("on", "false")
+  sendRequest("on", "false")
 }
 
 
 function togglePower() {
-    if (state.spectrum.on) {
-        sendRequest("on", "false")
-    } else {
-        sendRequest("on", "true")
-    }
+  if (state.spectrum.on) {
+    sendRequest("on", "false")
+  } else {
+    sendRequest("on", "true")
+  }
 }
 
+
 function goEdit() {
-    router.push(`/home/entity/${props.entity.id}`)
+  router.push(`/home/entity/${props.entity.id}`)
 }
 
 function mouseHold(e: MouseEvent) {
-    console.log("Hold")
+  console.log("Hold")
 }
 
 function mouseDown(e: TouchEvent) {
-    e.preventDefault();
-    state.down = Date.now();
-    state.holding = false;
-    state.pressed = true
-    state.timeout = window.setTimeout(() => {
-        state.holding = true;
-        goEdit();
-    }, 250); // Adjust the timeout as per your requirement
+  e.preventDefault();
+  state.down = Date.now();
+  state.holding = false;
+  state.pressed = true
+  state.timeout = window.setTimeout(() => {
+    state.holding = true;
+    goEdit();
+  }, 250); // Adjust the timeout as per your requirement
 }
 
 function mouseUp(e: TouchEvent) {
-    e.preventDefault();
-    clearTimeout(state.timeout);
-    state.pressed = false
-    const elapsedTime = Date.now() - state.down;
+  e.preventDefault();
+  clearTimeout(state.timeout);
+  state.pressed = false
+  const elapsedTime = Date.now() - state.down;
 
-    if (elapsedTime < 250 && !state.holding) {
-        togglePower();
-    }
+  if (elapsedTime < 250 && !state.holding) {
+    togglePower();
+  }
 }
 
 </script>
 
 <template>
-    <div :class="`${state.pressed?'pressed':''} ${state.spectrum.on?'on':'off'}`" class="entity px-3 py-2"
-         @touchend="mouseUp"
-         @touchstart="mouseDown">
-        <div class="d-flex gap-2 justify-content-between align-items-center py-1 gap-3 w-100">
-            <div class="d-flex justify-content-center align-items-center gap-3">
-                <div :class="`${state.spectrum.on?'icon-on':'icon-off'}`" class="sf-icon">{{
-                    props.entity.icon
-                    }}
-                </div>
-                <div>
-                    <div class="label-c5 label-w700  name">{{
-                        props.entity.alias ? props.entity.alias : props.entity.name
-                        }}
-                    </div>
+  <div :class="`${state.pressed?'pressed':''} ${state.spectrum.on?'on':'off'}`" class="entity px-3 py-2"
+       @touchend="mouseUp"
+       @touchstart="mouseDown">
 
-                </div>
-            </div>
-            <div v-if="false" class="d-flex">
-                <div v-for="attr in state.attributes">
-                    <div v-if="attr.key === 'on'" class="d-flex justify-content-center" style="width: 4rem">
-                        <div :class="``"
-                             class="power-toggle label-w500 label-c2"
-                             @click="attr.value === 'false'?powerOn(attr.id):powerOff(attr.id)">
-                            {{ attr.value === 'false' ? "OFF" : "ON" }}
-                        </div>
-                    </div>
-                </div>
-
-                <router-link :to="`/home/entity/${props.entity.id}`" class="sf-icon label-o3">􀆊</router-link>
-            </div>
+    <div class="d-flex gap-2 justify-content-between align-items-center py-1 gap-3 w-100">
+      <div class="d-flex justify-content-center align-items-center gap-3">
+        <div :class="`${state.spectrum.on?'icon-on':'icon-off'}`" class="sf-icon">{{
+            props.entity.icon
+          }}
         </div>
+        <div>
+          <div class="label-c5 label-w700  name">{{
+              props.entity.alias ? props.entity.alias : props.entity.name
+            }}
+          </div>
+
+
+        </div>
+
+      </div>
+      <div v-if="!state.online" class="sf-icon text-warning">􀇿</div>
+      <div v-if="false" class="d-flex">
+        <div v-for="attr in state.attributes">
+          <div v-if="attr.key === 'on'" class="d-flex justify-content-center" style="width: 4rem">
+            <div :class="``"
+                 class="power-toggle label-w500 label-c2"
+                 @click="attr.value === 'false'?powerOn(attr.id):powerOff(attr.id)">
+              {{ attr.value === 'false' ? "OFF" : "ON" }}
+            </div>
+          </div>
+        </div>
+
+        <router-link :to="`/home/entity/${props.entity.id}`" class="sf-icon label-o3">􀆊</router-link>
+      </div>
     </div>
+  </div>
 
 </template>
 

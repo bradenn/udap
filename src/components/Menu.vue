@@ -66,6 +66,10 @@ function toggleMenu() {
       <div class="d-flex gap-1">
         <AppLink icon="􀎟" name="Home" to="/home/dashboard"></AppLink>
         <AppLink icon="􀍟" name="Settings" to="/home/settings"></AppLink>
+        <div class="element d-flex align-items-center gap-1 justify-content-center" style="min-width: 8rem">
+          <div class="sf-icon label-o4 lh-1">􀅈</div>
+          <div class="app-link-header lh-1">Reload</div>
+        </div>
         <!--                <AppLink name="Home" icon="􀎟" to="/home/dashboard"></AppLink>-->
       </div>
     </div>
@@ -73,6 +77,13 @@ function toggleMenu() {
 </template>
 
 <style scoped>
+.app-link-header {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+
+}
+
 .blur {
   -webkit-backdrop-filter: blur(4px);
   width: calc(100% + 1rem);
