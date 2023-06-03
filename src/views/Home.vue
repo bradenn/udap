@@ -34,7 +34,7 @@ watchEffect(() => {
 <template>
   <div class="d-flex flex-column gap-3 justify-content-between h-100">
 
-  <div v-for="zone in state.zones">
+    <div v-for="zone in state.zones">
       <div>
         <div class="label-c5 label-w700 label-o5 px-2">{{ zone.name }}</div>
         <div class="home-grid">
