@@ -34,6 +34,29 @@ type Module struct {
 	*controller.Controller
 }
 
+func (m *Module) ListEntities() ([]domain.Entity, error) {
+	entities, err := m.Entities.FindAllByModule(m.Config.Name)
+	if err != nil {
+		return []domain.Entity{}, err
+	}
+	return *entities, nil
+}
+
+func (m *Module) RegisterEntity(name string, entityType string) (string, error) {
+	product := domain.Entity{
+		Name:   name,
+		Alias:  "",
+		Type:   entityType,
+		Module: m.Config.Name,
+		Locked: false,
+	}
+	err := m.Entities.Register(&product)
+	if err != nil {
+		return "", err
+	}
+	return product.Id, nil
+}
+
 // LogF is called once at the launch of the module
 func (m *Module) LogF(format string, args ...any) {
 	out := domain.Log{

@@ -36,7 +36,7 @@ watchEffect(() => {
 function setOptions() {
   if (!remote) return;
 
-  let entities: TaskOption[] = props.zone.entities.map(t => {
+  let entities: TaskOption[] = remote.entities.map(t => {
     return {title: t.alias ? t.alias : t.name, description: t.module, value: t.id}
   }) as TaskOption[]
 
@@ -75,7 +75,7 @@ function finish(tasks: Task[]) {
 
   zoneService.updateZone({
     name: name.value as string,
-    entities: remote.entities.filter(e => (entities.value as string[]).includes(e.id)) as Entity[],
+    entities: remote.entities.filter(e => entities.value.includes(e.id)) as Entity[],
   } as Zone).then(res => {
     console.log(res)
     goBack()

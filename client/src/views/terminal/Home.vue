@@ -12,6 +12,7 @@ import Calendar from '@/components/widgets/Calendar.vue';
 import Spotify from '@/components/widgets/Spotify.vue'
 import type {Remote} from "@/remote";
 import Thermostat from "@/components/thermostat/Thermostat.vue";
+import Proxmox from "@/components/Proxmox.vue";
 
 
 // Define the local reactive data for this view
@@ -117,6 +118,7 @@ function getRoutes() {
           class="d-flex justify-content-center flex-column align-items-center gap-1"
           style=" grid-column: 6/span 5; grid-row: 1/span 6;">
         <Calendar></Calendar>
+        <Proxmox v-if="false"></Proxmox>
         <!--                <Camera></Camera>-->
       </div>
 
