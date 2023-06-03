@@ -105,6 +105,9 @@ type Light struct {
 	DevId      string `json:"devId"`
 	LocalId    string `json:"localId"`
 	Active     int    `json:"active"`
+	Mode       string
+	Hue        int
+	Dim        int
 	UUID       string `json:"uid"`
 	Encrypt    bool   `json:"encrypt"`
 	ProductKey string `json:"productKey"`
@@ -158,6 +161,7 @@ func (l *Light) sendModeCommandDps(mode string, key int, value any) error {
 	dps := make(map[string]any)
 	dps[fmt.Sprintf("%d", Mode)] = mode
 	dps[fmt.Sprintf("%d", key)] = value
+	l.Mode = mode
 
 	marshal, err := json.Marshal(dps)
 	if err != nil {
@@ -179,6 +183,7 @@ func (l *Light) sendModeCommandDps(mode string, key int, value any) error {
 
 func (l *Light) sendCommandDps(key int, value any) error {
 	dps := make(map[string]any)
+	dps[fmt.Sprintf("%d", Mode)] = l.Mode
 	dps[fmt.Sprintf("%d", key)] = value
 
 	marshal, err := json.Marshal(dps)
@@ -261,7 +266,10 @@ func (l *Light) setDim(dim int) error {
 	if dim > 100 || dim < 0 {
 		return fmt.Errorf("dim value must be a value betweeen 0 and 100 inclusive")
 	}
-
+	if l.Mode == "colour" {
+		l.Dim = dim
+		return l.setHueDim(l.Hue, dim)
+	}
 	return l.sendCommandDps(Brightness, dim*10)
 }
 
@@ -286,10 +294,36 @@ func (l *Light) setRGB(r, g, b int) error {
 	return l.sendModeCommandDps(ModeColor, Color, hexVal)
 }
 
+func (l *Light) setRGBW(r, g, b, w int) error {
+	// The light expects an HSV value in the mode Hue: 0-360, Saturation: 0-1000, and Value: 0-1000
+	h, s, v := RGBToHSV(r, g, b)
+	values := []int{int(h * 360), int(s * 1000), int(v * math.Min(float64(w*100), 1000))}
+	hexVal := ""
+	for _, value := range values {
+		local := fmt.Sprintf("%04x", value)
+		hexVal += local
+	}
+
+	return l.sendModeCommandDps(ModeColor, Color, hexVal)
+}
+
+func (l *Light) setHueDim(r int, dim int) error {
+	// The light expects an HSV value in the mode Hue: 0-360, Saturation: 0-1000, and Value: 0-1000
+
+	values := []int{int(math.Min(float64(r), 360)), int(1000), int(math.Min(float64(dim*10), 1000))}
+	hexVal := ""
+	for _, value := range values {
+		local := fmt.Sprintf("%04x", value)
+		hexVal += local
+	}
+
+	return l.sendModeCommandDps(ModeColor, Color, hexVal)
+}
+
 func (l *Light) setHue(r int) error {
 	// The light expects an HSV value in the mode Hue: 0-360, Saturation: 0-1000, and Value: 0-1000
 
-	values := []int{int(math.Min(float64(r), 360)), int(1000), int(1000)}
+	values := []int{int(math.Min(float64(r), 360)), int(1000), int(l.Latest.Dps.Dim)}
 	hexVal := ""
 	for _, value := range values {
 		local := fmt.Sprintf("%04x", value)
@@ -366,7 +400,7 @@ func (l *Light) parsePayload(payload []byte) error {
 	if err != nil {
 		return err
 	}
-
+	l.Mode = data.Dps.Mode
 	l.Latest = data
 
 	return nil
@@ -429,7 +463,7 @@ func (l *Light) sendStatusPayload() error {
 	}
 	// Craft a buffer to contain the incoming data
 	response := make([]byte, 512)
-	err = socket.SetDeadline(time.Now().Add(time.Millisecond * 250))
+	err = socket.SetDeadline(time.Now().Add(time.Second * 5))
 	if err != nil {
 		return err
 	}
@@ -440,11 +474,13 @@ func (l *Light) sendStatusPayload() error {
 	}
 	// Cut off the unused bits
 	response = response[:n]
+
 	// Decode/Decrypt the data
 	processed, err := l.decodePayload(response[:n], false)
 	if err != nil {
 		return err
 	}
+	//fmt.Printf("%s\n", processed)
 	// Parse the data and update the local struct
 	err = l.parsePayload(processed)
 	if err != nil {
@@ -465,7 +501,7 @@ func (l *Light) sendCommandPayload(data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", data)
+	//fmt.Printf("%s\n", data)
 	// Prefix the version and spacing to the encrypted payload
 	packet := append([]byte("3.3"), PROTOCOL_3x_HEADER...)
 	packet = append(packet, payload...)
@@ -501,7 +537,7 @@ func (l *Light) sendCommandPayload(data []byte) error {
 	}
 	// Craft a buffer to contain the incoming data
 	re := make([]byte, 256)
-	err = socket.SetReadDeadline(time.Now().Add(time.Millisecond * 250))
+	err = socket.SetReadDeadline(time.Now().Add(time.Millisecond * 500))
 	if err != nil {
 		return err
 	}
@@ -544,10 +580,15 @@ func (l *Light) getSocket() (net.Conn, error) {
 		return nil, err
 	}
 
-	err = l.socket.SetWriteDeadline(time.Now().Add(time.Second * 5))
-	if err != nil {
-		return nil, err
-	}
+	//err = l.socket.SetWriteDeadline(time.Now().Add(time.Second * 5))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//err = l.socket.SetReadDeadline(time.Now().Add(time.Second * 5))
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	// Return opened socket
 	return l.socket, nil
@@ -646,6 +687,20 @@ func (t *Tuya) Update() error {
 				return err
 			}
 
+			h := int(0)
+			s := int(0)
+			v := int(0)
+			_, err = fmt.Sscanf(light.Latest.Dps.Color, "%04x%04x%04x", &h, &s, &v)
+			if err != nil {
+				return nil
+			}
+			_ = t.Attributes.Set(eid, "hue", fmt.Sprintf("%d", h))
+			light.Hue = h
+			light.Dim = v / 10
+			if err != nil {
+				log.Err(err)
+			}
+
 			if light.Latest.Dps.On {
 				err = t.Attributes.Set(eid, "on", "true")
 				if err != nil {
@@ -658,23 +713,19 @@ func (t *Tuya) Update() error {
 				}
 			}
 
-			err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Latest.Dps.Dim/10))
-			if err != nil {
-				log.Err(err)
+			if light.Mode == "colour" {
+				err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Dim))
+				if err != nil {
+					log.Err(err)
+				}
+			} else {
+				err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Latest.Dps.Dim/10))
+				if err != nil {
+					log.Err(err)
+				}
 			}
 
 			err = t.Attributes.Set(eid, "cct", fmt.Sprintf("%d", int(convertRange(float64(light.Latest.Dps.Cct), 0, 1000, 2700, 6500))))
-			if err != nil {
-				log.Err(err)
-			}
-
-			h := int(0)
-			o := int(0)
-			_, err = fmt.Sscanf(light.Latest.Dps.Color, "%04x%04x%04x", &h, &o, &o)
-			if err != nil {
-				return nil
-			}
-			_ = t.Attributes.Set(eid, "hue", fmt.Sprintf("%d", h))
 			if err != nil {
 				log.Err(err)
 			}
@@ -772,7 +823,7 @@ func (t *Tuya) runScan() error {
 		Lights: map[string]*Light{},
 	}
 
-	err := system.Scan(time.Second * 15)
+	err := system.Scan(time.Second * 10)
 	if err != nil {
 		return err
 	}
