@@ -9,6 +9,7 @@ import Home from "@/views/Home.vue";
 import EntityEdit from "@/views/home/EntityEdit.vue";
 import MenuPage from "@/views/MenuPage.vue";
 import settings from "@/views/settings";
+import MonitorList from "@/views/monitor/MonitorList.vue";
 
 const mobileRoutes =
     {
@@ -34,6 +35,12 @@ const mobileRoutes =
                 path: '/home/subroutines',
                 name: 'subroutines',
                 component: SubRoutineList,
+                icon: '􀎟',
+            },
+            {
+                path: '/home/monitor',
+                name: 'monitor',
+                component: MonitorList,
                 icon: '􀎟',
             },
             {

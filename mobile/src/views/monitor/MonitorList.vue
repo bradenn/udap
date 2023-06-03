@@ -126,7 +126,8 @@ function updateEntities() {
                                name="CPU">{{ Math.round(vm.utilization.cpu * 1000) / 10 }}%
                   </Utilization>
 
-                  <Utilization :max="vm.utilization.maxmem" :min="0" :value="vm.utilization.mem" class="flex-grow-1 w-75"
+                  <Utilization :max="vm.utilization.maxmem" :min="0" :value="vm.utilization.mem"
+                               class="flex-grow-1 w-75"
                                name="Memory">
                     {{ formatByteSize(vm.utilization.mem) }} / {{ formatByteSize(vm.utilization.maxmem) }}
                   </Utilization>

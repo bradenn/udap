@@ -17,6 +17,7 @@ export default defineConfig({
         VitePWA({
             mode: 'development',
             registerType: 'autoUpdate',
+            injectRegister: 'auto',
             manifest: {
                 name: 'UDAP',
                 short_name: 'UDAP',
@@ -42,9 +43,7 @@ export default defineConfig({
                 enabled: true
                 /* other options */
             },
-            workbox: {
-                // Workbox configuration options
-            },
+            // add this to cache all the imports
         }),
     ],
     server: {

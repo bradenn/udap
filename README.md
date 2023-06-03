@@ -18,25 +18,6 @@ order to access the UDAP platform.
 
 **Routing & Network Details**
 
-```
-User -> DNS (vyos) -> Router (vyos) -> Nginx Server -> Resource Server
-```
-
-**Specified Address Routing**
-
-The domain `udap.app` is owned by me, but only to prevent malicious outside influence should the internal routing be
-temporarily compromised. All protocol communication should be confined to a secured private network.
-
-| Usage          | Address                       | Reverse Proxy Port | TLS      | Notes             |
-|----------------|-------------------------------|--------------------|----------|-------------------|
-| Mobile         | https://udap.app              | 5045               | Required |                   |
-| Terminal       | https://terminal.udap.app     | 5002               | Required |                   |
-| Authentication | https://auth.udap.app         | 6699               | Required |                   |
-| Static         | https://static.udap.app       | ---                | Required | Hosted with NGINX |
-| API            | https://api.udap.app          | 3020               | Required |                   |
-| Google OAuth   | https://google-oauth.udap.app | 8976               | Required |                   |
-| Trigger        | https://trigger.udap.app      | 5058               | Optional |                   |
-
 ## Entities & Attributes
 
 Any state within udap is stored within an attribute. These attributes belong to a parent entity.
