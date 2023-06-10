@@ -117,13 +117,13 @@ func (c *Google) setHeat(attribute domain.Attribute) {
 		return
 	}
 
-	request, err := c.sendAuthenticatedRequest(marshal)
+	_, err = c.sendAuthenticatedRequest(marshal)
 	if err != nil {
 		log.Err(err)
 		return
 	}
 
-	fmt.Println(string(request))
+	//fmt.Println(string(request))
 }
 
 func (c *Google) setCool(attribute domain.Attribute) {
@@ -141,13 +141,13 @@ func (c *Google) setCool(attribute domain.Attribute) {
 		return
 	}
 
-	request, err := c.sendAuthenticatedRequest(marshal)
+	_, err = c.sendAuthenticatedRequest(marshal)
 	if err != nil {
 		log.Err(err)
 		return
 	}
 
-	fmt.Println(string(request))
+	//fmt.Println(string(request))
 
 }
 
@@ -229,7 +229,7 @@ func (c *Google) runOAuth() error {
 
 		code := request.URL.Query().Get("code")
 
-		fmt.Printf("Got code: %s\n", code)
+		//fmt.Printf("Got code: %s\n", code)
 
 		_, err = writer.Write([]byte("You have been signed in, please come again :)"))
 		if err != nil {
@@ -414,6 +414,7 @@ func (c *Google) sendAPIRequest() ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+	//fmt.Println(res.String())
 	_ = response.Body.Close()
 	return res.Bytes(), nil
 }
@@ -543,6 +544,84 @@ func (c *Google) updateValues(qr QueryResponse) error {
 	}
 	return nil
 }
+func (c *Google) initDevices() error {
+	dat, err := c.sendAPIRequest()
+	if err != nil {
+		return err
+	}
+
+	qr := QueryResponse{}
+	err = json.Unmarshal(dat, &qr)
+	if err != nil {
+		return err
+	}
+
+	for _, device := range qr.Devices {
+		c.deviceId = device.Name
+		if device.Type != "sdm.devices.types.THERMOSTAT" {
+			continue
+		}
+		dev := domain.Entity{
+			Name:   strings.ToLower("thermostat"),
+			Type:   "thermostat",
+			Module: "google",
+		}
+		err = c.Entities.Register(&dev)
+		if err != nil {
+			return err
+		}
+		c.entityId = dev.Id
+		channel := c.request
+		media := &domain.Attribute{
+			Key:     "thermostat",
+			Value:   "{}",
+			Request: "{}",
+			Order:   0,
+			Type:    "media",
+			Entity:  dev.Id,
+			Channel: channel,
+		}
+		err = c.Attributes.Register(media)
+		if err != nil {
+			return err
+		}
+
+		heat := &domain.Attribute{
+			Key:     "heat",
+			Value:   "0",
+			Request: "0",
+			Order:   0,
+			Type:    "number",
+			Entity:  dev.Id,
+			Channel: channel,
+		}
+		err = c.Attributes.Register(heat)
+		if err != nil {
+			return err
+		}
+
+		cool := &domain.Attribute{
+			Key:     "cool",
+			Value:   "0",
+			Request: "0",
+			Order:   0,
+			Type:    "number",
+			Entity:  dev.Id,
+			Channel: channel,
+		}
+		err = c.Attributes.Register(cool)
+		if err != nil {
+			return err
+		}
+
+	}
+	err = c.updateValues(qr)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 func (c *Google) Run() error {
 
 	err := c.InitConfig("auth", "unset")
@@ -558,8 +637,14 @@ func (c *Google) Run() error {
 		log.Err(err)
 		return err
 	}
+
+	token, err := c.GetConfig("token")
+	if err != nil {
+		log.Err(err)
+		return err
+	}
 	go c.mux()
-	if config == "unset" {
+	if config == "unset" || token == "" {
 		go func() {
 			err = c.runOAuth()
 			if err != nil {
@@ -572,6 +657,12 @@ func (c *Google) Run() error {
 			log.Event("Code: %s", config)
 			err = c.fetchToken()
 			if err != nil {
+				log.Err(err)
+				return
+			}
+			err = c.initDevices()
+			if err != nil {
+				return
 			}
 		}()
 	} else {
@@ -582,82 +673,10 @@ func (c *Google) Run() error {
 				return err
 			}
 		}
-
-		dat, err := c.sendAPIRequest()
+		err = c.initDevices()
 		if err != nil {
 			return err
 		}
-
-		qr := QueryResponse{}
-		err = json.Unmarshal(dat, &qr)
-		if err != nil {
-			return err
-		}
-
-		for _, device := range qr.Devices {
-			c.deviceId = device.Name
-			if device.Type != "sdm.devices.types.THERMOSTAT" {
-				continue
-			}
-			dev := domain.Entity{
-				Name:   strings.ToLower("thermostat"),
-				Type:   "thermostat",
-				Module: "google",
-			}
-			err = c.Entities.Register(&dev)
-			if err != nil {
-				return err
-			}
-			c.entityId = dev.Id
-			channel := c.request
-			media := &domain.Attribute{
-				Key:     "thermostat",
-				Value:   "{}",
-				Request: "{}",
-				Order:   0,
-				Type:    "media",
-				Entity:  dev.Id,
-				Channel: channel,
-			}
-			err = c.Attributes.Register(media)
-			if err != nil {
-				return err
-			}
-
-			heat := &domain.Attribute{
-				Key:     "heat",
-				Value:   "0",
-				Request: "0",
-				Order:   0,
-				Type:    "number",
-				Entity:  dev.Id,
-				Channel: channel,
-			}
-			err = c.Attributes.Register(heat)
-			if err != nil {
-				return err
-			}
-
-			cool := &domain.Attribute{
-				Key:     "cool",
-				Value:   "0",
-				Request: "0",
-				Order:   0,
-				Type:    "number",
-				Entity:  dev.Id,
-				Channel: channel,
-			}
-			err = c.Attributes.Register(cool)
-			if err != nil {
-				return err
-			}
-
-		}
-		err = c.updateValues(qr)
-		if err != nil {
-			return err
-		}
-
 	}
 
 	return nil
@@ -680,6 +699,7 @@ func (c *Google) refresh() error {
 	if err != nil {
 		return err
 	}
+
 	clientId, foundClientId := os.LookupEnv("googleClientId")
 	if !foundClientId {
 		return fmt.Errorf("client id environment variable not set")
@@ -694,6 +714,8 @@ func (c *Google) refresh() error {
 	if err != nil {
 		return err
 	}
+
+	//fmt.Println(fmt.Sprintf(refreshURL, clientId, secret, refresh))
 
 	client := http.Client{}
 	defer client.CloseIdleConnections()

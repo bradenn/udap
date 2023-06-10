@@ -7,12 +7,12 @@ import moment from "moment";
 import {formatByteSize} from "../types";
 import Utilization from "@/components/Utilization.vue";
 
-declare interface Network {
+interface Network {
   netout: number;
   netin: number;
 }
 
-declare interface Utilization {
+interface Utilization {
   mem: number;
   maxmem: number;
   cpu: number;
@@ -22,7 +22,7 @@ declare interface Utilization {
   maxdisk: number;
 }
 
-declare interface VM {
+interface VM {
   vmid: number;
   status: string;
   name: string;
@@ -32,7 +32,7 @@ declare interface VM {
   network: Network;
 }
 
-declare interface Node {
+interface Node {
   node: string;
   status: string;
   uptime: number;
