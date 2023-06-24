@@ -1,10 +1,11 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
-import type {Attribute, Entity} from "@/types";
+import type {Attribute, Entity} from "udap-ui/types";
 import {onMounted, reactive, watchEffect} from "vue";
 import core from "@/core";
 import attributeService from "@/services/attributeService";
+import Element from "udap-ui/components/Element.vue";
 
 const props = defineProps<{
   aspect?: number
@@ -110,10 +111,9 @@ function mouseUp(e: TouchEvent) {
 </script>
 
 <template>
-  <div :class="`${state.pressed?'pressed':''} ${state.spectrum.on?'on':'off'}`" class="entity px-3 py-2"
-       @touchend="mouseUp"
-       @touchstart="mouseDown">
-
+  <Element :cb="togglePower" :class="`${state.spectrum.on?'on':'off'}`" :foreground="true" :long-cb="goEdit"
+           :mutable="true"
+           class="px-3 py-3">
     <div class="d-flex gap-2 justify-content-between align-items-center py-1 gap-3 w-100">
       <div class="d-flex justify-content-center align-items-center gap-3">
         <div :class="`${state.spectrum.on?'icon-on':'icon-off'}`" class="sf-icon">{{
@@ -121,7 +121,7 @@ function mouseUp(e: TouchEvent) {
           }}
         </div>
         <div>
-          <div class="label-c5 label-w700  name">{{
+          <div class="label-c5 label-w600  name">{{
               props.entity.alias ? props.entity.alias : props.entity.name
             }}
           </div>
@@ -130,7 +130,7 @@ function mouseUp(e: TouchEvent) {
         </div>
 
       </div>
-      <div v-if="!state.online" class="sf-icon text-warning">􀇿</div>
+      <div v-if="!state.online" class="sf-icon text-warning ">􀇿</div>
       <div v-if="false" class="d-flex">
         <div v-for="attr in state.attributes">
           <div v-if="attr.key === 'on'" class="d-flex justify-content-center" style="width: 4rem">
@@ -145,7 +145,7 @@ function mouseUp(e: TouchEvent) {
         <router-link :to="`/home/entity/${props.entity.id}`" class="sf-icon label-o3">􀆊</router-link>
       </div>
     </div>
-  </div>
+  </Element>
 
 </template>
 
@@ -154,7 +154,7 @@ function mouseUp(e: TouchEvent) {
 
 .entity.pressed {
   transform: scale(0.99); /* Scale down the button when pressed */
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+  //box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .on {
@@ -185,11 +185,21 @@ function mouseUp(e: TouchEvent) {
   }
 }
 
+.element {
+  .sf-icon {
+    font-size: 1rem;
+    /* Label Color/Light/Primary */
+    color: #FFF;
+
+    mix-blend-mode: overlay;
+  }
+}
+
 .entity {
 
 
   backdrop-filter: blur(40px);
-  box-shadow: inset 0 0 1px 1.5px rgba(37, 37, 37, 0.6), 0 0 3px 1px rgba(22, 22, 22, 0.6);
+  //box-shadow: inset 0 0 1px 1.5px rgba(37, 37, 37, 0.6), 0 0 3px 1px rgba(22, 22, 22, 0.6);
   /* Note: backdrop-filter has minimal browser support */
   aspect-ratio: 2.71828183/0.8;
   border-radius: 11.5px;

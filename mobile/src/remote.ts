@@ -23,8 +23,9 @@ import type {
     Zone
 } from "./types";
 
-import {PreferenceTypes} from "@/types";
+import {PreferenceTypes} from "udap-ui/types";
 import {Preference} from "@/preferences";
+
 
 function connectionString(): string {
     let nexus = new Preference(PreferenceTypes.Controller).get()

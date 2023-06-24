@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Braden Nicholson
 
 
-import type {Attribute} from "@/types";
+import type {Attribute} from "udap-ui/types";
 import request from "@/services/request";
 
 

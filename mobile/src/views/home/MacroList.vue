@@ -3,7 +3,7 @@
 <script lang="ts" setup>
 
 import MacroDom from "@/components/Macro.vue";
-import {Macro, Zone} from "@/types";
+import {Macro, Zone} from "udap-ui/types";
 import core from "@/core";
 import {onMounted, reactive, watchEffect} from "vue";
 

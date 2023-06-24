@@ -5,7 +5,7 @@
 
 import {onMounted, reactive} from "vue";
 import {Preference} from "@/preferences";
-import {PreferenceTypes} from "@/types";
+import {PreferenceTypes} from "udap-ui/types";
 import axios from "axios";
 
 const state = reactive({

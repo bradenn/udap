@@ -16,8 +16,8 @@
     "sass": "^1.60.0",
     "uuid": "^9.0.0",
     "vite-plugin-pwa": "^0.14.7",
-    "vue": "^3.2.47",
-    "vue-router": "^4.1.6"
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.2"
   },
   "devDependencies": {
     "@types/node": "^18.15.11",

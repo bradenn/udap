@@ -7,7 +7,8 @@ import {VitePWA} from "vite-plugin-pwa";
 export default defineConfig({
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            'udap-ui': fileURLToPath(new URL('../common', import.meta.url))
         }
     },
     // build: {

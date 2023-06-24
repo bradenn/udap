@@ -66,6 +66,7 @@ function toggleMenu() {
       <div class="d-flex gap-1">
         <AppLink icon="􀎟" name="Home" to="/home/dashboard"></AppLink>
         <AppLink icon="􀍟" name="Settings" to="/home/settings"></AppLink>
+        <AppLink icon="􀬕" name="Beam" to="/home/beam"></AppLink>
         <div class="element d-flex align-items-center gap-1 justify-content-center" style="min-width: 8rem">
           <div class="sf-icon label-o4 lh-1">􀅈</div>
           <div class="app-link-header lh-1">Reload</div>

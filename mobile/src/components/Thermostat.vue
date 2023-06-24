@@ -1,7 +1,7 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
-import type {Attribute, Entity} from "@/types";
+import type {Attribute, Entity} from "udap-ui/types";
 import {onMounted, reactive, watchEffect} from "vue";
 import core from "@/core";
 import attributeService from "@/services/attributeService";
@@ -184,15 +184,6 @@ function mouseHold(e: MouseEvent) {
 
 <style lang="scss">
 
-.subplot {
-  border-radius: 0.3rem !important;
-  //box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.05);
-  //border: 1px solid rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.55);
-  font-weight: 500;
-  font-size: 1rem;
-  background-color: rgba(255, 255, 255, 0.025);
-}
 
 .subplot-hidden {
   background-color: transparent !important;

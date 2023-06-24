@@ -10,6 +10,16 @@ import EntityEdit from "@/views/home/EntityEdit.vue";
 import MenuPage from "@/views/MenuPage.vue";
 import settings from "@/views/settings";
 import MonitorList from "@/views/monitor/MonitorList.vue";
+import Demo from "@/views/Demo.vue";
+import Beam from "@/views/beam/Beam.vue";
+
+const demoRoute = {
+    path: '/home/demo',
+    name: 'demo',
+    component: Demo,
+    icon: '􀎟',
+}
+
 
 const mobileRoutes =
     {
@@ -55,13 +65,21 @@ const mobileRoutes =
                 component: MacroList,
                 icon: '􀎟',
             },
-            settings
+            {
+                path: '/home/beam',
+                name: 'beam',
+                component: Beam,
+                icon: '􀎟',
+            },
+            settings,
+            demoRoute
         ]
     };
 
 const routes = [
     mobileRoutes,
-    setupRoutes
+    setupRoutes,
+
     // {path: '/:pathMatch(.*)*', redirect: "/"}
 ]
 
