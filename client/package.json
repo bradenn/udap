@@ -38,7 +38,8 @@
     "vuex": "^3.6.2",
     "wikiapi": "^1.19.2",
     "wtf-plugin-html": "^1.0.0",
-    "wtf_wikipedia": "^10.0.2"
+    "wtf_wikipedia": "^10.0.2",
+    "udap-ui": "^=1.0.0"
   },
   "devDependencies": {
     "@types/stats.js": "^0.17.0",

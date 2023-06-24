@@ -119,6 +119,7 @@ function getRoutes() {
           style=" grid-column: 6/span 5; grid-row: 1/span 6;">
         <Calendar></Calendar>
         <Proxmox v-if="false"></Proxmox>
+
         <!--                <Camera></Camera>-->
       </div>
 
