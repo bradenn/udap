@@ -5,8 +5,8 @@
 
 import {onMounted, reactive, watchEffect} from "vue";
 
-import type {Entity} from "@/types"
-import {formatByteSize} from "@/types";
+import type {Entity} from "udap-ui/types"
+import {formatByteSize} from "udap-ui/utils";
 import core from "@/core";
 import Utilization from "@/components/Utilization.vue";
 import ToggleView from "@/components/elements/ToggleView.vue";

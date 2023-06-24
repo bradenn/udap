@@ -1,6 +1,10 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
+
+
+import router from "@/router";
+
 const props = defineProps<{
   back?: string
   title?: string
@@ -8,12 +12,12 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="navbar w-100 mb-3">
+  <div class="navbar w-100 mb-2">
     <div class="cell justify-content-start">
-      <router-link :to="props.back?props.back:'/'" class="back label-c4">
+      <div class="back label-c4" @touchstart="() => router.go(-1)">
         <div class="sf-icon label-o1">􀯶</div>
         <div>Back</div>
-      </router-link>
+      </div>
     </div>
     <div class="cell justify-content-center label-w600 text-capitalize label-c4 label-o6">{{
         props.title

@@ -27,21 +27,24 @@ let transitionName = computed(() => {
 </script>
 
 <template>
-  <div class=" gap-1 h-100" style="height: 100vh">
+  <div class=" gap-0 d-flex flex-column" style="height: 100vh">
     <div class="d-flex">
       <Navbar v-if="router.currentRoute.value.name"
               :back="(router.currentRoute.value.path === '/home/settings')?'/home/dashboard':'/home/settings'"
               :title="state.currentName">
       </Navbar>
     </div>
-    <div class="root">
+
+    <div class="root h-100 w-100">
       <router-view v-slot="{ Component }">
         <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
                     mode="out-in">
           <component :is="Component"/>
         </transition>
       </router-view>
+
     </div>
+
   </div>
 </template>
 
@@ -49,12 +52,8 @@ let transitionName = computed(() => {
 
 
 .root {
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  height: 100%;
-  overflow-y: scroll;
-  /*outline: 1px solid red;*/
+  height: max-content;
+//margin: auto; //outline: 1px solid white; //display: block; //display: flex; //flex-direction: column; //max-height: 100%; //height: 100%; //overflow-y: scroll;
 }
 
 @keyframes slide-in-reverse {

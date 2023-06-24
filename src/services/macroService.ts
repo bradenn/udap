@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Braden Nicholson
 
 
-import type {Macro} from "@/types";
+import type {Macro} from "udap-ui/types";
 import request from "@/services/request";
 
 

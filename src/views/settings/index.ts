@@ -4,6 +4,9 @@ import Connection from "@/views/settings/Connection.vue";
 import SettingsMenu from "@/views/settings/SettingsMenu.vue";
 import Background from "@/views/settings/Background.vue";
 import Color from "@/views/settings/Color.vue";
+import Entities from "@/views/settings/entities/Entities.vue";
+import EntityManage from "@/views/settings/entities/EntityManage.vue";
+import Frame from "@/views/settings/entities/Frame.vue";
 
 
 export default {
@@ -35,6 +38,23 @@ export default {
             path: '/home/settings/color',
             name: 'color',
             component: Color,
+        },
+        {
+            path: '/home/settings/entities',
+            name: 'entity_frame',
+            component: Frame,
+            children: [
+                {
+                    path: '/home/settings/entities',
+                    name: 'Entities',
+                    component: Entities,
+                },
+                {
+                    path: '/home/settings/entities/:entityId',
+                    name: 'entities_view',
+                    component: EntityManage,
+                }
+            ]
         }
     ]
 }

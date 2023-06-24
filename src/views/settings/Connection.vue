@@ -6,7 +6,7 @@ import Table from "@/components/Table.vue";
 import TableText from "@/components/TableText.vue";
 import core from "@/core";
 import {computed, onBeforeMount, onMounted, reactive} from "vue";
-import type {Endpoint, Timing} from "@/types";
+import type {Endpoint, Timing} from "udap-ui/types";
 
 
 const remote = core.remote()

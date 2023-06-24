@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Braden Nicholson
 
 
-import type {SubRoutine} from "@/types";
+import type {SubRoutine} from "udap-ui/types";
 import request from "@/services/request";
 
 

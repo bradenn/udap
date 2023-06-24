@@ -1,6 +1,6 @@
 // Copyright (c) 2022 Braden Nicholson
 
-import type {Preferences} from "@/types";
+import type {Preferences} from "udap-ui/types";
 import {provide, reactive, watch} from "vue";
 
 export function usePersistent() {

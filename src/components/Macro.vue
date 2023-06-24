@@ -1,7 +1,7 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
-import {Macro} from "@/types";
+import {Macro} from "udap-ui/types";
 import macroService from "@/services/macroService";
 import {reactive} from "vue";
 

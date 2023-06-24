@@ -4,9 +4,9 @@
 
 import core from "@/core";
 import {onMounted, reactive, watchEffect} from "vue";
-import type {Entity as EntityType, Zone} from "@/types";
+import type {Entity as EntityType, Zone} from "udap-ui/types";
 import Entity from "@/components/Entity.vue";
-import Thermostat from "@/components/Thermostat.vue";
+import ThermostatV2 from "@/components/ThermostatV2.vue";
 
 const remote = core.remote()
 
@@ -33,20 +33,18 @@ watchEffect(() => {
 
 <template>
   <div class="d-flex flex-column gap-3 justify-content-between h-100">
-
+    <div>
+      <div class="label-c5 label-w700 label-o5 px-2">Climate</div>
+      <div class="w-100">
+        <ThermostatV2 :entity="state.thermostat"></ThermostatV2>
+      </div>
+    </div>
     <div v-for="zone in state.zones">
       <div>
         <div class="label-c5 label-w700 label-o5 px-2">{{ zone.name }}</div>
         <div class="home-grid">
           <Entity v-for="e in zone.entities" :key="e.id" :entity="e"></Entity>
         </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="label-c5 label-w700 label-o5 px-2">Climate</div>
-      <div class="w-100">
-        <Thermostat :entity="state.thermostat"></Thermostat>
       </div>
     </div>
 

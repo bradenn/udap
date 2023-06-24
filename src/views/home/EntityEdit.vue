@@ -1,7 +1,7 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
-import {Attribute, Entity} from "@/types";
+import {Attribute, Entity} from "udap-ui/types";
 import {onBeforeMount, reactive, watchEffect} from "vue";
 import core from "@/core";
 import Slider from "@/components/Slider.vue";

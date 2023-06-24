@@ -4,7 +4,7 @@
 
 import core from "@/core";
 import {onMounted, reactive, watchEffect} from "vue";
-import type {Entity as EntityType, Zone} from "@/types";
+import type {Entity as EntityType, Zone} from "udap-ui/types";
 
 const remote = core.remote()
 
@@ -27,7 +27,8 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
+
+<div>
     <router-view></router-view>
   </div>
 </template>
