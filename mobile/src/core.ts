@@ -3,7 +3,7 @@
 import {inject} from "vue";
 import type {Router} from "vue-router";
 import {useRouter} from "vue-router";
-import type {Remote} from "@/remote";
+import type {Remote} from "udap-ui/remote";
 import type {PreferencesRemote} from "udap-ui/persistent";
 
 

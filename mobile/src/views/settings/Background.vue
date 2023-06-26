@@ -96,7 +96,8 @@ function selectBlur(blur: number) {
           <Title title="Element Blur"></Title>
           <div class="">
             <List :row="true" scroll-x>
-              <Element v-for="b in blurOptions" :cb="() => selectBlur(b)" :foreground="true" :style="`${preferences.blur== b?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} `"
+              <Element v-for="b in blurOptions" :cb="() => selectBlur(b)" :foreground="true"
+                       :style="`${preferences.blur== b?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} `"
                        class="py-4 d-flex justify-content-center align-items-center"
 
                        style="min-width: 4rem; height: 2rem"

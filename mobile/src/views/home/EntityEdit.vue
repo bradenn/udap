@@ -103,7 +103,9 @@ function setDim(value: number) {
                    to="/home/dashboard">
             <span class="sf-icon" style="color: hsla(0, 0%, 60%, 0.9)">􀯶</span> &nbsp;
           </Element>
-          <Element :cb="() => sendRequest('on', state.spectrum.on?'false':'true')" :class="`${state.spectrum.on?'on':'off'}`" class="d-flex align-items-center justify-content-start gap-4 header flex-grow-1"
+          <Element :cb="() => sendRequest('on', state.spectrum.on?'false':'true')"
+                   :class="`${state.spectrum.on?'on':'off'}`"
+                   class="d-flex align-items-center justify-content-start gap-4 header flex-grow-1"
                    foreground
                    style="height: 3.25rem">
 
