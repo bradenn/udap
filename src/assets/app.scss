@@ -59,6 +59,38 @@ body {
   overflow: clip;
 }
 
+.scroll-horizontal {
+  //padding-bottom: 0.6rem;
+}
+
+
+//::-webkit-scrollbar {
+//  width: 0.125em;
+//  border-radius: 0.5rem;
+//  height: 0.125rem;
+//
+//}
+//
+//::-webkit-scrollbar-track {
+//
+//  //border: 1px solid rgba(255, 255, 255, 0.025);
+//  //@extend .element;
+//  //outline: 1px solid hsla(0, 0%, 10%, 0.6);
+//  //border-radius: 1rem;
+//  //background-color: hsla(0, 0%, 30%, 0.6);
+//
+//}
+//
+//::-webkit-scrollbar-thumb {
+//  //@extend .element;
+//  //border-radius: 1rem;
+//  background-color: hsl(0, 0%, 50%);
+//  width: 0.25em;
+//  border-radius: 0.5rem;
+//  height: 0.25rem;
+//  //outline: 1px solid slategrey;
+//}
+
 //.text-success {
 //  color: rgba(255, 128, 12, 1) !important;
 //}
@@ -123,35 +155,38 @@ $border: rgba(255, 255, 255, 0.0625);
   padding: 12px 18px;
 }
 
-.slider-track.slider::-webkit-slider-thumb {
-  @extend .element;
-  padding: 0;
-  height: 6px !important;
-  width: 6px !important;
-  -webkit-appearance: none;
-  appearance: none;
-}
+//.slider-track.slider::-webkit-slider-thumb {
+//  @extend .element;
+//  padding: 0;
+//  height: 6px !important;
+//  width: 6px !important;
+//  -webkit-appearance: none;
+//  appearance: none;
+//}
 
 .slider {
+
   -webkit-appearance: none;
   width: 100%;
   height: 48px;
-  border-radius: 0.375rem !important;
+  //border-radius: 0.375rem !important;
   max-height: 6rem;
-  padding-inline: 0.125rem;
-  padding: 0.125rem 0.125rem !important;
+  //padding-inline: 0.125rem;
+  //padding: 0.125rem 0.125rem !important;
   outline: none;
+  border-radius: calc(1rem - 0.375rem);
   opacity: 1;
   transition: all 100ms ease-in-out;
 }
 
 .slider-dim {
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 1%, rgba(213, 230, 255, 0.75) 100%);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 1) 1%, rgba(213, 230, 255, 1) 100%);
 }
 
 .slider-cct {
-  background: linear-gradient(90deg, rgba(255, 160, 75, 0.75) 0%, rgba(255, 249, 230, 0.5) 50%, rgba(213, 230, 255, 0.5) 100%) !important;
+  background: linear-gradient(90deg, rgba(255, 160, 75, 1) 0%, rgba(255, 249, 230, 1) 50%, rgba(213, 230, 255, 1) 100%) !important;
 }
+
 
 .slider-hue {
   background: linear-gradient(to right,
@@ -169,15 +204,16 @@ $border: rgba(255, 255, 255, 0.0625);
   opacity: 1;
 }
 
+
 .slider::-webkit-slider-thumb {
-  mix-blend-mode: overlay;
+  mix-blend-mode: screen;
   background: rgba(255, 255, 255, 0.5) !important;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.1), inset 0 0 1px 1px rgba(47, 47, 47, 0.4) !important;
   //background-color: rgb(153, 153, 153);
 
   height: 38px;
   width: 24px;
-  border-radius: 4px;
+  border-radius: 0.375rem;
   -webkit-appearance: none;
   appearance: none;
   transition: all 500ms ease;

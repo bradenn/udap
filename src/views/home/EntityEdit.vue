@@ -6,6 +6,9 @@ import {onBeforeMount, reactive, watchEffect} from "vue";
 import core from "@/core";
 import Slider from "@/components/Slider.vue";
 import attributeService from "@/services/attributeService";
+import Element from "udap-ui/components/Element.vue";
+import Title from "udap-ui/components/Title.vue";
+import List from "udap-ui/components/List.vue";
 
 
 let state = reactive({
@@ -94,63 +97,61 @@ function setDim(value: number) {
 <template>
   <div class="d-flex gap-2 flex-column">
     <div class="d-flex gap-1">
-      <router-link class="sf-icon element m-0 label-w600" style="width: 3.5rem; color: rgba(255,255,255,0.2)"
-                   to="/home/dashboard">􀯶
-      </router-link>
-      <div :class="`${state.spectrum.on?'on':'off'}`"
-           class="d-flex align-items-center justify-content-start gap-4 header flex-grow-1"
-           @click="() => sendRequest('on', state.spectrum.on?'false':'true')">
-        <div class=" label-c2 sf-icon" style="padding-left: 1.5rem !important;">{{ state.entity.icon }}</div>
-        <div class="d-flex justify-content-between w-100 align-items-center">
-          <div class="d-flex align-items-center gap-2">
-            <div class="label-c5 label-w700 label-o5 ">{{
-                state.entity.alias ? state.entity.alias : state.entity.name
-              }}
-            </div>
-          </div>
+      <Element class="w-100">
+        <List row>
+          <Element class="d-flex align-items-center justify-content-center" foreground style="height: 3.25rem; "
+                   to="/home/dashboard">
+            <span class="sf-icon" style="color: hsla(0, 0%, 60%, 0.9)">􀯶</span> &nbsp;
+          </Element>
+          <Element :cb="() => sendRequest('on', state.spectrum.on?'false':'true')" :class="`${state.spectrum.on?'on':'off'}`" class="d-flex align-items-center justify-content-start gap-4 header flex-grow-1"
+                   foreground
+                   style="height: 3.25rem">
 
-          <div class="px-3 label-w600 entity-status">
-            {{ state.spectrum.on ? "ON" : "OFF" }}
-          </div>
-        </div>
-      </div>
+            <div class=" label-c2 sf-icon" style="padding-left: 1.5rem !important;">{{ state.entity.icon }}</div>
+            <div class="d-flex justify-content-between w-100 align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <div class="label-c5 label-w700 label-o5 ">{{
+                    state.entity.alias ? state.entity.alias : state.entity.name
+                  }}
+                </div>
+              </div>
+
+              <div class="px-3 label-w600 entity-status" style="width: 4rem">
+                {{ state.spectrum.on ? "ON" : "OFF" }}
+              </div>
+            </div>
+          </Element>
+        </List>
+      </Element>
+
     </div>
     <div v-if="!state.online" class="element px-3 d-flex gap-2">
       <div class="sf-icon text-warning">􀇿</div>
       <div class="label-o5 label-w600">This device is offline.</div>
     </div>
-    <div :class="!state.online?'block-usage':''" class="d-flex flex-column gap-1">
-      <div v-if="state.attributes.map(a => a.key).includes('dim')">
-        <div class="d-flex justify-content-between px-1">
-          <div class="label-c4 label-w600 label-o6">Brightness</div>
-          <div class="label-c4 label-w600 label-o5">{{ state.spectrum.dim }}%</div>
-        </div>
-        <div>
+    <Element :class="!state.online?'block-usage':''">
+      <List>
+        <Element v-if="state.attributes.map(a => a.key).includes('dim')" foreground>
+          <Title :alt="`${state.spectrum.dim}%`" title="Brightness"></Title>
           <Slider :change="(v) => sendRequest('dim', `${v}`)" :max="100" :min="1"
                   :step="2" :value="state.spectrum.dim"
                   bg="dim"></Slider>
-        </div>
-      </div>
-      <div v-if="state.attributes.map(a => a.key).includes('cct')">
-        <div class="d-flex justify-content-between px-1">
-          <div class="label-c4 label-w600 label-o6">Color Temperature</div>
-          <div class="label-c4 label-w600 label-o5">{{ state.spectrum.cct }}&deg; K</div>
-        </div>
-        <Slider :change="(v) => sendRequest('cct', `${v}`)" :max="6000"
-                :min="2000"
-                :step="1" :value="state.spectrum.cct"
-                bg="cct"></Slider>
-      </div>
-      <div v-if="state.attributes.map(a => a.key).includes('hue')">
-        <div class="d-flex justify-content-between px-1">
-          <div class="label-c4 label-w600 label-o6">Color Hue</div>
-          <div class="label-c4 label-w600 label-o5">{{ state.spectrum.hue }}&deg;</div>
-        </div>
-        <Slider :change="(v) => sendRequest('hue', `${v}`)" :max="360" :min="1"
-                :step="1"
-                :value="state.spectrum.hue" bg="hue"></Slider>
-      </div>
-    </div>
+        </Element>
+        <Element v-if="state.attributes.map(a => a.key).includes('cct')" foreground>
+          <Title :alt="`${state.spectrum.cct}&deg; K`" title="Color Temperature"></Title>
+          <Slider :change="(v) => sendRequest('cct', `${v}`)" :max="6000"
+                  :min="2000"
+                  :step="1" :value="state.spectrum.cct"
+                  bg="cct"></Slider>
+        </Element>
+        <Element v-if="state.attributes.map(a => a.key).includes('hue')" foreground>
+          <Title :alt="`${state.spectrum.hue}&deg;`" title="Color Hue"></Title>
+          <Slider :change="(v) => sendRequest('hue', `${v}`)" :max="360" :min="1"
+                  :step="1"
+                  :value="state.spectrum.hue" bg="hue"></Slider>
+        </Element>
+      </List>
+    </Element>
   </div>
 </template>
 

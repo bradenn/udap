@@ -82,7 +82,8 @@ const state = useEntities(remote)
         <ElementHeader :title="group.name" class="px-3"></ElementHeader>
         <Element>
           <List class="">
-            <Entity v-for="entity in group.entities" :key="entity.id" :entity="entity" :foreground="true" :mutable="true"
+            <Entity v-for="entity in group.entities" :key="entity.id" :entity="entity" :foreground="true"
+                    :mutable="true"
                     class=""></Entity>
           </List>
         </Element>

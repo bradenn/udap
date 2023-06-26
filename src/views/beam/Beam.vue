@@ -415,7 +415,8 @@ function touchMoveYDown(e: TouchEvent) {
     </Element>
     <Element class=" d-flex align-items-center justify-content-center" style="user-select: none !important;">
       <Element :foreground="true" style="width: 100%; height:100%;aspect-ratio: 1/1 !important;">
-        <canvas id="canvas" style="width: 100%; height:100%;user-select: none !important;" @touchend="up" @touchleave="up" @touchmove="move"
+        <canvas id="canvas" style="width: 100%; height:100%;user-select: none !important;" @touchend="up"
+                @touchleave="up" @touchmove="move"
                 @touchstart="down"></canvas>
       </Element>
     </Element>

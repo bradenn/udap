@@ -4,6 +4,7 @@
 
 
 import router from "@/router";
+import Element from "udap-ui/components/Element.vue";
 
 const props = defineProps<{
   back?: string
@@ -12,18 +13,18 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="navbar w-100 mb-2">
-    <div class="cell justify-content-start">
-      <div class="back label-c4" @touchstart="() => router.go(-1)">
-        <div class="sf-icon label-o1">􀯶</div>
-        <div>Back</div>
-      </div>
-    </div>
-    <div class="cell justify-content-center label-w600 text-capitalize label-c4 label-o6">{{
+  <div class="d-flex justify-content-between align-items-center w-100 mb-1 px-2">
+    <Element :cb="() => router.go(-1)" class="d-flex align-items-center justify-content-center gap-0 py-2" foreground
+             mutable
+             style="height: 2.5rem; width: 25%">
+      <div class="sf-icon label-o3" style="margin-left: -8px">􀯶</div>
+      <div class="label-c5 label-w500">Back</div>
+    </Element>
+    <div class="d-flex justify-content-center label-w600 text-capitalize label-c4 label-o6" style="width: 50%">{{
         props.title
       }}
     </div>
-    <div class="cell justify-content-end">
+    <div class=" justify-content-end" style="width: 25%">
       <slot></slot>
     </div>
   </div>

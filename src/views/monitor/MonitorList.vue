@@ -10,6 +10,7 @@ import {formatByteSize} from "udap-ui/utils";
 import core from "@/core";
 import Utilization from "@/components/Utilization.vue";
 import ToggleView from "@/components/elements/ToggleView.vue";
+import Element from "udap-ui/components/Element.vue";
 
 interface Network {
   netout: number;
@@ -79,7 +80,7 @@ function updateEntities() {
   <div class="px-2">
     <!--    <div class="label-c2 label-w600">Monitoring</div>-->
     <div v-if="state.loaded" class="d-flex flex-column gap-1">
-      <div v-for="node in state.data" class=" element px-2 py-2 d-flex flex-column gap-2">
+      <Element v-for="node in state.data" class="  px-2 py-2 d-flex flex-column gap-2">
         <div class="d-flex justify-content-between">
           <div class="label-c3 label-o6 label-w600 d-flex align-items-center gap-1 ">
             <div class="text-success label-w800 label-c1 lh-1">•</div>
@@ -111,8 +112,9 @@ function updateEntities() {
 
         <!--        <div class="label-c6 label-o4 label-w600 px-1 d-flex mt-1">Virtual Machines</div>-->
         <div class="d-flex flex-column gap-1">
-          <div v-for="vm in node.virtualMachines.sort((a, b) => a.vmid - b.vmid)" :key="vm.vmid">
-            <ToggleView :subtitle="`pve ${vm.vmid}`" :title="vm.name" class="subplot px-1 py-2">
+
+          <Element v-for="vm in node.virtualMachines.sort((a, b) => a.vmid - b.vmid)" :key="vm.vmid" foreground>
+            <ToggleView :subtitle="`pve ${vm.vmid}`" :title="vm.name">
 
               <template v-slot:description>
                 <div class="label-c5 label-o6 label-w600">
@@ -135,18 +137,22 @@ function updateEntities() {
               </template>
               <template v-slot:secondary>
                 <div class="d-flex w-100 gap-1 px-1">
-                  <div class="label-c6 label-o6 label-w600 d-flex w-50"><span class="sf-icon label-c7 label-o3">􀆈</span>
+                  <div class="label-c6 label-o6 label-w600 d-flex w-50"><span
+                      class="sf-icon label-c7 label-o3">􀆈</span>
                     {{ formatByteSize(vm.network.netin) }}
                   </div>
-                  <div class="label-c6 label-o6 label-w600 d-flex w-50"><span class="sf-icon label-c7 label-o3">􀆇</span>
+                  <div class="label-c6 label-o6 label-w600 d-flex w-50"><span
+                      class="sf-icon label-c7 label-o3">􀆇</span>
                     {{ formatByteSize(vm.network.netout) }}
                   </div>
                 </div>
               </template>
             </ToggleView>
-          </div>
+          </Element>
+
+
         </div>
-      </div>
+      </Element>
     </div>
 
   </div>

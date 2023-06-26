@@ -30,10 +30,12 @@ function updateBackground() {
   // document.body.style.backgroundSize = "20px";
   document.body.style.backgroundColor = preferences.background
   document.body.style.backgroundImage = preferences.pattern.svg;
+
   document.body.style.backgroundRepeat = 'repeat';
+  // document.body.style.backgroundRepeat = 'round';
 
 
-  document.body.style.backgroundSize = `${preferences.pattern.scale}%`;
+  document.body.style.backgroundSize = `auto`;
 }
 
 let state = reactive({
