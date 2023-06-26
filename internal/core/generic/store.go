@@ -25,7 +25,7 @@ func NewStore[T any](db *gorm.DB) Store[T] {
 // FindAll returns all records of the type T
 func (c *Store[T]) FindAll() (*[]T, error) {
 	var target []T
-	if err := c.db.Find(&target).Error; err != nil {
+	if err := c.db.Model(&target).Find(&target).Error; err != nil {
 		return nil, err
 	}
 	return &target, nil
@@ -34,7 +34,7 @@ func (c *Store[T]) FindAll() (*[]T, error) {
 // FindById returns the first record with a UUID matching the provided string
 func (c *Store[T]) FindById(id string) (*T, error) {
 	var target T
-	if err := c.db.Where("id = ?", id).First(&target).Error; err != nil {
+	if err := c.db.Model(&target).Where("id = ?", id).First(&target).Error; err != nil {
 		return nil, err
 	}
 	return &target, nil
@@ -42,7 +42,7 @@ func (c *Store[T]) FindById(id string) (*T, error) {
 
 // Create creates a record of the type T
 func (c *Store[T]) Create(t *T) error {
-	if err := c.db.Create(t).Error; err != nil {
+	if err := c.db.Model(&t).Create(t).Error; err != nil {
 		return err
 	}
 	return nil
@@ -50,7 +50,7 @@ func (c *Store[T]) Create(t *T) error {
 
 // FindOrCreate will emplace any record into its appropriate table
 func (c *Store[T]) FindOrCreate(t *T) error {
-	if err := c.db.FirstOrCreate(t).Error; err != nil {
+	if err := c.db.Model(&t).FirstOrCreate(t).Error; err != nil {
 		return err
 	}
 	return nil
@@ -58,7 +58,7 @@ func (c *Store[T]) FindOrCreate(t *T) error {
 
 // Update saves any changes made to the provided record of type T
 func (c *Store[T]) Update(t *T) error {
-	if err := c.db.Save(t).Error; err != nil {
+	if err := c.db.Model(&t).Save(t).Error; err != nil {
 		return err
 	}
 	return nil
@@ -66,7 +66,7 @@ func (c *Store[T]) Update(t *T) error {
 
 // Delete deletes the record from the database
 func (c *Store[T]) Delete(t *T) error {
-	if err := c.db.Delete(t).Error; err != nil {
+	if err := c.db.Model(&t).Delete(t).Error; err != nil {
 		return err
 	}
 	return nil
