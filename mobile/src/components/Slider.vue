@@ -71,9 +71,8 @@ function handleUpdate(value: Event) {
 
 <template>
   <input :class="`slider-${props.bg}`" :max="props.max" :min="props.min" :step="props.step" :value="state.value"
-         class="slider element"
-         type="range" @input="handleUpdate"
-  >
+         class="slider "
+         type="range" @input="handleUpdate">
 </template>
 
 <style scoped>

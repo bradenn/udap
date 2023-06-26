@@ -4,11 +4,11 @@
 
 import List from "udap-ui/components/List.vue";
 import Element from "udap-ui/components/Element.vue";
-import ElementHeader from "udap-ui/components/ElementHeader.vue";
+import Title from "udap-ui/components/Title.vue";
 
 import * as patterns from "udap-ui/vendor/hero-patterns"
 import core from "@/core";
-import {onBeforeMount} from "vue";
+import {onMounted, reactive} from "vue";
 
 const patternList = Object.keys(patterns)
 
@@ -19,6 +19,10 @@ function selectPattern(pattern: string) {
   preferences.pattern.name = pattern
 
 }
+
+let state = reactive({
+  loaded: false
+})
 
 function hslToHex(h, s, l) {
   l /= 100;
@@ -36,22 +40,23 @@ function selectColor(accent: string) {
   preferences.pattern.svg = patterns[preferences.pattern.name](preferences.accent, preferences.pattern.opacity)
 }
 
-const scaleOptions = [] as number[]
+const scaleOptions = [1, 2, 3, 4] as number[]
 const colors = []
 const backgrounds = []
 const blurOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 30]
 
-onBeforeMount(() => {
+onMounted(() => {
   let numItems = 64
   for (let i = 0; i < numItems; i++) {
     colors.push(`${hslToHex((360 / numItems) * i, 50, 30)}`)
   }
-  for (let i = 0; i < numItems; i++) {
-    backgrounds.push(`${hslToHex(0, 13, (100 / numItems) * i)}`)
+  for (let i = 0; i < 24; i++) {
+    backgrounds.push(`${hslToHex(0, 0, (50 / 24) * i)}`)
   }
-  for (let i = 0; i <= 20; i++) {
+  for (let i = 1; i <= 20; i++) {
     scaleOptions.push(i * 5)
   }
+  state.loaded = true
 })
 
 function selectBackgroundColor(color: string) {
@@ -69,73 +74,81 @@ function selectBlur(blur: number) {
 </script>
 
 <template>
-  <div class="d-flex gap-1 flex-column">
-    <ElementHeader title="Background Scale"></ElementHeader>
+  <div v-if="state.loaded" class="d-flex gap-1 flex-column">
     <Element>
-      <div class="">
-        <List :row="true" style="overflow-x: scroll">
-          <Element v-for="w in scaleOptions" :cb="() => selectScale(w)" :foreground="true"
-                   :style="`${preferences.pattern.scale == w?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} `"
+      <List>
+        <Element v-if="false" :foreground="true">
+          <div class="">
+            <List :row="true" scroll-x>
+              <Element v-for="w in scaleOptions" :cb="() => selectScale(w)" :foreground="true"
+                       :style="`${preferences.pattern.scale == w?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} `"
 
-                   class="py-4 d-flex justify-content-center align-items-center"
-                   style="min-width: 4rem; height: 2rem">
-            {{ w }}
-          </Element>
+                       class="py-4 d-flex justify-content-center align-items-center"
+                       style="min-width: 4rem; height: 2rem">
+                {{ w }}
+              </Element>
 
-        </List>
-      </div>
-    </Element>
-    <ElementHeader title="Foreground Blur"></ElementHeader>
-    <Element>
-      <div class="">
-        <List :row="true" style="overflow-x: scroll">
-          <Element v-for="b in blurOptions" :cb="() => selectBlur(b)" :foreground="true"
-                   :style="`${preferences.blur== b?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} `"
-
-                   class="py-4 d-flex justify-content-center align-items-center"
-                   style="min-width: 4rem; height: 2rem">
-            {{ b }}px
-          </Element>
-
-        </List>
-      </div>
-    </Element>
-    <ElementHeader title="Background Color"></ElementHeader>
-    <Element>
-      <List :row="false">
-        <Element :foreground="true">
-          <div class="label-c4 label-o5 px-2 label-w600 lh-1 mb-1">Background</div>
-          <List :row="true" style="overflow-x: scroll">
-            <Element v-for="bg in backgrounds" :cb="() => selectBackgroundColor(bg)" :foreground="true" :style="`${preferences.background == bg?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} background-color:${bg} !important;`"
-
-                     class="py-4"
-                     style="min-width: 4rem">
-
-            </Element>
-          </List>
+            </List>
+          </div>
         </Element>
+
         <Element :foreground="true">
-          <div class="label-c4 label-o5 px-2 label-w600 lh-1 mb-1">Accent</div>
-          <List :row="true" style="overflow-x: scroll">
-            <Element v-for="clr in colors" :cb="() => selectColor(clr)" :foreground="true" :style="`${preferences.accent == clr?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} background-color:${clr} !important;`"
+          <Title title="Element Blur"></Title>
+          <div class="">
+            <List :row="true" scroll-x>
+              <Element v-for="b in blurOptions" :cb="() => selectBlur(b)" :foreground="true" :style="`${preferences.blur== b?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} `"
+                       class="py-4 d-flex justify-content-center align-items-center"
 
-                     class="py-4"
-                     style="min-width: 4rem">
+                       style="min-width: 4rem; height: 2rem"
+                       surface>
+                {{ b }}px
+              </Element>
 
-            </Element>
-          </List>
-
+            </List>
+          </div>
         </Element>
       </List>
     </Element>
-    <ElementHeader title="Accent Color"></ElementHeader>
-
-    <ElementHeader title="Background Pattern"></ElementHeader>
     <Element>
-      <List>
-        <Element v-for="pattern in patternList" :cb="() => selectPattern(pattern)" :foreground="true" :style="`background-image:${patterns[pattern](preferences.accent, preferences.pattern.opacity)}; ${preferences.pattern.name== pattern?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''}`"
-                 class="py-4">
-          {{ pattern }}
+
+      <List :row="false">
+        <Element :foreground="true">
+          <Title title="Background"></Title>
+          <List :row="true" class="scroll-horizontal" style="overflow-x: scroll">
+            <Element v-for="bg in backgrounds" :cb="() => selectBackgroundColor(bg)" :foreground="true"
+                     :style="`${preferences.background == bg?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} background-color:${bg} !important;`"
+
+                     class="py-4"
+                     style="min-width: 4rem">
+
+            </Element>
+          </List>
+        </Element>
+        <Element :foreground="true">
+          <Title title="Accent"></Title>
+          <List :row="true" class="scroll-horizontal" style="overflow-x: scroll;">
+            <Element v-for="clr in colors" :cb="() => selectColor(clr)" :foreground="true"
+                     :style="`${preferences.accent == clr?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} background-color:${clr} !important;`"
+
+                     class="py-4"
+                     style="min-width: 4rem">
+
+            </Element>
+
+          </List>
+
+        </Element>
+
+        <Element class="" foreground>
+          <Title title="Patterns"></Title>
+          <div class="sample-grid" style=" height: 50vh; overflow-y: scroll; overflow-x: hidden">
+            <Element v-for="pattern in patternList" :cb="() => selectPattern(pattern)" :foreground="true"
+                     :style="`background-image:${patterns[pattern](preferences.accent, preferences.pattern.opacity)}; ${preferences.pattern.name== pattern?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''}`"
+                     class="py-4">
+              <div class="label-c5 label-o5 px-2 label-w600 lh-1 mb-1">{{ pattern }}</div>
+            </Element>
+          </div>
+
         </Element>
       </List>
     </Element>
@@ -143,5 +156,9 @@ function selectBlur(blur: number) {
 </template>
 
 <style scoped>
-
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(1rem, 100fr));
+  grid-gap: 0.25rem;
+}
 </style>

@@ -2,8 +2,11 @@
 
 <script lang="ts" setup>
 
-import Table from "@/components/Table.vue";
-import TableText from "@/components/TableText.vue";
+import Element from "udap-ui/components/Element.vue";
+import ElementLabel from "udap-ui/components/ElementLabel.vue";
+import List from "udap-ui/components/List.vue";
+import Title from "udap-ui/components/Title.vue";
+
 import core from "@/core";
 import {computed, onBeforeMount, onMounted, reactive} from "vue";
 import type {Endpoint, Timing} from "udap-ui/types";
@@ -39,21 +42,17 @@ onBeforeMount(() => {
   let ep = remote.endpoints.find(e => e.id === tokenMeta.id)
   if (!ep) return
   state.endpoint = ep
-  let store = localStorage.getItem("preferences")
-  if (store) state.storage = store
-
-
 })
 
 onMounted(() => {
-  setup()
-  animate()
+  // setup()
+  // animate()
 })
 
-function animate() {
-  draw()
-  requestAnimationFrame(animate)
-}
+// function animate() {
+//   draw()
+//   requestAnimationFrame(animate)
+// }
 
 let timings = computed(() => {
   return correlateTimings(remote.timings)
@@ -113,32 +112,34 @@ function setup() {
 
 <template>
   <div class="d-flex flex-column gap-3">
-    <Table title="Client">
-      <TableText icon="" title="Status">{{ remote.connected ? "Connected" : "Disconnected" }}</TableText>
-      <TableText icon="" title="Endpoint Identifier">{{ state.endpoint.name }}</TableText>
-      <TableText icon="" title="Permissions">
-        <div v-if="state.endpoint.type === 'terminal'">
-          Inexorable
-        </div>
-        <div v-else>
+    <Element>
+      <Title title="Client"></Title>
+      <List>
+        <ElementLabel icon="" title="Status">{{ remote.client.connected ? "Connected" : "Disconnected" }}</ElementLabel>
+        <ElementLabel icon="" title="Endpoint Identifier">{{ state.endpoint.name || "Unnamed" }}</ElementLabel>
+        <ElementLabel icon="" title="Permissions">
+          <div v-if="state.endpoint.type === 'terminal'">
+            root
+          </div>
+          <div v-else>
 
-        </div>
-      </TableText>
-      <TableText icon="" title="Local Storage">{{ state.storage }}</TableText>
-    </Table>
+          </div>
+        </ElementLabel>
+      </List>
 
-    <div class="element">
-      <canvas id="performance" style="width: 100%; height: 4rem;"></canvas>
-    </div>
+    </Element>
 
-    <Table v-if="remote.metadata.system" title="Node">
-      <TableText icon="" title="Hostname">{{ remote.metadata.system.hostname }}</TableText>
-      <TableText icon="" title="IPv4">{{ remote.metadata.system.ipv4 }}</TableText>
-      <TableText icon="" title="Cores">{{ remote.metadata.system.cores }}</TableText>
-      <TableText icon="" title="Environment">{{ remote.metadata.system.environment }}</TableText>
-      <TableText icon="" title="Version">{{ remote.metadata.system.version }}</TableText>
-      <TableText icon="" title="Compiler">{{ remote.metadata.system.go }}</TableText>
-    </Table>
+    <Element v-if="remote.metadata.system" title="Node">
+      <Title title="Host Node"></Title>
+      <List>
+        <ElementLabel icon="" title="Hostname">{{ remote.metadata.system.hostname }}</ElementLabel>
+        <ElementLabel icon="" title="IPv4">{{ remote.metadata.system.ipv4 }}</ElementLabel>
+        <ElementLabel icon="" title="Cores">{{ remote.metadata.system.cores }}</ElementLabel>
+        <ElementLabel icon="" title="Environment">{{ remote.metadata.system.environment }}</ElementLabel>
+        <ElementLabel icon="" title="Version">{{ remote.metadata.system.version }}</ElementLabel>
+        <ElementLabel icon="" title="Compiler">{{ remote.metadata.system.go }}</ElementLabel>
+      </List>
+    </Element>
     <div v-else> Disconnected from Network</div>
   </div>
 </template>

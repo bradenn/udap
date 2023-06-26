@@ -14,7 +14,7 @@ const state = reactive({
 
 router.afterEach((to, from, failure) => {
   if (!to.name) return
-  state.currentName = <string>to.name
+  state.currentName = <string>to.name || "Settings"
 })
 
 let transitionName = computed(() => {
@@ -35,7 +35,7 @@ let transitionName = computed(() => {
       </Navbar>
     </div>
 
-    <div class="root h-100 w-100">
+    <div class="root h-100 w-100" style="overflow-y: scroll">
       <router-view v-slot="{ Component }">
         <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
                     mode="out-in">
@@ -89,7 +89,7 @@ let transitionName = computed(() => {
 }
 
 .slide-reverse-leave-active {
-  animation: slide-out-reverse 100ms linear;
+//animation: slide-out-reverse 100ms linear;
 }
 
 @keyframes slide-in {

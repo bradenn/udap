@@ -28,7 +28,7 @@ watchEffect(() => {
 
 <template>
 
-<div>
+  <div>
     <router-view></router-view>
   </div>
 </template>

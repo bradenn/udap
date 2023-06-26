@@ -3,6 +3,7 @@
 
 <script lang="ts" setup>
 import {onMounted, reactive} from "vue";
+import core from "@/core";
 
 interface Loader {
   size?: string
@@ -22,12 +23,14 @@ onMounted(() => {
   mountCanvas()
 })
 
+const preferences = core.preferences();
+
 function drawSemiArc() {
 
   let ctx = state.ctx
   let thickness = 6
-  ctx.strokeStyle = "rgba(179,115,26,1)"
-  ctx.fillStyle = "rgba(179,115,26,1)"
+  ctx.strokeStyle = `${preferences.accent}`
+  ctx.fillStyle = `${preferences.accent}`
   ctx.lineWidth = thickness
 
   let radius = state.width / 2 - (thickness * 1.5)
@@ -38,7 +41,7 @@ function drawSemiArc() {
   ctx.arc(state.width / 2, state.width / 2, radius, 0, (Math.PI / 180) * 359, false)
   ctx.stroke()
   ctx.closePath()
-  ctx.strokeStyle = "rgba(179,115,26,1)"
+  ctx.strokeStyle = `${preferences.accent}`
   ctx.beginPath()
   ctx.arc(state.width / 2, state.width / 2, radius, start, current, false)
   ctx.stroke()
