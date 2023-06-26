@@ -1,44 +1,40 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
-import {defineProps, inject, reactive} from "vue"
+import {defineProps, reactive} from "vue"
 import {useRouter} from "vue-router";
 import Element from "./Element.vue";
-import {PreferencesRemote} from "../persistent";
 
 const props = defineProps<{
   title?: string
   icon?: string
   to?: string
-  cb?: () => void
-  button?: boolean
 }>()
 
 const state = reactive({})
 
 const router = useRouter();
 
-const preferences = inject("preferences") as PreferencesRemote
-
 
 </script>
 
 <template>
-  <Element :cb="props.cb" :foreground="true" :mutable="true" :to="props.to"
+  <Element :foreground="true"
            class="d-flex align-items-center gap-2 ent" style="height: 3.25rem">
+
     <div class="d-flex flex-column gap-0 justify-content-center-center px-2">
       <div></div>
       <div class="label-c4 lh-1 label-o5 d-flex">
-        <div class="sf-icon label-c6" style="width: 15px; margin-right: 12px">
+        <div v-if="props.icon" class="sf-icon label-c6" style="width: 15px; margin-right: 12px">
           {{ props.icon }}
         </div>
         <div>{{ props.title }}</div>
       </div>
       <!--      <div class="label-c5 lh-1 label-o3">sds</div>-->
     </div>
-    <div class="flex-grow-1 d-flex justify-content-end">
+    <div class="flex-grow-1 d-flex justify-content-end px-2">
 
-      <div v-if="!props.button" class="sf-icon label-o2 label-w500 label-c3">􀆊</div>
+      <slot></slot>
     </div>
   </Element>
 </template>

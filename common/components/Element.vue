@@ -8,6 +8,7 @@ import {PreferencesRemote} from "../persistent";
 const props = defineProps<{
   foreground?: boolean
   mutable?: boolean
+  surface?: boolean
   to?: string
   link?: boolean
   cb?: () => void
@@ -98,6 +99,7 @@ function pointerDrag(event: TouchEvent | MouseEvent) {
 function pointerUp(event: TouchEvent | MouseEvent) {
   state.position.a = 0
   state.position.b = 0
+  event.preventDefault()
   state.position.w = 1
   if (props.longCb) {
     clearTimeout(state.timeout);
@@ -118,8 +120,8 @@ function pointerUp(event: TouchEvent | MouseEvent) {
 <template>
 
   <div
-      :class="`${props.foreground?(props.link?(state.active?'subplot px-2 py-2':'subplot subplot-inactive px-2 py-2'):'subplot px-2 py-2'):`element back`}`"
-      :style="`${props.mutable?'transform: translateZ(10px)scale(' + state.position.w+');':''} backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`"
+      :class="`${props.foreground?(props.link?(state.active?'subplot px-2 py-2':'subplot subplot-inactive px-2 py-2'):'subplot px-2 py-2'):`element back`} ${props.surface?'subplot-surface':''} `"
+      :style="`${props.mutable?'transform: translateZ(10px)scale(' + state.position.w+');':''}  backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`"
       @touchend="pointerUp"
       @touchleave="pointerUp"
       @touchmove="pointerDrag"
@@ -138,13 +140,14 @@ function pointerUp(event: TouchEvent | MouseEvent) {
   user-select: none;
   padding: 0.375rem;
   border-radius: 1rem !important;
+  scroll-margin-block: 8px 8px;
 
 }
 
 .subplot {
   cursor: none !important;
   user-select: none !important;
-  z-index: 99 !important;
+  //z-index: 99 !important;
   border-radius: calc(1rem - 0.375rem) !important;
   border: 1px solid rgba(255, 255, 255, 0.025);
   //filter: brightness(150%);
