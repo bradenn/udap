@@ -8,6 +8,7 @@ import Entities from "@/views/settings/entities/Entities.vue";
 import EntityManage from "@/views/settings/entities/EntityManage.vue";
 import Frame from "@/views/settings/entities/Frame.vue";
 import Config from "@/views/settings/Config.vue";
+import Modules from "@/views/settings/Modules.vue";
 
 
 export default {
@@ -39,6 +40,11 @@ export default {
             path: '/home/settings/config',
             name: 'configuration',
             component: Config,
+        },
+        {
+            path: '/home/settings/modules',
+            name: 'modules',
+            component: Modules,
         },
         {
             path: '/home/settings/color',

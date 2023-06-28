@@ -111,9 +111,9 @@ function mouseUp(e: TouchEvent) {
 </script>
 
 <template>
-  <Element :cb="togglePower" :class="`${state.spectrum.on?'on':'off'}`" :foreground="true" :long-cb="goEdit"
+  <Element :cb="togglePower" :class="`${state.spectrum.on?'on':'off'}`" :foreground="false" :long-cb="goEdit"
            :mutable="true"
-           class="px-3 py-2">
+           class="px-3 py-2 subplot">
     <div class="d-flex gap-2 justify-content-between align-items-center py-1 gap-3 w-100">
       <div class="d-flex justify-content-center align-items-center gap-3">
         <div :class="`${state.spectrum.on?'icon-on':'icon-off'}`" class="sf-icon">{{

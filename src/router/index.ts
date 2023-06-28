@@ -12,6 +12,7 @@ import settings from "@/views/settings";
 import MonitorList from "@/views/monitor/MonitorList.vue";
 import Demo from "@/views/Demo.vue";
 import Beam from "@/views/beam/Beam.vue";
+import ThermostatView from "@/views/home/ThermostatView.vue";
 
 const demoRoute = {
     path: '/home/demo',
@@ -57,6 +58,12 @@ const mobileRoutes =
                 path: '/home/menu',
                 name: 'menu',
                 component: MenuPage,
+                icon: '􀎟',
+            },
+            {
+                path: '/home/thermostat',
+                name: 'thermostat',
+                component: ThermostatView,
                 icon: '􀎟',
             },
             {

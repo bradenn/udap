@@ -30,6 +30,7 @@ import Title from "udap-ui/components/Title.vue";
       <Title title="System"></Title>
       <List>
         <ElementLink icon="􀟗" title="Entities" to="/home/settings/entities"></ElementLink>
+        <ElementLink icon="􀟗" title="Modules" to="/home/settings/modules"></ElementLink>
       </List>
     </Element>
   </div>

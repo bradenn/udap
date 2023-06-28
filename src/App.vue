@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import Encrypted from "./components/Encrypted.vue";
-import Menu from "./components/Menu.vue";
 import type {Remote} from "udap-ui/remote";
 import _remote from "udap-ui/remote";
 import {onBeforeUnmount, onMounted, provide, reactive, watchEffect} from "vue";
@@ -68,13 +67,13 @@ onBeforeUnmount(() => {
   <div class="d-flex flex-column gap-3 mt-2 px-2" style=" max-height: 95vh; height: 95vh; background-color: transparent"
   >
 
-    <div class="d-flex justify-content-between ">
+    <div class="d-flex justify-content-between">
       <div class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1">
         <Encrypted></Encrypted>
         <div class="udap-logo lh-1" style=" z-index: 6 !important;">UDAP</div>
 
       </div>
-      <Menu v-if="remote.client.connected" :name="0"></Menu>
+      <!--      <Menu v-if="!remote.client.connected" :name="0"></Menu>-->
     </div>
 
     <div v-if="state.ready && !remote.client.connected"
