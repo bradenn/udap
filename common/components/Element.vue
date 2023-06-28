@@ -13,6 +13,7 @@ const props = defineProps<{
   link?: boolean
   cb?: () => void
   longCb?: () => void
+  accent?: boolean
 }>()
 
 const state = reactive({
@@ -121,7 +122,7 @@ function pointerUp(event: TouchEvent | MouseEvent) {
 
   <div
       :class="`${props.foreground?(props.link?(state.active?'subplot px-2 py-2':'subplot subplot-inactive px-2 py-2'):'subplot px-2 py-2'):`element back`} ${props.surface?'subplot-surface':''} `"
-      :style="`${props.mutable?'transform: translateZ(10px)scale(' + state.position.w+');':''}  backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`"
+      :style="` box-shadow: inset 0 0 1px 1px ${state.active||props.accent?preferences.accent+'':'transparent'}; ${props.mutable?'transform: translateZ(10px)scale(' + state.position.w+');':''}  ${!props.foreground?`backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`:''}`"
       @touchend="pointerUp"
       @touchleave="pointerUp"
       @touchmove="pointerDrag"
@@ -135,6 +136,10 @@ function pointerUp(event: TouchEvent | MouseEvent) {
   background-color: transparent !important;
 }
 
+.subplot {
+
+}
+
 .element {
   cursor: none !important;
   user-select: none;
@@ -142,6 +147,10 @@ function pointerUp(event: TouchEvent | MouseEvent) {
   border-radius: 1rem !important;
   scroll-margin-block: 8px 8px;
 
+  > .subplot {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 .subplot {
@@ -150,6 +159,7 @@ function pointerUp(event: TouchEvent | MouseEvent) {
   //z-index: 99 !important;
   border-radius: calc(1rem - 0.375rem) !important;
   border: 1px solid rgba(255, 255, 255, 0.025);
+
   //filter: brightness(150%);
   transition: transform 80ms ease-out;
 }
