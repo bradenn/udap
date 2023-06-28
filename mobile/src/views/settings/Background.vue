@@ -50,8 +50,8 @@ onMounted(() => {
   for (let i = 0; i < numItems; i++) {
     colors.push(`${hslToHex((360 / numItems) * i, 50, 30)}`)
   }
-  for (let i = 0; i < 24; i++) {
-    backgrounds.push(`${hslToHex(0, 0, (50 / 24) * i)}`)
+  for (let i = 0; i < 48; i++) {
+    backgrounds.push(`${hslToHex(0, 0, (50 / 48) * i)}`)
   }
   for (let i = 1; i <= 20; i++) {
     scaleOptions.push(i * 5)
@@ -81,7 +81,7 @@ function selectBlur(blur: number) {
           <div class="">
             <List :row="true" scroll-x>
               <Element v-for="w in scaleOptions" :cb="() => selectScale(w)" :foreground="true"
-                       :style="`${preferences.pattern.scale == w?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} `"
+                       :accent="preferences.pattern.scale == w"
 
                        class="py-4 d-flex justify-content-center align-items-center"
                        style="min-width: 4rem; height: 2rem">
@@ -117,7 +117,7 @@ function selectBlur(blur: number) {
           <Title title="Background"></Title>
           <List :row="true" class="scroll-horizontal" style="overflow-x: scroll">
             <Element v-for="bg in backgrounds" :cb="() => selectBackgroundColor(bg)" :foreground="true"
-                     :style="`${preferences.background == bg?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} background-color:${bg} !important;`"
+                     :accent="preferences.background == bg" :style="`background-color:${bg} !important;`"
 
                      class="py-4"
                      style="min-width: 4rem">
@@ -129,7 +129,8 @@ function selectBlur(blur: number) {
           <Title title="Accent"></Title>
           <List :row="true" class="scroll-horizontal" style="overflow-x: scroll;">
             <Element v-for="clr in colors" :cb="() => selectColor(clr)" :foreground="true"
-                     :style="`${preferences.accent == clr?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''} background-color:${clr} !important;`"
+                     :accent="preferences.accent == clr"
+                     :style="`background-color:${clr} !important;`"
 
                      class="py-4"
                      style="min-width: 4rem">
@@ -144,7 +145,8 @@ function selectBlur(blur: number) {
           <Title title="Patterns"></Title>
           <div class="sample-grid" style=" height: 50vh; overflow-y: scroll; overflow-x: hidden">
             <Element v-for="pattern in patternList" :cb="() => selectPattern(pattern)" :foreground="true"
-                     :style="`background-image:${patterns[pattern](preferences.accent, preferences.pattern.opacity)}; ${preferences.pattern.name== pattern?('box-shadow: inset 0 0 0px 2px rgba(255,255,255,0.1);'):''}`"
+                     :accent="preferences.pattern.name== pattern"
+                     :style="`background-image:${patterns[pattern](preferences.accent, preferences.pattern.opacity)}; `"
                      class="py-4">
               <div class="label-c5 label-o5 px-2 label-w600 lh-1 mb-1">{{ pattern }}</div>
             </Element>

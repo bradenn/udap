@@ -55,7 +55,7 @@ body {
   //background-image: url("https://static.udap.app/images/bg.jpeg");
 
   transition: background-color 125ms ease-out, background-image 125ms ease-out, background-size 125ms ease-out;
-
+  overflow-y: scroll;
   overflow: clip;
 }
 
@@ -130,7 +130,7 @@ body {
   //transform: translate3d(0, 0, 0);
   //background-color: hsla(214, 9%, 28%, 0.2);
   //color: rgba(255, 255, 255, 0.7);
-  //box-shadow: inset 0 0 1.5px 2px rgba(114, 114, 114, 0.2) !important;
+  //box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.0625);
   //border-radius: 6px;
   //padding: 12px 18px;
 }
@@ -146,7 +146,7 @@ $border: rgba(255, 255, 255, 0.0625);
   flex-direction: row;
   align-items: center;
   //filter: drop-shadow(0px 10px 60px rgba(0, 0, 0, 0.1));
-  transform: translate3d(0, 0, 0);
+  //transform: translate3d(0, 0, 0);
   //border: 1px solid $border;
   //background-color: hsla(214, 9%, 28%, 0.2);
   color: rgba(255, 255, 255, 0.7);

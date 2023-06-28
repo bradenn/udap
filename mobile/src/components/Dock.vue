@@ -12,20 +12,20 @@ const props = defineProps<{
 <template>
   <div>
     <div class="d-flex flex-row gap-1">
-      <Element :foreground="true" :link="true" :mutable="true"
-               class="d-flex align-items-center justify-content-center gap-1"
+      <Element :link="true" :mutable="true"
+               class="d-flex align-items-center justify-content-center gap-1 subplot"
                style="height: 2.8rem" to="/home/dashboard">
         <div class="sf-icon label-c5">􀎟</div>
         <div class="label-c5">Home</div>
       </Element>
-      <Element :foreground="true" :link="true" :mutable="true"
-               class="d-flex align-items-center justify-content-center gap-1"
+      <Element :link="true" :mutable="true"
+               class="d-flex align-items-center justify-content-center gap-1 subplot"
                to="/home/monitor">
         <div class="sf-icon label-c5">􀞿</div>
         <div class="label-c5">Monitor</div>
       </Element>
-      <Element :foreground="true" :link="true" :mutable="true"
-               class="d-flex align-items-center justify-content-center gap-1"
+      <Element :link="true" :mutable="true"
+               class="d-flex align-items-center justify-content-center gap-1 subplot"
                to="/home/settings">
         <div class="sf-icon label-c5">􀍟</div>
         <div class="label-c5">Settings</div>
