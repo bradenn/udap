@@ -145,7 +145,7 @@ function mouseHold(e: MouseEvent) {
     <List :row="true">
 
 
-      <Element :foreground="true" :mutable="true" class="w-100  px-4">
+      <Element :foreground="true" :long-cb="() => router.push('/home/thermostat')" :mutable="true" class="w-100  px-4">
         <div class="d-flex flex-column align-items-center gap-0 justify-content-center w-100">
           <div class="d-flex align-items-center gap-0">
             <div class="d-flex">

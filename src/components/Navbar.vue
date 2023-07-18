@@ -10,17 +10,21 @@ const props = defineProps<{
   back?: string
   title?: string
 }>()
+//style="border-bottom: 1px solid rgba(255,255,255,0.0); padding-bottom: 0.375rem; margin-bottom: 0.375rem"
 </script>
 
 <template>
-  <div class="d-flex justify-content-between align-items-center w-100 mb-1 px-2">
-    <Element :cb="() => router.go(-1)" class="d-flex align-items-center justify-content-center gap-0 py-2 subplot"
+  <div class="d-flex justify-content-between align-items-center w-100"
+  >
+    <Element :cb="() => router.go(-1)" class="d-flex align-items-center justify-content-center gap-0 py-2 "
+             foreground
              mutable
              style="height: 2.5rem; width: 25%">
       <div class="sf-icon label-o1" style="margin-left: -8px">􀯶</div>
       <div class="label-c5 label-w500">Back</div>
     </Element>
-    <div class="d-flex justify-content-center label-w600 text-capitalize label-c4 label-o6" style="width: 50%">{{
+    <div class="d-flex justify-content-center label-w600 text-capitalize label-c3 label-o6 " style="width: 50%">
+      {{
         props.title
       }}
     </div>

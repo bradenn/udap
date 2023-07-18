@@ -5,12 +5,16 @@
 import Element from "udap-ui/components/Element.vue";
 import List from "udap-ui/components/List.vue";
 import {onMounted, onUnmounted, reactive, watchEffect} from "vue";
-import {Attribute, Entity} from "@/types";
-import Beam from "@/views/beam/Beam.vue";
-import {Remote} from "@/remote";
+import {Attribute, Entity} from "udap-ui/types";
+import {Remote} from "udap-ui/remote";
 import attributeService from "@/services/attributeService";
-import core from "@/core";
+import core from "udap-ui/core";
 
+interface Beam {
+  active: number,
+  target: string,
+  power: number,
+}
 
 const state = reactive({
   canvas: {} as HTMLCanvasElement,
@@ -19,10 +23,16 @@ const state = reactive({
   dy: 0,
   px: 0,
   py: 0,
+  gx: 0,
+  gy: 0,
   af: 0,
   x: 0,
   y: 0,
   z: 0,
+  lastPos: {
+    x: 0,
+    y: 0
+  },
   pan: 90,
   panFine: 90,
   tilt: 180,
@@ -38,22 +48,24 @@ const state = reactive({
   position: {} as Attribute,
   beam: {} as Attribute
 })
-const remote = core.remote()
+const remote = core.remote() as Remote
 watchEffect(() => {
   findEntity(remote)
   return remote.attributes
 })
 
-const height = 2.7432
 
-const roomSize = 5
+const roomSizeZ = 2.6924
+const height = roomSizeZ
+const roomSizeY = 3.2004
+const roomSizeX = 3.5814
 
 watchEffect(() => {
-  if (new Date().valueOf() - state.lastUpdate > 20 && state.connected) {
+  if (new Date().valueOf() - state.lastUpdate > 25 && state.connected) {
     // moveBeam(Math.round(state.panFine), Math.round(state.tiltFine))
     // state.px = Math.max(Math.min(state.px, 20), -20)
     // state.py = Math.max(Math.min(state.py, 20), -20)
-    goToXYZ(state.px, state.py, height)
+    goToXYZ(map_range(state.px, 0, roomSizeX, -roomSizeX / 2, roomSizeX / 2), map_range(state.py, 0, roomSizeY, -roomSizeY / 2, roomSizeY / 2), roomSizeZ)
   }
   return state.px + state.py
 })
@@ -89,32 +101,49 @@ function convertXYToPanTilt(x: number, y: number, h: number, r: number): { pan: 
   return {pan: panDeg, tilt: tiltDeg};
 }
 
+
 function goToXYZ(x: number, y: number, z: number) {
+  // x -= roomSizeX / 2
   // let distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2))
   // let theta = Math.atan(y / x) + (x >= 0 ? 0 : Math.PI)
   // let phi = Math.atan(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / z)
   // let pan = theta * 180 / Math.PI
   // let tilt = phi * 180 / Math.PI
+  // let {pan, tilt} = convertPositionToPanTilt(x, y, roomSizeX, roomSizeY, inToM(67), inToM(19), roomSizeZ)
+  let {phi, theta} = PlanarToSpherical(0, 0, x, y + roomSizeY / 2, roomSizeZ);
+  let lp = (phi * (180.0 / Math.PI))
+  let theta1 = (theta * (180.0 / Math.PI))
+  state.panFine = (phi * (180.0 / Math.PI))
+  state.tiltFine = (theta * (180.0 / Math.PI))
+  if (lp >= 0 && lp <= 180 && theta1 >= 0 && theta1 <= 180) {
+    moveBeam(state.panFine, state.tiltFine)
 
-  let {pan, tilt} = convertXYToPanTilt(x, y, height, roomSize);
-
-  // if (pan >= 0 && pan <= 180 && tilt >= 0 && tilt <= 180) {
-  state.panFine = pan + 90
-  state.tiltFine = tilt + 90
-  moveBeam(state.panFine, state.tiltFine)
-  // }
+  }
 }
 
-function reversePanTiltToXY(pan: number, tilt: number, h: number): { x: number; y: number } {
-  // Convert degrees to radians
-  const panRad = (pan * Math.PI) / 180;
-  const tiltRad = (tilt * Math.PI) / 180;
 
-  // Calculate x, y coordinates
-  const x = h * Math.tan(panRad);
-  const y = h * Math.tan(tiltRad);
+function SphericalToPlanar(phi: number, theta: number, height: number): { x: number, y: number } {
+  theta *= (Math.PI / 180)
+  phi *= (Math.PI / 180)
+  let r = Math.tan(theta) * height;
+  let x = Math.cos(phi) * r;
+  let y = Math.sin(phi) * r;
+
 
   return {x, y};
+}
+
+function PlanarToSpherical(cx: number, cy: number, x: number, y: number, height: number): {
+  phi: number,
+  theta: number
+} {
+
+  let r: number = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+  let phi: number = Math.atan(y / x) + (x >= 0 ? 0 : Math.PI)
+  let theta: number = (Math.atan(r / height));
+
+
+  return {phi, theta};
 }
 
 function query() {
@@ -122,12 +151,11 @@ function query() {
   let status = JSON.parse(state.position.value)
   state.pan = status.pan
   state.tilt = status.tilt
-  state.panFine = state.pan
-  state.tiltFine = state.tilt
+
   let theta = Math.PI / 180 * state.pan
   let phi = Math.PI / 180 * state.tilt
   let distance = 10;
-  let {x, y} = reversePanTiltToXY(state.pan, state.tilt, height);
+  let {x, y} = SphericalToPlanar(state.panFine, state.tiltFine, roomSizeZ);
   state.x = x
   state.y = y
 
@@ -166,12 +194,13 @@ function moveBeam(pan: number, tilt: number) {
   if (!state.entity) return
   state.position.request = JSON.stringify({
     pan: Math.round(pan),
-    tilt: Math.round(tilt)
+    tilt: 90 - Math.round(tilt)
   })
 
 
   state.lastUpdate = new Date().valueOf()
-
+  state.lastPos.x = state.px
+  state.lastPos.y = state.py
   attributeService.request(state.position).then(e => console.log(e))
 }
 
@@ -231,6 +260,112 @@ function map_range(value: number, low1: number, high1: number, low2: number, hig
   return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
 }
 
+function inToM(i: number): number {
+
+  return (i / 39.37) * (state.ctx.canvas?.height / roomSizeY)
+}
+
+function drawRoom() {
+  let ctx = state.ctx
+  let w = state.ctx.canvas.width
+  let h = state.ctx.canvas.height
+
+  let items = [
+    {
+      name: "Matthew's Desk",
+      x: 141 - 20,
+      y: 37,
+      w: 20,
+      h: 47,
+    },
+    {
+      name: "Book Shelf",
+      x: 141 - 30,
+      y: 126 - 15,
+      w: 30,
+      h: 15,
+    },
+    {
+      name: "Window Shelf",
+      x: 141 - 42 - 48,
+      y: 126 - 12,
+      w: 48,
+      h: 12,
+    },
+    {
+      name: "Braden's Side Desk",
+      x: 0,
+      y: 126 - 20,
+      w: 47,
+      h: 20,
+    },
+    {
+      name: "Braden's Desk",
+      x: 0,
+      y: 126 - 20 - 65,
+      w: 24,
+      h: 63,
+    },
+    {
+      name: "Drawers",
+      x: 0,
+      y: 126 - 20 - 65 - 34,
+      w: 19,
+      h: 32,
+    },
+    {
+      name: "Laser",
+      x: 67,
+      y: roomSizeY / 2 * 39.37,
+      w: 4,
+      h: 4,
+    }
+  ]
+  ctx.fillStyle = "rgba(255,255,255,0.2)"
+  for (let i = 0; i < items.length; i++) {
+    let item = items[i]
+
+
+    if (item.name == "Laser") {
+      let r = h / 2;
+      let mx = w / 2
+      let my = 50
+      ctx.fillRect(mx - 50, my - 50, 100, 100)
+      ctx.beginPath()
+      ctx.moveTo(mx - r, my)
+      ctx.lineTo(mx + r, my)
+      ctx.closePath()
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(mx, my - r)
+      ctx.lineTo(mx, my + r)
+      ctx.closePath()
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.ellipse(w / 2, my, r, r, 0, 0, Math.PI * 2, false)
+      ctx.closePath()
+      ctx.stroke()
+
+      let {x, y} = SphericalToPlanar(state.panFine, state.tiltFine, roomSizeZ);
+      // ctx.beginPath()
+      // ctx.moveTo(mx, my)
+      // ctx.lineTo(mx, my)
+      // ctx.closePath()
+      // ctx.stroke()
+
+      ctx.beginPath()
+      ctx.moveTo(mx, my)
+      ctx.lineTo(map_range(x, -roomSizeX / 2, roomSizeX / 2, 0, w), map_range(y - roomSizeY / 2, -roomSizeY / 2, roomSizeY / 2, 0, h))
+      ctx.closePath()
+      ctx.stroke()
+    } else {
+      ctx.fillRect(inToM(item.x), inToM(item.y), inToM(item.w), inToM(item.h))
+    }
+
+  }
+
+}
+
 function render() {
   let ctx = state.ctx
   let w = state.ctx.canvas.width
@@ -243,15 +378,36 @@ function render() {
   // ctx.fillStyle = "rgb(0,0,0)"
   // ctx.ellipse(w / 2, h / 2, w / 2, w / 2, 0, 0, Math.PI * 2, false)
   // ctx.stroke()
-  let pointsX = roomSize;
-  let pointsY = roomSize;
-  let dx = (w / 2) / pointsX
-  let dy = (h / 2) / pointsY
+  drawRoom()
+  let pointsX = roomSizeX;
+  let pointsY = roomSizeY;
+  let dx = (w) / pointsX
+  let dy = (h) / pointsY
   ctx.beginPath()
   ctx.fillStyle = "rgba(255,255,255, 0.1)"
-  ctx.ellipse(w / 2 + state.px * dx, h / 2 + state.py * dy, w / 8, h / 8, 0, 0, Math.PI * 2, false)
+  ctx.ellipse(state.px * dx, state.py * dy, w / 8, h / 8, 0, 0, Math.PI * 2, false)
   ctx.closePath()
   ctx.fill()
+  const points = 65
+  let dtx = w / points
+  let dty = h / points
+  for (let i = 1; i < points; i++) {
+    for (let j = 1; j < points; j++) {
+      ctx.beginPath()
+      if (j == state.gy) {
+        ctx.fillStyle = "rgba(255, 128,128, 1)"
+      } else if (i == state.gx) {
+        ctx.fillStyle = "rgba(128, 128,255, 1)"
+
+      } else {
+        ctx.fillStyle = "rgba(255,255,255, 0.1)"
+      }
+
+      ctx.ellipse(i * dtx, j * dty, 2, 2, 0, 0, Math.PI * 2, false)
+      ctx.closePath()
+      ctx.fill()
+    }
+  }
 
 
 }
@@ -295,14 +451,17 @@ function move(e: TouchEvent) {
   // let t = 2 * Math.atan((dy) / (dx + Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))))
   // state.dx = Math.cos(t) * dist / 2
   // state.dy = Math.sin(t) * dist / 2
-
-  state.dx = e.touches.item(0).pageX - br.x
-  state.dy = e.touches.item(0).pageY - br.y
+  let touch = e.touches.item(0)
+  if (!touch) return
+  state.dx = Math.min(touch.pageX - br.x, state.canvas.clientWidth)
+  state.dy = Math.min(touch.pageY - br.y, state.canvas.clientHeight)
   let ppx = state.px
   // if (state.dx >= br.left && state.dx <= br.right) {
-  ppx = map_range(state.dx, 0, state.canvas.clientWidth, -roomSize, roomSize)
-  if (ppx >= -roomSize && ppx <= roomSize) {
-    state.px = ppx
+  ppx = map_range(state.dx, 0, state.canvas.clientWidth, 0, roomSizeX)
+  if (ppx >= 0 && ppx <= roomSizeX) {
+    state.px = map_range(state.dx, 0, state.canvas.clientWidth, 0, roomSizeX)
+    state.gx = Math.round(map_range(ppx, 0, roomSizeX, 0, 65))
+
   }
   // }
 
@@ -310,9 +469,10 @@ function move(e: TouchEvent) {
   if (state.dy >= br.height && state.dy <= br.bottom) {
 
   }
-  ppy = map_range(state.dy, 0, state.canvas.clientHeight, -roomSize, roomSize)
-  if (ppy >= -roomSize && ppy <= roomSize) {
-    state.py = ppy
+  ppy = map_range(state.dy, 0, state.canvas.clientHeight, 0, roomSizeY)
+  if (ppy >= 0 && ppy <= roomSizeY) {
+    state.py = map_range(state.dy, 0, state.canvas.clientHeight, 0, roomSizeY)
+    state.gy = Math.round(map_range(ppy, 0, roomSizeY, 0, 65))
   }
 
 }
@@ -320,12 +480,14 @@ function move(e: TouchEvent) {
 function touchMovePUp(e: TouchEvent) {
   e.preventDefault()
   state.panFine += 5
+
   sendFine()
 }
 
 function touchMovePDown(e: TouchEvent) {
   e.preventDefault()
   state.panFine -= 5
+
   sendFine()
 }
 
@@ -366,12 +528,21 @@ function touchMoveYDown(e: TouchEvent) {
 
 <template>
   <div class="d-flex flex-column gap-2">
+
     <Element>
       <List :row="true">
-        <Element :foreground="true" class="d-flex justify-content-center">P {{ Math.round(state.pan) }}</Element>
-        <Element :foreground="true" class="d-flex justify-content-center">T {{ Math.round(state.tilt) }}</Element>
-        <Element :foreground="true" class="d-flex justify-content-center">P {{ Math.round(state.pan) }}</Element>
-        <Element :foreground="true" class="d-flex justify-content-center">T {{ Math.round(state.tilt) }}</Element>
+        <Element :foreground="true" class="d-flex justify-content-center">P {{
+            Math.round(state.px * 1000) / 1000
+          }}
+        </Element>
+        <Element :foreground="true" class="d-flex justify-content-center">T {{
+            Math.round(state.py * 1000) / 1000
+          }}
+        </Element>
+        <Element :foreground="true" class="d-flex justify-content-center">P
+          {{ Math.round(state.panFine) }}
+        </Element>
+        <Element :foreground="true" class="d-flex justify-content-center">T {{ Math.round(state.tiltFine) }}</Element>
         <Element :foreground="true" :mutable="true" class="d-flex justify-content-center"
                  @touchstart="laserPower(!state.laser)">
           {{ state.laser ? "Turn Off" : "Turn On" }}
@@ -379,21 +550,8 @@ function touchMoveYDown(e: TouchEvent) {
 
       </List>
     </Element>
-    <Element>
-      <List :row="true">
-        <Element :foreground="true" class="d-flex justify-content-center">PX</Element>
-        <Element :foreground="true" class="d-flex justify-content-center">X {{ Math.round(state.dx) }}</Element>
-        <Element :foreground="true" class="d-flex justify-content-center">Y {{ Math.round(state.dx) }}</Element>
-      </List>
-    </Element>
-    <Element>
-      <List :row="true">
-        <Element :foreground="true" class="d-flex justify-content-center">DX</Element>
-        <Element :foreground="true" class="d-flex justify-content-center">X {{ Math.round(state.px) }}</Element>
-        <Element :foreground="true" class="d-flex justify-content-center">Y {{ Math.round(state.py) }}</Element>
-      </List>
-    </Element>
-    <Element>
+
+    <Element v-if="false">
       <List :row="true">
         <Element :foreground="true" class="d-flex justify-content-center" @touchstart="touchMoveXUp">X+</Element>
         <Element :foreground="true" class="d-flex justify-content-center" @touchstart="touchMoveXDown">X-</Element>
@@ -405,7 +563,7 @@ function touchMoveYDown(e: TouchEvent) {
         </Element>
       </List>
     </Element>
-    <Element>
+    <Element v-if="true">
       <List :row="true">
         <Element :foreground="true" class="d-flex justify-content-center" @touchstart="touchMovePUp">P+</Element>
         <Element :foreground="true" class="d-flex justify-content-center" @touchstart="touchMovePDown">P-</Element>
@@ -414,7 +572,8 @@ function touchMoveYDown(e: TouchEvent) {
       </List>
     </Element>
     <Element class=" d-flex align-items-center justify-content-center" style="user-select: none !important;">
-      <Element :foreground="true" style="width: 100%; height:100%;aspect-ratio: 1/1 !important;">
+      <Element :foreground="true" :style="`aspect-ratio: ${roomSizeX}/${roomSizeY} !important;`"
+               style="width: 100%; height:100%;">
         <canvas id="canvas" style="width: 100%; height:100%;user-select: none !important;" @touchend="up"
                 @touchleave="up" @touchmove="move"
                 @touchstart="down"></canvas>

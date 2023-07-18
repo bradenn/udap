@@ -3,10 +3,15 @@ import Encrypted from "./components/Encrypted.vue";
 import type {Remote} from "udap-ui/remote";
 import _remote from "udap-ui/remote";
 import {onBeforeUnmount, onMounted, provide, reactive, watchEffect} from "vue";
-import core from "@/core";
+import core from "udap-ui/core";
 import Status from "@/components/Status.vue";
 import Dock from "@/components/Dock.vue";
 import {PreferencesRemote, usePersistent} from "udap-ui/persistent";
+import Element from "udap-ui/components/Element.vue";
+import ElementHeader from "udap-ui/components/ElementHeader.vue";
+import List from "udap-ui/components/List.vue";
+import type {RemoteTimings} from "udap-ui/timings";
+import useTimings from "udap-ui/timings";
 
 /* Remote */
 const remote: Remote = _remote
@@ -15,6 +20,8 @@ const router = core.router();
 
 const preferences: PreferencesRemote = usePersistent();
 
+const timings: RemoteTimings = useTimings(remote);
+provide("timings", timings)
 watchEffect(() => {
   updateBackground()
   return preferences
@@ -63,46 +70,97 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-
-  <div class="d-flex flex-column gap-3 mt-2 px-2" style=" max-height: 95vh; height: 95vh; background-color: transparent"
-  >
-
-    <div class="d-flex justify-content-between">
-      <div class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1">
-        <Encrypted></Encrypted>
-        <div class="udap-logo lh-1" style=" z-index: 6 !important;">UDAP</div>
+  <div class="app-frame">
+    <div class="app-container">
+      <div
+          class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1 pb-1 flex-shrink-0"
+          style="height: 1.5rem">
+        <Encrypted :compact="!(router.currentRoute.value.fullPath === '/home/dashboard')"></Encrypted>
+        <div :class="`udap-logo-container ${router.currentRoute.value.fullPath === '/home/dashboard'?'udap-logo':'udap-logo-sm'}`"
+             class="lh-1"
+             style=" z-index: 6 !important;">UDAP
+        </div>
 
       </div>
-      <!--      <Menu v-if="!remote.client.connected" :name="0"></Menu>-->
-    </div>
 
-    <div v-if="state.ready && !remote.client.connected"
-         class="d-flex flex-column align-items-center justify-content-center"
-         style="height: 10rem">
-      <div class="label-c1 label-w600">Connection Lost</div>
-      <div class="label-c5 label-w600 label-o3">You are currently out of range of all UDAP nodes.</div>
-      <Status :remote="remote"></Status>
+      <div v-if="state.ready && !remote.client.connected"
+           class="dock-fixed flex-fill">
+        <Element>
+          <ElementHeader title="Connection Lost"></ElementHeader>
+          <List>
+            <Element class="d-flex" foreground>
+              <Status :remote="remote"></Status>
+              <div class=" py-2 px-2 label-c5 label-w600 label-o3">You are currently out of range of all UDAP nodes.
+              </div>
+
+            </Element>
+
+          </List>
+        </Element>
+      </div>
+      <div v-else class="dock-fixed flex-grow-1 flex-shrink-1 overflow-hidden">
+        <router-view></router-view>
+      </div>
+
+      <div class="d-flex align-items-center w-100 flex-shrink-0 mb-3" style="height: 60px">
+        <Element class="w-100">
+          <Dock class=""></Dock>
+        </Element>
+      </div>
     </div>
-    <div v-else class="dock-fixed">
-      <router-view></router-view>
-    </div>
-    <Dock class="float-end"></Dock>
   </div>
+
 </template>
 
-<style>
+<style lang="scss">
+//.app-container > * {
+//  box-shadow: inset 0 0 2px 2px rgba(128, 128, 255, 1);
+//}
 
-.element {
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  grid-template-rows: repeat(10, minmax(1px, 1fr));
+  grid-row-gap: 0.25rem;
+  min-width: 0; //  FF flexbox overflow
 
+  //box-shadow: inset 0 0 2px 2px rgba(128, 255, 128, 1);
 }
+
+.app-frame {
+  height: 100vh;
+  width: 100vw;
+  //box-shadow: inset 0 0 2px 2px rgba(255, 128, 255, 1);
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.app-frame > * {
+  //outline: 1px solid rgba(255, 255, 255, 0.5);
+  z-index: 1;
+  border-radius: 0.25rem;
+}
+
+.udap-logo-container {
+  transition: font-size 100ms ease;
+}
+
+//.select-outline-all {
+//  //* {
+//  //  box-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+//  //  border: 0.5px solid rgba(255, 255, 255, 0.1);
+//  //  border-radius: 4px;
+//  //}
+//}
 
 
 .dock-fixed {
   /*position: relative;*/
-  height: 100%;
-  width: 100%;
-  overflow-y: scroll !important;
-//padding-right: ;
+
+  //overflow-y: clip !important;
+  //padding-right: ;
   /*filter: blur(20px);*/
 }
 
@@ -115,9 +173,14 @@ onBeforeUnmount(() => {
 
 
 .udap-logo {
-  font-family: "IBM Plex Sans Medium", sans-serf;
+  font-family: "IBM Plex Sans Medium", sans-serif;
   font-size: 2rem;
   font-weight: 700;
 }
 
+.udap-logo-sm {
+  font-family: "IBM Plex Sans Medium", sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
 </style>

@@ -2,10 +2,9 @@
 
 <script lang="ts" setup>
 
-import Element from "udap-ui/components/Element.vue";
 import ElementLabel from "udap-ui/components/ElementLabel.vue";
 import List from "udap-ui/components/List.vue";
-import Title from "udap-ui/components/Title.vue";
+import ElementHeader from "udap-ui/components/ElementHeader.vue";
 import ElementLink from "udap-ui/components/ElementLink.vue";
 
 import core from "@/core";
@@ -15,6 +14,7 @@ import type {Endpoint} from "udap-ui/types";
 
 
 const remote = core.remote()
+const preferences = core.preferences() as PreferencesRemote
 
 interface Key {
   key: string
@@ -25,10 +25,10 @@ interface Key {
 const state = reactive({
   endpoint: {} as Endpoint,
   items: [] as Key[],
-  ctx: {} as CanvasRenderingContext2D
+  ctx: {} as CanvasRenderingContext2D,
+  loaded: false
 })
 
-let preferences = core.preferences() as PreferencesRemote
 
 let pctl = inject("preferencesCtrl") as PreferencesCtrl
 
@@ -39,16 +39,17 @@ watchEffect(() => {
 
 function localReset() {
   pctl.reset()
-  state.items = recursiveKeyMap(preferences)
+  state.items = recursiveKeyMap(preferences, 2)
 }
 
 onMounted(() => {
 
-  state.items = recursiveKeyMap(preferences)
+  state.items = recursiveKeyMap(preferences, 2)
+  state.loaded = true
 
 })
 
-function recursiveKeyMap(obj: any): Key[] {
+function recursiveKeyMap(obj: any, depth: number): Key[] {
   let keys = Object.keys(obj)
   let out: Key[] = []
   keys.forEach(key => {
@@ -58,7 +59,9 @@ function recursiveKeyMap(obj: any): Key[] {
     let target = obj[key]
     if (target) {
       if (target instanceof Object) {
-        k.children = recursiveKeyMap(target)
+        if (depth > 0) {
+          k.children = recursiveKeyMap(target, depth - 1)
+        }
         k.value = "---"
       } else {
         let value = `${target}`
@@ -74,24 +77,20 @@ function recursiveKeyMap(obj: any): Key[] {
 
 }
 
-onMounted(() => {
-  // setup()
-  // animate()
-})
-
 
 </script>
 
 <template>
-  <div class="d-flex flex-column gap-3">
-    <Element>
-      <Title title="Local Preferences"></Title>
+  <List>
+
+    <div v-if="state.loaded">
+      <ElementHeader title="Local Preferences"></ElementHeader>
       <List>
         <div v-for="item in state.items" :key="item.key">
           <ElementLabel :title="item.key " icon="">
             <div class="label-monospace">{{ item.value }}</div>
           </ElementLabel>
-          <List v-if="item.children.length > 0" class="mt-1" style="padding-left: 1rem">
+          <List v-if="item.children?item.children.length > 0:false" class="mt-1" style="padding-left: 1rem">
             <ElementLabel v-for="child in item.children" :key="child.key" :title="child.key" icon="">
               <div class="label-monospace">{{ child.value }}</div>
             </ElementLabel>
@@ -99,13 +98,12 @@ onMounted(() => {
         </div>
       </List>
 
-    </Element>
-    <Element>
-      <Title title="Options"></Title>
-      <ElementLink :cb="() => localReset()" button icon="􀲯" title="Reset"></ElementLink>
-    </Element>
+    </div>
+    <ElementHeader title="Options"></ElementHeader>
+    <ElementLink :cb="() => localReset()" button class="flex-shrink-0" icon="􀲯"
+                 title="Reset"></ElementLink>
 
-  </div>
+  </List>
 </template>
 
 <style scoped>

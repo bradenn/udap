@@ -12,11 +12,9 @@ let state = useListModules() as ModuleController;
 </script>
 
 <template>
+  <List v-if="state.modules">
 
-  <List v-if="state.modules" scroll-y style="max-height: inherit">
-
-    <Element v-for="module in state.modules" :key="module.id" :foreground="true" :to="`/home/settings/modules/${module.id}`"
-             class="d-flex gap-2 align-items-center px-2 py-2"
+    <Element v-for="module in state.modules" :foreground="true" class="d-flex gap-2 align-items-center px-2 py-2"
              mutable>
       <div class="notches px-2" style="height: 1rem">
         <div :class="`${module.enabled?'active':''}`" class="notch h-100"></div>
@@ -26,13 +24,9 @@ let state = useListModules() as ModuleController;
         <div class="label-monospace lh-1">{{ module.name }}</div>
         <div class="label-monospace lh-1 label-o2 label-c6">v{{ module.version }}</div>
 
-
       </div>
-
-      <div class="flex-grow-1 d-flex justify-content-end align-items-end">
-        {{ module.state }}
-        <div class="sf-icon label-o2 label-w500 label-c3">􀆊</div>
-      </div>
+      <div class="flex-fill"></div>
+      <div class="label-c5 px-2">{{ module.state }}</div>
     </Element>
 
   </List>

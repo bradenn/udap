@@ -6,6 +6,8 @@ import {PreferencesRemote} from "udap-ui/persistent";
 import {reactive} from "vue";
 import Navbar from "@/components/Navbar.vue";
 import SettingsMenu from "@/views/settings/SettingsMenu.vue";
+import Element from "udap-ui/components/Element.vue";
+import List from "udap-ui/components/List.vue";
 
 const router = core.router()
 const preferences = core.preferences() as PreferencesRemote
@@ -30,49 +32,72 @@ router.afterEach((to, from, failure) => {
 </script>
 
 <template>
-  <div class=" gap-0 d-flex flex-column w-100">
-    <div class="d-flex">
-      <Navbar v-if="router.currentRoute.value.name"
-              :back="(router.currentRoute.value.path === '/home/settings')?'/home/dashboard':'/home/settings'"
-              :title="state.currentName">
-      </Navbar>
+  <div class=" nest-highlight">
+    <div v-if="router.currentRoute.value.name" class="d-flex mb-1">
+
     </div>
 
     <div v-if="preferences.landscape">
       <div class="d-flex flex-row gap-1">
-        <div class="col-4">
+        <Element class="w-25">
           <SettingsMenu></SettingsMenu>
-        </div>
+        </Element>
         <div class="flex-fill w-25">
-          <router-view v-if="router.currentRoute.value.path !== '/home/settings'" v-slot="{ Component }">
-            <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
-                        mode="out-in">
-              <component :is="Component"/>
-            </transition>
-          </router-view>
+          <Element class="">
+            <List v-if="router.currentRoute.value.path !== '/home/settings'" scroll-y
+                  style="max-height: 80vh; height: 80vh">
+              <router-view v-slot="{ Component }">
+                <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
+                            mode="out-in">
+                  <component :is="Component"/>
+                </transition>
+              </router-view>
+            </List>
+          </Element>
+
         </div>
       </div>
     </div>
-
-    <div v-else class="root flex-fill mx-1">
-
-      <router-view v-slot="{ Component }">
-        <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
-                    mode="out-in">
-          <component :is="Component"/>
-        </transition>
-      </router-view>
+    <div v-else style="height: 100%">
+      <List style="height: 100%">
+        <Element style="height: 100%">
+          <Navbar
+              :back="(router.currentRoute.value.path === '/home/settings')?'/home/dashboard':'/home/settings'"
+              :title="state.currentName">
+          </Navbar>
+        </Element>
+        <Element class="">
+          <List scroll-y style="max-height: 77vh; height: 77vh">
+            <router-view v-slot="{ Component }">
+              <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
+                          mode="out-in">
+                <component :is="Component"/>
+              </transition>
+            </router-view>
+          </List>
+        </Element>
+      </List>
     </div>
-
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+//.nest-highlight {
+//  outline: 1px solid blue;
+//  display: block;
+//  max-height: 100%;
+//  height: 83vh;
+//  overflow: hidden;
+//}
 
+.nest-highlight > * {
+  //outline: 1px solid red;
+  border-radius: 0.25rem;
+}
 
 .root {
 
-//overflow-y: auto; //max-height: 50vh; //overflow-y: scroll !important; //height: max-content; //margin: auto; //outline: 1px solid white; //display: block; //display: flex; //flex-direction: column; //max-height: 100%; //height: 100%; //overflow-y: scroll;
+  //overflow-y: auto; //max-height: 50vh; //overflow-y: scroll !important; //height: max-content; //margin: auto; //outline: 1px solid white; //display: block; //display: flex; //flex-direction: column; //max-height: 100%; //height: 100%; //overflow-y: scroll;
 }
 
 @keyframes slide-in-reverse {
@@ -102,11 +127,11 @@ router.afterEach((to, from, failure) => {
 }
 
 .slide-reverse-enter-active {
-//animation: slide-in 70ms linear;
+  //animation: slide-in 70ms linear;
 }
 
 .slide-reverse-leave-active {
-//animation: slide-out-reverse 100ms linear;
+  //animation: slide-out-reverse 100ms linear;
 }
 
 @keyframes slide-in {
@@ -124,10 +149,10 @@ router.afterEach((to, from, failure) => {
 
 @keyframes slide-out {
   from {
-  //transform: translateY(0) scale(0.98); //filter: blur(0px); opacity: 1;
+    //transform: translateY(0) scale(0.98); //filter: blur(0px); opacity: 1;
   }
   to {
-  //transform: translateY(10px) scale(0); //filter: blur(1px); opacity: 0;
+    //transform: translateY(10px) scale(0); //filter: blur(1px); opacity: 0;
   }
 }
 

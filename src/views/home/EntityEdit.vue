@@ -2,7 +2,7 @@
 
 <script lang="ts" setup>
 import {Attribute, Entity} from "udap-ui/types";
-import {onBeforeMount, reactive, watchEffect} from "vue";
+import {onMounted, reactive, watchEffect} from "vue";
 import core from "@/core";
 import Slider from "@/components/Slider.vue";
 import attributeService from "@/services/attributeService";
@@ -27,7 +27,7 @@ let state = reactive({
 const router = core.router()
 const remote = core.remote()
 
-onBeforeMount(() => {
+onMounted(() => {
   state.entityId = router.currentRoute.value.params["entityId"] as string
   const entity = remote.entities.find(e => e.id === state.entityId)
   if (!entity) return
@@ -96,7 +96,8 @@ function setDim(value: number) {
 
 <template>
   <div class="d-flex gap-2 flex-column">
-    <div class="d-flex gap-1">
+
+  <div class="d-flex gap-1">
       <Element class="w-100">
         <List row>
           <Element class="d-flex align-items-center justify-content-center" foreground style="height: 3.25rem; "
