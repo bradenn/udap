@@ -15,7 +15,8 @@ let state = useListModules() as ModuleController;
 
   <List v-if="state.modules" scroll-y style="max-height: inherit">
 
-    <Element v-for="module in state.modules" :key="module.id" :foreground="true" :to="`/home/settings/modules/${module.id}`"
+    <Element v-for="module in state.modules" :key="module.id" :foreground="true"
+             :to="`/home/settings/modules/${module.id}`"
              class="d-flex gap-2 align-items-center px-2 py-2"
              mutable>
       <div class="notches px-2" style="height: 1rem">

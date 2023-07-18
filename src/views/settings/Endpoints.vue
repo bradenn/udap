@@ -18,7 +18,8 @@ let state = useListEndpoints() as EndpointController;
 
     <ElementHeader title="Online"></ElementHeader>
 
-    <Element v-for="module in state.endpoints.filter(e => e.connected)" :foreground="true" class="d-flex gap-2 align-items-center px-2 py-2"
+    <Element v-for="module in state.endpoints.filter(e => e.connected)" :foreground="true"
+             class="d-flex gap-2 align-items-center px-2 py-2"
              mutable>
       <div class="notches px-2" style="height: 1rem">
         <div :class="`${module.connected?'active':''}`" class="notch h-100"></div>
@@ -35,7 +36,8 @@ let state = useListEndpoints() as EndpointController;
     </Element>
 
     <ElementHeader title="Recent"></ElementHeader>
-    <Element v-for="module in state.endpoints.filter(e => !e.connected)" :foreground="true" class="d-flex gap-2 align-items-center px-2 py-2"
+    <Element v-for="module in state.endpoints.filter(e => !e.connected)" :foreground="true"
+             class="d-flex gap-2 align-items-center px-2 py-2"
              mutable>
       <div class="notches px-2" style="height: 1rem">
         <div :class="`${module.connected?'active':''}`" class="notch h-100"></div>

@@ -186,7 +186,8 @@ function toggleDisco() {
         <div v-for="zone in lights.zones" v-if="lights.loaded">
           <ElementHeader :title="zone.name"></ElementHeader>
           <List>
-            <Element v-for="entity in zone.entities" :accent="state.selected.includes(entity.id)" :cb="() => select(entity.id)"
+            <Element v-for="entity in zone.entities" :accent="state.selected.includes(entity.id)"
+                     :cb="() => select(entity.id)"
                      class="d-flex align-items-center justify-content-between" foreground
                      mutable
                      style="height: 3.25rem">
@@ -205,7 +206,8 @@ function toggleDisco() {
     </Element>
     <Element :class="!state.online?'block-usage':''">
       <List scroll-y style="max-height: 40vh">
-        <Element v-if="lights.attributes.map(a => a.key).includes('on')" :cb="() => sendRequest('on', state.spectrum.on?'false':'true')"
+        <Element v-if="lights.attributes.map(a => a.key).includes('on')"
+                 :cb="() => sendRequest('on', state.spectrum.on?'false':'true')"
                  class="d-flex align-items-center justify-content-between px-3 py-3"
                  foreground style="height: 3.25rem">
           <div class="d-flex gap-2">

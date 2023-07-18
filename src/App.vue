@@ -76,9 +76,10 @@ onBeforeUnmount(() => {
           class="d-flex flex-row gap-1 justify-content-start align-items-center align-content-center px-1 pb-1 flex-shrink-0"
           style="height: 1.5rem">
         <Encrypted :compact="!(router.currentRoute.value.fullPath === '/home/dashboard')"></Encrypted>
-        <div :class="`udap-logo-container ${router.currentRoute.value.fullPath === '/home/dashboard'?'udap-logo':'udap-logo-sm'}`"
-             class="lh-1"
-             style=" z-index: 6 !important;">UDAP
+        <div
+            :class="`udap-logo-container ${router.currentRoute.value.fullPath === '/home/dashboard'?'udap-logo':'udap-logo-sm'}`"
+            class="lh-1"
+            style=" z-index: 6 !important;">UDAP
         </div>
 
       </div>
