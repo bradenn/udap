@@ -51,15 +51,18 @@ function handleUpdate(value: Event) {
   let input = value.target as HTMLInputElement
   state.value = parseInt(input.value)
   state.lastEdit = Date.now()
-  clearTimeout(state.reset)
-  //@ts-ignore
-  state.reset = setTimeout(() => {
-    if (Date.now() - state.lastEdit > 250) {
-      if (props.change) {
-        props.change(Math.round(state.value))
-      }
-    }
-  }, 250)
+  if (props.change) {
+    props.change(Math.round(state.value))
+  }
+  // clearTimeout(state.reset)
+  // //@ts-ignore
+  // state.reset = setTimeout(() => {
+  //   if (Date.now() - state.lastEdit > 250) {
+  //     if (props.change) {
+  //       props.change(Math.round(state.value))
+  //     }
+  //   }
+  // }, 250)
 
   // let ie = value.target as InputEvent
   // console.log(ie.target)
@@ -72,7 +75,7 @@ function handleUpdate(value: Event) {
 <template>
   <input :class="`slider-${props.bg}`" :max="props.max" :min="props.min" :step="props.step" :value="state.value"
          class="slider "
-         type="range" @input="handleUpdate">
+         type="range" @change="handleUpdate">
 </template>
 
 <style scoped>

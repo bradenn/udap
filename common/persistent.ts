@@ -7,6 +7,7 @@ export interface PreferencesRemote {
     background: string
     text: string
     blur: number
+    landscape: boolean
     pattern: {
         opacity: number
         scale: number
@@ -20,6 +21,7 @@ const preferenceDefaults: PreferencesRemote = {
     background: "#101010",
     accent: "#264173",
     text: "#ffffff",
+    landscape: false,
     pattern: {
         opacity: 1,
         scale: 1,

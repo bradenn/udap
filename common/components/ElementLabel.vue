@@ -33,7 +33,6 @@ const router = useRouter();
       <!--      <div class="label-c5 lh-1 label-o3">sds</div>-->
     </div>
     <div class="flex-grow-1 d-flex justify-content-end px-2">
-
       <slot></slot>
     </div>
   </Element>

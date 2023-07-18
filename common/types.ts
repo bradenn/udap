@@ -430,6 +430,38 @@ export interface Config {
     targets: Target[]
 }
 
+export interface ConfigFile {
+    controllers: ControllersEntity[];
+    targets: TargetsEntity[];
+    preferences: Preferences;
+    defaults: Defaults;
+}
+
+export interface ControllersEntity {
+    name: string;
+    address: string;
+}
+
+export interface TargetsEntity {
+    name: string;
+    address: string;
+    heartbeat: string;
+    description: string;
+    required: boolean;
+    cacheable: boolean;
+}
+
+export interface Preferences {
+    background?: (string)[] | null;
+}
+
+export interface Defaults {
+    background: string;
+    theme: string;
+    token: string;
+}
+
+
 export interface Target {
     name: string
     address: string

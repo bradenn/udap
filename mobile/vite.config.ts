@@ -9,11 +9,15 @@ export default defineConfig({
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url)),
             'udap-ui': fileURLToPath(new URL('../common', import.meta.url))
-        }
+        },
+        dedupe: ["moment", "vue", "vue-router"]
     },
-    // build: {
-    //     sourcemap: process.env.SOURCE_MAP === 'true',
-    // },
+    build: {
+        rollupOptions: {
+            external: ["moment"]
+        }
+        // sourcemap: process.env.SOURCE_MAP === 'true',
+    },
     plugins: [vue(),
         VitePWA({
             mode: 'development',

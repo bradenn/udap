@@ -11,6 +11,11 @@
 }
 
 @font-face {
+  font-family: "JetBrains Mono";
+  src: url('https://static.udap.app/fonts/JetBrainsMono.ttf') format("truetype");
+}
+
+@font-face {
   font-family: "SF Pro Display";
   src: url('https://static.udap.app/fonts/SF-Pro-Display-Regular.otf') format("opentype");
 }
@@ -25,6 +30,9 @@
   background-color: rgba(255, 255, 255, 0.025);
 }
 
+::-webkit-scrollbar {
+  display: none; // Safari and Chrome
+}
 
 $baseElevation: 24px;
 /* Label Sizes */

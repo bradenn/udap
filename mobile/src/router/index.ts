@@ -1,18 +1,13 @@
 // Copyright (c) 2022 Braden Nicholson
 
-import {createRouter, createWebHashHistory} from "vue-router";
-import Dashboard from "@/views/Dashboard.vue";
+import {createRouter, createWebHistory} from "vue-router";
+
 import setupRoutes from "@/views/setup";
-import SubRoutineList from "@/views/home/SubRoutineList.vue";
-import MacroList from "@/views/home/MacroList.vue";
-import Home from "@/views/Home.vue";
-import EntityEdit from "@/views/home/EntityEdit.vue";
-import MenuPage from "@/views/MenuPage.vue";
+
+
 import settings from "@/views/settings";
-import MonitorList from "@/views/monitor/MonitorList.vue";
 import Demo from "@/views/Demo.vue";
-import Beam from "@/views/beam/Beam.vue";
-import ThermostatView from "@/views/home/ThermostatView.vue";
+
 
 const demoRoute = {
     path: '/home/demo',
@@ -25,57 +20,86 @@ const demoRoute = {
 const mobileRoutes =
     {
         path: '/home',
-        name: 'Home',
+        name: 'Base',
         redirect: "/home/dashboard",
-        component: Dashboard,
+        component: () => import("@/views/Dashboard.vue"),
         icon: '􀎟',
         children: [
             {
                 path: '/home/dashboard',
                 name: 'dashboard',
-                component: Home,
+                component: () => import("@/views/Home.vue"),
+                icon: '􀎟',
+            },
+            {
+                path: '/home/apps',
+                name: 'apps',
+                component: () => import("@/views/apps/Apps.vue"),
+                icon: '􀎟',
+            }, {
+                path: '/home/beampath',
+                name: 'beampath',
+                component: () => import("@/views/apps/BeamPath.vue"),
                 icon: '􀎟',
             },
             {
                 path: '/home/entity/:entityId',
                 name: 'editEntity',
-                component: EntityEdit,
+                component: () => import("@/views/home/EntityEdit.vue"),
+                icon: '􀎟',
+            },
+            {
+                path: '/home/extra/homework',
+                name: 'homework',
+                component: () => import("@/views/extra/Homework.vue"),
                 icon: '􀎟',
             },
             {
                 path: '/home/subroutines',
                 name: 'subroutines',
-                component: SubRoutineList,
+                component: () => import("@/views/home/SubRoutineList.vue"),
+                icon: '􀎟',
+            },
+            {
+                path: '/home/sentry',
+                name: 'sentry',
+                component: () => import("@/views/beam/Beam.vue"),
                 icon: '􀎟',
             },
             {
                 path: '/home/monitor',
                 name: 'monitor',
-                component: MonitorList,
+                component: () => import("@/views/monitor/MonitorList.vue"),
+                icon: '􀎟',
+            },
+            {
+                path: '/home/lights',
+                name: 'lights',
+                component: () => import("@/views/apps/Lights.vue"),
                 icon: '􀎟',
             },
             {
                 path: '/home/menu',
                 name: 'menu',
-                component: MenuPage,
+                component: () => import("@/views/MenuPage.vue"),
                 icon: '􀎟',
             },
             {
                 path: '/home/thermostat',
                 name: 'thermostat',
-                component: ThermostatView,
+                component: () => import("@/views/home/ThermostatView.vue"),
                 icon: '􀎟',
             },
             {
                 path: '/home/macros',
                 name: 'macros',
-                component: MacroList,
+                component: () => import("@/views/home/MacroList.vue"),
                 icon: '􀎟',
             },
             {
                 path: '/home/beam',
                 name: 'beam',
-                component: Beam,
+                component: () => import("@/views/beam/Beam.vue"),
                 icon: '􀎟',
             },
             settings,
@@ -91,7 +115,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory("/"),
     routes: routes,
 })
 

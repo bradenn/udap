@@ -3,11 +3,15 @@
 package plugin
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 	"udap/internal/controller"
 	"udap/internal/core/domain"
 	"udap/internal/log"
+	"udap/internal/pulse"
 )
 
 type Config struct {
@@ -32,6 +36,89 @@ type Module struct {
 	UUID       string
 
 	*controller.Controller
+}
+
+type WebRequest struct {
+	request  *http.Request
+	client   *http.Client
+	timeout  time.Duration
+	metadata Config
+	moduleId string
+}
+
+func (w *WebRequest) WithHeader(key string, value string) {
+	w.request.Header.Set(key, value)
+}
+
+func (w *WebRequest) WithBasicAuth(username string, password string) {
+	w.request.SetBasicAuth(username, password)
+}
+
+func (w *WebRequest) WithAuthentication(style string, token string) {
+	w.request.Header.Set("Authorization", fmt.Sprintf("%s %s", style, token))
+}
+
+func (w *WebRequest) WithTimeout(timeout time.Duration) {
+	w.timeout = timeout
+}
+
+func (w *WebRequest) Execute(output any) error {
+
+	addr := fmt.Sprintf("module.%s.webrequest.%s", w.moduleId, w.request.RemoteAddr)
+
+	pulse.Begin(addr)
+	defer pulse.End(addr)
+
+	response, err := w.client.Do(w.request)
+	if err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(response.Body)
+	if err != nil {
+		return err
+	}
+
+	err = response.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	w.client.CloseIdleConnections()
+	if output != nil {
+		err = json.Unmarshal(buf.Bytes(), output)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Module) NewPostRequest(url string, body any) (*WebRequest, error) {
+	marshal, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	wr := &WebRequest{
+		metadata: m.Config,
+		moduleId: m.UUID,
+	}
+
+	reader := bytes.NewReader(marshal)
+	request, err := http.NewRequest("POST", url, reader)
+	if err != nil {
+		return wr, err
+	}
+
+	wr.client = &http.Client{}
+
+	wr.timeout = time.Second * 1
+	wr.request = request
+
+	return wr, nil
 }
 
 func (m *Module) ListEntities() ([]domain.Entity, error) {

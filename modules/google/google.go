@@ -26,6 +26,7 @@ const (
 	CommandSetHeat  = "sdm.devices.commands.ThermostatTemperatureSetpoint.SetHeat"
 	CommandSetCool  = "sdm.devices.commands.ThermostatTemperatureSetpoint.SetCool"
 	CommandSetRange = "sdm.devices.commands.ThermostatTemperatureSetpoint.SetRange"
+	CommandSetMode  = "sdm.devices.commands.ThermostatMode.SetMode"
 )
 
 type Google struct {
@@ -39,6 +40,10 @@ type Google struct {
 type SetMode struct {
 	Heat float64 `json:"heat,omitempty"`
 	Cool float64 `json:"cool,omitempty"`
+}
+
+type ModeSet struct {
+	Mode string `json:"mode,omitempty"`
 }
 
 func init() {
@@ -102,6 +107,23 @@ func (c *Command) SetCool(cool float64) {
 	c.Params = marshal
 }
 
+func (c *Command) SetMode(mode string) {
+	hcp := ModeSet{
+		Mode: mode,
+	}
+	if mode != "HEAT" && mode != "COOL" && mode != "OFF" && mode != "HEATCOOL" {
+		hcp = ModeSet{
+			Mode: "OFF",
+		}
+	}
+	marshal, err := json.Marshal(hcp)
+	if err != nil {
+		return
+	}
+	c.Command = CommandSetMode
+	c.Params = marshal
+}
+
 func (c *Google) setHeat(attribute domain.Attribute) {
 	float, err := strconv.ParseFloat(attribute.Request, 64)
 	if err != nil {
@@ -125,7 +147,30 @@ func (c *Google) setHeat(attribute domain.Attribute) {
 
 	//fmt.Println(string(request))
 }
+func (c *Google) setMode(attribute domain.Attribute) {
+	cmd := Command{}
+	cmd.SetMode(attribute.Request)
 
+	marshal, err := json.Marshal(cmd)
+	if err != nil {
+		log.Err(err)
+		return
+	}
+
+	_, err = c.sendAuthenticatedRequest(marshal)
+	if err != nil {
+		log.Err(err)
+		return
+	}
+
+	err = c.forceUpdate()
+	if err != nil {
+		return
+	}
+
+	//fmt.Println(string(request))
+
+}
 func (c *Google) setCool(attribute domain.Attribute) {
 	float, err := strconv.ParseFloat(attribute.Request, 64)
 	if err != nil {
@@ -155,6 +200,13 @@ func (c *Google) handleRequest(attribute domain.Attribute) {
 	switch attribute.Key {
 	case "heat":
 		c.setHeat(attribute)
+		break
+	case "mode":
+		c.setMode(attribute)
+		err := c.Attributes.Set(c.entityId, "mode", attribute.Request)
+		if err != nil {
+			log.Err(err)
+		}
 		break
 	case "cool":
 		c.setCool(attribute)
@@ -211,8 +263,8 @@ func (c *Google) runOAuth() error {
 	if !c.oauth.TryLock() {
 		return fmt.Errorf("oauth is already in progress. Please wait")
 	}
-	//c.oauth.Lock()
 	defer c.oauth.Unlock()
+
 	authCode := make(chan string, 1)
 
 	pUrl, err := generateServicePartnerURL()
@@ -241,16 +293,20 @@ func (c *Google) runOAuth() error {
 	srv.Handler = router
 
 	go func() {
-		err = http.ListenAndServe(":8976", router)
+		srv.Addr = ":8976"
+
+		err = srv.ListenAndServe()
 		if err != nil {
 			log.Err(err)
 		}
 		fmt.Println("Server closed.")
 	}()
+
+	// Wait for the auth code
 	auth := <-authCode
-
+	// Shutdown the server
 	srv.Shutdown(context.Background())
-
+	// Store the auth code
 	err = c.SetConfig("auth", auth)
 	if err != nil {
 		return err
@@ -260,28 +316,39 @@ func (c *Google) runOAuth() error {
 }
 
 func (c *Google) fetchToken() error {
+	// Get the auth code from storage
 	config, err := c.GetConfig("auth")
+	// Generate the token fetching url
 	url, err := generateTokenURL(config)
 	if err != nil {
 		return err
 	}
+	// Print out that URL for reference
 	fmt.Println(url)
+
 	cli := http.Client{}
+	// Send the request
 	post, err := cli.Post(url, "application/json", nil)
 	if err != nil {
 		return err
 	}
-
+	// Read the stream to an array of bytes
 	all, err := io.ReadAll(post.Body)
 	if err != nil {
 		return err
 	}
-	rt := TokenResponse{}
+	// Close the stream
+	defer post.Body.Close()
 
+	// Prepare the response object
+	rt := TokenResponse{}
+	// Read the response into the struct
 	err = json.Unmarshal(all, &rt)
 	if err != nil {
 		return err
 	}
+
+	// Store the new values
 
 	err = c.SetConfig("token", rt.AccessToken)
 	if err != nil {
@@ -293,7 +360,9 @@ func (c *Google) fetchToken() error {
 		return err
 	}
 
-	err = c.SetConfig("expires", fmt.Sprintf("%d", time.Now().Add(time.Duration(rt.ExpiresIn)*time.Second).Unix()))
+	exp := fmt.Sprintf("%d", time.Now().Add(time.Duration(rt.ExpiresIn)*time.Second).Unix())
+
+	err = c.SetConfig("expires", exp)
 	if err != nil {
 		return err
 	}
@@ -311,14 +380,14 @@ type TokenResponse struct {
 }
 
 func (c *Google) shouldRefresh() bool {
-	config, err := c.GetConfig("refresh")
+	refresh, err := c.GetConfig("refresh")
 	if err != nil {
-		return true
+		return false
 	}
 
 	expires, err := c.GetConfig("expires")
 	if err != nil {
-		return true
+		return false
 	}
 
 	parseInt, err := strconv.ParseInt(expires, 10, 64)
@@ -326,7 +395,7 @@ func (c *Google) shouldRefresh() bool {
 		return false
 	}
 
-	return config != "" && time.Now().After(time.Unix(parseInt, 0))
+	return (refresh != "unset") && time.Now().After(time.Unix(parseInt, 0))
 }
 
 func (c *Google) sendAuthenticatedRequest(data []byte) ([]byte, error) {
@@ -470,6 +539,26 @@ type QueryResponse struct {
 	Devices []Device `json:"devices"`
 }
 
+func (c *Google) forceUpdate() error {
+	dat, err := c.sendAPIRequest()
+	if err != nil {
+		return err
+	}
+
+	qr := QueryResponse{}
+	err = json.Unmarshal(dat, &qr)
+	if err != nil {
+		return err
+	}
+
+	err = c.updateValues(qr)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *Google) Update() error {
 	if !c.Ready() {
 		return nil
@@ -537,6 +626,11 @@ func (c *Google) updateValues(qr QueryResponse) error {
 		}
 
 		err = c.Attributes.Set(c.entityId, "cool", fmt.Sprintf("%f", convertCToF(device.Traits.SdmDevicesTraitsThermostatTemperatureSetpoint.CoolCelsius)))
+		if err != nil {
+			return err
+		}
+
+		err = c.Attributes.Set(c.entityId, "mode", device.Traits.SdmDevicesTraitsThermostatMode.Mode)
 		if err != nil {
 			return err
 		}
@@ -614,6 +708,20 @@ func (c *Google) initDevices() error {
 			return err
 		}
 
+		mode := &domain.Attribute{
+			Key:     "mode",
+			Value:   "OFF",
+			Request: "OFF",
+			Order:   0,
+			Type:    "string",
+			Entity:  dev.Id,
+			Channel: channel,
+		}
+		err = c.Attributes.Register(mode)
+		if err != nil {
+			return err
+		}
+
 	}
 	err = c.updateValues(qr)
 	if err != nil {
@@ -626,47 +734,48 @@ func (c *Google) Run() error {
 
 	err := c.InitConfig("auth", "unset")
 	if err != nil {
-		log.Err(err)
+		return err
+	}
+
+	err = c.InitConfig("token", "unset")
+	if err != nil {
+		return err
+	}
+
+	err = c.InitConfig("refresh", "unset")
+	if err != nil {
+		return err
+	}
+
+	err = c.InitConfig("expires", "0")
+	if err != nil {
 		return err
 	}
 
 	c.request = make(chan domain.Attribute)
 	c.oauth = sync.Mutex{}
-	config, err := c.GetConfig("auth")
+
+	auth, err := c.GetConfig("auth")
 	if err != nil {
-		log.Err(err)
 		return err
 	}
 
 	token, err := c.GetConfig("token")
 	if err != nil {
-		log.Err(err)
 		return err
 	}
+
 	go c.mux()
-	if config == "unset" || token == "" {
+
+	if auth == "unset" || token == "unset" {
 		go func() {
-			err = c.runOAuth()
-			if err != nil {
-				log.Err(err)
-			}
-			config, err = c.GetConfig("auth")
-			if err != nil {
-				log.Err(err)
-			}
-			log.Event("Code: %s", config)
-			err = c.fetchToken()
-			if err != nil {
-				log.Err(err)
-				return
-			}
-			err = c.initDevices()
-			if err != nil {
-				return
+			errf := c.connectAccount()
+			if errf != nil {
+				log.Err(errf)
 			}
 		}()
 	} else {
-		log.Event("Google Auth Code: %s", config)
+		log.Event("Google Auth Code: %s", auth)
 		if c.shouldRefresh() {
 			err = c.refresh()
 			if err != nil {
@@ -677,6 +786,35 @@ func (c *Google) Run() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (c *Google) connectAccount() error {
+	err := c.runOAuth()
+	if err != nil {
+		return err
+	}
+
+	// Get the auth code
+	auth, err := c.GetConfig("auth")
+	if err != nil {
+		return err
+	}
+
+	// Print out the results
+	log.Event("Code: %s", auth)
+
+	// Try to get a token
+	err = c.fetchToken()
+	if err != nil {
+		return err
+	}
+
+	err = c.initDevices()
+	if err != nil {
+		return err
 	}
 
 	return nil

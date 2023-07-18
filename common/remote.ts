@@ -135,7 +135,7 @@ function setup(): boolean {
 
     let endpoint = localStorage.getItem("endpoint")
     if (endpoint == null) {
-        endpoint = config.controllers.find(c => c.name === "Production").address
+        endpoint = config.controllers.find(c => c.name === "Production")?.address || "api.udap.app"
     }
 
     remote.client.url = connectionString(endpoint, token)
@@ -149,7 +149,7 @@ function connect(): boolean {
         return false;
     }
 
-    if (remote.client.connected || remote.client.connecting) return
+    if (remote.client.connected || remote.client.connecting) return false
     remote.client.connecting = true
 
     remote.client.socket = new WebSocket(remote.client.url)
@@ -187,12 +187,12 @@ function beginCountdown() {
     remote.client.nextAttempt = 2000
     remote.client.attempts++
     //@ts-ignore
-    remote.client.interval = setInterval(tick, 33)
+    remote.client.interval = setInterval(tick, 100)
 }
 
 function tick() {
-    if (remote.client.nextAttempt >= 33) {
-        remote.client.nextAttempt -= 33
+    if (remote.client.nextAttempt >= 100) {
+        remote.client.nextAttempt -= 100
     } else {
         remote.client.nextAttempt = 0
         clearInterval(remote.client.interval)

@@ -79,6 +79,45 @@ func (w *Worldspace) Setup() (plugin.Config, error) {
 }
 
 func (w *Worldspace) Update() error {
+
+	//srv := http.Server{}
+	//sm := http.NewServeMux()
+	//srv.Handler = sm
+	//srv.Addr = "0.0.0.0:6969"
+	//sm.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+	//	writer.WriteHeader(200)
+	//	_, err := writer.Write([]byte("Hello"))
+	//	if err != nil {
+	//		return
+	//	}
+	//
+	//})
+	//
+	//go func() {
+	//	_ = srv.ListenAndServe()
+	//}()
+	//
+	//time.Sleep(time.Second)
+	//
+	//request, err := w.NewPostRequest("http://localhost:6969", nil)
+	//if err != nil {
+	//	return err
+	//}
+	//request.WithTimeout(time.Second)
+	//log.Event("WS->SRV")
+	//start := time.Now()
+	//err = request.Execute(nil)
+	//if err != nil {
+	//	return err
+	//}
+	//end := time.Since(start)
+	//log.Event("SRV->WS")
+	//err = srv.Close()
+	//if err != nil {
+	//	log.Err(err)
+	//}
+	//log.Event(end.String())
+
 	return nil
 }
 
@@ -209,7 +248,7 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string
 		}
 		t := w.timers[fmt.Sprintf("ws-%s", name)]
 		t.Stop()
-		t.Reset(5 * time.Minute)
+		t.Reset(1 * time.Minute)
 		_, err = writer.Write([]byte("OK"))
 		if err != nil {
 			return

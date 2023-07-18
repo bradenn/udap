@@ -463,7 +463,7 @@ func (l *Light) sendStatusPayload() error {
 	}
 	// Craft a buffer to contain the incoming data
 	response := make([]byte, 512)
-	err = socket.SetDeadline(time.Now().Add(time.Second * 5))
+	err = socket.SetDeadline(time.Now().Add(time.Second * 2))
 	if err != nil {
 		return err
 	}
@@ -537,7 +537,7 @@ func (l *Light) sendCommandPayload(data []byte) error {
 	}
 	// Craft a buffer to contain the incoming data
 	re := make([]byte, 256)
-	err = socket.SetReadDeadline(time.Now().Add(time.Millisecond * 500))
+	err = socket.SetReadDeadline(time.Now().Add(time.Millisecond * 1000))
 	if err != nil {
 		return err
 	}

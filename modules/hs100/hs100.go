@@ -17,6 +17,8 @@ var Module HS100
 type HS100 struct {
 	plugin.Module
 	devices map[string]*hs100.Hs100
+	names   map[string]string
+	mod     int
 }
 
 func init() {
@@ -42,9 +44,22 @@ func (h *HS100) findDevices() error {
 	}
 
 	for _, device := range devices {
+
 		name, err := device.GetName()
 		if err != nil {
 			return err
+		}
+
+		v, ok := h.names[strings.ToLower(name)]
+
+		if ok {
+			r, here := h.devices[v]
+			if here {
+				_, err = r.IsOn()
+				if err == nil {
+					continue
+				}
+			}
 		}
 
 		newSwitch := domain.Entity{
@@ -58,6 +73,7 @@ func (h *HS100) findDevices() error {
 		}
 
 		h.devices[newSwitch.Id] = device
+		h.names[strings.ToLower(name)] = newSwitch.Id
 		channel := make(chan domain.Attribute)
 		on := &domain.Attribute{
 			Key:     "on",
@@ -90,10 +106,13 @@ func (h *HS100) findDevices() error {
 // Setup is called once at the launch of the module
 func (h *HS100) Setup() (plugin.Config, error) {
 	h.devices = map[string]*hs100.Hs100{}
+	h.names = map[string]string{}
+	h.mod = 0
 	err := h.UpdateInterval(5000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
+
 	return h.Config, nil
 }
 
@@ -119,6 +138,15 @@ func (h *HS100) pull() error {
 // Update is called every cycle
 func (h *HS100) Update() error {
 	if h.Ready() {
+		h.mod = (h.mod + 1) % 48
+		if h.mod == 0 {
+			go func() {
+				err := h.findDevices()
+				if err != nil {
+					return
+				}
+			}()
+		}
 		return h.pull()
 	}
 	return nil

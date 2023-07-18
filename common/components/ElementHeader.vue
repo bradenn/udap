@@ -27,5 +27,7 @@ const props = defineProps<{
 <style lang="scss" scoped>
 .element-header {
   padding: 0.125rem 0.5rem;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 </style>

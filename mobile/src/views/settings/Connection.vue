@@ -2,14 +2,13 @@
 
 <script lang="ts" setup>
 
-import Element from "udap-ui/components/Element.vue";
 import ElementLabel from "udap-ui/components/ElementLabel.vue";
 import List from "udap-ui/components/List.vue";
-import Title from "udap-ui/components/Title.vue";
 
 import core from "@/core";
 import {computed, onBeforeMount, onMounted, reactive} from "vue";
 import type {Endpoint, Timing} from "udap-ui/types";
+import ElementHeader from "udap-ui/components/ElementHeader.vue";
 
 
 const remote = core.remote()
@@ -112,25 +111,24 @@ function setup() {
 
 <template>
   <div class="d-flex flex-column gap-3">
-    <Element>
-      <Title title="Client"></Title>
-      <List>
-        <ElementLabel icon="" title="Status">{{ remote.client.connected ? "Connected" : "Disconnected" }}</ElementLabel>
-        <ElementLabel icon="" title="Endpoint Identifier">{{ state.endpoint.name || "Unnamed" }}</ElementLabel>
-        <ElementLabel icon="" title="Permissions">
-          <div v-if="state.endpoint.type === 'terminal'">
-            root
-          </div>
-          <div v-else>
 
-          </div>
-        </ElementLabel>
-      </List>
+    <List>
+      <ElementHeader title="Client"></ElementHeader>
+      <ElementLabel icon="" title="Status">{{ remote.client.connected ? "Connected" : "Disconnected" }}</ElementLabel>
+      <ElementLabel icon="" title="Endpoint Identifier">{{ state.endpoint.name || "Unnamed" }}</ElementLabel>
+      <ElementLabel icon="" title="Permissions">
+        <div v-if="state.endpoint.type === 'terminal'">
+          root
+        </div>
+        <div v-else>
 
-    </Element>
+        </div>
+      </ElementLabel>
+    </List>
 
-    <Element v-if="remote.metadata.system" title="Node">
-      <Title title="Host Node"></Title>
+
+    <div v-if="remote.metadata.system" title="Node">
+      <ElementHeader title="Host"></ElementHeader>
       <List>
         <ElementLabel icon="" title="Hostname">{{ remote.metadata.system.hostname }}</ElementLabel>
         <ElementLabel icon="" title="IPv4">{{ remote.metadata.system.ipv4 }}</ElementLabel>
@@ -139,7 +137,7 @@ function setup() {
         <ElementLabel icon="" title="Version">{{ remote.metadata.system.version }}</ElementLabel>
         <ElementLabel icon="" title="Compiler">{{ remote.metadata.system.go }}</ElementLabel>
       </List>
-    </Element>
+    </div>
     <div v-else> Disconnected from Network</div>
   </div>
 </template>
