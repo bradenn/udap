@@ -184,7 +184,8 @@ function selectOpacity(opacity: number) {
       <Element :foreground="true">
         <Title title="Accent Opacity"></Title>
         <List :row="true" class="scroll-horizontal" style="overflow-x: scroll">
-          <Element v-for="opacity in state.opacities" v-if="state.loaded" :accent="preferences.pattern.opacity == opacity"
+          <Element v-for="opacity in state.opacities" v-if="state.loaded"
+                   :accent="preferences.pattern.opacity == opacity"
                    :cb="() => selectOpacity(opacity)"
                    :foreground="true"
 
@@ -200,7 +201,8 @@ function selectOpacity(opacity: number) {
         <div style="height: 100%">
           <List scroll-y style="max-height: 50vh">
             <div class="sample-grid">
-              <Element v-for="pattern in state.patternList" v-if="state.loaded" :accent="preferences.pattern.name == pattern"
+              <Element v-for="pattern in state.patternList" v-if="state.loaded"
+                       :accent="preferences.pattern.name == pattern"
                        :cb="() => selectPattern(pattern)"
                        :foreground="true"
                        :style="`background-image:${getPattern(pattern)}; `" class="py-4">

@@ -58,7 +58,8 @@ function handleInput(m: TouchEvent) {
     >
 
       <div>
-        <div v-if="props.immutable" :class="`${state.active?'input-number-active':''}`" class="input-number input-number-active px-2 d-flex align-items-center justify-content-end"
+        <div v-if="props.immutable" :class="`${state.active?'input-number-active':''}`"
+             class="input-number input-number-active px-2 d-flex align-items-center justify-content-end"
              style="z-index: 10 !important;">
           {{ props.immutable ? '' : props.value }}{{ props.unit }}
         </div>

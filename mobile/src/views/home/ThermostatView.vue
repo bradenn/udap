@@ -281,7 +281,8 @@ function setMode(mode: string) {
         <List scroll-y style="max-height: 74vh">
           <ElementHeader title="Controls"></ElementHeader>
           <List row style="height: 3.25rem; z-index: 1">
-            <Element :cb="() => setCool(-1)" class="align-items-center d-flex justify-content-center  flex-row" foreground
+            <Element :cb="() => setCool(-1)" class="align-items-center d-flex justify-content-center  flex-row"
+                     foreground
                      mutable>
               <div class="label-c2 lh-1 label-w600 label-o3 sf-icon">􀆈
               </div>
@@ -308,22 +309,26 @@ function setMode(mode: string) {
             </Element>
           </List>
           <List v-if="state.expandControls" row style="height: 3.25rem; z-index: 1">
-            <Element :accent="state.mode === 'OFF'" :cb="() => setMode('OFF')" class="align-items-center d-flex justify-content-center  flex-row"
+            <Element :accent="state.mode === 'OFF'" :cb="() => setMode('OFF')"
+                     class="align-items-center d-flex justify-content-center  flex-row"
                      foreground mutable
             >
               <div class="label-c5 label-w400 label-o3">OFF</div>
             </Element>
-            <Element :accent="state.mode === 'COOL'" :cb="() => setMode('COOL')" class="align-items-center d-flex justify-content-center  flex-row"
+            <Element :accent="state.mode === 'COOL'" :cb="() => setMode('COOL')"
+                     class="align-items-center d-flex justify-content-center  flex-row"
                      foreground mutable
             >
               <div class="label-c5 label-w400 label-o3">COOL</div>
             </Element>
-            <Element :accent="state.mode === 'HEAT'" :cb="() => setMode('HEAT')" class="align-items-center d-flex justify-content-center  flex-row"
+            <Element :accent="state.mode === 'HEAT'" :cb="() => setMode('HEAT')"
+                     class="align-items-center d-flex justify-content-center  flex-row"
                      foreground mutable
             >
               <div class="label-c5 label-w400 label-o3">HEAT</div>
             </Element>
-            <Element :accent="state.mode === 'HEATCOOL'" :cb="() => setMode('HEATCOOL')" class="align-items-center d-flex justify-content-center  flex-row"
+            <Element :accent="state.mode === 'HEATCOOL'" :cb="() => setMode('HEATCOOL')"
+                     class="align-items-center d-flex justify-content-center  flex-row"
                      foreground mutable
             >
               <div class="label-c5 label-w400 label-o3">HEAT COOL</div>
@@ -357,7 +362,8 @@ function setMode(mode: string) {
             <ElementHeader title="Forecast"></ElementHeader>
             <List v-if="!forecast.loading" class="" row>
 
-              <Element v-for="item in forecast.hourly" class="sf-icon d-flex flex-column align-items-center justify-content-center"
+              <Element v-for="item in forecast.hourly"
+                       class="sf-icon d-flex flex-column align-items-center justify-content-center"
                        foreground>
                 <div class="label-c6 label-o2">{{ item.time }}</div>
                 <div class="label-c5 label-o4 label-w500 py-1">{{ item.icon }}</div>

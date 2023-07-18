@@ -155,11 +155,13 @@ function convertNanosecondsToString(nanoseconds: number): string {
       </List>
     </List>
     <ElementHeader title="Runtime"></ElementHeader>
-    <ElementPair :title="!state.module.enabled?'Downtime':'Uptime'" :value="convertNanosecondsToString((new Date().valueOf() - new Date(state.module.updated).valueOf())*1000*1000).toString()"
+    <ElementPair :title="!state.module.enabled?'Downtime':'Uptime'"
+                 :value="convertNanosecondsToString((new Date().valueOf() - new Date(state.module.updated).valueOf())*1000*1000).toString()"
                  icon="􀅳"></ElementPair>
     <ElementPair v-if="state.module.enabled" :value="convertNanosecondsToString(state.moduleTimings.run.delta)" icon="􀅳"
                  title="Startup"></ElementPair>
-    <ElementPair v-if="state.module.enabled" :value="convertNanosecondsToString(state.moduleTimings.update.delta)" icon="􀅳"
+    <ElementPair v-if="state.module.enabled" :value="convertNanosecondsToString(state.moduleTimings.update.delta)"
+                 icon="􀅳"
                  title="Last Update"></ElementPair>
 
 
@@ -173,7 +175,9 @@ function convertNanosecondsToString(nanoseconds: number): string {
 
 
     <ElementHeader title="Implementation"></ElementHeader>
-    <ElementPair v-if="state.module.enabled" :value="convertNanosecondsToString((new Date().valueOf() - new Date(state.module.created).valueOf())*1000*1000).toString()" icon="􀅳"
+    <ElementPair v-if="state.module.enabled"
+                 :value="convertNanosecondsToString((new Date().valueOf() - new Date(state.module.created).valueOf())*1000*1000).toString()"
+                 icon="􀅳"
                  title="Created"></ElementPair>
     <ElementPair :value="state.module.type" icon="􀅳" title="Classification"></ElementPair>
     <ElementPair :value="state.module.path.replace('modules/', '')" icon="􀅳" title="Path"></ElementPair>
@@ -182,7 +186,8 @@ function convertNanosecondsToString(nanoseconds: number): string {
     <ElementPair :value="state.module.author" icon="􀅳" title="Author"></ElementPair>
     <ElementPair :value="state.module.version" icon="􀅳" title="Version"></ElementPair>
     <ElementHeader title="Configuration"></ElementHeader>
-    <ElementPair v-for="key in state.config" v-if="state.config.length>0" :key="key.key" :title="key.key" :value="key.value"
+    <ElementPair v-for="key in state.config" v-if="state.config.length>0" :key="key.key" :title="key.key"
+                 :value="key.value"
                  icon="􀅳"></ElementPair>
 
     <Element v-else class="px-4" foreground>No Configuration</Element>

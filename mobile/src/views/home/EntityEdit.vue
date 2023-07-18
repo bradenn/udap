@@ -97,7 +97,7 @@ function setDim(value: number) {
 <template>
   <div class="d-flex gap-2 flex-column">
 
-  <div class="d-flex gap-1">
+    <div class="d-flex gap-1">
       <Element class="w-100">
         <List row>
           <Element class="d-flex align-items-center justify-content-center" foreground style="height: 3.25rem; "
