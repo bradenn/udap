@@ -67,7 +67,7 @@ watchEffect(() => {
     // state.py = Math.max(Math.min(state.py, 20), -20)
     goToXYZ(map_range(state.px, 0, roomSizeX, -roomSizeX / 2, roomSizeX / 2), map_range(state.py, 0, roomSizeY, -roomSizeY / 2, roomSizeY / 2), roomSizeZ)
   }
-  return state.px + state.py
+  return state.px
 })
 
 function findEntity(rem: Remote) {
@@ -81,6 +81,15 @@ function findEntity(rem: Remote) {
   if (!laserAttribute) return
   state.beam = laserAttribute
   query()
+}
+
+function drawCircle() {
+  let loops = 0;
+  for (let i = 0; i < loops; i++) {
+
+    moveBeam(state.panFine, state.tiltFine)
+  }
+
 }
 
 function sendFine() {
@@ -110,7 +119,7 @@ function goToXYZ(x: number, y: number, z: number) {
   // let pan = theta * 180 / Math.PI
   // let tilt = phi * 180 / Math.PI
   // let {pan, tilt} = convertPositionToPanTilt(x, y, roomSizeX, roomSizeY, inToM(67), inToM(19), roomSizeZ)
-  let {phi, theta} = PlanarToSpherical(0, 0, x, y + roomSizeY / 2, roomSizeZ);
+  let {phi, theta} = PlanarToSpherical(0, 0, x, y + roomSizeY / 2 - roomSizeY / 8, roomSizeZ);
   let lp = (phi * (180.0 / Math.PI))
   let theta1 = (theta * (180.0 / Math.PI))
   state.panFine = (phi * (180.0 / Math.PI))
@@ -162,6 +171,7 @@ function query() {
   state.z = distance * Math.cos(phi)
   if (!state.beam) return
   state.laserBeam = JSON.parse(state.beam.value) as Beam;
+  state.laserBeam.power = Math.round(state.laserBeam.power);
   state.laser = (state.laserBeam.active === 1)
   state.connected = true
 
@@ -171,7 +181,7 @@ function query() {
 function laserPower(on: boolean) {
   if (!state.entity) return
   if (!state.laserBeam) return
-  setDuty(50)
+  setDuty(1)
   let beam = state.laserBeam
   beam.active = on ? 1 : 0;
   state.beam.request = JSON.stringify(beam)
@@ -198,10 +208,11 @@ function moveBeam(pan: number, tilt: number) {
   })
 
 
-  state.lastUpdate = new Date().valueOf()
   state.lastPos.x = state.px
   state.lastPos.y = state.py
-  attributeService.request(state.position).then(e => console.log(e))
+  attributeService.request(state.position).then(e => {
+  })
+  state.lastUpdate = new Date().valueOf()
 }
 
 
@@ -321,12 +332,13 @@ function drawRoom() {
       h: 4,
     }
   ]
-  ctx.fillStyle = "rgba(255,255,255,0.2)"
+  ctx.fillStyle = "rgba(255,255,255,0.15)"
   for (let i = 0; i < items.length; i++) {
     let item = items[i]
 
 
     if (item.name == "Laser") {
+      ctx.fillStyle = "rgba(255,255,255,0.15)"
       let r = h / 2;
       let mx = w / 2
       let my = 50
@@ -355,7 +367,7 @@ function drawRoom() {
 
       ctx.beginPath()
       ctx.moveTo(mx, my)
-      ctx.lineTo(map_range(x, -roomSizeX / 2, roomSizeX / 2, 0, w), map_range(y - roomSizeY / 2, -roomSizeY / 2, roomSizeY / 2, 0, h))
+      ctx.lineTo(map_range(x, -roomSizeX / 2, roomSizeX / 2, 0, w), map_range(y - roomSizeY / 2 + roomSizeY / 8, -roomSizeY / 2, roomSizeY / 2, 0, h))
       ctx.closePath()
       ctx.stroke()
     } else {
@@ -524,6 +536,9 @@ function touchMoveYDown(e: TouchEvent) {
   e.preventDefault()
   state.py -= 1
 }
+
+const dutys = [1, 3, 5, 11, 15]
+
 </script>
 
 <template>
@@ -544,9 +559,32 @@ function touchMoveYDown(e: TouchEvent) {
         </Element>
         <Element :foreground="true" class="d-flex justify-content-center">T {{ Math.round(state.tiltFine) }}</Element>
         <Element :foreground="true" :mutable="true" class="d-flex justify-content-center"
-                 @touchstart="laserPower(!state.laser)">
+                 :cb="() => laserPower(!state.laser)">
           {{ state.laser ? "Turn Off" : "Turn On" }}
         </Element>
+
+      </List>
+    </Element>
+    <Element>
+      <List :row="true">
+        <!--        <Element :foreground="true" class="d-flex justify-content-center">-->
+        <List class="w-100" row>
+
+          <Element v-for="duty in dutys" :accent="state.laserBeam.power === duty" :cb="() => setDuty(duty)" class="d-flex align-items-baseline gap-1 w-100 justify-content-center position-relative"
+                   foreground>
+            <div>{{ duty }}</div>
+            <div class="label-c7 label-o3">mW</div>
+            <div v-if="duty > 5"
+                 :style="`color: ${duty>11?'hsla(0deg, 40%, 60%);':'hsla(30deg, 0%, 30%);'};`"
+                 class="label-c7 label-o3 sf label-o3 position-absolute"
+                 style="font-size: 10px; right: 6px; top:2px;">
+              􀋰
+            </div>
+          </Element>
+
+
+        </List>
+        <!--        </Element>-->
 
       </List>
     </Element>

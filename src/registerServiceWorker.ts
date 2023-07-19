@@ -11,5 +11,9 @@ const updateSW = registerSW({
         console.log("OFFLINE")
     },
 })
+//
+// navigator.serviceWorker.register("service-worker.js").then((registration) => {
+//     return registration.pushManager.getSubscription().then(/* ... */);
+// });
 
 export default updateSW;

@@ -9,20 +9,20 @@ import 'udap-ui/assets/reset.css';
 import router from '@/router'
 
 // import updateSW from "@/registerServiceWorker";
-// @ts-ignore
-import {registerSW} from "virtual:pwa-register";
 
-window.addEventListener('load', () => {
-    registerSW({
-        onNeedRefresh() {
-            console.log("REFRESH")
-        },
-        onOfflineReady() {
-            console.log("OFFLINE")
-        },
-        immediate: true
-    })
-})
+
+// window.addEventListener('load', () => {
+//     registerSW({
+//         onNeedRefresh() {
+//             console.log("REFRESH")
+//         },
+//         onOfflineReady() {
+//             console.log("OFFLINE")
+//         },
+//         immediate: true
+//     })
+// })
+
 
 const app = createApp(Root)
 app.use(router)

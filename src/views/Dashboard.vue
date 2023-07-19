@@ -5,8 +5,11 @@
 import core from "@/core";
 import {onMounted, reactive, watchEffect} from "vue";
 import type {Entity as EntityType, Zone} from "udap-ui/types";
+// @ts-ignore
+import {registerSW} from "virtual:pwa-register";
 
 const remote = core.remote()
+
 
 const state = reactive({
   entities: [] as EntityType[],
@@ -16,13 +19,17 @@ const state = reactive({
 onMounted(() => {
   state.entities = remote.entities
   state.zones = remote.zones.filter(z => z.pinned)
+
 })
 
 watchEffect(() => {
   state.zones = remote.zones.filter(z => z.pinned)
   return remote.entities
 })
-
+if ("serviceWorker" in navigator) {
+  // && !/localhost/.test(window.location)) {
+  registerSW();
+}
 
 </script>
 
