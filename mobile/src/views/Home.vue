@@ -9,6 +9,7 @@ import Entity from "@/components/Entity.vue";
 import ThermostatV2 from "@/components/ThermostatV2.vue";
 import Element from "udap-ui/components/Element.vue";
 import ElementLink from "udap-ui/components/ElementLink.vue";
+import List from "udap-ui/components/List.vue";
 import {PreferencesRemote} from "udap-ui/persistent";
 
 const remote = core.remote()
@@ -63,14 +64,14 @@ watchEffect(() => {
           <ThermostatV2 :entity="state.thermostat"></ThermostatV2>
         </div>
       </div>
-      <div v-for="zone in state.zones">
-        <div>
+      <List scroll-y>
+        <div v-for="zone in state.zones">
           <div class="label-c5 label-w700 label-o5 px-2">{{ zone.name }}</div>
           <div class="home-grid">
             <Entity v-for="e in zone.entities" :key="e.id" :entity="e"></Entity>
           </div>
         </div>
-      </div>
+      </List>
       <div v-if="false">
         <div class="label-c5 label-w700 label-o5 px-2 mb-0 pb-0 lh-0">Notifications</div>
         <Element>

@@ -14,6 +14,7 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/log"
 	"udap/internal/plugin"
+	"udap/internal/pulse"
 )
 
 var Module Sentry
@@ -93,6 +94,7 @@ func (v *Sentry) connect() error {
 			}
 			_, data, err := v.session.ReadMessage()
 			if err != nil {
+				v.session.Close()
 				v.session = nil
 				return
 			}
@@ -169,18 +171,22 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 	//	return err
 	//}
 	//_ = resp.Body.Close()
-	fmt.Printf("OUT => Sentry: P %d T %d\n", position.Pan, position.Tilt)
+
 	if v.session == nil {
+		log.Event("Reconnecting...")
 		err := v.connect()
 		if err != nil {
 			return err
 		}
 	}
 
+	ref := fmt.Sprintf("module.%s.mux.handle", v.UUID)
+	pulse.Begin(ref)
 	err := v.session.WriteJSON(position)
 	if err != nil {
 		return err
 	}
+	pulse.End(ref)
 
 	return nil
 }
@@ -196,7 +202,7 @@ func (v *Sentry) requestBeam(beam Beam) error {
 	v.beam = beam
 
 	client := http.Client{}
-	client.Timeout = time.Millisecond * 300
+	client.Timeout = time.Millisecond * 5000
 	defer client.CloseIdleConnections()
 	resp, err := client.Post(fmt.Sprintf("http://%s/beam", sentryUrl), "application/json", reader)
 	if err != nil {
@@ -303,7 +309,7 @@ func (v *Sentry) UpdateData(buf bytes.Buffer) error {
 		return err
 	}
 	p := Position{}
-	fmt.Printf("IN  => Sentry: P %d T %d\n", s.Servos.Pan, s.Servos.Tilt)
+	//fmt.Printf("IN  => Sentry: P %d T %d\n", s.Servos.Pan, s.Servos.Tilt)
 	p.Pan = int(mapRange(float64(s.Servos.Pan), -90, 90, 0, 180))
 	p.Tilt = int(mapRange(float64(s.Servos.Tilt), -90, 90, 0, 180))
 	marshal, err := json.Marshal(p)

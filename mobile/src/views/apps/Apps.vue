@@ -12,9 +12,9 @@ const apps = [
     icon: '􁂥'
   },
   {
-    name: "Beam Sim",
-    link: "/home/beampath",
-    icon: '􁀘'
+    name: "Thermostat",
+    link: "/home/thermostat",
+    icon: '􁁋'
   },
   {
     name: "Lasers",
@@ -25,7 +25,8 @@ const apps = [
     name: "Lights",
     link: "/home/lights",
     icon: '􁓼'
-  }
+  },
+
 ]
 
 </script>

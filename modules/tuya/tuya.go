@@ -20,6 +20,7 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/log"
 	"udap/internal/plugin"
+	"udap/internal/pulse"
 )
 
 var Module Tuya
@@ -463,7 +464,7 @@ func (l *Light) sendStatusPayload() error {
 	}
 	// Craft a buffer to contain the incoming data
 	response := make([]byte, 512)
-	err = socket.SetDeadline(time.Now().Add(time.Second * 2))
+	err = socket.SetDeadline(time.Now().Add(time.Millisecond * 2500))
 	if err != nil {
 		return err
 	}
@@ -536,8 +537,8 @@ func (l *Light) sendCommandPayload(data []byte) error {
 		return err
 	}
 	// Craft a buffer to contain the incoming data
-	re := make([]byte, 256)
-	err = socket.SetReadDeadline(time.Now().Add(time.Millisecond * 1000))
+	re := make([]byte, 512)
+	err = socket.SetReadDeadline(time.Now().Add(time.Millisecond * 250))
 	if err != nil {
 		return err
 	}
@@ -662,7 +663,7 @@ func init() {
 }
 
 func (t *Tuya) Setup() (plugin.Config, error) {
-	err := t.UpdateInterval(1000 * 10)
+	err := t.UpdateInterval(1000 * 5)
 	if err != nil {
 		return plugin.Config{}, err
 	}
@@ -808,6 +809,9 @@ func (t *Tuya) mux() error {
 		select {
 		case attr := <-t.receiver:
 			go func() {
+				tag := fmt.Sprintf("module.%s.mux.handle", t.UUID)
+				pulse.Begin(tag)
+				defer pulse.End(tag)
 				err := t.handleRequest(attr)
 				if err != nil {
 					log.Err(err)

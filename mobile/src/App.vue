@@ -2,7 +2,7 @@
 import Encrypted from "./components/Encrypted.vue";
 import type {Remote} from "udap-ui/remote";
 import _remote from "udap-ui/remote";
-import {onBeforeUnmount, onMounted, provide, reactive, watchEffect} from "vue";
+import {onBeforeMount, onBeforeUnmount, provide, reactive, watchEffect} from "vue";
 import core from "udap-ui/core";
 import Status from "@/components/Status.vue";
 import Dock from "@/components/Dock.vue";
@@ -22,6 +22,7 @@ const preferences: PreferencesRemote = usePersistent();
 
 const timings: RemoteTimings = useTimings(remote);
 provide("timings", timings)
+
 watchEffect(() => {
   updateBackground()
   return preferences
@@ -48,7 +49,7 @@ let state = reactive({
   ready: false
 })
 
-onMounted(() => {
+onBeforeMount(() => {
   updateBackground()
   if (!remote.client.connect()) {
     router.push("/setup/enroll")
@@ -56,7 +57,7 @@ onMounted(() => {
     return
   } else {
     state.ready = true
-    router.push("/home")
+    router.push("/home/dashboard")
   }
 
 })

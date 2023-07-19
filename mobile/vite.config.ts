@@ -27,7 +27,7 @@ export default defineConfig({
                 name: 'UDAP',
                 short_name: 'UDAP',
                 description: 'Universal Device Aggregation Platform Interface',
-                start_url: '/',
+                start_url: '/home/dashboard',
                 display: 'standalone',
                 background_color: '#000000',
                 theme_color: '#000000',

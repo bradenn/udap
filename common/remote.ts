@@ -18,7 +18,6 @@ import type {
     User,
     Zone
 } from "./types";
-import {config} from "./config";
 
 export enum Target {
     Metadata = "metadata",
@@ -133,10 +132,10 @@ function setup(): boolean {
         return false
     }
 
-    let endpoint = localStorage.getItem("endpoint")
-    if (endpoint == null) {
-        endpoint = config.controllers.find(c => c.name === "Production")?.address || "api.udap.app"
-    }
+    // let endpoint = localStorage.getItem("endpoint")
+    // if (endpoint == null) {
+    // }
+    let endpoint = "api.udap.app"
 
     remote.client.url = connectionString(endpoint, token)
 

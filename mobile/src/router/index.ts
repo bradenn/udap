@@ -97,6 +97,12 @@ const mobileRoutes =
                 icon: '􀎟',
             },
             {
+                path: '/home/apps/request',
+                name: 'request',
+                component: () => import("@/views/apps/RequestBuilder.vue"),
+                icon: '􀎟',
+            },
+            {
                 path: '/home/beam',
                 name: 'beam',
                 component: () => import("@/views/beam/Beam.vue"),

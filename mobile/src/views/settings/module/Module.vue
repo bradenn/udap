@@ -9,6 +9,7 @@ import List from "udap-ui/components/List.vue";
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
 import ElementPair from "udap-ui/components/ElementPair.vue";
 import Element from "udap-ui/components/Element.vue";
+import Time from "udap-ui/components/Time.vue";
 
 import type {ModuleTiming, RemoteTimings} from "udap-ui/timings";
 
@@ -99,6 +100,14 @@ function convertNanosecondsToString(nanoseconds: number): string {
 
   return `${value.toFixed(2)}${units[unitIndex]}`;
 }
+
+function init() {
+  Notification.requestPermission().then((result) => {
+    if (result === "granted") {
+      alert("Yippie!");
+    }
+  })
+}
 </script>
 
 <template>
@@ -117,6 +126,7 @@ function convertNanosecondsToString(nanoseconds: number): string {
               <div class="label-c5 label-w400 label-o4 lh-1">v{{ state.module.version }}</div>
             </div>
           </div>
+          <div></div>
           <div :class="`${state.module.state === 'running'?'text-success':''}`"
                class="label-c3 label-w400 label-o4 px-2 text-capitalize d-flex flex-column align-items-end">
             <div>
@@ -127,9 +137,8 @@ function convertNanosecondsToString(nanoseconds: number): string {
               <div class="label-c4 label-w400 d-flex w-100">
                 <div class="sf label-o3 label-c4 flex-fill">􀣔</div>
                 <div v-if="state.module.state === 'running'" class="px-1">
-                  {{
-                    convertNanosecondsToString((new Date().valueOf() * 1000 * 1000) - state.moduleTimings.update.stopNano)
-                  }}
+                  <Time :since="(new Date().valueOf() * 1000 * 1000) - state.moduleTimings.update.stopNano"></Time>
+
                 </div>
                 <div v-else class="px-1">{{
                     convertNanosecondsToString((new Date().valueOf() * 1000 * 1000) - new Date(state.module.updated).valueOf() * 1000 * 1000)
@@ -143,7 +152,8 @@ function convertNanosecondsToString(nanoseconds: number): string {
       </Element>
 
       <List row style="height: 3.25rem">
-        <Element class="d-flex align-items-center justify-content-center gap-1" foreground mutable style="width: 4rem">
+        <Element :cb="init" class="d-flex align-items-center justify-content-center gap-1" foreground mutable
+                 style="width: 4rem">
           <div class="sf">􀊯</div>
           Reload
         </Element>

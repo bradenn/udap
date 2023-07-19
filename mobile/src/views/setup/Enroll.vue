@@ -8,6 +8,11 @@ import {Preference} from "@/preferences";
 import {PreferenceTypes} from "udap-ui/types";
 import axios from "axios";
 
+import Element from "udap-ui/components/Element.vue";
+import ElementHeader from "udap-ui/components/ElementHeader.vue";
+import List from "udap-ui/components/List.vue";
+
+
 const state = reactive({
   name: "",
   token: "",
@@ -41,18 +46,26 @@ function authenticate() {
 </script>
 
 <template>
-  <div class="d-flex flex-column gap-3">
-    <div class="d-flex justify-content-between">
-      <h4>Authentication</h4>
-      <div> {{ state.delta }}</div>
-    </div>
-    <div class="text-danger" v-text="state.message"></div>
-    <div class="d-flex flex-column gap-2 w-100">
-      <input id="cypher" v-model="state.token" autocapitalize="off" autocomplete="off" class="form-control"
-             placeholder="Access Token" type="text">
+  <div class="d-flex flex-column gap-1  justify-content-center" style="height: 30vh">
 
-    </div>
-    <div class="element d-flex justify-content-center" @click="authenticate">Authenticate</div>
+
+    <Element>
+      <ElementHeader class="pt-0 mb-2" title="Access Token">
+        <template v-slot:description>
+          <div class="text-danger label-c5 lh-1" v-text="state.message"></div>
+        </template>
+      </ElementHeader>
+      <List row>
+        <input id="cypher" v-model="state.token" autocapitalize="off" autocomplete="off"
+               class="subplot w-100"
+               placeholder="--------" type="text">
+        <Element :cb="() => authenticate()" accent class="d-flex justify-content-center align-items-center py-1"
+                 foreground style="width: 8rem">
+          Login
+        </Element>
+      </List>
+    </Element>
+
   </div>
 </template>
 
