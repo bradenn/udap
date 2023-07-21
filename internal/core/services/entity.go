@@ -19,6 +19,10 @@ type entityService struct {
 	generic.Watchable[domain.Entity]
 }
 
+func (u *entityService) FindAllByModule(name string) (*[]domain.Entity, error) {
+	return u.repository.FindAllByModule(name)
+}
+
 func (u *entityService) EmitAll() error {
 	all, err := u.repository.FindAll()
 	if err != nil {

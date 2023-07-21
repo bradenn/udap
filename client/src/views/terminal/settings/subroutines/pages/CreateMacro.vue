@@ -10,6 +10,7 @@ import TaskManager from "@/components/task/TaskManager.vue";
 import macroService from "@/services/macroService";
 import type {Remote} from "@/remote";
 import Button from "@/components/Button.vue";
+import core from "@/core";
 
 const router = useRouter()
 
@@ -37,7 +38,7 @@ function setOptions() {
   if (!remote) return;
 
   let zones: TaskOption[] = remote.zones.filter(z => !z.deleted).map(t => {
-    return {title: t.name, description: t.entities.map(e => e.name).join(", "), value: t.id}
+    return {title: t.name, description: t.entities.map(e => e.alias ? e.alias : e.name).join(", "), value: t.id}
   }) as TaskOption[]
 
   state.tasks = [
@@ -60,8 +61,8 @@ function setOptions() {
       description: "What devices should this macro interact with?",
       type: TaskType.Radio,
       options: zones,
-      value: zones[0].value,
-      preview: zones[0].title
+      value: zones.length > 0 ? zones[0].value : '',
+      preview: zones.length > 0 ? zones[0].title : ''
     },
     {
       title: "Attribute",
@@ -104,21 +105,36 @@ function goBack() {
   router.push("/terminal/settings/subroutines")
 }
 
+const notify = core.notify()
+
 function finish(tasks: Task[]) {
   const name = tasks.find(t => t.title === "Name");
-  if (!name) return;
+  if (!name) {
+    notify.fail("Macro", "Invalid macro name")
+    return;
+  }
 
   const description = tasks.find(t => t.title === "Description");
-  if (!description) return;
+  if (!description) {
+    notify.fail("Macro", "Invalid description")
+    return;
+  }
 
   const zone = tasks.find(t => t.title === "Zone");
-  if (!zone) return;
-
+  if (!zone) {
+    notify.fail("Macro", "Invalid zone")
+    return;
+  }
   const attributeTarget = tasks.find(t => t.title === "Attribute");
-  if (!attributeTarget) return;
-
+  if (!attributeTarget) {
+    notify.fail("Macro", "Invalid attributeTarget")
+    return;
+  }
   const value = tasks.find(t => t.title === "Value");
-  if (!value) return;
+  if (!value) {
+    notify.fail("Macro", "Invalid value")
+    return;
+  }
 
   macroService.createMacro({
     name: name.value as string,

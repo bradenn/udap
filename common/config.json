@@ -1,0 +1,49 @@
+{
+  "controllers": [
+    {
+      "name": "Development",
+      "address": "dev.udap.app"
+    },
+    {
+      "name": "Production",
+      "address": "api.udap.app"
+    }
+  ],
+  "targets": [
+    {
+      "name": "Static",
+      "address": "static.udap.app",
+      "heartbeat": "/status",
+      "description": "Static file server",
+      "required": true,
+      "cacheable": true
+    },
+    {
+      "name": "API",
+      "address": "api.udap.app",
+      "heartbeat": "/status",
+      "description": "Core Application Program Interface",
+      "required": true,
+      "cacheable": false
+    },
+    {
+      "name": "Webserver",
+      "address": "udap.app",
+      "heartbeat": "/status",
+      "description": "Mobile PWA Web Server",
+      "required": true,
+      "cacheable": true
+    }
+  ],
+  "preferences": {
+    "background": [
+      "hexagons",
+      "dark"
+    ]
+  },
+  "defaults": {
+    "background": "waves",
+    "theme": "dark",
+    "token": "unset"
+  }
+}

@@ -20,6 +20,7 @@ var Module Worldspace
 type Worldspace struct {
 	plugin.Module
 	server   http.Server
+	timers   map[string]*time.Timer
 	entityId string
 }
 
@@ -70,7 +71,7 @@ func init() {
 }
 
 func (w *Worldspace) Setup() (plugin.Config, error) {
-	err := w.UpdateInterval(2000)
+	err := w.UpdateInterval(10000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
@@ -78,9 +79,45 @@ func (w *Worldspace) Setup() (plugin.Config, error) {
 }
 
 func (w *Worldspace) Update() error {
-	if w.Ready() {
 
-	}
+	//srv := http.Server{}
+	//sm := http.NewServeMux()
+	//srv.Handler = sm
+	//srv.Addr = "0.0.0.0:6969"
+	//sm.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+	//	writer.WriteHeader(200)
+	//	_, err := writer.Write([]byte("Hello"))
+	//	if err != nil {
+	//		return
+	//	}
+	//
+	//})
+	//
+	//go func() {
+	//	_ = srv.ListenAndServe()
+	//}()
+	//
+	//time.Sleep(time.Second)
+	//
+	//request, err := w.NewPostRequest("http://localhost:6969", nil)
+	//if err != nil {
+	//	return err
+	//}
+	//request.WithTimeout(time.Second)
+	//log.Event("WS->SRV")
+	//start := time.Now()
+	//err = request.Execute(nil)
+	//if err != nil {
+	//	return err
+	//}
+	//end := time.Since(start)
+	//log.Event("SRV->WS")
+	//err = srv.Close()
+	//if err != nil {
+	//	log.Err(err)
+	//}
+	//log.Event(end.String())
+
 	return nil
 }
 
@@ -209,14 +246,36 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string
 		if err != nil {
 			return
 		}
+		t := w.timers[fmt.Sprintf("ws-%s", name)]
+		t.Stop()
+		t.Reset(1 * time.Minute)
 		_, err = writer.Write([]byte("OK"))
 		if err != nil {
 			return
 		}
 	})
 
+	w.timers[fmt.Sprintf("ws-%s", name)] = time.NewTimer(time.Hour * 128)
+
+	go func() {
+		for {
+			select {
+			case <-w.timers[fmt.Sprintf("ws-%s", name)].C:
+				err := w.Triggers.Trigger(fmt.Sprintf("ws-%s-off", name))
+				if err != nil {
+				}
+			}
+		}
+	}()
+
 	err := w.Triggers.Register(&domain.Trigger{
 		Name:        fmt.Sprintf("ws-%s", name),
+		Type:        "module",
+		Description: desc,
+	})
+
+	err = w.Triggers.Register(&domain.Trigger{
+		Name:        fmt.Sprintf("ws-%s-off", name),
 		Type:        "module",
 		Description: desc,
 	})
@@ -227,6 +286,8 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string
 }
 
 func (w *Worldspace) Run() error {
+	w.timers = map[string]*time.Timer{}
+
 	w.server = http.Server{}
 	w.server.Addr = "0.0.0.0:5058"
 	router := chi.NewRouter()

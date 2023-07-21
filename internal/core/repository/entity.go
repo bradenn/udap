@@ -14,6 +14,15 @@ type entityRepo struct {
 	db *gorm.DB
 }
 
+func (u entityRepo) FindAllByModule(name string) (*[]domain.Entity, error) {
+	var entity []domain.Entity
+	err := u.db.Model(&domain.Entity{}).Where("module = ?", name).Find(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
 func (u entityRepo) FindAll() (*[]domain.Entity, error) {
 	var res []domain.Entity
 	if err := u.db.Model(domain.Entity{}).Find(&res).Error; err != nil {

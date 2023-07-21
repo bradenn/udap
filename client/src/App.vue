@@ -15,16 +15,16 @@ import type {Screensaver} from "@/screensaver";
 import _screensaver from "@/screensaver";
 
 let system = reactive({
-  nexus: {
-    system: {
-      version: version
+    nexus: {
+        system: {
+            version: version
+        }
+    },
+    udap: {
+        system: {
+            version: '0.0.0'
+        }
     }
-  },
-  udap: {
-    system: {
-      version: '0.0.0'
-    }
-  }
 })
 
 /* Haptics */
@@ -45,12 +45,11 @@ const router = core.router()
 const preferences = usePersistent()
 
 onMounted(() => {
-  haptics.connect("ws://10.0.1.60/ws")
-
+    haptics.connect("ws://10.0.1.60/ws")
 })
 
 onUnmounted(() => {
-  haptics.disconnect()
+    haptics.disconnect()
 })
 
 provide('system', system)
@@ -60,17 +59,17 @@ provide('system', system)
 
 <template>
 
-  <div
-      :class="`root theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} h-100`">
+    <div
+            :class="`root theme-${preferences.ui.theme} mode-${preferences.ui.mode} blurs-${preferences.ui.blur} h-100`">
 
-    <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
-         :src="`/custom/${preferences.ui.background.image}@4x.png`" alt=""
-         class="backdrop "/>
-    <div v-if="preferences.ui.grid" class="grid"></div>
-    <div class="h-100">
-      <router-view/>
+        <img :class="`${preferences.ui.background.blur?'backdrop-blurred':''}`"
+             :src="`/custom/${preferences.ui.background.image}@4x.png`" alt=""
+             class="backdrop "/>
+        <div v-if="preferences.ui.grid" class="grid"></div>
+        <div class="h-100">
+            <router-view/>
+        </div>
     </div>
-  </div>
 
 </template>
 

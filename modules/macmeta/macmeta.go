@@ -170,7 +170,7 @@ func (v *MacMeta) displayOn() error {
 }
 
 func (v *MacMeta) pollDisplay() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*750)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1000)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "/bin/bash", "-c",
 		"system_profiler SPDisplaysDataType | grep 'Display Asleep' | wc -l")
@@ -188,6 +188,7 @@ func (v *MacMeta) displayOff() error {
 	if err != nil {
 		return err
 	}
+
 	v.requestState(false)
 	return nil
 }

@@ -97,10 +97,11 @@ func (u *moduleService) Update(id string) error {
 			}
 		}
 	}()
+	addr := fmt.Sprintf("module.%s.update", module.UUID)
 	// Mark the time that the update begins
-	pulse.Begin(module.Id)
+	pulse.Begin(addr)
 	// End the pulse when the update concludes or errors out
-	defer pulse.End(module.Id)
+	defer pulse.End(addr)
 	// Attempt to update the modules
 	err = u.operator.Update(module.UUID)
 	if err != nil {
@@ -134,6 +135,11 @@ func (u *moduleService) Run(id string) error {
 			}
 		}
 	}()
+	addr := fmt.Sprintf("module.%s.run", module.UUID)
+	// Mark the time that the update begins
+	pulse.Begin(addr)
+	// End the pulse when the update concludes or errors out
+	defer pulse.End(addr)
 	// Attempt to run the module
 	err = u.operator.Run(module.UUID)
 	if err != nil {
@@ -455,8 +461,8 @@ func (u *moduleService) InitConfig(id string, key string, value string) error {
 		values = map[string]string{}
 	}
 
-	val := values[key]
-	if val != "" {
+	val, ok := values[key]
+	if val != "" && ok {
 		return nil
 	}
 

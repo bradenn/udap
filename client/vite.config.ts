@@ -7,7 +7,8 @@ process.env.VUE_APP_VERSION = process.env.npm_package_version
 export default defineConfig({
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            'udap-ui': '../common'
         }
     },
     plugins: [vue()],

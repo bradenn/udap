@@ -3,9 +3,9 @@
 package pulse
 
 import (
+	"runtime"
 	"sync"
 	"time"
-	"udap/internal/log"
 )
 
 var Timings Timing
@@ -69,9 +69,9 @@ func (h *Timing) handle() {
 	}
 }
 
-func (h *Timing) begin(ref string) {
+func (h *Timing) begin(ref string, pointer string) {
 	proc := Proc{}
-	proc.Pointer = ref
+	proc.Pointer = pointer
 	proc.Start = time.Now()
 	proc.StartNano = proc.Start.UnixNano()
 	proc.Complete = false
@@ -79,18 +79,33 @@ func (h *Timing) begin(ref string) {
 	h.handler <- proc
 }
 
-func (h *Timing) end(ref string) error {
+func (h *Timing) end(ref string, pointer string) {
 	proc := Proc{}
-	proc.Pointer = ref
+	proc.Pointer = pointer
+	proc.Name = ref
 	proc.Complete = true
 	h.handler <- proc
-	return nil
+
+}
+
+func BeginTrack(ref string) {
+	pc, _, _, ok := runtime.Caller(1)
+	if !ok {
+		Timings.begin(ref, ref)
+		return
+	}
+	details := runtime.FuncForPC(pc)
+	if details != nil {
+		Timings.begin(ref, details.Name())
+		return
+	}
+
 }
 
 func Begin(ref string) {
 	// pc, _, _, ok := runtime.Caller(1)
 	// details := runtime.FuncForPC(pc)
-	Timings.begin(ref)
+	Timings.begin(ref, ref)
 	// if ok && details != nil {
 	// }
 }
@@ -98,10 +113,8 @@ func Begin(ref string) {
 func End(ref string) {
 	// pc, _, _, ok := runtime.Caller(1)
 	// details := runtime.FuncForPC(pc)
-	err := Timings.end(ref)
-	if err != nil {
-		log.Err(err)
-	}
+	Timings.end(ref, ref)
+
 	// if ok && details != nil {
 	//
 	// }

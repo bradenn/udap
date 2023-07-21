@@ -60,8 +60,8 @@ func NewOrchestrator() (Orchestrator, error) {
 		server:     server,
 		done:       make(chan bool),
 		controller: nil,
-		maxTick:    time.Second,
-		mutations:  make(chan domain.Mutation, 16),
+		maxTick:    time.Second * 1,
+		mutations:  make(chan domain.Mutation, 24),
 	}, nil
 }
 
@@ -173,10 +173,13 @@ func (o *orchestrator) tick() <-chan error {
 	go func() {
 		start := time.Now()
 		err := o.Update()
+		pulse.End("update")
+		_ = o.broadcastTimings()
 		if err != nil {
 			out <- err
 			return
 		}
+
 		delta := time.Since(start)
 		if delta < o.maxTick {
 			// log.Tick("Elapsed: %s", delta.String())
@@ -214,7 +217,7 @@ func (o *orchestrator) Run() error {
 
 		for {
 			pulse.Begin("update")
-			t.Reset(o.maxTick + time.Millisecond*500)
+			t.Reset(o.maxTick + time.Second*500)
 			select {
 			case <-o.done:
 				log.Event("Event loop exiting...")
@@ -223,19 +226,14 @@ func (o *orchestrator) Run() error {
 			case <-t.C:
 				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*500).String())
 				log.Event("Currently %d threads.", runtime.NumGoroutine())
-				pulse.End("update")
-				continue
+
 			case err := <-o.tick():
 				t.Stop()
 				if err != nil {
 					log.Err(err)
 				}
 			}
-			pulse.End("update")
-			err := o.broadcastTimings()
-			if err != nil {
-				log.Err(err)
-			}
+
 		}
 	}()
 

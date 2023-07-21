@@ -77,9 +77,11 @@ const props = defineProps<EntityProps>()
           {{ props.entity.icon }}
         </div>
         <div v-if="props.selected"
-             class="label-c2 label-o4 label-w500 text-accent">􀷙</div>
+             class="label-c2 label-o4 label-w500 text-accent">􀷙
+        </div>
         <div v-else-if="!props.noselect"
-             class="label-c2 label-o1 label-w500">􀓞</div>
+             class="label-c2 label-o1 label-w500">􀓞
+        </div>
       </div>
 
       <div class="label-c2 label-o4 label-w700 lh-1">

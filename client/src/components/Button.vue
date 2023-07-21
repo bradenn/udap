@@ -12,6 +12,8 @@ const props = defineProps<{
     to?: string,
     icon?: string,
     accent?: boolean,
+    fill?: boolean
+    color?: string
 }>()
 
 let state = reactive({})
@@ -35,19 +37,23 @@ function release(_: Event) {
 </script>
 
 <template>
-    <div :class="`${props.active?props.accent?'text-accent':'':'subplot-inline'}`"
-         class="switch-space subplot switch-space-active"
-         @mousedown="push"
-         @mouseup="release">
-        <div v-if="props.icon" class="label-o2" style="padding-right: 0.125rem">{{ props.icon }}</div>
-        <span :class="`${props.active?'':''}`">{{ props.text }}</span>
+    <div
+            :class="`${props.active?props.accent?'text-accent':'':'subplot-inline'}${props.fill?'element':''} ${props.color}` "
+            class="switch-space subplot switch-space-active px-3"
+            @mousedown="push"
+            @mouseup="release">
+        <div v-if="props.icon" :class="`${props.color}`" class="label-o2 opacity-75" style="padding-right: 0.33rem">{{
+            props.icon
+            }}
+        </div>
+        <span :class="`${props.active?'':''} ${props.color}`">{{ props.text }}</span>
     </div>
 </template>
 
 <style lang="scss" scoped>
 
 .switch-space-active {
-  color: rgba(255, 255, 255, 0.5) !important;
+  //color: rgba(255, 255, 255, 0.5) !important;
 
   box-shadow: 0 0 20px 1px rgba(0, 0, 0, 0.1), inset 0 0 2px 1px rgba(255, 255, 255, 0.05);
 }
@@ -60,6 +66,11 @@ function release(_: Event) {
   transform: scale3d(0.96, 0.96, 1);
 }
 
+.element.switch-space:active {
+  transform: scale3d(0.96, 0.96, 1) !important;
+}
+
+
 .switch-space {
   display: flex;
   justify-content: center;
@@ -67,7 +78,7 @@ function release(_: Event) {
   align-items: center;
   font-size: 0.65rem;
   line-height: 0.7rem;
-  height: 1.8rem;
+  height: 1.7rem;
   color: rgba(255, 255, 255, 0.4);
 }
 </style>

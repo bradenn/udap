@@ -31,7 +31,7 @@ function connectionString(): string {
     if (token === "unset") {
         return ""
     }
-    return `wss://${nexus}/socket/${token}`
+    return `wss://api.udap.app/socket/${token}`
 }
 
 export interface Remote {
