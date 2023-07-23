@@ -15,12 +15,13 @@ import (
 )
 
 type Config struct {
-	Name        string     `json:"name"`
-	Type        string     `json:"type"` // Module, Daemon, etc.
-	Description string     `json:"description"`
-	Version     string     `json:"version"`
-	Author      string     `json:"author"`
-	Variables   []Variable `json:"variables"`
+	Name        string        `json:"name"`
+	Type        string        `json:"type"` // Module, Daemon, etc.
+	Description string        `json:"description"`
+	Interval    time.Duration `json:"interval"`
+	Version     string        `json:"version"`
+	Author      string        `json:"author"`
+	Variables   []Variable    `json:"variables"`
 }
 
 type Variable struct {
@@ -225,6 +226,7 @@ func (m *Module) Err(err error) {
 func (m *Module) UpdateInterval(frequency time.Duration) error {
 	m.Frequency = time.Millisecond * frequency
 	m.LastUpdate = time.Now().Add(-m.Frequency)
+	m.Config.Interval = time.Millisecond * frequency
 	return nil
 }
 

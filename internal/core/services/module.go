@@ -19,8 +19,10 @@ import (
 
 func NewModuleService(repository ports.ModuleRepository, runtime ports.ModuleOperator) ports.ModuleService {
 	return &moduleService{
-		repository: repository,
-		operator:   runtime,
+		repository:    repository,
+		operator:      runtime,
+		timeoutsMutex: sync.RWMutex{},
+		timeouts:      map[string]*time.Timer{},
 	}
 }
 
@@ -38,8 +40,10 @@ const (
 )
 
 type moduleService struct {
-	repository ports.ModuleRepository
-	operator   ports.ModuleOperator
+	repository    ports.ModuleRepository
+	operator      ports.ModuleOperator
+	timeouts      map[string]*time.Timer
+	timeoutsMutex sync.RWMutex
 	generic.Watchable[domain.Module]
 }
 
@@ -107,6 +111,24 @@ func (u *moduleService) Update(id string) error {
 	if err != nil {
 		return err
 	}
+
+	go func(mod *domain.Module) {
+		duration := mod.Interval
+		if duration < time.Second {
+			return
+		}
+		timer := time.NewTimer(duration)
+		u.timeoutsMutex.Lock()
+		u.timeouts[mod.UUID] = timer
+		u.timeoutsMutex.Unlock()
+		select {
+		case _ = <-timer.C:
+			err = u.Update(id)
+			if err != nil {
+				return
+			}
+		}
+	}(module)
 	// Return normally
 	return nil
 }
@@ -161,6 +183,13 @@ func (u *moduleService) Run(id string) error {
 	if err != nil {
 		return err
 	}
+	if module.Enabled && module.Running {
+		err = u.Update(module.Id)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -188,11 +217,12 @@ func (u *moduleService) Load(id string) error {
 	module.Variables = config.Variables
 	module.Version = config.Version
 	module.Description = config.Description
+	module.Interval = config.Interval
 	module.Type = config.Type
 	module.Author = config.Author
 	module.Running = false
-	log.Event("Module '%s' @ 0x%s loaded. (%s)", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).String())
+	log.Event("Module '%s' @ 0x%s loaded. (%s) [%s]", module.Name, module.SessionId(),
+		time.Since(start).Truncate(time.Millisecond).String(), config.Interval.String())
 	err = u.repository.Update(module)
 	if err != nil {
 		return err
@@ -273,6 +303,7 @@ func (u *moduleService) UpdateAll() error {
 			continue
 		}
 		wg.Add(1)
+
 		go func(mod domain.Module) {
 			defer wg.Done()
 			err = u.Update(mod.Id)
@@ -367,6 +398,7 @@ func (u *moduleService) LoadAll() error {
 		}(module)
 	}
 	wg.Wait()
+
 	return nil
 }
 
