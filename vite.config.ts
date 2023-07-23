@@ -22,12 +22,17 @@ export default defineConfig({
         VitePWA({
             mode: 'development',
             registerType: 'autoUpdate',
-            injectRegister: 'auto',
+            injectRegister: "auto",
+            srcDir: 'src',
+            filename: 'pwa.ts',
+            strategies: "injectManifest",
             manifest: {
                 name: 'UDAP',
+                protocol_handlers: [],
+                orientation: "portrait-primary",
                 short_name: 'UDAP',
                 description: 'Universal Device Aggregation Platform Interface',
-                start_url: '/home/dashboard',
+                start_url: '/',
                 display: 'standalone',
                 background_color: '#000000',
                 theme_color: '#000000',
@@ -44,6 +49,7 @@ export default defineConfig({
                     },
                 ],
             },
+
             devOptions: {
                 enabled: true
                 /* other options */
