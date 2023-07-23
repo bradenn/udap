@@ -101,7 +101,7 @@ function setDim(value: number) {
       <Element class="w-100">
         <List row>
           <Element class="d-flex align-items-center justify-content-center" foreground style="height: 3.25rem; "
-                   to="/home/dashboard">
+                   to="/">
             <span class="sf-icon" style="color: hsla(0, 0%, 60%, 0.9)">􀯶</span> &nbsp;
           </Element>
           <Element :cb="() => sendRequest('on', state.spectrum.on?'false':'true')"

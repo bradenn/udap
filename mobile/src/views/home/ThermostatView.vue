@@ -175,7 +175,7 @@ function setMode(mode: string) {
       <List>
         <List row>
 
-          <Element :foreground="true" :long-cb="() => router.push('/home/thermostat')" :mutable="true"
+          <Element :foreground="true" :long-cb="() => router.push('/thermostat')" :mutable="true"
                    class="w-100  px-4">
             <div class="d-flex flex-column align-items-center gap-0 justify-content-center w-100">
               <div class="d-flex align-items-center gap-0">

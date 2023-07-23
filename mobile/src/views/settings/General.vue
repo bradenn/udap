@@ -18,7 +18,8 @@ const device: Device = core.device()
 
     <ElementHeader title="Web APIs"></ElementHeader>
     <List>
-      <ElementLink :cb="() => device.notifications.requestPermission()" :icon="device.notifications.granted ? '􀁣' : '􀀳'" button
+      <ElementLink :cb="() => device.notifications.requestPermission()"
+                   :icon="device.notifications.granted ? '􀁣' : '􀀳'" button
                    class="d-flex gap-2 py-3" title="Push Notifications">
 
         <div>
@@ -26,7 +27,8 @@ const device: Device = core.device()
           {{ device.notifications.granted ? 'Granted' : (device.notifications.supported ? 'Denied' : 'Unsupported') }}
         </div>
       </ElementLink>
-      <ElementLink :cb="() => device.notifications.appBadge.setBadge(2)" :icon="device.notifications.appBadge.supported ? '􀁣' : '􀀳'" button
+      <ElementLink :cb="() => device.notifications.appBadge.setBadge(2)"
+                   :icon="device.notifications.appBadge.supported ? '􀁣' : '􀀳'" button
                    class="d-flex gap-2 py-3" title="App Badge">
 
         <div>
@@ -36,7 +38,8 @@ const device: Device = core.device()
           }}
         </div>
       </ElementLink>
-      <ElementLink :cb="() => device.notifications.push.requestPermission()" :icon="device.notifications.push.supported ? '􀈠' : '􀀳'" button
+      <ElementLink :cb="() => device.notifications.push.requestPermission()"
+                   :icon="device.notifications.push.supported ? '􀈠' : '􀀳'" button
                    class="d-flex gap-2 py-3" title="Send Test Notification">
 
         <div>

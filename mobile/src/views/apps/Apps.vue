@@ -8,25 +8,34 @@ import Element from "udap-ui/components/Element.vue";
 const apps = [
   {
     name: "Monitor",
-    link: "/home/monitor",
+    link: "/monitor",
     icon: '􁂥'
   },
   {
     name: "Thermostat",
-    link: "/home/thermostat",
+    link: "/thermostat",
     icon: '􁁋'
   },
   {
     name: "Lasers",
-    link: "/home/sentry",
+    link: "/sentry",
     icon: '􀑃'
   },
   {
     name: "Lights",
-    link: "/home/lights",
+    link: "/lights",
     icon: '􁓼'
   },
-
+  {
+    name: "Todo",
+    link: "/apps/todo",
+    icon: '􀷾'
+  },
+  {
+    name: "Message",
+    link: "/apps/message",
+    icon: '􀈠'
+  },
 ]
 
 </script>

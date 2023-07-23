@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/SherClockHolmes/webpush-go v1.2.0
 	github.com/arran4/golang-ical v0.0.0-20220517104411-fd89fefb0182
 	github.com/brutella/hc v1.2.4
 	github.com/gerow/go-color v0.0.0-20140219113758-125d37f527f1
@@ -19,6 +20,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.6
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/shirou/gopsutil/v3 v3.22.6
+	gitlab.com/gomidi/midi/v2 v2.0.30
 	gocv.io/x/gocv v0.31.0
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129
@@ -32,6 +34,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/goccy/go-json v0.7.6 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -59,7 +62,6 @@ require (
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/xiam/to v0.0.0-20191116183551-8328998fc0ed // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	gitlab.com/gomidi/midi/v2 v2.0.30 // indirect
 	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect

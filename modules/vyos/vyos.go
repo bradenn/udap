@@ -78,9 +78,13 @@ func (r *RemoteSocket) connect(w http.ResponseWriter, req *http.Request) {
 		select {
 		case r.export <- res:
 			continue
-		case <-time.After(time.Millisecond * 100):
+		case <-time.After(time.Millisecond * 500):
 			log.Err(fmt.Errorf("utilization export timed out"))
-			continue
+			err = conn.Close()
+			if err != nil {
+				return
+			}
+
 		}
 
 	}
@@ -254,7 +258,7 @@ func (v *Vyos) Setup() (plugin.Config, error) {
 	v.pingQueue = make(chan domain.Device, 8)
 	v.pingResolver = make(chan domain.Device, 8)
 	v.done = make(chan bool)
-	v.utilizationResolver = make(chan domain.Utilization)
+	v.utilizationResolver = make(chan domain.Utilization, 10)
 	v.devicesIds = map[string]string{}
 	v.sockets = NewRemoteSocket(v.utilizationResolver)
 	err := v.UpdateInterval(1000 * 30)

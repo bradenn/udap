@@ -44,10 +44,10 @@ router.afterEach((to, from, failure) => {
         </Element>
         <div class="flex-fill w-25">
           <Element class="">
-            <List v-if="router.currentRoute.value.path !== '/home/settings'" scroll-y
+            <List v-if="router.currentRoute.value.path !== '/settings'" scroll-y
                   style="max-height: 80vh; height: 80vh">
               <router-view v-slot="{ Component }">
-                <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
+                <transition :name="(router.currentRoute.value.path === '/settings')?'slide-reverse':'slide'"
                             mode="out-in">
                   <component :is="Component"/>
                 </transition>
@@ -62,14 +62,14 @@ router.afterEach((to, from, failure) => {
       <List style="height: 100%">
         <Element style="height: 100%">
           <Navbar
-              :back="(router.currentRoute.value.path === '/home/settings')?'/home/dashboard':'/home/settings'"
+              :back="(router.currentRoute.value.path === '/settings')?'/':'/settings'"
               :title="state.currentName">
           </Navbar>
         </Element>
         <Element class="">
           <List scroll-y style="max-height: 77vh; height: 77vh">
             <router-view v-slot="{ Component }">
-              <transition :name="(router.currentRoute.value.path === '/home/settings')?'slide-reverse':'slide'"
+              <transition :name="(router.currentRoute.value.path === '/settings')?'slide-reverse':'slide'"
                           mode="out-in">
                 <component :is="Component"/>
               </transition>
@@ -102,12 +102,12 @@ router.afterEach((to, from, failure) => {
 
 @keyframes slide-in-reverse {
   from {
-    transform: translateY(-10px);
-    filter: blur(4px);
-    opacity: 0.5;
+    transform: translateX(-25px) scale(0.98);
+
+    opacity: 0.9;
   }
   to {
-    transform: translateY(0);
+    transform: translateX(0px) scale(1);
     filter: blur(0px);
     opacity: 1;
   }
@@ -115,23 +115,23 @@ router.afterEach((to, from, failure) => {
 
 @keyframes slide-out-reverse {
   from {
-    transform: translateY(-10px);
-    filter: blur(4px);
-    opacity: 0.5;
-  }
-  to {
-    transform: translateY(0);
+    transform: translateX(0px) scale(1);
     filter: blur(0px);
     opacity: 1;
+  }
+  to {
+    transform: translateX(25px) scale(0.98);
+    filter: blur(8px);
+    opacity: 0;
   }
 }
 
 .slide-reverse-enter-active {
-  //animation: slide-in 70ms linear;
+  animation: slide-in-reverse 100ms ease-out;
 }
 
 .slide-reverse-leave-active {
-  //animation: slide-out-reverse 100ms linear;
+  animation: slide-out-reverse 100ms ease-out;
 }
 
 @keyframes slide-in {

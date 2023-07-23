@@ -429,6 +429,8 @@ export interface Endpoint {
     updated: string;
     id: string;
     name: string;
+    notifications: boolean;
+    push: string;
     type: string;
     frequency: number;
     connected: boolean;

@@ -12,6 +12,7 @@ import ElementHeader from "udap-ui/components/ElementHeader.vue";
 import List from "udap-ui/components/List.vue";
 import type {RemoteTimings} from "udap-ui/timings";
 import useTimings from "udap-ui/timings";
+import useDevice, {Device} from "udap-ui/device";
 
 /* Remote */
 const remote: Remote = _remote
@@ -23,10 +24,14 @@ const preferences: PreferencesRemote = usePersistent();
 const timings: RemoteTimings = useTimings(remote);
 provide("timings", timings)
 
+const device: Device = useDevice(remote) as Device;
+provide("device", device)
+
 watchEffect(() => {
   updateBackground()
   return preferences
 })
+
 
 function updateBackground() {
 
@@ -41,6 +46,7 @@ function updateBackground() {
   document.body.style.backgroundRepeat = 'repeat';
   // document.body.style.backgroundRepeat = 'round';
 
+  document.body.style.accentColor = preferences.accent
 
   document.body.style.backgroundSize = `auto`;
 }
@@ -49,15 +55,21 @@ let state = reactive({
   ready: false
 })
 
+function connected(success: boolean): void {
+  console.log("Ell connector is " + success)
+  state.ready = true
+}
+
 onBeforeMount(() => {
   updateBackground()
-  if (!remote.client.connect()) {
+  if (!remote.client.connect(connected)) {
     router.push("/setup/enroll")
     state.ready = false
     return
   } else {
-    state.ready = true
-    router.push("/home/dashboard")
+
+    // state.ready = true
+    // router.push("/home/dashboard")
   }
 
 })

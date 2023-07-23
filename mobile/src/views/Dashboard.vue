@@ -26,10 +26,7 @@ watchEffect(() => {
   state.zones = remote.zones.filter(z => z.pinned)
   return remote.entities
 })
-if ("serviceWorker" in navigator) {
-  // && !/localhost/.test(window.location)) {
-  registerSW();
-}
+
 
 </script>
 

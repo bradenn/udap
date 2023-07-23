@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/log"
 	"udap/internal/plugin"
 )
 
@@ -66,6 +67,7 @@ func init() {
 		Description: "worldspace integration",
 		Version:     "0.1.2",
 		Author:      "Braden Nicholson",
+		Interval:    time.Second,
 	}
 	Module.Config = config
 }
@@ -79,7 +81,7 @@ func (w *Worldspace) Setup() (plugin.Config, error) {
 }
 
 func (w *Worldspace) Update() error {
-
+	//log.Event("Updating worldspace")
 	//srv := http.Server{}
 	//sm := http.NewServeMux()
 	//srv.Handler = sm
@@ -159,6 +161,35 @@ type Arrival struct {
 	Time string `json:"time"`
 }
 
+func (w *Worldspace) tldTrigger(writer http.ResponseWriter, request *http.Request) {
+	// id := chi.URLParam(request, "id")
+
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(request.Body)
+	if err != nil {
+		return
+	}
+
+	//err = json.Unmarshal(buf.Bytes(), &a)
+	//if err != nil {
+	//	return
+	//}
+	value := request.Header.Get("id")
+	if value == "" {
+		writer.WriteHeader(403)
+		return
+	}
+
+	err = w.Triggers.Trigger(value)
+	if err != nil {
+		log.Err(err)
+		writer.WriteHeader(404)
+		return
+	}
+
+	writer.WriteHeader(200)
+
+}
 func (w *Worldspace) handleArrival(writer http.ResponseWriter, request *http.Request) {
 	// id := chi.URLParam(request, "id")
 	a := Arrival{}
@@ -291,6 +322,8 @@ func (w *Worldspace) Run() error {
 	w.server = http.Server{}
 	w.server.Addr = "0.0.0.0:5058"
 	router := chi.NewRouter()
+
+	router.Get("/", w.tldTrigger)
 	err := w.endpointTrigger(router, "motion", "dummy motion")
 	if err != nil {
 		return err
@@ -327,7 +360,11 @@ func (w *Worldspace) Run() error {
 		Type:   "media",
 		Module: "worldspace",
 	}
-
+	err = w.Triggers.Register(&domain.Trigger{
+		Name:        "braden-arrives",
+		Type:        "module",
+		Description: "homekit braden arrives",
+	})
 	err = w.Entities.Register(&entity)
 	if err != nil {
 		return err
