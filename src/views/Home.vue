@@ -39,6 +39,7 @@ watchEffect(() => {
 
 <template>
   <div class="d-flex flex-column gap-3 justify-content-between h-100">
+
     <div v-if="preferences.landscape" class="d-flex flex-column gap-2 w-50">
       <div>
         <div class="label-c5 label-w700 label-o5 px-2">Climate</div>
@@ -75,7 +76,7 @@ watchEffect(() => {
       <div v-if="false">
         <div class="label-c5 label-w700 label-o5 px-2 mb-0 pb-0 lh-0">Notifications</div>
         <Element>
-          <ElementLink icon="􁖇" title="Homework Assignment" to="/home/extra/homework"></ElementLink>
+          <ElementLink icon="􁖇" title="Homework Assignment" to="/extra/homework"></ElementLink>
         </Element>
       </div>
     </div>

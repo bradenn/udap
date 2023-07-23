@@ -8,20 +8,9 @@ import 'udap-ui/assets/reset.css';
 
 import router from '@/router'
 
-// import updateSW from "@/registerServiceWorker";
 
-
-// window.addEventListener('load', () => {
-//     registerSW({
-//         onNeedRefresh() {
-//             console.log("REFRESH")
-//         },
-//         onOfflineReady() {
-//             console.log("OFFLINE")
-//         },
-//         immediate: true
-//     })
-// })
+if (typeof window !== 'undefined')
+    import('./pwa')
 
 
 const app = createApp(Root)

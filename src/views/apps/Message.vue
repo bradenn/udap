@@ -81,7 +81,8 @@ function toggleSelection(id: string) {
 <template>
   <Element>
     <List>
-      <Element v-for="endpoint in remote.endpoints.filter(e => e.notifications)" :key="endpoint.id" :accent="state.selected.includes(endpoint.id)"
+      <Element v-for="endpoint in remote.endpoints.filter(e => e.notifications)" :key="endpoint.id"
+               :accent="state.selected.includes(endpoint.id)"
                :cb="() => toggleSelection(endpoint.id)" foreground
                mutable>
         {{ endpoint.name }}

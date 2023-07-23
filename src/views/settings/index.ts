@@ -1,106 +1,137 @@
-import General from "@/views/settings/General.vue";
-import Connection from "@/views/settings/Connection.vue";
-import SettingsMenu from "@/views/settings/SettingsMenu.vue";
-import Background from "@/views/settings/Background.vue";
-import Color from "@/views/settings/Color.vue";
-import Entities from "@/views/settings/entities/Entities.vue";
-import EntityManage from "@/views/settings/entities/EntityManage.vue";
-import Frame from "@/views/settings/entities/Frame.vue";
-import Config from "@/views/settings/Config.vue";
-import Modules from "@/views/settings/Modules.vue";
-import Zones from "@/views/settings/Zones.vue";
-import Endpoints from "@/views/settings/Endpoints.vue";
-import EditHome from "@/views/settings/EditHome.vue";
-import Timings from "@/views/settings/Timings.vue";
-import WebServices from "@/views/settings/WebServices.vue";
-import Module from "@/views/settings/module/Module.vue";
-
-
 export default {
-    path: '/home/settings',
+    path: '/settings',
     name: 'settings',
     component: () => import('./Settings.vue'),
     children: [
         {
-            path: '/home/settings',
+            path: '/settings',
             name: 'menu',
-            component: SettingsMenu,
+            meta: {
+                name: "Menu",
+                icon: "􀦳",
+
+            },
+            component: () => import('@/views/settings/SettingsMenu.vue'),
         },
         {
-            path: '/home/settings/general',
+            path: '/settings/general',
             name: 'general',
-            component: General,
+            meta: {
+                name: "General",
+                icon: "􀣋",
+                category: "App"
+            },
+            component: () => import('@/views/settings/General.vue'),
         },
         {
-            path: '/home/settings/connection',
+            path: '/settings/connection',
             name: 'connection',
-            component: Connection,
+            meta: {
+                name: "Connection",
+                icon: "􀉣",
+                category: "App"
+            },
+            component: () => import('@/views/settings/Connection.vue'),
         },
         {
-            path: '/home/settings/background',
+            path: '/settings/background',
             name: 'background',
-            component: Background,
+            meta: {
+                name: "Background",
+                icon: "􀏅",
+                category: "App"
+            },
+            component: () => import('@/views/settings/Background.vue'),
         },
         {
-            path: '/home/settings/config',
+            path: '/settings/config',
             name: 'configuration',
-            component: Config,
+            meta: {
+                name: "Configuration",
+                icon: "􁇵",
+                category: "App"
+            },
+            component: () => import('@/views/settings/Config.vue'),
         },
         {
-            path: '/home/settings/modules',
+            path: '/settings/modules',
             name: 'modules',
-            component: Modules,
+            meta: {
+                name: "Modules",
+                icon: "􁚊",
+                category: "System"
+            },
+            component: () => import('@/views/settings/Modules.vue'),
             children: []
         },
         {
-            path: '/home/settings/modules/:moduleId',
+            path: '/settings/modules/:moduleId',
             name: 'module',
-            component: Module,
+            meta: {
+                name: "Module",
+                icon: "+",
+            },
+            component: () => import('@/views/settings/module/Module.vue'),
         },
         {
-            path: '/home/settings/color',
-            name: 'color',
-            component: Color,
-        },
-        {
-            path: '/home/settings/zones',
+            path: '/settings/zones',
             name: 'zones',
-            component: Zones,
+            meta: {
+                name: "Zones",
+                icon: "􀟼",
+                category: "System"
+            },
+            component: () => import('@/views/settings/Zones.vue'),
         },
         {
-            path: '/home/settings/home',
-            name: 'home',
-            component: EditHome,
-        },
-        {
-            path: '/home/settings/timings',
+            path: '/settings/timings',
             name: 'timings',
-            component: Timings,
+            meta: {
+                name: "Timings",
+                icon: "􀐬",
+                category: "System"
+            },
+            component: () => import('@/views/settings/Timings.vue'),
         },
         {
-            path: '/home/settings/webservices',
+            path: '/settings/webservices',
             name: 'webservices',
-            component: WebServices,
+            meta: {
+                name: "WebServices",
+                icon: "􀉣",
+                category: "Network"
+            },
+            component: () => import('@/views/settings/WebServices.vue'),
         },
         {
-            path: '/home/settings/endpoints',
+            path: '/settings/endpoints',
             name: 'endpoints',
-            component: Endpoints,
+            meta: {
+                name: "Endpoints",
+                icon: "􀏭",
+                category: "System"
+            },
+            component: () => import('@/views/settings/Endpoints.vue'),
         },
         {
-            path: '/home/settings/entities',
+            path: '/settings/entities',
             name: 'entity_frame',
-            component: Frame,
+            meta: {
+                name: "Entities",
+                icon: "􁓽",
+                category: "System"
+            },
+            component: () => import('@/views/settings/entities/Frame.vue'),
             children: [
                 {
-                    path: '/home/settings/entities',
+                    path: '/settings/entities',
                     name: 'Entities',
-                    component: Entities,
+                    component: () => import('@/views/settings/entities/Entities.vue'),
                 },
                 {
-                    path: '/home/settings/entities/:entityId',
+                    path: '/settings/entities/:entityId',
                     name: 'entities_view',
-                    component: EntityManage,
+                    component: () => import('@/views/settings/entities/EntityManage.vue'),
                 }
             ]
         }

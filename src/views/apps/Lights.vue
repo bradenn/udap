@@ -14,6 +14,7 @@ import Slider from "@/components/Slider.vue";
 import attributeService from "@/services/attributeService";
 import Navbar from "@/components/Navbar.vue";
 import Countdown from "@/components/Countdown.vue";
+import {Attribute} from "@/types";
 
 
 const lights = useLights() as Lights
@@ -73,12 +74,10 @@ function updateAttribute() {
 }
 
 function sendRandomHue() {
-  let found = lights.attributes.find(a => a.key === "hue")
+  let found: Attribute = lights.attributes.find(a => a.key === "hue") || {} as Attribute
   if (!found) {
     return
   }
-
-
   found.key = "hue"
   state.selected.forEach(s => {
     found.entity = s
@@ -115,8 +114,9 @@ function sendRequest(key: string, value: string) {
   found.request = value
   found.key = key
   state.selected.forEach(s => {
+    if (!found) return;
     found.entity = s
-
+    if (!found) return
     attributeService.request(found).then(e => {
       console.log(e)
     }).catch(err => {
@@ -142,6 +142,7 @@ function haltDisco() {
 function toggleDisco() {
   if (!state.disco) {
     sendRequest("on", "true")
+    //@ts-ignore
     state.discoTimer = setInterval(() => {
       if (state.discoDuration >= state.discoLength) {
         haltDisco()

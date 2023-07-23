@@ -4,6 +4,7 @@
 
 import core from "udap-ui/core";
 import type {Module} from "udap-ui/types";
+import {Timing} from "udap-ui/types";
 import {onMounted, reactive, watchEffect} from "vue";
 import List from "udap-ui/components/List.vue";
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
@@ -11,13 +12,32 @@ import ElementPair from "udap-ui/components/ElementPair.vue";
 import Element from "udap-ui/components/Element.vue";
 import Time from "udap-ui/components/Time.vue";
 
-import type {ModuleTiming, RemoteTimings} from "udap-ui/timings";
+import type {RemoteTimings} from "udap-ui/timings";
+
+interface ModuleTiming {
+  loaded: boolean,
+  run: Timing
+  update: Timing
+}
 
 interface ConfigEntry {
   key: string,
   value: string,
 }
 
+let stub: Timing = {
+  pointer: "",
+  name: "",
+  start: new Date().toString(),
+  startNano: new Date().valueOf() * 1000,
+  stop: new Date().toString(),
+  stopNano: new Date().valueOf() * 1000,
+  delta: 0,
+  frequency: 0,
+  complete: true,
+  depth: 0,
+  id: "id"
+}
 const router = core.router();
 const remote = core.remote();
 const timings = core.timings() as RemoteTimings
@@ -25,13 +45,18 @@ const state = reactive({
   moduleId: "" as string,
   module: {} as Module,
   config: [] as ConfigEntry[],
-  moduleTimings: {} as ModuleTiming,
+  moduleTimings: {
+    run: null,
+    update: null,
+    loaded: false
+  } as ModuleTiming,
   loaded: false
 })
 
 
 onMounted(() => {
   poll()
+
 })
 
 watchEffect(() => {
@@ -40,18 +65,31 @@ watchEffect(() => {
 })
 
 
+watchEffect(() => {
+  updateModuleTimings()
+  return timings.timings
+})
+
+function updateModuleTimings() {
+  let moduleRun = `module.${state.module.uuid}.run`
+  let moduleUpdate = `module.${state.module.uuid}.update`
+  state.moduleTimings.run = timings.timings.find(t => t.pointer == moduleRun)
+  state.moduleTimings.update = timings.timings.find(t => t.pointer == moduleUpdate)
+  state.moduleTimings.loaded = true
+}
+
+
 function poll() {
   if (!router.currentRoute.value) return
   state.moduleId = router.currentRoute.value.params["moduleId"] as string
   let module = remote.modules.find(m => m.id == state.moduleId)
   if (!module) return;
   state.module = module
-
-  state.moduleTimings = timings.getModuleTimings(state.module.uuid)
-
+  // state.moduleTimings = timings.getModuleTimings(state.module.uuid) as ModuleTiming
+  updateModuleTimings()
   if (state.module.config.length > 1) {
     state.config = []
-    let ncfg = []
+    let ncfg: ConfigEntry[] = []
     let cfg = JSON.parse(state.module.config)
 
     if (cfg instanceof Object) {
@@ -65,7 +103,7 @@ function poll() {
       })
 
     }
-    state.config = ncfg
+    state.config = ncfg as ConfigEntry[]
   }
   state.loaded = true
 }
@@ -111,7 +149,9 @@ function init() {
 </script>
 
 <template>
-  <List v-if="state.loaded">
+
+  <List v-if="state.loaded && state.moduleTimings.loaded">
+
     <List>
       <Element class="" foreground>
         <List class="justify-content-between align-items-center" row>
@@ -132,17 +172,23 @@ function init() {
             <div>
               {{ state.module.state }}
             </div>
+
             <Element class=" lh-1 d-flex justify-content-center px-0" foreground
-                     style="width: 100%; border-radius: 1.5rem !important;">
+                     v-if="false" style="width: 100%; border-radius: 1.5rem !important;">
               <div class="label-c4 label-w400 d-flex w-100">
                 <div class="sf label-o3 label-c4 flex-fill">􀣔</div>
                 <div v-if="state.module.state === 'running'" class="px-1">
-                  <Time :since="(new Date().valueOf() * 1000 * 1000) - state.moduleTimings.update.stopNano"></Time>
-
+                  <div v-if="!state.moduleTimings.run">
+                    Not running.
+                  </div>
+                  <div v-else>
+                    <Time :since="(new Date().valueOf() * 1000 *1000) - state.moduleTimings.run.stopNano" nano></Time>
+                  </div>
                 </div>
-                <div v-else class="px-1">{{
-                    convertNanosecondsToString((new Date().valueOf() * 1000 * 1000) - new Date(state.module.updated).valueOf() * 1000 * 1000)
-                  }}
+                <div v-else class="px-1">
+                  <Time :since="(new Date().valueOf() * 1000 * 1000) - new Date(state.module.updated).valueOf() * 1000 * 1000"
+                        nano></Time>
+
                 </div>
               </div>
             </Element>
@@ -166,14 +212,72 @@ function init() {
     </List>
     <ElementHeader title="Runtime"></ElementHeader>
     <ElementPair :title="!state.module.enabled?'Downtime':'Uptime'"
-                 :value="convertNanosecondsToString((new Date().valueOf() - new Date(state.module.updated).valueOf())*1000*1000).toString()"
-                 icon="􀅳"></ElementPair>
-    <ElementPair v-if="state.module.enabled" :value="convertNanosecondsToString(state.moduleTimings.run.delta)" icon="􀅳"
-                 title="Startup"></ElementPair>
-    <ElementPair v-if="state.module.enabled" :value="convertNanosecondsToString(state.moduleTimings.update.delta)"
-                 icon="􀅳"
-                 title="Last Update"></ElementPair>
+                 alt="Time since startup" icon="􀯛">
+      <div v-if="state.moduleTimings.run">
+        <Time :since="new Date(state.moduleTimings.run.stop).valueOf()" live></Time>
+      </div>
+      <div v-else>
+        No Data
+      </div>
 
+    </ElementPair>
+    <ElementPair v-if="state.module.enabled" alt="Module startup duration"
+                 icon="􀣔" title="Startup">
+      <div v-if="state.moduleTimings.run">
+
+        <Time :since="state.moduleTimings.run.delta"
+              nano></Time>
+      </div>
+      <div v-else>
+        No Data
+      </div>
+
+    </ElementPair>
+    <ElementHeader title="Update"></ElementHeader>
+    <ElementPair v-if="state.module.enabled"
+                 alt="Time since the last update"
+                 icon="􀣔" title="Last Update">
+      <div v-if="state.moduleTimings.update">
+        <Time :since="new Date(state.moduleTimings.update.stop).valueOf()" live
+              precise></Time>
+      </div>
+      <div v-else>
+        No Data
+      </div>
+
+    </ElementPair>
+    <ElementPair v-if="state.module.enabled"
+                 alt="Module update duration"
+                 icon="􀣔" title="Update">
+      <div v-if="state.moduleTimings.update">
+        <Time :since="new Date(state.moduleTimings.update.delta).valueOf()"
+              nano></Time>
+      </div>
+      <div v-else>
+        No Data
+      </div>
+
+    </ElementPair>
+    <div class=""></div>
+    <ElementPair v-if="state.module.enabled"
+                 alt="Prescribed update interval"
+                 icon="􀐱" title="Interval">
+      <Time :since="state.module.interval"
+            nano></Time>
+
+    </ElementPair>
+    <ElementPair v-if="state.module.enabled"
+                 alt="Previous update interval"
+                 icon="􀐱" title="Actual Interval">
+      <div v-if="state.moduleTimings.update">
+        <Time :since="new Date(state.moduleTimings.update.frequency).valueOf()"
+              nano></Time>
+      </div>
+      <div v-else>
+        No Data
+      </div>
+
+    </ElementPair>
 
     <ElementHeader title="Module"></ElementHeader>
     <ElementPair :value="state.module.name" icon="􀅳" title="Name"></ElementPair>
@@ -201,6 +305,9 @@ function init() {
                  icon="􀅳"></ElementPair>
 
     <Element v-else class="px-4" foreground>No Configuration</Element>
+  </List>
+  <List v-else>
+    Loading
   </List>
 
 </template>

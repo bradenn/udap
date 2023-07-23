@@ -34,7 +34,7 @@ function authenticate() {
     new Preference(PreferenceTypes.Token).set(res.data.token)
     new Preference(PreferenceTypes.Name).set(state.name.slice(0, 1).toUpperCase() + state.name.toLowerCase().slice(1))
     // Redirect the user to the authenticated portal
-    window.location.href = "/mobile/home"
+    window.location.href = "/"
 
   }).catch(err => {
     // alert("Denied..." + err)

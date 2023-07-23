@@ -6,110 +6,113 @@ import setupRoutes from "@/views/setup";
 
 
 import settings from "@/views/settings";
-import Demo from "@/views/Demo.vue";
-
-
-const demoRoute = {
-    path: '/home/demo',
-    name: 'demo',
-    component: Demo,
-    icon: '􀎟',
-}
+import NotFound from "@/views/NotFound.vue";
 
 
 const mobileRoutes =
     {
-        path: '/home',
+        path: '/',
         name: 'Base',
-        redirect: "/home/dashboard",
         component: () => import("@/views/Dashboard.vue"),
         icon: '􀎟',
         children: [
             {
-                path: '/home/dashboard',
+                path: '/',
                 name: 'dashboard',
                 component: () => import("@/views/Home.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/apps',
+                path: '/apps',
                 name: 'apps',
                 component: () => import("@/views/apps/Apps.vue"),
                 icon: '􀎟',
             }, {
-                path: '/home/beampath',
+                path: '/beampath',
                 name: 'beampath',
                 component: () => import("@/views/apps/BeamPath.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/entity/:entityId',
+                path: '/entity/:entityId',
                 name: 'editEntity',
                 component: () => import("@/views/home/EntityEdit.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/extra/homework',
+                path: '/extra/homework',
                 name: 'homework',
                 component: () => import("@/views/extra/Homework.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/subroutines',
+                path: '/subroutines',
                 name: 'subroutines',
                 component: () => import("@/views/home/SubRoutineList.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/sentry',
+                path: '/sentry',
                 name: 'sentry',
                 component: () => import("@/views/beam/Beam.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/monitor',
+                path: '/monitor',
                 name: 'monitor',
                 component: () => import("@/views/monitor/MonitorList.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/lights',
+                path: '/lights',
                 name: 'lights',
                 component: () => import("@/views/apps/Lights.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/menu',
+                path: '/menu',
                 name: 'menu',
                 component: () => import("@/views/MenuPage.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/thermostat',
+                path: '/thermostat',
                 name: 'thermostat',
                 component: () => import("@/views/home/ThermostatView.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/macros',
+                path: '/macros',
                 name: 'macros',
                 component: () => import("@/views/home/MacroList.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/apps/request',
+                path: '/apps/request',
                 name: 'request',
                 component: () => import("@/views/apps/RequestBuilder.vue"),
                 icon: '􀎟',
             },
             {
-                path: '/home/beam',
+                path: '/apps/message',
+                name: 'message',
+                component: () => import("@/views/apps/Message.vue"),
+                icon: '􀎟',
+            },
+            {
+                path: '/apps/todo',
+                name: 'request',
+                component: () => import("@/views/apps/Todo.vue"),
+                icon: '􀎟',
+            },
+            {
+                path: '/beam',
                 name: 'beam',
                 component: () => import("@/views/beam/Beam.vue"),
                 icon: '􀎟',
             },
             settings,
-            demoRoute
+            {path: "*", component: NotFound}
         ]
     };
 

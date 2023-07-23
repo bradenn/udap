@@ -570,7 +570,8 @@ const dutys = [1, 3, 5, 11, 15]
         <!--        <Element :foreground="true" class="d-flex justify-content-center">-->
         <List class="w-100" row>
 
-          <Element v-for="duty in dutys" :accent="state.laserBeam.power === duty" :cb="() => setDuty(duty)" class="d-flex align-items-baseline gap-1 w-100 justify-content-center position-relative"
+          <Element v-for="duty in dutys" :accent="state.laserBeam.power === duty" :cb="() => setDuty(duty)"
+                   class="d-flex align-items-baseline gap-1 w-100 justify-content-center position-relative"
                    foreground>
             <div>{{ duty }}</div>
             <div class="label-c7 label-o3">mW</div>
