@@ -1,10 +1,13 @@
 <!-- Copyright (c) 2023 Braden Nicholson -->
 
 <script lang="ts" setup>
+
 let props = defineProps<{
   title: string,
   alt?: string
 }>()
+
+
 </script>
 
 <template>

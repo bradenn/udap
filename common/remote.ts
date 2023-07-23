@@ -18,6 +18,7 @@ import type {
     User,
     Zone
 } from "./types";
+import axios from "axios";
 
 export enum Target {
     Metadata = "metadata",
@@ -46,6 +47,7 @@ export interface Client {
     socket: WebSocket
     url: string
 
+    host: boolean
     ready: boolean
     connecting: boolean
     connected: boolean
@@ -54,8 +56,9 @@ export interface Client {
     interval: number
     attempts: number
     nextAttempt: number
+    onConnect: (result: boolean) => void
 
-    connect(): boolean
+    connect(cb: (result: boolean) => void): boolean
 
     disconnect(): void
 }
@@ -92,11 +95,13 @@ let remote = reactive<Remote>({
         connecting: false,
         connected: false,
         closed: false,
+        host: false,
 
         interval: 0,
         attempts: 0,
         nextAttempt: 0,
-
+        onConnect: (resu: boolean) => {
+        },
         connect: connect,
         disconnect: disconnect,
     } as Client,
@@ -142,10 +147,18 @@ function setup(): boolean {
     return true
 }
 
-function connect(): boolean {
+function connect(cb: (result: boolean) => void): boolean {
 
     if (!setup()) {
         return false;
+    }
+
+    if (!cb) {
+        remote.client.onConnect = (b: boolean) => {
+
+        }
+    } else {
+        remote.client.onConnect = cb
     }
 
     if (remote.client.connected || remote.client.connecting) return false
@@ -166,6 +179,8 @@ function disconnect(): void {
         remote.client.connected = false
         remote.client.connecting = false
     }
+    remote.client.connected = false
+    remote.client.connecting = false
 }
 
 export {
@@ -178,15 +193,40 @@ function onOpen(_: Event) {
     remote.client.connected = true
     remote.client.connecting = false
     remote.client.attempts = 0
+    remote.client.onConnect(true);
+
+}
+
+function pingHostInterval() {
 
 }
 
 function beginCountdown() {
-    clearInterval(remote.client.interval)
-    remote.client.nextAttempt = 2000
-    remote.client.attempts++
-    //@ts-ignore
-    remote.client.interval = setInterval(tick, 100)
+    pingHost().then((r) => {
+        if (r) {
+            clearInterval(remote.client.interval)
+            remote.client.nextAttempt = 0
+            remote.client.attempts++
+            remote.client.host = true
+            //@ts-ignore
+            remote.client.interval = setInterval(tick, 100)
+        } else {
+            remote.client.host = false
+            clearInterval(remote.client.interval)
+            remote.client.nextAttempt = 2000
+            remote.client.attempts++
+            //@ts-ignore
+            remote.client.interval = setInterval(tick, 100)
+        }
+    }).catch(() => {
+        remote.client.host = false
+        clearInterval(remote.client.interval)
+        remote.client.nextAttempt = 2000
+        remote.client.attempts++
+        //@ts-ignore
+        remote.client.interval = setInterval(tick, 100)
+    })
+
 }
 
 function tick() {
@@ -195,8 +235,18 @@ function tick() {
     } else {
         remote.client.nextAttempt = 0
         clearInterval(remote.client.interval)
-        remote.client.connect()
+        remote.client.connect((a) => {
+
+        })
     }
+}
+
+function pingHost() {
+    return axios.get("https://api.udap.app/status").then(r => {
+        return r.data == "."
+    }).catch(r => {
+        return false
+    })
 }
 
 function onClose(_: CloseEvent) {
@@ -204,6 +254,7 @@ function onClose(_: CloseEvent) {
     remote.client.connected = false
     remote.client.connecting = false
     remote.client.disconnect()
+
     beginCountdown()
 }
 

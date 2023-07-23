@@ -31,7 +31,7 @@ const preferences = inject("preferences") as PreferencesRemote
     <div class="d-flex flex-column gap-0 justify-content-center-center px-2">
 
       <div class="label-c4 lh-1 label-o5 d-flex">
-        <div class="sf-icon label-c6" style="width: 15px; margin-right: 12px">
+        <div class="sf-icon label-c5" style="width: 15px; margin-right: 12px">
           {{ props.icon }}
         </div>
         <div class="d-flex flex-column justify-content-start" style="gap: 0.125rem">
@@ -43,7 +43,7 @@ const preferences = inject("preferences") as PreferencesRemote
     </div>
     <div class="flex-grow-1 d-flex justify-content-end align-items-end">
       <slot></slot>
-      <div v-if="!props.button" class="sf-icon label-o2 label-w500 label-c3">􀆊</div>
+      <div v-if="!props.button" class="sf label-o3 label-w500 label-c3 px-2">􀆊</div>
     </div>
   </Element>
 </template>

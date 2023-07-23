@@ -42,7 +42,7 @@ onMounted(() => {
 
 function update() {
   if (props.to) {
-    state.active = router.currentRoute.value.fullPath.includes(props.to)
+    state.active = router.currentRoute.value.fullPath == (props.to)
   }
 }
 
@@ -141,10 +141,10 @@ function pointerUp(event: TouchEvent | MouseEvent) {
       :class="`${props.foreground?(props.link?(state.active?'subplot px-2 py-2':'subplot  px-2 py-2'):'subplot px-2 py-2'):`element back`} ${props.surface?'subplot-surface':''} `"
       :style="`box-shadow: inset 0 0 1px 1px ${state.active||props.accent?preferences.accent+'':'transparent'}; ${props.mutable?'transform: scale(' + state.position.w+');':''}  ${!props.foreground?`backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`:''}`"
 
-      @touchend="pointerUp"
-      @touchleave="pointerUp"
-      @touchmove="pointerDrag"
-      @touchstart="pointerDown">
+      @touchend.passive="pointerUp"
+      @touchleave.passive="pointerUp"
+      @touchmove.passive="pointerDrag"
+      @touchstart.passive="pointerDown">
     <slot></slot>
   </div>
 </template>

@@ -24,6 +24,10 @@ const router = core.router()
 
 const preferences = inject("preferences") as PreferencesRemote
 
+function copyValue() {
+  navigator.clipboard.writeText(props.value);
+
+}
 
 </script>
 
@@ -31,8 +35,8 @@ const preferences = inject("preferences") as PreferencesRemote
   <Element :cb="props.cb" :foreground="true" :to="props.to"
            class="d-flex justify-content-between align-items-center flex-row " style="height: 3.25rem">
 
-    <div class="label-c4 lh-1 label-o5 d-flex align-items-center">
-      <div class="sf-icon label-c6" style="width: 15px; margin-right: 12px">
+    <div class="label-c4 lh-1 label-o5 d-flex align-items-center px-2">
+      <div class="sf-icon label-c4" style="width: 15px; margin-right: 12px">
         {{ props.icon }}
       </div>
       <div class="d-flex flex-column justify-content-start" style="gap: 0.125rem">
@@ -47,7 +51,7 @@ const preferences = inject("preferences") as PreferencesRemote
         <div v-else class="label-truncate label-o3 label-c4">{{ props.value }}</div>
       </div>
       <div v-if="props.copyable">
-        <Element class="sf d-flex align-items-center justify-content-center label-o3" foreground mutable
+        <Element :cb="copyValue" class="sf d-flex align-items-center justify-content-center label-o3" foreground mutable
                  style="width: 3rem !important; margin-right: -4px !important;">
           􀉂
         </Element>

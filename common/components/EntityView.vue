@@ -12,7 +12,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <Element :foreground="true" :mutable="true" :to="`/home/settings/entities/${props.entity.id}`"
+  <Element :foreground="true" :mutable="true" :to="`/settings/entities/${props.entity.id}`"
            class="d-flex align-items-center gap-2 ent" style="height: 3.25rem">
     <div class="notches">
       <div :class="`${props.entity.updated?'active':''}`" class="notch"></div>
