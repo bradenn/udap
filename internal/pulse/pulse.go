@@ -35,7 +35,7 @@ type Proc struct {
 	Stop      time.Time `json:"stop"`
 	StopNano  int64     `json:"stopNano"`
 	Delta     int       `json:"delta"`
-	Frequency int       `json:"frequency"`
+	Frequency int64     `json:"frequency"`
 	Complete  bool      `json:"complete"`
 	Depth     int       `json:"depth"`
 }
@@ -43,37 +43,70 @@ type Proc struct {
 // Timings returns the present timings manifest
 func (h *Timing) Timings() (a map[string]Proc) {
 	a = map[string]Proc{}
-	h.mt.RLock()
+	h.historyMutex.Lock()
 	for i, u := range h.history {
-		if time.Since(u.Stop).Seconds() < 10 {
+
+		if time.Since(u.Stop).Seconds() < 60 {
 			a[i] = u
 		} else {
-			delete(h.history, i)
+			//_, ok := h.history[i]
+			//if ok {
+			//	delete(h.history, i)
+			//}
 		}
 	}
-	h.mt.RUnlock()
+	h.historyMutex.Unlock()
+	//fmt.Println("Sent timings")
 	return
+}
+
+func (h *Timing) AllTimings() (a map[string]Proc) {
+	a = map[string]Proc{}
+	h.historyMutex.Lock()
+	for i, u := range h.history {
+		a[i] = u
+	}
+	h.historyMutex.Unlock()
+	//fmt.Println("Sent timings")
+	return
+}
+
+func (h *Timing) await(proc Proc) {
+	h.mt.Lock()
+	h.waiting[proc.Pointer] = proc
+	h.mt.Unlock()
 }
 
 // accept processes a proc request, the proc will either be added to the waiting queue or be resolved
 func (h *Timing) accept(proc Proc) {
 	// Send to waiting queue
 	if !proc.Complete {
-		h.waiting[proc.Pointer] = proc
+		h.await(proc)
 		return
 	}
+	h.mt.RLock()
 	// Resolve waiting process
 	resident := h.waiting[proc.Pointer]
+	h.mt.RUnlock()
+
 	// Mark the process as complete
 	resident.Complete = true
+	resident.Stop = proc.Stop
+	resident.StopNano = proc.StopNano
 	// Compute the delta in nanoseconds
 	resident.Delta = int(time.Since(resident.Start).Nanoseconds())
 	// Lock the mutex and record the record
-	h.mt.Lock()
+	h.historyMutex.Lock()
+	current, ok := h.history[resident.Pointer]
+	if ok {
+		resident.Frequency = resident.StartNano - current.StopNano
+	}
 	h.history[resident.Pointer] = resident
-	h.mt.Unlock()
+	h.historyMutex.Unlock()
 	// Delete the resident from the waiting queue
+	h.mt.Lock()
 	delete(h.waiting, resident.Pointer)
+	h.mt.Unlock()
 }
 
 // handle accepts incoming timing requests
@@ -82,7 +115,7 @@ func (h *Timing) handle() {
 		select {
 		// Accept any incoming requests, handle them in a new thread
 		case proc := <-h.handler:
-			go h.accept(proc)
+			h.accept(proc)
 		}
 	}
 }

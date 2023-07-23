@@ -5,6 +5,7 @@ package controller
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
+	"udap/internal/pulse"
 )
 
 type Controller struct {
@@ -101,6 +102,16 @@ func (c *Controller) EmitAll() error {
 	err = c.SubRoutines.EmitAll()
 	if err != nil {
 		return err
+	}
+
+	timings := pulse.Timings.AllTimings()
+	for s, proc := range timings {
+		c.RX <- domain.Mutation{
+			Status:    "update",
+			Operation: "timing",
+			Body:      proc,
+			Id:        s,
+		}
 	}
 
 	return nil

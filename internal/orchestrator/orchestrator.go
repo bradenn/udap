@@ -39,8 +39,18 @@ type Orchestrator interface {
 }
 
 func (o *orchestrator) Terminate() {
-	_ = o.controller.Modules.DisposeAll()
-	_ = o.controller.Endpoints.CloseAll()
+	go func() {
+		err := o.controller.Modules.DisposeAll()
+		if err != nil {
+			log.Err(err)
+		}
+	}()
+	go func() {
+		err := o.controller.Endpoints.CloseAll()
+		if err != nil {
+			log.Err(err)
+		}
+	}()
 	close(o.mutations)
 	fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
 	os.Exit(0)
@@ -132,15 +142,16 @@ func (o *orchestrator) Update() error {
 	if !o.ready {
 		return nil
 	}
-	err := o.controller.Modules.UpdateAll()
-	if err != nil {
-		return err
-	}
+	//err := o.controller.Modules.UpdateAll()
+	//if err != nil {
+	//	return err
+	//}
 	return nil
 }
 
 func (o *orchestrator) broadcastTimings() error {
 	timings := pulse.Timings.Timings()
+
 	for s, proc := range timings {
 		o.mutations <- domain.Mutation{
 			Status:    "update",
