@@ -27,6 +27,7 @@ func NewEndpointRouter(service ports.EndpointService) Routable {
 func (r *endpointRouter) RouteExternal(router chi.Router) {
 	router.Get("/endpoints/register/{key}", r.authenticate)
 	router.Post("/endpoints/create", r.create)
+	router.Post("/endpoints/{id}/push", r.registerPush)
 	router.Get("/socket/{token}", r.enroll)
 }
 
@@ -34,6 +35,25 @@ func (r *endpointRouter) RouteInternal(router chi.Router) {
 
 }
 
+func (r *endpointRouter) registerPush(w http.ResponseWriter, req *http.Request) {
+	var buf bytes.Buffer
+	key := chi.URLParam(req, "id")
+	if key == "" {
+		http.Error(w, "access key not provided", 401)
+		return
+	}
+
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		http.Error(w, "could not parse endpoint", 400)
+		return
+	}
+
+	err = r.service.RegisterPush(key, buf.String())
+	if err != nil {
+		http.Error(w, "endpoint creation failed", 400)
+	}
+}
 func (r *endpointRouter) create(w http.ResponseWriter, req *http.Request) {
 	var buf bytes.Buffer
 

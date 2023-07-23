@@ -54,7 +54,7 @@ func NewEndpointOperator(controller *controller.Controller) ports.EndpointOperat
 		controller:    controller,
 		local:         map[string]*domain.Endpoint{},
 		done:          make(chan bool),
-		localChannel:  make(chan endpointOperation),
+		localChannel:  make(chan endpointOperation, 2),
 		localTransmit: make(chan Response, 8),
 	}
 
@@ -91,7 +91,12 @@ func (m *endpointOperator) handleTransmit(transmission Response) error {
 	for _, endpoint := range records {
 		err := endpoint.Connection.WriteJSON(transmission)
 		if err != nil {
-			return err
+			go func() {
+				err = m.Unenroll(endpoint)
+				if err != nil {
+					log.Err(err)
+				}
+			}()
 		}
 	}
 	return nil

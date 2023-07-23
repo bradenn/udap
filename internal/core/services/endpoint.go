@@ -27,6 +27,22 @@ func (u *endpointService) SendAll(target string, operation string, payload any) 
 	return nil
 }
 
+func (u *endpointService) RegisterPush(id string, push string) error {
+	endpoint, err := u.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	endpoint.Push = push
+	endpoint.Notifications = true
+
+	err = u.mutate(endpoint)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *endpointService) mutate(endpoint *domain.Endpoint) error {
 	err := u.repository.Update(endpoint)
 	if err != nil {

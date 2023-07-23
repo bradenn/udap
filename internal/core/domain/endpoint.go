@@ -12,11 +12,13 @@ import (
 
 type Endpoint struct {
 	common.Persistent
-	Connection *websocket.Conn `json:"-" gorm:"-"`
-	Name       string          `json:"name" gorm:"unique"`
-	Type       string          `json:"type" gorm:"default:'terminal'"`
-	Connected  bool            `json:"connected"`
-	Key        string          `json:"key"`
+	Connection    *websocket.Conn `json:"-" gorm:"-"`
+	Name          string          `json:"name" gorm:"unique"`
+	Type          string          `json:"type" gorm:"default:'terminal'"`
+	Push          string          `json:"push" gorm:"default:'{}'"`
+	Notifications bool            `json:"notifications"`
+	Connected     bool            `json:"connected"`
+	Key           string          `json:"key"`
 }
 
 func randomString() string {

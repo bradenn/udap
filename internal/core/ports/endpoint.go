@@ -25,6 +25,7 @@ type EndpointService interface {
 	FindAll() (*[]domain.Endpoint, error)
 	FindById(id string) (*domain.Endpoint, error)
 	FindByKey(key string) (*domain.Endpoint, error)
+	RegisterPush(id string, push string) error
 	Create(*domain.Endpoint) error
 	CloseAll() error
 	domain.Observable

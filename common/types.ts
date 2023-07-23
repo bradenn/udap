@@ -50,6 +50,8 @@ export interface Endpoint {
     id: string;
     name: string;
     type: string;
+    notifications: boolean;
+    push: string;
     frequency: number;
     connected: boolean;
     key: string;
@@ -94,6 +96,7 @@ export interface Module {
     id: string;
     name: string
     uuid: string
+    interval: number
     config: string
     variables: string
     path: string
