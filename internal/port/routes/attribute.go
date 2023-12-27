@@ -4,7 +4,7 @@ package routes
 
 import (
 	"bytes"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"udap/internal/core/ports"
 )

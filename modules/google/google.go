@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 	"os"
@@ -35,6 +35,8 @@ type Google struct {
 	oauth    sync.Mutex
 	entityId string
 	deviceId string
+
+	mode string
 }
 
 type SetMode struct {
@@ -124,10 +126,26 @@ func (c *Command) SetMode(mode string) {
 	c.Params = marshal
 }
 
-func (c *Google) setHeat(attribute domain.Attribute) {
+func (c *Google) setBestGuess(attribute domain.Attribute) error {
+	mode, err := c.Attributes.FindByComposite(attribute.Entity, "mode")
+	if err != nil {
+		return err
+	}
+	if mode.Value == "HEAT" {
+		return c.setHeat(attribute)
+	} else if mode.Value == "COOL" {
+		return c.setCool(attribute)
+	} else {
+
+	}
+
+	return nil
+}
+
+func (c *Google) setHeat(attribute domain.Attribute) error {
 	float, err := strconv.ParseFloat(attribute.Request, 64)
 	if err != nil {
-		return
+		return err
 	}
 
 	cmd := Command{}
@@ -135,16 +153,14 @@ func (c *Google) setHeat(attribute domain.Attribute) {
 
 	marshal, err := json.Marshal(cmd)
 	if err != nil {
-		log.Err(err)
-		return
+		return err
 	}
 
 	_, err = c.sendAuthenticatedRequest(marshal)
 	if err != nil {
-		log.Err(err)
-		return
+		return err
 	}
-
+	return nil
 	//fmt.Println(string(request))
 }
 func (c *Google) setMode(attribute domain.Attribute) {
@@ -171,10 +187,10 @@ func (c *Google) setMode(attribute domain.Attribute) {
 	//fmt.Println(string(request))
 
 }
-func (c *Google) setCool(attribute domain.Attribute) {
+func (c *Google) setCool(attribute domain.Attribute) error {
 	float, err := strconv.ParseFloat(attribute.Request, 64)
 	if err != nil {
-		return
+		return err
 	}
 
 	cmd := Command{}
@@ -182,22 +198,31 @@ func (c *Google) setCool(attribute domain.Attribute) {
 
 	marshal, err := json.Marshal(cmd)
 	if err != nil {
-		log.Err(err)
-		return
+		return err
 	}
 
 	_, err = c.sendAuthenticatedRequest(marshal)
 	if err != nil {
-		log.Err(err)
-		return
+		return err
 	}
-
+	return nil
 	//fmt.Println(string(request))
 
 }
 
 func (c *Google) handleRequest(attribute domain.Attribute) {
 	switch attribute.Key {
+	case "target":
+		err := c.setBestGuess(attribute)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+		err = c.Attributes.Set(c.entityId, "target", attribute.Request)
+		if err != nil {
+			log.Err(err)
+		}
+		break
 	case "heat":
 		c.setHeat(attribute)
 		break
@@ -635,6 +660,18 @@ func (c *Google) updateValues(qr QueryResponse) error {
 			return err
 		}
 
+		if device.Traits.SdmDevicesTraitsThermostatMode.Mode == "HEAT" {
+			err = c.Attributes.Set(c.entityId, "target", fmt.Sprintf("%f", convertCToF(device.Traits.SdmDevicesTraitsThermostatTemperatureSetpoint.HeatCelsius)))
+			if err != nil {
+				return err
+			}
+		} else if device.Traits.SdmDevicesTraitsThermostatMode.Mode == "COOL" {
+			err = c.Attributes.Set(c.entityId, "target", fmt.Sprintf("%f", convertCToF(device.Traits.SdmDevicesTraitsThermostatTemperatureSetpoint.CoolCelsius)))
+			if err != nil {
+				return err
+			}
+		}
+
 	}
 	return nil
 }
@@ -676,6 +713,20 @@ func (c *Google) initDevices() error {
 			Channel: channel,
 		}
 		err = c.Attributes.Register(media)
+		if err != nil {
+			return err
+		}
+
+		target := &domain.Attribute{
+			Key:     "target",
+			Value:   "50",
+			Request: "50",
+			Order:   0,
+			Type:    "number",
+			Entity:  dev.Id,
+			Channel: channel,
+		}
+		err = c.Attributes.Register(target)
 		if err != nil {
 			return err
 		}

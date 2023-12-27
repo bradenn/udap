@@ -5,7 +5,7 @@ package routes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
@@ -17,6 +17,7 @@ type triggerRouter struct {
 
 func (r *triggerRouter) RouteInternal(router chi.Router) {
 	router.Post("/triggers/create", r.create)
+
 }
 
 func (r *triggerRouter) RouteExternal(_ chi.Router) {

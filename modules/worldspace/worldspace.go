@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 	"time"
@@ -279,7 +279,7 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string
 		}
 		t := w.timers[fmt.Sprintf("ws-%s", name)]
 		t.Stop()
-		t.Reset(1 * time.Minute)
+		t.Reset(5 * time.Minute)
 		_, err = writer.Write([]byte("OK"))
 		if err != nil {
 			return

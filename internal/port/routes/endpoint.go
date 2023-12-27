@@ -5,7 +5,7 @@ package routes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"udap/internal/core/domain"

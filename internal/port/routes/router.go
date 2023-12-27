@@ -5,7 +5,7 @@ package routes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 )
