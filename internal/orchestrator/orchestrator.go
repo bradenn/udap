@@ -39,20 +39,25 @@ type Orchestrator interface {
 }
 
 func (o *orchestrator) Terminate() {
-	go func() {
-		err := o.controller.Modules.DisposeAll()
-		if err != nil {
-			log.Err(err)
-		}
-	}()
+
 	go func() {
 		err := o.controller.Endpoints.CloseAll()
 		if err != nil {
 			log.Err(err)
 		}
 	}()
+
+	go func() {
+		err := o.controller.Modules.DisposeAll()
+		if err != nil {
+			log.Err(err)
+		}
+	}()
+
 	close(o.mutations)
+
 	fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
+
 	os.Exit(0)
 }
 
@@ -71,7 +76,7 @@ func NewOrchestrator() (Orchestrator, error) {
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second * 1,
-		mutations:  make(chan domain.Mutation, 24),
+		mutations:  make(chan domain.Mutation, 512),
 	}, nil
 }
 
@@ -132,6 +137,8 @@ func (o *orchestrator) Start() error {
 		modules.NewLog,
 	)
 
+	o.sys.UseModules(modules.NewAction)
+
 	o.sys.Loaded()
 	o.ready = true
 
@@ -166,8 +173,8 @@ func (o *orchestrator) broadcastTimings() error {
 func (o *orchestrator) handleMutations() error {
 	for response := range o.mutations {
 		// o.modules.HandleEmits(response)
-		if !o.ready {
-			continue
+		for !o.ready {
+			time.Sleep(time.Millisecond * 250)
 		}
 
 		err := o.controller.Endpoints.SendAll(response.Id, response.Operation, response.Body)

@@ -105,6 +105,19 @@ func (u *entityService) ChangeIcon(id string, icon string) error {
 	return nil
 }
 
+func (u *entityService) SetPrediction(id string, predicted string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	byId.Predicted = predicted
+	err = u.mutate(byId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Repository Mapping
 
 func (u *entityService) FindByName(name string) (*domain.Entity, error) {

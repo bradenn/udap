@@ -2,33 +2,51 @@
 
 <script lang="ts" setup>
 
-import useListModules, {ModuleController} from "@/controller/modulesController";
-import Element from "udap-ui/components/Element.vue";
+import ElementLink from "udap-ui/components/ElementLink.vue";
 import List from "udap-ui/components/List.vue";
+import {onMounted, reactive, watchEffect} from "vue";
+import {Zone} from "@/types";
+import core from "@/core";
+import ElementHeader from "udap-ui/components/ElementHeader.vue";
 
 
-let state = useListModules() as ModuleController;
+const remote = core.remote();
+
+const state = reactive({
+  zones: [] as Zone[]
+})
+
+onMounted(() => {
+  state.zones = remote.zones
+})
+
+watchEffect(() => {
+  state.zones = remote.zones
+  return remote.zones
+})
 
 </script>
 
 <template>
-  <List v-if="state.modules">
-
-    <Element v-for="module in state.modules" :foreground="true" class="d-flex gap-2 align-items-center px-2 py-2"
-             mutable>
-      <div class="notches px-2" style="height: 1rem">
-        <div :class="`${module.enabled?'active':''}`" class="notch h-100"></div>
-
+  <List>
+    <ElementHeader title="Pinned"></ElementHeader>
+    <ElementLink v-for="module in state.zones.filter(z => z.pinned)" :key="module.id"
+                 :title="module.name" :to="`/settings/zones/${module.id}`" icon="􀞿">
+      <div class="d-flex">
+        <div v-for="icon in module.entities.map(e => e.icon)" class="sf-icon">
+          {{ icon }}
+        </div>
       </div>
-      <div class="d-flex flex-column gap-1">
-        <div class="label-monospace lh-1">{{ module.name }}</div>
-        <div class="label-monospace lh-1 label-o2 label-c6">v{{ module.version }}</div>
-
+    </ElementLink>
+    <ElementHeader title="Unpinned"></ElementHeader>
+    <ElementLink v-for="module in state.zones.filter(z => !z.pinned)" :key="module.id"
+                 :title="module.name" :to="`/settings/zones/${module.id}`" icon="􀞿">
+      <div class="d-flex">
+        <div v-for="icon in module.entities.map(e => e.icon)" class="sf-icon">
+          {{ icon }}
+        </div>
       </div>
-      <div class="flex-fill"></div>
-      <div class="label-c5 px-2">{{ module.state }}</div>
-    </Element>
-
+    </ElementLink>
   </List>
 </template>
 

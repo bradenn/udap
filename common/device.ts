@@ -16,14 +16,14 @@ export interface Device {
         }
         appBadge: {
             supported: boolean,
-            setBadge: (number) => void
+            setBadge: (val: number) => void
         }
         requestPermission: () => void
     },
 
 }
 
-function urlBase64ToUint8Array(base64String) {
+function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding)
         .replace(/\-/g, '+')
@@ -122,8 +122,11 @@ export default function useDevice(remote: Remote): Device {
                 } else {
                     state.notifications.push.vapidUrl = subscription.endpoint
                     state.notifications.push.granted = true
-                    let jwt = parseJwt(localStorage.getItem("token")) as { id: string }
-                    endpointService.registerPush(jwt.id, JSON.stringify(subscription)).then(r => console.log("Registered!!!"))
+                    let token = localStorage.getItem("token");
+                    if (token) {
+                        let jwt = JSON.parse(parseJwt(token)) as { id: string }
+                        endpointService.registerPush(jwt.id, JSON.stringify(subscription)).then(r => console.log(`Registered Endpoint: ${jwt.id}`))
+                    }
                 }
             });
         }
@@ -135,6 +138,7 @@ export default function useDevice(remote: Remote): Device {
             // const n = new Notification(`Hi! Number is set to ${value}!!`, {
             //     tag: "soManyCuteNotification",
             // });
+            //@ts-ignore
             navigator.setAppBadge(Math.round(value))
         }
     }

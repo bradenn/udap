@@ -4,11 +4,15 @@
 import {defineProps, inject, onMounted, onUpdated, reactive} from "vue"
 import {useRouter} from "vue-router";
 import {PreferencesRemote} from "../persistent";
+import {v4 as uuidv4} from "uuid";
 
 const props = defineProps<{
   foreground?: boolean
   mutable?: boolean
+  layout?: boolean
+  micro?: string
   surface?: boolean
+  fill?: boolean
   to?: string
   link?: boolean
   cb?: () => void
@@ -29,6 +33,7 @@ const state = reactive({
   down: 0,
   timeout: 0,
   active: false,
+  uuid: uuidv4()
 })
 
 const router = useRouter();
@@ -44,21 +49,58 @@ function update() {
   if (props.to) {
     state.active = router.currentRoute.value.fullPath == (props.to)
   }
+  updateSize()
+}
+
+function updateSize() {
+  let element = document.getElementById(state.uuid) as HTMLElement
+
+  if (element && props.fill) {
+    let sum = 0;
+    // console.log(`List: ${state.uuid} => ${element} ${sum}`)
+
+    if (!element.parentElement) {
+      return
+    }
+
+    if (!element.parentElement.children) {
+      return
+    }
+    //@ts-ignore
+    for (let child of element.parentElement.children) {
+
+      if (child.id.toString() !== element.id.toString()) {
+        sum += child.clientHeight
+
+      }
+
+    }
+
+    let parent = element.parentElement?.clientHeight || 100;
+    let children = parent - sum;
+    element.style.height = `${children}px`;
+    element.style.maxHeight = `${children}px`;
+
+
+  } else {
+
+  }
 }
 
 onUpdated(() => {
   update()
+
 })
 
 router.afterEach(update)
 
 function pointerDown(event: TouchEvent | MouseEvent) {
-  state.position.w = 0.99
+  state.position.w = 0.995
   state.down = Date.now().valueOf()
   // if (event.cancelable) event.preventDefault()
   if (props.longCb) {
     //@ts-ignore
-    state.timeout = setTimeout(revisitLongCb, 250) as number
+    state.timeout = setTimeout(revisitLongCb, 400) as number
   }
 }
 
@@ -111,6 +153,7 @@ function pointerDrag(event: TouchEvent | MouseEvent) {
   // state.position.c = angle
   state.position.y = posY
 
+
 }
 
 
@@ -137,43 +180,75 @@ function pointerUp(event: TouchEvent | MouseEvent) {
 
 <template>
 
-  <div
-      :class="`${props.foreground?(props.link?(state.active?'subplot px-2 py-2':'subplot  px-2 py-2'):'subplot px-2 py-2'):`element back`} ${props.surface?'subplot-surface':''} `"
-      :style="`box-shadow: inset 0 0 1px 1px ${state.active||props.accent?preferences.accent+'':'transparent'}; ${props.mutable?'transform: scale(' + state.position.w+');':''}  ${!props.foreground?`backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`:''}`"
+  <div :id="`${state.uuid}`"
+       :class="`${props.layout?'element-layout':''} ${props.foreground?(props.link?(state.active?'subplot px-2 py-2':'subplot  px-2 py-2'):'subplot px-2 py-2'):`element back`} ${props.surface?'subplot-surface':''} `"
+       :style="`box-shadow: inset 0 0 0.5px 1px ${state.active||props.accent?preferences.accent+'':'transparent'}; ${props.accent?'background-color: rgba(255,255,255,0.05);':''} ${props.mutable?'transform: scale(' + state.position.w + `); filter: drop-shadow(0 0 2px rgba(255,255,255,0.1)) !important;`:'filter: drop-shadow(0 0 2px rgba(255,255,255,0.1)) !important;'}  ${props.foreground?`${state.position.w!=1?'background-color: rgba(255,255,255,0.05);':''} `:`backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`}`"
 
-      @touchend.passive="pointerUp"
-      @touchleave.passive="pointerUp"
-      @touchmove.passive="pointerDrag"
-      @touchstart.passive="pointerDown">
+       @touchend.passive="pointerUp"
+       @touchleave.passive="pointerUp"
+       @touchmove.passive="pointerDrag"
+       @touchstart.passive="pointerDown">
     <slot></slot>
   </div>
 </template>
 
 <style lang="scss" scoped>
+//backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);
 .subplot-inactive {
   background-color: transparent !important;
+}
+
+.micro-corner {
+  //background-color: rgba(255, 255, 255, 0.2);
+  position: absolute;
+  border-radius: 50%;
+  width: 16px;
+  aspect-ratio: 1/1;
+  left: 1.85rem;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .subplot.disabled {
   background-color: rgba(255, 0, 0, 1);
 }
 
+
 .subplot {
   cursor: none !important;
   user-select: none !important;
 }
 
+$border-element: hsla(0deg, 0%, 20%, 0.4);
+.element-layout {
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
 .element {
+
+
+  overflow: clip;
   cursor: none !important;
   user-select: none !important;
-  padding: 0.375rem;
+  padding: 0.375rem 0.375rem;
+  //z-index: 1000 !important;
+  //transform: translate3d(0, 0, 0);
+  //background-color: rgba(22, 22, 24, 0.05);
+  //backdrop-filter: brightness(120%);
+  //-webkit-backdrop-filter: brightness(120%);
   border-radius: 1rem !important;
-  box-shadow: inset 0 0 1px 0.5px rgba(255, 255, 255, 0.05) !important;
-
+  box-shadow: inset 0 0 2px 0.5px $border-element !important;
+  //border: 1px solid $border-element;
+  //border: 1px solid hsla(0deg, 0, 17, 0.2);
+  //filter: drop-shadow(2px 0 0 red);
+  //background-blend-mode: overlay !important;
 
   > .subplot {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    backdrop-filter: brightness(190%) !important;
+
+    -webkit-backdrop-filter: brightness(190%) !important;
   }
 }
 
@@ -181,12 +256,28 @@ function pointerUp(event: TouchEvent | MouseEvent) {
   cursor: none !important;
   user-select: none !important;
   -webkit-user-select: none !important;
-  //z-index: 99 !important;
+  transform: translate3d(0, 0, 0);
+
+  //z-index: 0 !important;
+  //margin-inline: 0;
+  //padding: 0 !important;
   border-radius: calc(1rem - 0.375rem) !important;
-  border: 1px solid rgba(255, 255, 255, 0.025);
+  border: 1px solid hsla(0deg, 0, 22, 0.3);
   //scroll-padding: 1rem;
+  //background-blend-mode: overlay !important;
+  //box-shadow: inset 0 0 1px 0.5px hsla(0deg, 0, 14, 0.8), 0 0 8px 2px hsla(0deg, 0, 2, 0.1), 0 0 1px 0.5px hsla(0deg, 0, 12, 0.2) !important;
+  //background: rgba(255, 255, 255, 0.03);
+  //box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  //backdrop-filter: blur(8px) brightness(120%);
+  //-webkit-backdrop-filter: blur(8px) contrast(98%);
+
   //filter: brightness(150%);
-  transition: transform 80ms ease-out;
+  transition: transform 40ms ease-out;
+
+  //
+  //
+  //-webkit-backdrop-filter: brightness(190%) !important;
+  //backdrop-filter: brightness(190%) !important;
 }
 
 .subplot {

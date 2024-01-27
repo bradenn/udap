@@ -50,7 +50,7 @@ function click() {
   display: flex;
   justify-content: center;
   flex-direction: column;
-  align-items: center;
+  align-items: start;
   //outline: 1px solid red;
 
 }

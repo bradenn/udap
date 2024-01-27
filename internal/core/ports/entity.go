@@ -23,6 +23,7 @@ type EntityService interface {
 	FindAllByModule(name string) (*[]domain.Entity, error)
 	Create(*domain.Entity) error
 	ChangeIcon(id string, icon string) error
+	SetPrediction(id string, prediction string) error
 	ChangeAlias(id string, icon string) error
 	Config(id string, value string) error
 	FindOrCreate(*domain.Entity) error

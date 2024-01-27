@@ -3,7 +3,9 @@
 package repository
 
 import (
+	"fmt"
 	"gorm.io/gorm"
+	"sync"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
@@ -11,7 +13,9 @@ import (
 
 type attributeRepo struct {
 	generic.Store[domain.Attribute]
-	db *gorm.DB
+	cache map[string]domain.Attribute
+	mutex sync.Mutex
+	db    *gorm.DB
 }
 
 func (u *attributeRepo) FindRecentLogs() (*[]domain.AttributeLog, error) {
@@ -27,6 +31,8 @@ func NewAttributeRepository(db *gorm.DB) ports.AttributeRepository {
 	return &attributeRepo{
 		db:    db,
 		Store: generic.NewStore[domain.Attribute](db),
+		mutex: sync.Mutex{},
+		cache: make(map[string]domain.Attribute),
 	}
 }
 
@@ -34,12 +40,55 @@ func (u *attributeRepo) Log(attribute *domain.Attribute) (*domain.AttributeLog, 
 	if attribute.Type == "media" {
 		return nil, nil
 	}
-	log := attribute.ToLog()
-	err := u.db.Model(&log).Create(&log).Error
-	if err != nil {
+	//log := attribute.ToLog()
+	//err := u.db.Model(&log).Create(&log).Error
+	//if err != nil {
+	//	return nil, err
+	//}
+	return nil, nil
+}
+
+func (u *attributeRepo) StateUpdate(attribute *domain.Attribute) error {
+	composite := fmt.Sprintf("%s.%s", attribute.Entity, attribute.Key)
+
+	u.mutex.Lock()
+	val, ok := u.cache[composite]
+	u.mutex.Unlock()
+
+	if !ok {
+		u.cache[composite] = *attribute
+	}
+
+	if val.Value != attribute.Value {
+		err := u.Store.Update(attribute)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (u *attributeRepo) CachedValue(entity string, key string) (*domain.Attribute, error) {
+	composite := fmt.Sprintf("%s.%s", entity, key)
+
+	u.mutex.Lock()
+	val, ok := u.cache[composite]
+	u.mutex.Unlock()
+
+	if ok {
+		return &val, nil
+	}
+
+	var target domain.Attribute
+	if err := u.db.Model(&domain.Attribute{}).Where("entity = ? AND key = ?", entity,
+		key).First(&target).Error; err != nil {
 		return nil, err
 	}
-	return &log, nil
+
+	u.cache[composite] = target
+
+	return &target, nil
 }
 
 func (u *attributeRepo) Register(attribute *domain.Attribute) error {
@@ -52,6 +101,7 @@ func (u *attributeRepo) Register(attribute *domain.Attribute) error {
 
 func (u *attributeRepo) FindByComposite(entity string, key string) (*domain.Attribute, error) {
 	var target domain.Attribute
+
 	if err := u.db.Model(&domain.Attribute{}).Where("entity = ? AND key = ?", entity,
 		key).First(&target).Error; err != nil {
 		return nil, err

@@ -22,6 +22,7 @@ type Controller struct {
 	Macros        ports.MacroService
 	Triggers      ports.TriggerService
 	SubRoutines   ports.SubRoutineService
+	Actions       ports.ActionService
 	RX            chan<- domain.Mutation
 }
 
@@ -100,6 +101,11 @@ func (c *Controller) EmitAll() error {
 	}
 
 	err = c.SubRoutines.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	err = c.Actions.EmitAll()
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,24 @@
 
 // UDAP Core Domain (Alphabetical)
 
+export interface Action {
+
+    name: string;
+    entities: string[];
+    attribute: string;
+    triggerId: string;
+    request: string;
+    created: string;
+    updated: string;
+    id: string;
+}
+
+export interface Detour {
+    time: number
+    dose: number
+    intensity: number
+}
+
 export interface Attribute {
     created: string;
     id: string;

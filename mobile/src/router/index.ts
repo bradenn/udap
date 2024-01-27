@@ -6,6 +6,7 @@ import setupRoutes from "@/views/setup";
 
 
 import settings from "@/views/settings";
+import apps from "@/views/apps";
 import NotFound from "@/views/NotFound.vue";
 
 
@@ -51,66 +52,22 @@ const mobileRoutes =
                 component: () => import("@/views/home/SubRoutineList.vue"),
                 icon: '􀎟',
             },
-            {
-                path: '/sentry',
-                name: 'sentry',
-                component: () => import("@/views/beam/Beam.vue"),
-                icon: '􀎟',
-            },
-            {
-                path: '/monitor',
-                name: 'monitor',
-                component: () => import("@/views/monitor/MonitorList.vue"),
-                icon: '􀎟',
-            },
-            {
-                path: '/lights',
-                name: 'lights',
-                component: () => import("@/views/apps/Lights.vue"),
-                icon: '􀎟',
-            },
+
             {
                 path: '/menu',
                 name: 'menu',
                 component: () => import("@/views/MenuPage.vue"),
                 icon: '􀎟',
             },
-            {
-                path: '/thermostat',
-                name: 'thermostat',
-                component: () => import("@/views/home/ThermostatView.vue"),
-                icon: '􀎟',
-            },
+
             {
                 path: '/macros',
                 name: 'macros',
                 component: () => import("@/views/home/MacroList.vue"),
                 icon: '􀎟',
             },
-            {
-                path: '/apps/request',
-                name: 'request',
-                component: () => import("@/views/apps/RequestBuilder.vue"),
-                icon: '􀎟',
-            },
-            {
-                path: '/apps/message',
-                name: 'message',
-                component: () => import("@/views/apps/Message.vue"),
-                icon: '􀎟',
-            },
-            {
-                path: '/apps/todo',
-                name: 'request',
-                component: () => import("@/views/apps/Todo.vue"),
-                icon: '􀎟',
-            },
-            {
-                path: '/beam',
-                name: 'beam',
-                component: () => import("@/views/beam/Beam.vue"),
-                icon: '􀎟',
-            },
+
+            apps,
             settings,
             {path: "*", component: NotFound}
         ]

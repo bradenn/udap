@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -221,8 +222,8 @@ func (u *moduleService) Load(id string) error {
 	module.Type = config.Type
 	module.Author = config.Author
 	module.Running = false
-	log.Event("Module '%s' @ 0x%s loaded. (%s) [%s]", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).String(), config.Interval.String())
+	log.Event("Module '%s' @ 0x%s loaded. (%s)", module.Name, module.SessionId(),
+		time.Since(start).String())
 	err = u.repository.Update(module)
 	if err != nil {
 		return err
@@ -292,27 +293,27 @@ func (u *moduleService) Dispose(id string) error {
 }
 
 func (u *moduleService) UpdateAll() error {
-	modules, err := u.repository.FindAll()
-	if err != nil {
-		return err
-	}
-	wg := sync.WaitGroup{}
-	ref := *modules
-	for _, module := range ref {
-		if !module.Running || !module.Enabled {
-			continue
-		}
-		wg.Add(1)
-
-		go func(mod domain.Module) {
-			defer wg.Done()
-			err = u.Update(mod.Id)
-			if err != nil {
-				log.Err(err)
-			}
-		}(module)
-	}
-	wg.Wait()
+	//modules, err := u.repository.FindAll()
+	//if err != nil {
+	//	return err
+	//}
+	//wg := sync.WaitGroup{}
+	//ref := *modules
+	//for _, module := range ref {
+	//	if !module.Running || !module.Enabled {
+	//		continue
+	//	}
+	//	wg.Add(1)
+	//
+	//	go func(mod domain.Module) {
+	//		defer wg.Done()
+	//		err = u.Update(mod.Id)
+	//		if err != nil {
+	//			log.Err(err)
+	//		}
+	//	}(module)
+	//}
+	//wg.Wait()
 	return nil
 }
 
@@ -381,6 +382,29 @@ func (u *moduleService) DisposeAll() error {
 	return nil
 }
 
+func (u *moduleService) Loader(wg *sync.WaitGroup) chan domain.Module {
+	threads := 8
+	channel := make(chan domain.Module, threads)
+
+	for i := 0; i < threads; i++ {
+		go func() {
+			for module := range channel {
+
+				err := u.Build(module.Id)
+				if err != nil {
+					wg.Done()
+					log.Err(err)
+					continue
+				}
+				log.Event("Loaded module '%s'", module.Name)
+				wg.Done()
+			}
+		}()
+	}
+
+	return channel
+}
+
 func (u *moduleService) LoadAll() error {
 	modules, err := u.repository.FindAll()
 	if err != nil {
@@ -388,7 +412,9 @@ func (u *moduleService) LoadAll() error {
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(len(*modules))
+	//channel := u.Loader(&wg)
 	for _, module := range *modules {
+		//channel <- module
 		go func(mod domain.Module) {
 			defer wg.Done()
 			err = u.Load(mod.Id)
@@ -397,7 +423,10 @@ func (u *moduleService) LoadAll() error {
 			}
 		}(module)
 	}
+
 	wg.Wait()
+
+	log.Event("All modules loaded")
 
 	return nil
 }
@@ -422,11 +451,44 @@ func (u *moduleService) Discover() error {
 			target.State = DISCOVERED
 			err = u.repository.Create(target)
 			if err != nil {
-				return err
+				continue
 			}
 		}
 	}
 	return nil
+}
+
+func (u *moduleService) Builder(wg *sync.WaitGroup) chan domain.Module {
+	threads := runtime.NumCPU()
+	channel := make(chan domain.Module, threads)
+
+	for i := 0; i < threads; i++ {
+		go func() {
+			for module := range channel {
+				start := time.Now()
+
+				err := u.Build(module.Id)
+				if err != nil {
+					wg.Done()
+					log.Err(err)
+					err = u.setState(module.Id, ERROR)
+					continue
+				}
+
+				err = u.setState(module.Id, UNINITIALIZED)
+				if err != nil {
+					continue
+				}
+
+				log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
+					time.Since(start).String())
+
+				wg.Done()
+			}
+		}()
+	}
+
+	return channel
 }
 
 func (u *moduleService) BuildAll() error {
@@ -436,26 +498,13 @@ func (u *moduleService) BuildAll() error {
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(len(*modules))
+	builder := u.Builder(&wg)
 	for _, module := range *modules {
-		go func(mod domain.Module) {
-			defer wg.Done()
-			mod.Running = false
-			err = u.Build(mod.Id)
-			if err != nil {
-				log.Err(err)
-				err = u.setState(mod.Id, ERROR)
-				if err != nil {
-					return
-				}
-				return
-			}
-			err = u.setState(mod.Id, UNINITIALIZED)
-			if err != nil {
-				return
-			}
-		}(module)
+		module.Running = false
+		builder <- module
 	}
 	wg.Wait()
+	close(builder)
 	return nil
 }
 

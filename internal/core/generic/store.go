@@ -4,6 +4,7 @@ package generic
 
 import (
 	"gorm.io/gorm"
+	"sync"
 	"udap/internal/core/domain"
 )
 
@@ -13,12 +14,16 @@ type PersistentType interface {
 }
 
 type Store[T any] struct {
-	db *gorm.DB
+	cache     map[string]T
+	cacheLock sync.RWMutex
+	db        *gorm.DB
 }
 
 func NewStore[T any](db *gorm.DB) Store[T] {
 	return Store[T]{
-		db: db,
+		db:        db,
+		cache:     map[string]T{},
+		cacheLock: sync.RWMutex{},
 	}
 }
 

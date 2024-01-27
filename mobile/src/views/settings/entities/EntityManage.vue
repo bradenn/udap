@@ -4,10 +4,11 @@
 import core from "@/core";
 import Element from "udap-ui/components/Element.vue";
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
+import ElementLink from "udap-ui/components/ElementLink.vue";
 import List from "udap-ui/components/List.vue";
 import ElementNumber from "udap-ui/components/ElementNumber.vue";
 import type {Attribute, Entity} from "udap-ui/types"
-import {onMounted, reactive} from "vue";
+import {onMounted, reactive, watchEffect} from "vue";
 
 const router = core.router()
 
@@ -52,6 +53,10 @@ const supportedAttributes = [
   },
 ]
 
+watchEffect(() => {
+  update()
+})
+
 onMounted(() => {
   let eid = router.currentRoute.value.params["entityId"]
   if (!eid) return
@@ -62,6 +67,14 @@ onMounted(() => {
   state.attributes = remote.attributes.filter(a => a.entity == state.entityId)
 
 })
+
+function update() {
+
+  let e = remote.entities.find(e => e.id == state.entityId)
+  if (!e) return;
+  state.entity = e
+  state.attributes = remote.attributes.filter(a => a.entity == state.entityId)
+}
 
 function getTitle(key: string): string {
   switch (key) {
@@ -78,6 +91,9 @@ function getTitle(key: string): string {
 }
 
 function getIcon(key: string): string {
+  if (key.startsWith("/sensors/")) {
+    return '􁔊';
+  }
   switch (key) {
     case "dim":
       return '􀇯'
@@ -124,10 +140,19 @@ function getValue(key: string, value: string): string {
 
     <ElementHeader class="px-3 pb-0 m-0" title="Attributes"></ElementHeader>
     <List>
-      <ElementNumber v-for="attr in state.attributes.sort((a, b) => a.order - b.order)" :icon="getIcon(attr.key)"
-                     :immutable="attr.key === 'on'" :title="getTitle(attr.key)"
-                     :unit="getValue(attr.key, attr.value)"
-                     :value="(parseInt(attr.value) || 0)">
+      <ElementLink
+          v-for="attr in state.attributes.sort((a, b) => a.order - b.order).filter(e => e.key.startsWith('/sensors/'))"
+          :icon="getIcon(attr.key)"
+          :title="attr.key">
+        {{ attr.request.length }}
+      </ElementLink>
+      <ElementNumber
+          v-for="attr in state.attributes.sort((a, b) => a.order - b.order).filter(e => !e.key.startsWith('/sensors/'))"
+          :icon="getIcon(attr.key)"
+          :immutable="attr.key === 'on'" :title="getTitle(attr.key)"
+          :unit="getValue(attr.key, attr.value)"
+          :value="(parseInt(attr.value) || 0)">
+
 
       </ElementNumber>
     </List>

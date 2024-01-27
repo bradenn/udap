@@ -43,8 +43,9 @@ onMounted(() => {
         children: [route]
       })
     } else {
+
       target.children.push(route)
-      state.groups = state.groups.map(g => g.name == category ? target : g)
+      state.groups = state.groups.map(g => g.name == category ? (target || {} as Group) : g)
     }
     return route
   })
@@ -54,14 +55,16 @@ onMounted(() => {
 
 <template>
 
-  <List class="gap-3" scroll-y style="max-height: 80vh">
+  <List class="gap-3 px-0" scroll-y style="max-height: 80vh;">
 
     <div v-for="group in state.groups">
-      <ElementHeader :title="group.name"></ElementHeader>
-      <List>
-        <ElementLink v-for="path in group.children" :icon="path.icon" :title="path.name" :to="path.path">
-        </ElementLink>
-      </List>
+      <div>
+        <ElementHeader :title="group.name"></ElementHeader>
+        <List>
+          <ElementLink v-for="path in group.children" :icon="path.icon" :title="path.name" :to="path.path">
+          </ElementLink>
+        </List>
+      </div>
     </div>
 
   </List>

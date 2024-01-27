@@ -73,6 +73,10 @@ function setOptions() {
         description: "Change the brightness of a light",
         value: "dim"
       }, {
+        title: "Spectral",
+        description: "Change the variables of a light",
+        value: "spectral"
+      }, {
         title: "Color",
         description: "Change the color of a light",
         value: "hue"

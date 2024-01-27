@@ -9,7 +9,7 @@ import Element from "udap-ui/components/Element.vue";
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
 import ElementLabel from "udap-ui/components/ElementLabel.vue";
 import List from "udap-ui/components/List.vue";
-import type {CurrentWeather} from "udap-ui/weather"
+
 import type {Forecast} from "udap-ui/composables/weather";
 import {useForecast} from "udap-ui/composables/weather";
 import attributeService from "@/services/attributeService";
@@ -29,6 +29,7 @@ const state = reactive({
   thermostat: {} as Entity,
   expandControls: false,
   mode: "OFF",
+  target: 0,
   outside: {
     humidity: 1,
     temp: 68,
@@ -96,6 +97,13 @@ function updateState() {
   if (mode) {
     state.mode = mode.value;
   }
+
+  let target = state.attributes.find(a => a.key === "target")
+
+  if (target) {
+    state.target = Math.round(parseFloat(target.value) * 10) / 10;
+
+  }
   let temp = state.attributes.find(a => a.key === "thermostat")
   if (temp) {
     let val = JSON.parse(temp.value) as {
@@ -115,15 +123,14 @@ function updateState() {
 
   let heat = state.attributes.find(a => a.key === "heat")
   if (heat) {
-    state.set.heat = Math.round(parseFloat(heat.value) * 100) / 100
-    state.set.heat = Math.max(state.set.heat, 55)
-    state.set.heat = Math.round(state.set.heat * 100) / 100
+    state.set.heat = state.target
+
   }
 
   let cool = state.attributes.find(a => a.key === "cool")
   if (cool) {
-    state.set.cool = Math.round(parseFloat(cool.value) * 100) / 100
-    state.set.cool = Math.round(state.set.cool * 100) / 100
+    state.set.cool = state.target
+
   }
 
   let weather = remote.attributes.find(a => a.key === "weather")
@@ -146,18 +153,31 @@ function updateState() {
 
 function sendRequest(key: string, value: string) {
   let found = state.attributes.find(a => a.key === key)
-  if (!found) return
+  if (!found) {
+    return
+  }
   found.request = value
   attributeService.request(found).then(suc => {
+    console.log("SENT " + value)
     console.log(suc)
   }).catch(err => {
     console.log(err)
   })
 }
 
+function setBest(delta: number) {
+  let value = `${Math.round(state.target) + delta}`
+  if (state.mode === "HEAT") {
+    sendRequest("target", value)
+  } else if (state.mode === "COOL") {
+    sendRequest("target", value)
+  }
+
+}
+
 function setCool(delta: number) {
 
-  let value = `${Math.round(state.set.cool + delta)}`
+  let value = `${Math.round(state.set.cool) + delta}`
   if (state.mode !== "OFF") {
     sendRequest("cool", value)
   }
@@ -180,6 +200,7 @@ function setMode(mode: string) {
             <div class="d-flex flex-column align-items-center gap-0 justify-content-center w-100">
               <div class="d-flex align-items-center gap-0">
                 <div class="d-flex">
+
                   <div class="temp lh-1">{{ state.inside.temp.toString().split(".")[0] }}</div>
                 </div>
                 <div class="d-flex flex-column justify-content-between" style="height: 3rem;">
@@ -199,13 +220,13 @@ function setMode(mode: string) {
             <!--        <div style="width: 2px; border-radius: 1px; height: 3.7rem; background-color: rgba(255,255,255,0.04)"></div>-->
             <div class="d-flex flex-column gap-2 align-items-start justify-content-between font-monospaced"
                  style="width: 4.6rem">
-              <div class=" lh-1 d-flex justify-content-between gap-1">
+              <div v-if="state.mode == 'COOL'" class=" lh-1 d-flex justify-content-between gap-1">
                 <div class="label-c6 label-o3" style="width: 2rem">cool</div>
                 <div class="label-c6 label-o3"
                      style="color: hsla(200, 50%, 55%, 0.9);">{{ state.set.cool.toFixed(2) }}&deg;
                 </div>
               </div>
-              <div v-if="false" class="d-flex justify-content-between lh-1 gap-1">
+              <div v-else-if="state.mode == 'HEAT'" class="d-flex justify-content-between lh-1 gap-1">
                 <div class="label-c6 label-o3" style="width: 2rem">heat</div>
                 <div class="label-c6 label-o3" style="color: hsla(0, 50%, 55%, 0.9);">{{ state.set.heat.toFixed(2) }}&deg;
                 </div>
@@ -281,11 +302,12 @@ function setMode(mode: string) {
         <List scroll-y style="max-height: 74vh">
           <ElementHeader title="Controls"></ElementHeader>
           <List row style="height: 3.25rem; z-index: 1">
-            <Element :cb="() => setCool(-1)" class="align-items-center d-flex justify-content-center  flex-row"
+            <Element :cb="() => setBest(-1)" class="align-items-center d-flex justify-content-center  flex-row"
                      foreground
                      mutable>
-              <div class="label-c2 lh-1 label-w600 label-o3 sf-icon">􀆈
-              </div>
+
+              <div class="label-c2 lh-1 label-w600 label-o3 sf-icon">􀆈</div>
+
 
             </Element>
             <Element :cb="() => state.expandControls = !state.expandControls"
@@ -293,8 +315,14 @@ function setMode(mode: string) {
                      style="width: 25%">
               <div
                   v-if="state.mode ==='COOL'" class="d-flex flex-column align-items-center justify-content-center">
-                <div class="label-c2 lh-1 label-w500 label-o4">{{ state.set.cool }}&deg;</div>
+                <div class="label-c2 lh-1 label-w500 label-o4">{{ state.target }}&deg;</div>
                 <div class="label-c6 lh-1" style="color: hsla(200, 50%, 55%, 0.9);">cool to</div>
+              </div>
+              <div v-else-if="state.mode === 'HEAT'"
+                   class="align-items-center d-flex justify-content-center flex-column">
+                <div class="label-c2 lh-1 label-w500 label-o4">{{ state.target }}&deg;</div>
+                <div class="label-c6 lh-1" style="color: hsla(0, 50%, 55%, 0.9);">heat to</div>
+
               </div>
               <div v-else-if="state.mode === 'OFF'"
                    class="align-items-center d-flex justify-content-center flex-column">
@@ -303,9 +331,10 @@ function setMode(mode: string) {
 
               </div>
             </Element>
-            <Element :cb="() => setCool(1)" class="align-items-center d-flex justify-content-center sf-icon" foreground
+            <Element :cb="() => setBest(1)" class="align-items-center d-flex justify-content-center sf-icon" foreground
                      mutable>
-              <div class="label-c2 lh-1 label-w600 label-o3 sf-icon">􀆇</div>
+              <div class="label-c2 lh-1 label-w600 label-o3 sf-icon">􀆇
+              </div>
             </Element>
           </List>
           <List v-if="state.expandControls" row style="height: 3.25rem; z-index: 1">

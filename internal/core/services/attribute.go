@@ -25,7 +25,7 @@ type attributeService struct {
 
 func (a *attributeService) Watch(ref chan<- domain.Mutation) {
 	a.Watchable.Watch(ref)
-	a.Logs.Watch(ref)
+	//a.Logs.Watch(ref)
 }
 
 func (a *attributeService) EmitAll() error {
@@ -82,10 +82,20 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 		return err
 	}
 
+	e.Requested = time.Now()
 	e.Request = value
-	log, err := a.repository.Log(&(*e))
-	if err != nil {
-		return err
+	//log, err := a.repository.Log(&(*e))
+	//if err != nil {
+	//	return err
+	//}
+
+	if key == "dim" {
+		//isPos := strings.HasPrefix(value, "+")
+		//isNeg := strings.HasPrefix(value, "-")
+		//if isPos || isNeg {
+		//
+		//}
+
 	}
 
 	err = a.operator.Request(e, value)
@@ -93,18 +103,20 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 		return err
 	}
 
-	e.UpdatedAt = time.Now()
+	e.Value = value
+
+	//e.UpdatedAt = time.Now()
 	err = a.repository.Update(e)
 	if err != nil {
 		return err
 	}
-
-	if log != nil {
-		err = a.Logs.Emit(*log)
-		if err != nil {
-			return err
-		}
-	}
+	//
+	//if log != nil {
+	//	err = a.Logs.Emit(*log)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	err = a.Emit(*e)
 	if err != nil {
 		return err
@@ -117,14 +129,17 @@ func (a *attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
+
 	err = a.operator.Update(e, value, time.Now())
 	if err != nil {
 		return err
 	}
+
 	err = a.repository.Update(e)
 	if err != nil {
 		return err
 	}
+
 	err = a.Emit(*e)
 	if err != nil {
 		return err
@@ -175,5 +190,7 @@ func (a *attributeService) FindOrCreate(attribute *domain.Attribute) error {
 }
 
 func (a *attributeService) Delete(attribute *domain.Attribute) error {
+	attribute.Deleted = true
+	_ = a.Emit(*attribute)
 	return a.repository.Delete(attribute)
 }

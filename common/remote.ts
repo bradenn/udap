@@ -2,6 +2,7 @@
 
 import {reactive} from "vue";
 import type {
+    Action,
     Attribute,
     Device,
     Endpoint,
@@ -18,9 +19,10 @@ import type {
     User,
     Zone
 } from "./types";
-import axios from "axios";
+import axios, {AxiosInstance} from "axios";
 
 export enum Target {
+    Action = "action",
     Metadata = "metadata",
     Module = "module",
     Zone = "zone",
@@ -47,7 +49,12 @@ export interface Client {
     socket: WebSocket
     url: string
 
+    oob: boolean
+    token: string
+    endpoint: string
+
     host: boolean
+    hostCheck: number
     ready: boolean
     connecting: boolean
     connected: boolean
@@ -66,7 +73,9 @@ export interface Client {
 
 export interface Remote {
     client: Client,
-
+    payload: number,
+    status: string,
+    actions: Action[],
     attributes: Attribute[],
     devices: Device[],
     endpoints: Endpoint[],
@@ -90,8 +99,10 @@ let remote = reactive<Remote>({
         socket: {} as WebSocket,
 
         url: "",
-
+        endpoint: "",
+        token: "",
         ready: false,
+        hostCheck: 0,
         connecting: false,
         connected: false,
         closed: false,
@@ -105,6 +116,9 @@ let remote = reactive<Remote>({
         connect: connect,
         disconnect: disconnect,
     } as Client,
+    payload: 0,
+    status: "",
+    actions: [] as Action[],
     attributes: [] as Attribute[],
     devices: [] as Device[],
     endpoints: [] as Endpoint[],
@@ -119,7 +133,7 @@ let remote = reactive<Remote>({
     triggers: [] as Trigger[],
     users: [] as User[],
     zones: [] as Zone[],
-})
+} as Remote)
 
 interface Message {
     endpoint: string;
@@ -137,6 +151,8 @@ function setup(): boolean {
         return false
     }
 
+    remote.client.token = token
+
     // let endpoint = localStorage.getItem("endpoint")
     // if (endpoint == null) {
     // }
@@ -147,6 +163,19 @@ function setup(): boolean {
     return true
 }
 
+function goConnect(): void {
+    remote.client.url = connectionString(remote.client.endpoint, remote.client.token)
+    try {
+        remote.client.socket = new WebSocket(remote.client.url)
+    } catch (e) {
+        console.log("That didnt work:" + e)
+    }
+    remote.client.socket.onopen = onOpen
+    remote.client.socket.onclose = onClose
+    remote.client.socket.onmessage = onMessage
+    remote.client.socket.onerror = onError
+}
+
 function connect(cb: (result: boolean) => void): boolean {
 
     if (!setup()) {
@@ -155,20 +184,17 @@ function connect(cb: (result: boolean) => void): boolean {
 
     if (!cb) {
         remote.client.onConnect = (b: boolean) => {
-
         }
     } else {
         remote.client.onConnect = cb
+
     }
 
     if (remote.client.connected || remote.client.connecting) return false
     remote.client.connecting = true
 
-    remote.client.socket = new WebSocket(remote.client.url)
-    remote.client.socket.onopen = onOpen
-    remote.client.socket.onclose = onClose
-    remote.client.socket.onmessage = onMessage
-    remote.client.socket.onerror = onError
+    beginCountdown()
+
 
     return true;
 }
@@ -178,6 +204,9 @@ function disconnect(): void {
         remote.client.socket.close(1000, "Disconnecting")
         remote.client.connected = false
         remote.client.connecting = false
+        remote.status = "Disconnected"
+    } else {
+        remote.status = "Disconnected"
     }
     remote.client.connected = false
     remote.client.connecting = false
@@ -193,40 +222,52 @@ function onOpen(_: Event) {
     remote.client.connected = true
     remote.client.connecting = false
     remote.client.attempts = 0
+    clearTimeout(remote.client.hostCheck)
     remote.client.onConnect(true);
-
+    remote.status = "Connected"
 }
 
-function pingHostInterval() {
-
+function tryAgainSoon() {
+    clearTimeout(remote.client.hostCheck)
+    //@ts-ignore
+    remote.client.hostCheck = setTimeout(beginCountdown, 2000)
 }
 
 function beginCountdown() {
+
     pingHost().then((r) => {
+        if (r != "") {
+            if (localStorage.getItem("endpoint") != r) {
+                localStorage.setItem("endpoint", r)
+            }
+            remote.client.endpoint = r
+        }
         if (r) {
-            clearInterval(remote.client.interval)
-            remote.client.nextAttempt = 0
-            remote.client.attempts++
+            attemptConnection()
             remote.client.host = true
-            //@ts-ignore
-            remote.client.interval = setInterval(tick, 100)
         } else {
             remote.client.host = false
-            clearInterval(remote.client.interval)
-            remote.client.nextAttempt = 2000
-            remote.client.attempts++
-            //@ts-ignore
-            remote.client.interval = setInterval(tick, 100)
+            tryAgainSoon()
         }
     }).catch(() => {
         remote.client.host = false
-        clearInterval(remote.client.interval)
-        remote.client.nextAttempt = 2000
-        remote.client.attempts++
-        //@ts-ignore
-        remote.client.interval = setInterval(tick, 100)
+        tryAgainSoon()
     })
 
+}
+
+
+function beginRetry() {
+    clearInterval(remote.client.interval)
+    remote.client.nextAttempt = 2000
+    remote.client.attempts++
+    remote.client.host = true
+    //@ts-ignore
+    remote.client.interval = setInterval(tick, 100)
+}
+
+function attemptConnection() {
+    goConnect()
 }
 
 function tick() {
@@ -236,17 +277,40 @@ function tick() {
         remote.client.nextAttempt = 0
         clearInterval(remote.client.interval)
         remote.client.connect((a) => {
-
         })
     }
 }
 
-function pingHost() {
-    return axios.get("https://api.udap.app/status").then(r => {
-        return r.data == "."
-    }).catch(r => {
-        return false
-    })
+function pingHost(): Promise<string> {
+
+    return new Promise((resolve, reject) => {
+
+        let instance: AxiosInstance = axios.create({
+            timeout: 500,
+            maxRedirects: 5
+        })
+
+        let local = false;
+
+        instance.get("https://api.udap.app/status").then(r => {
+            local = r.data == "."
+            return resolve("api.udap.app")
+        }).catch(r => {
+            local = false
+            instance.get("https://oob-local.udap.app/status").then(r => {
+                if (r.data == ".") {
+                    resolve("oob-local.udap.app")
+                } else {
+                    reject("no host")
+                }
+            }).catch(r => {
+                reject("no host")
+            })
+        })
+
+
+    });
+
 }
 
 function onClose(_: CloseEvent) {
@@ -254,6 +318,7 @@ function onClose(_: CloseEvent) {
     remote.client.connected = false
     remote.client.connecting = false
     remote.client.disconnect()
+    remote.status = "Connection Lost"
 
     beginCountdown()
 }
@@ -266,21 +331,24 @@ function onMessage(event: MessageEvent) {
         console.log("Invalid JSON received")
         return
     }
+
     if (msg.status !== "success") return;
     let operation: string = msg.operation
     let target: Target = operation as Target
+
     handleMessage(target, msg.body)
     remote.client.connected = true
 }
 
 function onError(err: Event) {
-    console.log(err)
-    if (remote.client.socket.readyState == WebSocket.CLOSED) {
+
+    if (remote.client.socket.readyState == WebSocket.CLOSED || remote.client.socket.readyState == WebSocket.CLOSING) {
         remote.client.ready = false
         remote.client.connected = false
         remote.client.connecting = false
+    } else {
+        remote.client.ready = true
     }
-    remote.client.ready = true
 }
 
 
@@ -306,6 +374,7 @@ function createOrUpdate(target: any[], data: Identifiable): any[] {
 // Handle and route incoming messages to the local cache
 function handleMessage(target: Target, data: any) {
     // remote.diagnostics.lastUpdate = new Date().valueOf()
+
     let dx = 0;
     switch (target) {
         case Target.Close:
@@ -323,6 +392,9 @@ function handleMessage(target: Target, data: any) {
                 remote.timings.push(data)
                 dx = 1
             }
+            break
+        case Target.Action:
+            remote.actions = createOrUpdate(remote.actions, data)
             break
         case Target.Entity:
             remote.entities = createOrUpdate(remote.entities, data)

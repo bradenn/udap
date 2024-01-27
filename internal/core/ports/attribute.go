@@ -14,6 +14,7 @@ type AttributeRepository interface {
 	FindByComposite(entity string, key string) (*domain.Attribute, error)
 	Log(attribute *domain.Attribute) (*domain.AttributeLog, error)
 	Register(*domain.Attribute) error
+	StateUpdate(*domain.Attribute) error
 	FindRecentLogs() (*[]domain.AttributeLog, error)
 }
 

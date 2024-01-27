@@ -26,7 +26,7 @@ const preferences = inject("preferences") as PreferencesRemote
 </script>
 
 <template>
-  <Element :cb="props.cb" :foreground="true" :mutable="true" :to="props.to"
+  <Element :cb="props.cb" :foreground="true" :mutable="true" :to="props?.to"
            class="d-flex align-items-center gap-2 ent" style="height: 3.25rem">
     <div class="d-flex flex-column gap-0 justify-content-center-center px-2">
 
@@ -35,7 +35,7 @@ const preferences = inject("preferences") as PreferencesRemote
           {{ props.icon }}
         </div>
         <div class="d-flex flex-column justify-content-start" style="gap: 0.125rem">
-          <div class="label-o5 label-c4">{{ props.title }}</div>
+          <div class="label-o5 label-c4" v-html="props.title"></div>
           <div v-if="props.alt" class="label-o2 label-c6">{{ props.alt }}</div>
         </div>
       </div>

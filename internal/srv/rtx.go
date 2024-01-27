@@ -42,7 +42,9 @@ type sys struct {
 }
 
 func (r *sys) WithWatch(mutation Watch) {
+
 	mutation.Watch(r.ctrl.RX)
+
 	err := mutation.EmitAll()
 	if err != nil {
 		return

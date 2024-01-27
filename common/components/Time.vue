@@ -4,6 +4,7 @@
 import {onMounted, onUnmounted, reactive, watchEffect} from "vue";
 import {PreferencesRemote} from "../persistent";
 import core from "../core";
+import {TimeUnit} from "../time";
 
 const props = defineProps<{
   until?: number,
@@ -14,10 +15,6 @@ const props = defineProps<{
   precise?: boolean
 }>()
 
-interface TimeUnit {
-  value: number
-  units: string
-}
 
 const state = reactive({
   display: [] as TimeUnit[],
@@ -39,6 +36,7 @@ onMounted(() => {
   }
   if (props.live) {
     setTimeout(() => {
+      //@ts-ignore
       state.frame = setInterval(animate, 1000 / state.tickLimit), 1000 - new Date().getMilliseconds()
     })
   }
@@ -64,7 +62,7 @@ function animate() {
     }
     state.last = state.value
     //map_range(state.tick, 0, state.tickLimit, state.last, state.target)
-    state.value = (state.target + state.value) / 2
+    state.value = state.target
     // console.log(state.value)
     state.display = convertNanosecondsDurationToString(state.value)
   }
@@ -147,7 +145,7 @@ function convertNanosecondsDurationToString(nanoseconds: number): TimeUnit[] {
     } as TimeUnit)
     if (props.precise) {
       timeUnits.push({
-        value: pad(Math.round(miliseconds), 3),
+        value: Math.round(miliseconds),
         units: "ms"
       } as TimeUnit)
     }
@@ -204,7 +202,7 @@ function convertNanosecondsDurationToString(nanoseconds: number): TimeUnit[] {
     value /= 1000;
     unitIndex++;
   }
-  return [{value: value.toFixed(2), units: units[unitIndex]} as TimeUnit]
+  return [{value: value, units: units[unitIndex]} as TimeUnit]
 
 }
 
@@ -220,7 +218,7 @@ function pad(num: number, size: number): string {
     <div class="d-flex gap-2">
       <div v-for="t in state.display" class="d-flex " style="gap: 0.125rem">
 
-        <div class="label-o5" v-html="pad(t.value, 2)"></div>
+        <div class="label-o5" v-html="pad(t.value, t.units == 'ms'?3:2)"></div>
         <div class="label-o3">{{ t.units }}</div>
       </div>
     </div>

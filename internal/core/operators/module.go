@@ -250,12 +250,7 @@ func (m *moduleRuntime) Dispose(module string, uuid string) error {
 	if err != nil {
 		return err
 	}
-	//defer func() {
-	//	err = m.returnModule(uuid, local)
-	//	if err != nil {
-	//		log.Err(err)
-	//	}
-	//}()
+
 	binaryPath := generateBuildPath(module, uuid)
 	// Confirm that the binary file exists
 	if _, err = os.Stat(binaryPath); err != nil {
@@ -278,6 +273,7 @@ func (m *moduleRuntime) Dispose(module string, uuid string) error {
 			return
 		}
 	}()
+
 	err = m.removeModule(uuid)
 	if err != nil {
 		return err

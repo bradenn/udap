@@ -48,13 +48,31 @@ func (v *MacMeta) listen() {
 	for {
 		select {
 		case req := <-v.request:
-			v.localDisplay = req
+
 			if v.terminalId != "" {
 				state := "false"
 				if req {
 					state = "true"
 				}
-				err := v.Attributes.Set(v.terminalId, "on", state)
+				v.localDisplay = req
+				val, err := v.pollDisplay()
+				if err != nil {
+					return
+				}
+
+				if val != req {
+					err = v.Entities.SetPrediction(v.terminalId, "immutable")
+					if err != nil {
+
+					}
+				} else {
+					err = v.Entities.SetPrediction(v.terminalId, "mutable")
+					if err != nil {
+
+					}
+				}
+
+				err = v.Attributes.Set(v.terminalId, "on", state)
 				if err != nil {
 					v.ErrF("failed to set terminal attribute: %s", err.Error())
 					break
@@ -169,17 +187,17 @@ func (v *MacMeta) displayOn() error {
 	return nil
 }
 
-func (v *MacMeta) pollDisplay() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*1000)
+func (v *MacMeta) pollDisplay() (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*4500)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "/bin/bash", "-c",
 		"system_profiler SPDisplaysDataType | grep 'Display Asleep' | wc -l")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return false, err
 	}
-	v.requestState(strings.Contains(string(output), "0"))
-	return nil
+
+	return strings.Contains(string(output), "0"), nil
 }
 
 func (v *MacMeta) displayOff() error {
@@ -190,6 +208,7 @@ func (v *MacMeta) displayOff() error {
 	}
 
 	v.requestState(false)
+
 	return nil
 }
 
@@ -204,7 +223,15 @@ func (v *MacMeta) Setup() (plugin.Config, error) {
 
 func (v *MacMeta) Update() error {
 	if v.Ready() {
-		err := v.pollDisplay()
+		value, err := v.pollDisplay()
+		if err != nil {
+			return err
+		}
+		out := "false"
+		if value {
+			out = "true"
+		}
+		err = v.Attributes.Set(v.terminalId, "on", out)
 		if err != nil {
 			return err
 		}

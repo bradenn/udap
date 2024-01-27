@@ -3,7 +3,7 @@
 <script lang="ts" setup>
 import type {Attribute, Entity} from "udap-ui/types";
 import {onMounted, reactive, watchEffect} from "vue";
-import core from "@/core";
+import core from "udap-ui/core";
 import attributeService from "@/services/attributeService";
 import Element from "udap-ui/components/Element.vue";
 import List from "udap-ui/components/List.vue";
@@ -145,7 +145,7 @@ function mouseHold(e: MouseEvent) {
     <List :row="true">
 
 
-      <Element :foreground="true" :long-cb="() => router.push('/home/thermostat')" :mutable="true" class="w-100  px-4">
+      <Element :cb="() => router.push('/apps/thermostat')" :foreground="true" :mutable="true" class="w-100  px-4">
         <div class="d-flex flex-column align-items-center gap-0 justify-content-center w-100">
           <div class="d-flex align-items-center gap-0">
             <div class="d-flex">
@@ -168,13 +168,14 @@ function mouseHold(e: MouseEvent) {
         <!--        <div style="width: 2px; border-radius: 1px; height: 3.7rem; background-color: rgba(255,255,255,0.04)"></div>-->
         <div class="d-flex flex-column gap-2 align-items-start justify-content-between font-monospaced"
              style="width: 4.6rem">
-          <div class=" lh-1 d-flex justify-content-between gap-1">
+          <div v-if="state.mode == 'COOL'" class=" lh-1 d-flex justify-content-between gap-1">
             <div class="label-c6 label-o3" style="width: 2rem">cool</div>
             <div class="label-c6 label-o3"
                  style="color: hsla(200, 50%, 55%, 0.9);">{{ state.set.cool.toFixed(2) }}&deg;
             </div>
           </div>
-          <div v-if="false" class="d-flex justify-content-between lh-1 gap-1">
+
+          <div v-if="state.mode == 'HEAT'" class="d-flex justify-content-between lh-1 gap-1">
             <div class="label-c6 label-o3" style="width: 2rem">heat</div>
             <div class="label-c6 label-o3" style="color: hsla(0, 50%, 55%, 0.9);">{{ state.set.heat.toFixed(2) }}&deg;
             </div>

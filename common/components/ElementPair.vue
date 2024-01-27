@@ -12,6 +12,7 @@ const props = defineProps<{
   value?: string
   icon?: string
   copyable?: boolean
+  noPadding?: boolean
   outbound?: string
   to?: string
   cb?: () => void
@@ -25,15 +26,16 @@ const router = core.router()
 const preferences = inject("preferences") as PreferencesRemote
 
 function copyValue() {
-  navigator.clipboard.writeText(props.value);
-
+  if (props.value) {
+    navigator.clipboard.writeText(props.value);
+  }
 }
 
 </script>
 
 <template>
-  <Element :cb="props.cb" :foreground="true" :to="props.to"
-           class="d-flex justify-content-between align-items-center flex-row " style="height: 3.25rem">
+  <Element :cb="props.cb" :foreground="true" :long-cb="props.cb" :mutable="!(!props.cb) || false" :to="props.to"
+           class="d-flex justify-content-between align-items-center flex-row" style="height: 3.25rem">
 
     <div class="label-c4 lh-1 label-o5 d-flex align-items-center px-2">
       <div class="sf-icon label-c4" style="width: 15px; margin-right: 12px">
@@ -46,9 +48,12 @@ function copyValue() {
     </div>
     <!--      <div class="label-c5 lh-1 label-o3">sds</div>-->
     <div class="d-flex align-items-center">
-      <div class="flex-grow-1 d-flex align-items-end justify-content-end position-relative px-1">
+      <div v-if="props.noPadding" style="margin-right: -2px">
+        <slot></slot>
+      </div>
+      <div v-else class="flex-grow-1 d-flex align-items-end justify-content-end position-relative px-1">
         <slot v-if="!props.value"></slot>
-        <div v-else class="label-truncate label-o3 label-c4">{{ props.value }}</div>
+        <div v-else class="label-truncate label-o3 label-c4 sf">{{ props.value }}</div>
       </div>
       <div v-if="props.copyable">
         <Element :cb="copyValue" class="sf d-flex align-items-center justify-content-center label-o3" foreground mutable

@@ -147,6 +147,7 @@ function mouseHold(e: MouseEvent) {
                   :outside-next="state.outside.next" :set="state.set"
                   :weather-max="state.emax" :weather-min="state.emin" class="w-100"></TempSlider>
     </div>
+
     <div class="d-flex justify-content-between align-items-center gap-1 p-1">
       <div class="subplot d-flex justify-content-center align-items-center sf-icon"
            style="width: 4rem; height: 4rem"

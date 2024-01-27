@@ -8,6 +8,8 @@ export interface PreferencesRemote {
     text: string
     blur: number
     landscape: boolean
+    oob: boolean
+    home?: string[]
     pattern: {
         opacity: number
         scale: number
@@ -22,6 +24,8 @@ const preferenceDefaults: PreferencesRemote = {
     accent: "#264173",
     text: "#ffffff",
     landscape: false,
+    oob: false,
+    home: [],
     pattern: {
         opacity: 1,
         scale: 1,
@@ -58,13 +62,14 @@ export function usePersistent(): PreferencesRemote {
             // Parse the string to the Preferences object
             // Return the parsed Preferences object
             let out = JSON.parse(stored) as PreferencesRemote
+
             return out
-        } else {
-            // If the retrieval failed, save the default values to localStorage
-            save(preferenceDefaults)
-            // Return the default parameters
-            return preferenceDefaults
         }
+
+        // If the retrieval failed, save the default values to localStorage
+        save(preferenceDefaults)
+        // Return the default parameters
+        return preferenceDefaults
     }
 
     // Watch all changes made to the Preferences reactive object

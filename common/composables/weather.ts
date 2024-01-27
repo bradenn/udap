@@ -3,8 +3,9 @@
 import {Attribute, Entity} from "../types";
 import {CurrentWeather, getWeatherIcon, Weather} from "../weather";
 import {inject, onMounted, reactive, watchEffect} from "vue";
+
 //@ts-ignore
-import moment from 'moment';
+import moment from 'moment/src/moment';
 
 import {Remote} from "../remote";
 
