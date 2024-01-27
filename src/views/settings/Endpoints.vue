@@ -4,8 +4,10 @@
 
 import Element from "udap-ui/components/Element.vue";
 import List from "udap-ui/components/List.vue";
+
 import useListEndpoints, {EndpointController} from "@/controller/endpointController";
-import moment from "moment";
+import {since} from "udap-ui/time"
+
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
 import core from "udap-ui/core";
 
@@ -13,6 +15,9 @@ import core from "udap-ui/core";
 let state = useListEndpoints() as EndpointController;
 const preferences = core.preferences()
 
+function timeSince(date: string): string {
+  return since(date)
+}
 
 </script>
 
@@ -38,7 +43,7 @@ const preferences = core.preferences()
           }}
         </div>
 
-        <div class="label-monospace lh-1 label-o2 label-c6">{{ moment(endpoint.updated).fromNow() }}</div>
+        <div class="label-monospace lh-1 label-o2 label-c6">{{ timeSince(endpoint.updated) }}</div>
 
       </div>
       <div class="flex-fill"></div>
@@ -46,7 +51,7 @@ const preferences = core.preferences()
     </Element>
 
     <ElementHeader title="Recent"></ElementHeader>
-    <Element v-for="module in state.endpoints.filter(e => !e.connected)" :foreground="true"
+    <Element v-for="module in state.endpoints.filter(e => !e.connected)" :key="module.id" :foreground="true"
              class="d-flex gap-2 align-items-center px-2 py-2"
              mutable>
       <div class="notches px-2" style="height: 1rem">
@@ -60,7 +65,8 @@ const preferences = core.preferences()
           </div>
           {{ module.name ? module.name : 'Unnamed' }}
         </div>
-        <div class="label-monospace lh-1 label-o2 label-c6">{{ moment(module.updated).fromNow() }}</div>
+
+        <div class="label-monospace lh-1 label-o2 label-c6">{{ timeSince(module.created) }}</div>
 
       </div>
       <div class="flex-fill"></div>

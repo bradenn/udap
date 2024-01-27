@@ -2,7 +2,7 @@
 
 <script lang="ts" setup>
 
-import core from "@/core";
+import core from "udap-ui/core";
 import {onMounted, reactive, watchEffect} from "vue";
 import type {Entity as EntityType, Zone} from "udap-ui/types";
 import Entity from "@/components/Entity.vue";
@@ -11,6 +11,8 @@ import Element from "udap-ui/components/Element.vue";
 import ElementLink from "udap-ui/components/ElementLink.vue";
 import List from "udap-ui/components/List.vue";
 import {PreferencesRemote} from "udap-ui/persistent";
+import ActionToggle from "udap-ui/components/ActionToggle.vue";
+
 
 const remote = core.remote()
 
@@ -22,7 +24,9 @@ const state = reactive({
   thermostat: {} as EntityType,
 })
 
+
 onMounted(() => {
+
   state.entities = remote.entities
   state.zones = remote.zones.filter(z => z.pinned)
 })
@@ -37,6 +41,7 @@ watchEffect(() => {
 
 </script>
 
+
 <template>
   <div class="d-flex flex-column gap-3 justify-content-between h-100">
 
@@ -45,6 +50,7 @@ watchEffect(() => {
         <div class="label-c5 label-w700 label-o5 px-2">Climate</div>
         <div class="w-100">
           <ThermostatV2 :entity="state.thermostat"></ThermostatV2>
+
         </div>
       </div>
       <div class="flex-column d-flex gap-2">
@@ -63,9 +69,11 @@ watchEffect(() => {
         <div class="label-c5 label-w700 label-o5 px-2">Climate</div>
         <div class="w-100">
           <ThermostatV2 :entity="state.thermostat"></ThermostatV2>
+          <!--          <br>-->
+          <!--          <ThermostatV3 :entity="state.thermostat"></ThermostatV3>-->
         </div>
       </div>
-      <List scroll-y>
+      <List>
         <div v-for="zone in state.zones">
           <div class="label-c5 label-w700 label-o5 px-2">{{ zone.name }}</div>
           <div class="home-grid">
@@ -73,6 +81,15 @@ watchEffect(() => {
           </div>
         </div>
       </List>
+      <div class="label-c5 label-w700 label-o5 px-2">Actions</div>
+      <div class="home-grid">
+        <ActionToggle v-for="a in preferences.home" v-if="preferences.home" :id="a"></ActionToggle>
+        <div v-else style="grid-column: 1 / span 2;">
+          <Element>
+            <ElementLink icon="􁖇" title="Select Actions" to="/apps/actions"></ElementLink>
+          </Element>
+        </div>
+      </div>
       <div v-if="false">
         <div class="label-c5 label-w700 label-o5 px-2 mb-0 pb-0 lh-0">Notifications</div>
         <Element>

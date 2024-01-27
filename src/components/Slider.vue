@@ -3,6 +3,7 @@
 <script lang="ts" setup>
 import {onBeforeMount, reactive} from "vue";
 
+
 const props = defineProps<{
   min: number
   max: number

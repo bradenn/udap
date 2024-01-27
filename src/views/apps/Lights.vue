@@ -12,8 +12,6 @@ import core from "@/core";
 import {PreferencesRemote} from "udap-ui/persistent";
 import Slider from "@/components/Slider.vue";
 import attributeService from "@/services/attributeService";
-import Navbar from "@/components/Navbar.vue";
-import Countdown from "@/components/Countdown.vue";
 import {Attribute} from "@/types";
 
 
@@ -169,19 +167,7 @@ function toggleDisco() {
 <template>
 
   <List>
-    <Element>
-      <Navbar title="Lights">
-        <Element :cb="() => toggleDisco()" class="d-flex align-items-center justify-content-center gap-1" foreground
-                 mutable>
-          <div v-if="!state.disco" class="sf-icon label-c7 label-o3" style="font-size: 0.9rem !important;">􁓵</div>
-          <div v-else class="d-flex justify-content-center align-items-center">
-            <Countdown :percent="state.discoRemains" class="sf-icon"
-                       style="scale: 0.6; height: 1rem; width: 1.5rem; "></Countdown>
-          </div>
-          <div>Disco</div>
-        </Element>
-      </Navbar>
-    </Element>
+
     <Element>
       <List scroll-y style="max-height: 30vh">
         <div v-for="zone in lights.zones" v-if="lights.loaded">

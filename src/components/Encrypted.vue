@@ -15,11 +15,16 @@ const remote = core.remote() as Remote
 
 <template>
   <div :class="props.compact?'flex-row':'flex-column'"
-       class="d-flex  align-items-center justify-content-center align-content-center" style=" z-index: 6 !important;">
-    <div class="sf-icon icon-inf">{{ remote.client.url.includes('wss') ? '􀎡' : '􀎣' }}</div>
-    <div :class="remote.client.connected?'text-green':'text-danger'" class="sf-icon icon-inf">􀯠</div>
-  </div>
+       class="d-flex  align-items-center justify-content-center align-content-center lh-1"
+       style=" z-index: 6 !important;">
+    <div class="sf-icon icon-inf">{{
+        remote.client.connected ? (remote.client.url.includes('wss') ? '􀎡' : '􀎣') : '􁙎'
+      }}
 
+    </div>
+    <div :class="remote.client.connected?'text-green':'text-danger'" class="sf-icon icon-inf">􀯠</div>
+
+  </div>
 </template>
 
 <style scoped>

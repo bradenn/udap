@@ -11,6 +11,7 @@ import ElementHeader from "udap-ui/components/ElementHeader.vue";
 import ElementPair from "udap-ui/components/ElementPair.vue";
 import Element from "udap-ui/components/Element.vue";
 import Time from "udap-ui/components/Time.vue";
+import moduleService from "udap-ui/services/moduleService"
 
 import type {RemoteTimings} from "udap-ui/timings";
 
@@ -46,8 +47,8 @@ const state = reactive({
   module: {} as Module,
   config: [] as ConfigEntry[],
   moduleTimings: {
-    run: null,
-    update: null,
+    run: {} as Timing,
+    update: {} as Timing,
     loaded: false
   } as ModuleTiming,
   loaded: false
@@ -73,8 +74,8 @@ watchEffect(() => {
 function updateModuleTimings() {
   let moduleRun = `module.${state.module.uuid}.run`
   let moduleUpdate = `module.${state.module.uuid}.update`
-  state.moduleTimings.run = timings.timings.find(t => t.pointer == moduleRun)
-  state.moduleTimings.update = timings.timings.find(t => t.pointer == moduleUpdate)
+  state.moduleTimings.run = timings.timings.find(t => t.pointer == moduleRun) || {} as Timing
+  state.moduleTimings.update = timings.timings.find(t => t.pointer == moduleUpdate) || {} as Timing
   state.moduleTimings.loaded = true
 }
 
@@ -140,12 +141,21 @@ function convertNanosecondsToString(nanoseconds: number): string {
 }
 
 function init() {
-  Notification.requestPermission().then((result) => {
-    if (result === "granted") {
-      alert("Yippie!");
-    }
-  })
+  moduleService.reload(state.module.id).then(() => {
+
+  }).catch(err => {
+
+  });
 }
+
+function enable() {
+  moduleService.setEnabled(state.module.id, true).then(() => {
+
+  }).catch(err => {
+
+  });
+}
+
 </script>
 
 <template>
@@ -186,8 +196,9 @@ function init() {
                   </div>
                 </div>
                 <div v-else class="px-1">
-                  <Time :since="(new Date().valueOf() * 1000 * 1000) - new Date(state.module.updated).valueOf() * 1000 * 1000"
-                        nano></Time>
+                  <Time
+                      :since="(new Date().valueOf() * 1000 * 1000) - new Date(state.module.updated).valueOf() * 1000 * 1000"
+                      nano></Time>
 
                 </div>
               </div>
@@ -197,7 +208,7 @@ function init() {
         </List>
       </Element>
 
-      <List row style="height: 3.25rem">
+      <List v-if="state.module.enabled" row style="height: 3.25rem">
         <Element :cb="init" class="d-flex align-items-center justify-content-center gap-1" foreground mutable
                  style="width: 4rem">
           <div class="sf">􀊯</div>
@@ -209,6 +220,12 @@ function init() {
           Halt
         </Element>
       </List>
+      <Element v-else :cb="enable" class="d-flex align-items-center justify-content-center gap-1"
+               foreground
+               mutable style="height: 3.25rem">
+        <div class="sf">􀊄</div>
+        Enable
+      </Element>
     </List>
     <ElementHeader title="Runtime"></ElementHeader>
     <ElementPair :title="!state.module.enabled?'Downtime':'Uptime'"

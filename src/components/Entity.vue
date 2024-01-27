@@ -4,7 +4,7 @@
 import type {Attribute, Entity} from "udap-ui/types";
 import {onMounted, reactive, watchEffect} from "vue";
 import core from "@/core";
-import attributeService from "@/services/attributeService";
+import attributeService from "udap-ui/services/attributeService";
 import Element from "udap-ui/components/Element.vue";
 
 const props = defineProps<{
@@ -79,7 +79,7 @@ function togglePower() {
 
 
 function goEdit() {
-  router.push(`/home/entity/${props.entity.id}`)
+  router.push(`/entity/${props.entity.id}`)
 }
 
 function mouseHold(e: MouseEvent) {
@@ -111,17 +111,20 @@ function mouseUp(e: TouchEvent) {
 </script>
 
 <template>
+
   <Element :cb="togglePower" :class="`${state.spectrum.on?'on':'off'}`" :foreground="false" :long-cb="goEdit"
            :mutable="true"
-           class=" subplot" style="padding: 0.8rem 1.5rem">
+           class=" subplot" style="padding: 0.8rem 1.125rem">
     <div class="d-flex gap-2 justify-content-between align-items-center py-1 gap-3 w-100">
       <div class="d-flex justify-content-center align-items-center gap-3">
-        <div :class="`${state.spectrum.on?'icon-on':'icon-off'}`" class="sf-icon">{{
+        <div v-if="!state.online" class="sf-icon text-warning">􀙥</div>
+        <div v-else :class="`${state.spectrum.on?'icon-on':'icon-off'}`" class="sf-icon">{{
             props.entity.icon
           }}
         </div>
+        {{ props.entity.predicted }}
         <div>
-          <div class="label-c5 label-w600  name">{{
+          <div class="label-c5 label-w600 name" style="overflow-x: clip; word-break: normal; word-wrap: break-word">{{
               props.entity.alias ? props.entity.alias : props.entity.name
             }}
           </div>
@@ -130,7 +133,7 @@ function mouseUp(e: TouchEvent) {
         </div>
 
       </div>
-      <div v-if="!state.online" class="sf-icon text-warning ">􀇿</div>
+
       <div v-if="false" class="d-flex">
         <div v-for="attr in state.attributes">
           <div v-if="attr.key === 'on'" class="d-flex justify-content-center" style="width: 4rem">

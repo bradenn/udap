@@ -22,7 +22,7 @@ import {onMounted, reactive} from "vue";
 const remote = core.remote()
 
 const state = reactive({
-  selected: [],
+  selected: [] as string[],
   from: "",
   message: ""
 })
@@ -32,7 +32,7 @@ onMounted(() => {
   state.from = remote.endpoints.find(e => e.id == token.id)?.name || "Unknown"
 })
 
-function parseJwt(token: string): string {
+function parseJwt(token: string): any {
   let base64Url = token.split('.')[1];
   let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
   let jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
@@ -51,10 +51,8 @@ function sendNotification(endpointId: string) {
   }
   webpush.request = JSON.stringify({
     endpointId: endpointId,
-    message: JSON.stringify({
-      title: `Message from ${state.from}`,
-      message: state.message
-    })
+    title: `Message from ${state.from}`,
+    message: state.message
   })
   attributeService.request(webpush).then((a) => {
     // alert("sent!")

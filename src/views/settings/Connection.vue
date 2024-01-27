@@ -3,6 +3,7 @@
 <script lang="ts" setup>
 
 import ElementLabel from "udap-ui/components/ElementLabel.vue";
+import ElementToggle from "udap-ui/components/ElementToggle.vue";
 import List from "udap-ui/components/List.vue";
 
 import core from "@/core";
@@ -24,6 +25,8 @@ let token = localStorage.getItem("token")
 interface TokenData {
   id: string
 }
+
+let preferences = core.preferences();
 
 function parseJwt(token: string): TokenData {
   let base64Url = token.split('.')[1];
@@ -124,6 +127,10 @@ function setup() {
 
         </div>
       </ElementLabel>
+      <ElementToggle :cb="() => preferences.oob=!preferences.oob" :icon="preferences.oob?'􀖀':'􁅒'"
+                     :selected="preferences.oob"
+                     title="Out-of-band">{{ preferences.oob ? 'Enabled' : 'Disabled' }}
+      </ElementToggle>
     </List>
 
 

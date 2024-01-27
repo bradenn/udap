@@ -33,9 +33,6 @@ router.afterEach((to, from, failure) => {
 
 <template>
   <div class=" nest-highlight">
-    <div v-if="router.currentRoute.value.name" class="d-flex mb-1">
-
-    </div>
 
     <div v-if="preferences.landscape">
       <div class="d-flex flex-row gap-1">
@@ -59,7 +56,7 @@ router.afterEach((to, from, failure) => {
       </div>
     </div>
     <div v-else style="height: 100%">
-      <List style="height: 100%">
+      <List>
         <Element style="height: 100%">
           <Navbar
               :back="(router.currentRoute.value.path === '/settings')?'/':'/settings'"

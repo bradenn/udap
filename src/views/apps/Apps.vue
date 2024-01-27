@@ -2,8 +2,31 @@
 
 <script lang="ts" setup>
 
-import Element from "udap-ui/components/Element.vue";
 
+import Element from "udap-ui/components/Element.vue";
+import Navbar from "@/components/Navbar.vue";
+import core from "@/core";
+import {RouteMeta} from "vue-router";
+import {AppMeta} from "@/views/apps/index";
+
+const router = core.router();
+
+function isApps(): boolean {
+  return router.currentRoute.value.fullPath.endsWith("apps") || appName() == "Unknown"
+}
+
+const appName: () => string = () => {
+  let meta: RouteMeta = router.currentRoute.value.meta
+  if (!meta) {
+    return "Unknown"
+  }
+  let appMeta: AppMeta = meta as unknown as AppMeta
+  if (!appMeta || Object.keys(appMeta).length == 0) {
+    return "Unknown"
+  }
+
+  return appMeta.name
+}
 
 const apps = [
   {
@@ -36,20 +59,43 @@ const apps = [
     link: "/apps/message",
     icon: '􀈠'
   },
+  {
+    name: "Sensors",
+    link: "/apps/sensors",
+    icon: '􁔊'
+  },
+  {
+    name: "Actions",
+    link: "/apps/actions",
+    icon: '􀒘'
+  },
+  {
+    name: "Conversions",
+    link: "/apps/conversions",
+    icon: '􀅮'
+  },
+  {
+    name: "Movies",
+    link: "/apps/movies",
+    icon: '􀜤'
+  },
+  {
+    name: "Network",
+    link: "/apps/network",
+    icon: '􁆬'
+  },
 ]
 
 </script>
 
 <template>
-
-  <div class="app-list">
-    <div v-for="app in apps" :key="app.link" class="d-flex flex-column align-items-center justify-content-center">
-      <Element :to="app.link" class="d-flex align-items-center justify-content-center"
-               mutable
-               style="aspect-ratio: 1/1; width: 100%; box-shadow: inset 0 0 1px 1px rgba(255,255,255,0.08) !important;">
-        <div class="sf label-c0 label-o4" style="font-size: 1.8rem">{{ app.icon }}</div>
-      </Element>
-      <div class="label-c5 label-o6 label-w600">{{ app.name }}</div>
+  <div class="d-flex gap-1 flex-column scrollable-fixed">
+    <Element v-if="!isApps()" class="d-flex justify-content-end">
+      <Navbar :title="appName()" back="/apps">
+      </Navbar>
+    </Element>
+    <div class="scrollable-fixed">
+      <router-view></router-view>
     </div>
   </div>
 </template>
@@ -57,8 +103,10 @@ const apps = [
 <style lang="scss">
 
 .app-list {
+  height: 100%;
   display: grid;
-  grid-template-rows: repeat(8, minmax(1rem, 1fr));
+  padding: 1rem;
+  grid-template-rows: repeat(6, minmax(1rem, 1fr));
   grid-template-columns: repeat(4, minmax(2rem, 6rem));
   grid-gap: 1.5rem;
 }

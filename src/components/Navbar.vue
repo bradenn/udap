@@ -9,14 +9,30 @@ import Element from "udap-ui/components/Element.vue";
 const props = defineProps<{
   back?: string
   title?: string
+  cb?: () => void
+  auto?: boolean
 }>()
+
 //style="border-bottom: 1px solid rgba(255,255,255,0.0); padding-bottom: 0.375rem; margin-bottom: 0.375rem"
+
+function back() {
+  if (props.auto) {
+    router.go(-1)
+    return;
+  }
+  if (props.cb) {
+    props.cb()
+    return
+  }
+  router.go(-1)
+}
+
 </script>
 
 <template>
-  <div class="d-flex justify-content-between align-items-center w-100"
-  >
-    <Element :cb="() => router.go(-1)" class="d-flex align-items-center justify-content-center gap-0 py-2 "
+  <div class="d-flex justify-content-between align-items-center w-100">
+    <Element :cb="back"
+             class="d-flex align-items-center justify-content-center gap-0 py-2 "
              foreground
              mutable
              style="height: 2.5rem; width: 25%">

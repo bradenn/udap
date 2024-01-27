@@ -84,6 +84,21 @@ export default {
             component: () => import('@/views/settings/Zones.vue'),
         },
         {
+            path: '/settings/attributes',
+            name: 'attributes',
+            meta: {
+                name: "Attributes",
+                icon: "􀯲",
+                category: "System"
+            },
+            component: () => import('@/views/settings/Attributes.vue'),
+        },
+        {
+            path: '/settings/zones/:zoneId',
+            name: 'zone',
+            component: () => import('@/views/settings/zones/Zone.vue'),
+        },
+        {
             path: '/settings/timings',
             name: 'timings',
             meta: {
