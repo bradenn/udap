@@ -1,0 +1,185 @@
+// Copyright (c) 2023 Braden Nicholson
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: local("IBM Plex Sans"), url('/fonts/IBMPlexSans-Regular.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Medium";
+  src: local("IBM Plex Sans Medium"), url('/fonts/IBMPlexSans-Medium.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: local("JetBrains Mono"), url('/fonts/JetBrainsMono.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  font-display: block;
+  src: local("SF Pro Display"), url('/fonts/SF-Pro-Display-Regular.otf') format("opentype");
+}
+
+.subplot {
+  border-radius: 0.3rem;
+  box-shadow: 0 0 8px 2px rgba(0, 0, 0, 0.05);
+  //border: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  font-size: 1rem;
+
+  background-color: rgba(255, 255, 255, 0.045);
+}
+
+::-webkit-scrollbar {
+  display: none; // Safari and Chrome
+}
+
+$baseElevation: 24px;
+/* Label Sizes */
+$elevationNames: (
+        "0": 0,
+        "1": 0.05,
+        "2": 0.07,
+        "3": 0.08,
+        "4": 0.09,
+        "6": 0.11,
+        "8": 0.12,
+        "12": 0.14,
+        "16": 0.15,
+        "24": 0.16,
+);
+/* Label Sizes */
+@each $clr, $i in $elevationNames {
+  .dp-#{$clr} {
+    background-color: rgba(255, 255, 255, 1-$i);
+  }
+}
+
+$base: 24px;
+/* Label Sizes */
+$fontSizes: (
+        "c0": $base,
+        "c1": $base - 2px,
+        "c2": $base - 4px,
+        "c3": $base - 6px,
+        "c4": $base - 8px,
+        "c5": $base - 10px,
+        "c6": $base - 12px,
+        "c7": $base - 14px,
+);
+
+@each $clr, $i in $fontSizes {
+  .label-#{$clr} {
+    font-size: $i;
+  }
+}
+
+/* Label Weights */
+$fontWeights: (
+        "100": 100,
+        "200": 200,
+        "300": 300,
+        "400": 400,
+        "500": 500,
+        "600": 600,
+        "700": 700,
+        "800": 800,
+        "900": 900,
+);
+
+@each $clr, $i in $fontWeights {
+  .label-w#{$clr} {
+    font-weight: $i;
+  }
+}
+
+/* Label Opacities */
+$fontColors: (
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+);
+
+
+@each $clr, $i in $fontColors {
+  .label-o#{$clr} {
+    color: rgba(255, 255, 255, $i * 0.125);
+
+  }
+}
+
+.notch-split:last-of-type {
+  border-left: none !important;
+  border-radius: 0 2px 2px 0 !important;
+}
+
+.notch-split:first-of-type {
+  border-right: none !important;
+  border-radius: 2px 0 0 2px !important;
+}
+
+.notch-split:not(:first-of-type):not(:last-of-type) {
+  border-left: none;
+  border-right: none;
+  border-radius: 0 0 0 0 !important;
+}
+
+.notch-split {
+  height: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  flex-grow: 1;
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.notch-split-cont {
+  display: flex;
+  width: 1.5rem;
+  height: 7px;
+  align-items: center;
+}
+
+.notches {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 1.8rem;
+
+  div {
+    height: 7px;
+    line-height: 7px;
+  }
+
+  .notch {
+    height: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    width: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.01);
+  }
+
+
+  .active {
+    border: 1px solid rgba(65, 180, 106, 0.2);
+    background-color: rgba(0, 210, 77, 0.3);
+  }
+
+  .warn {
+    border: 1px solid rgba(210, 137, 0, 0.3);
+    background-color: rgba(210, 137, 0, 0.3);
+  }
+
+  .danger {
+    border: 1px solid rgba(196, 0, 210, 0.3);
+    background-color: rgba(210, 0, 31, 0.3);
+  }
+}

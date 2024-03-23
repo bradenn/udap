@@ -13,7 +13,7 @@ export default defineConfig(({mode}) => {
         resolve: {
             alias: {
                 '@': fileURLToPath(new URL('./src', import.meta.url)),
-                'udap-ui': fileURLToPath(new URL('../common', import.meta.url))
+                'udap-ui': fileURLToPath(new URL('./common', import.meta.url))
             },
             dedupe: ["moment", "vue", "vue-router"]
         },

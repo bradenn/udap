@@ -14,7 +14,6 @@ import ElementTextBox from "udap-ui/components/ElementTextBox.vue";
 
 import type {SensorData} from "@/views/apps/Sensor.vue";
 import SensorDOM from "@/views/apps/Sensor.vue";
-import triggerService from "udap-ui/services/triggerService";
 import entityService from "udap-ui/services/entityService";
 import attributeService from "@/services/attributeService";
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
@@ -162,16 +161,28 @@ function createDeviceState(): Warning[] {
 
 function update() {
   state.entityId = <string>router.currentRoute.value.params["entityId"];
-  state.entity = remote.entities.find(e => e.type.includes("uhidv2") && e.id == state.entityId)
-  if (!state.entity) return
+
+  let entity = remote.entities.find(e => (e.type.includes("uhidv2") || e.type.includes("vradarv4")) && e.id == state.entityId)
+  if (!entity) return
+  state.entity = entity as Entity;
+
   state.attributes = remote.attributes.filter(a => a.entity == state.entityId)
   let sensor = state.attributes.find(a => a.key == "sensor")
   if (!sensor) return
 
-  state.sensor = JSON.parse(sensor?.value || "{}") as SensorData || {} as SensorData
+
+  try {
+    state.sensor = JSON.parse(sensor?.value || "{}") as SensorData || {} as SensorData
+  } catch {
+    state.sensor = {} as SensorData
+  }
   let metadata = state.attributes.find(a => a.key == "metadata")
   if (!metadata) return
-  state.metadata = JSON.parse(metadata?.value || "{}") as UHIDv2 || {} as UHIDv2
+  try {
+    state.metadata = JSON.parse(metadata?.value || "{}") as UHIDv2 || {} as UHIDv2
+  } catch {
+    state.metadata = {} as UHIDv2
+  }
   let now = new Date().valueOf()
   if (state.sensor) {
     state.lastUpdate = Math.max(new Date(sensor.updated).valueOf(), new Date(metadata.updated).valueOf())
@@ -196,11 +207,11 @@ function goBack() {
 }
 
 function callTrigger(trigger: Trigger) {
-  triggerService.invoke(trigger).then(() => {
-
-  }).catch(() => {
-
-  })
+  // triggerService.invoke(trigger).then(() => {
+  //
+  // }).catch(() => {
+  //
+  // })
 }
 
 function parseName(input: string): string {
@@ -238,6 +249,19 @@ function beginUpdate() {
   } as Attribute).then(() => {
 
   }).catch()
+}
+
+function deleteDevice() {
+  Promise.all(state.attributes.filter(a => a.entity == state.entityId).map(e => attributeService.delete(e.id))).then(res => {
+    entityService.delete(state.entityId).then(() => {
+      router.go(-1)
+    }).catch((err) => {
+      alert("Could not delete entity, but the attributes are gone.. " + err)
+    })
+  }).catch(() => {
+    alert("Could not delete entity attributes")
+  })
+
 }
 
 function restartNow() {
@@ -343,26 +367,39 @@ function restartNow() {
   </div>
 
   <div v-if="state.settings" class="modal" @click="toggleSettings">
-    <Element @click.stop>
-      <List>
-        <Element class="d-flex flex-column" foreground mutable>
-          <div class="label-c3 label-o6 label-w600 px-2 mono lh-1" style="">
-            {{ (state.alias != "" ? state.alias : state.entity.name) }}
-          </div>
-          <div class="label-c5 label-o4 label-w600 mono px-2 ">
-            {{ state.alias == "" ? 'No alias' : state.entity.name }}
-          </div>
-        </Element>
+    <List>
+      <Element @click.stop>
+        <List>
+          <Element class="d-flex flex-column" foreground mutable>
+            <div class="label-c3 label-o6 label-w600 px-2 mono lh-1" style="">
+              {{ (state.alias != "" ? state.alias : state.entity.name) }}
+            </div>
+            <div class="label-c5 label-o4 label-w600 mono px-2 ">
+              {{ state.alias == "" ? 'No alias' : state.entity.name }}
+            </div>
+          </Element>
 
-        <List class="" row>
-          <ElementTextBox :change="(v) => state.alias = v" class=""></ElementTextBox>
-          <Element :cb="() => setAlias()" class="sf d-flex align-items-center justify-content-center " foreground
-                   mutable style="width: 4rem !important;">
-            <div class="d-flex align-items-center justify-content-center">Save</div>
+          <List class="" row>
+            <ElementTextBox :change="(v) => state.alias = v" class=""></ElementTextBox>
+            <Element :cb="() => setAlias()" class="sf d-flex align-items-center justify-content-center " foreground
+                     mutable style="width: 4rem !important;">
+              <div class="d-flex align-items-center justify-content-center">Save</div>
+            </Element>
+
+          </List>
+
+        </List>
+
+      </Element>
+      <Element>
+        <List>
+          <Element :cb="() => deleteDevice()" class="sf d-flex align-items-center justify-content-center " foreground
+                   mutable>
+            <div class="d-flex align-items-center justify-content-center label-w600">Delete</div>
           </Element>
         </List>
-      </List>
-    </Element>
+      </Element>
+    </List>
   </div>
 
 </template>

@@ -81,8 +81,8 @@ watchEffect(() => {
           </div>
         </div>
       </List>
-      <div class="label-c5 label-w700 label-o5 px-2">Actions</div>
-      <div class="home-grid">
+      <div v-if="false" class="label-c5 label-w700 label-o5 px-2">Actions</div>
+      <div v-if="false" class="home-grid">
         <ActionToggle v-for="a in preferences.home" v-if="preferences.home" :id="a"></ActionToggle>
         <div v-else style="grid-column: 1 / span 2;">
           <Element>
