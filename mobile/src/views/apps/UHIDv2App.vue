@@ -12,6 +12,7 @@ import List from "udap-ui/components/List.vue";
 import type {SensorData} from "@/views/apps/Sensor.vue";
 import SensorDOM from "@/views/apps/Sensor.vue";
 import UHIDv2Preview from "@/views/apps/UHIDv2Preview.vue";
+import ElementHeader from "udap-ui/components/ElementHeader.vue";
 
 const remote = core.remote();
 
@@ -32,6 +33,8 @@ const state = reactive({
   attributes: [] as Attribute[],
   sensors: [] as Attribute[],
   alignments: [] as Attribute[],
+  devices: [] as Entity[],
+  hubs: [] as Entity[],
 
 
 })
@@ -53,14 +56,25 @@ function alignSensors() {
 }
 
 function update() {
-  state.entities = remote.entities.filter(e => e.type.includes("uhidv2"))
+  state.entities = remote.entities.filter(e => (e.type.includes("uhidv2") || e.type.includes("vradarv4")))
   let entityIds: string[] = state.entities.map(e => e.id)
   state.attributes = remote.attributes.filter(a => entityIds.includes(a.entity))
   state.sensors = state.attributes.filter(a => a.key == "sensor")
   state.alignments = state.attributes.filter(a => a.key == "alignment")
 
+  state.devices = []
+  state.hubs = []
+  for (let entity of state.entities) {
+    if (entity.type == "uhidv2") {
+      state.devices.push(entity)
+    } else if (entity.type == "vradarv4") {
+      state.hubs.push(entity)
+    }
+  }
 
-  state.thermostat = remote.entities.find(e => e.name == "thermostat")
+  let thermostat = remote.entities.find(e => e.name == "thermostat")
+  if (!thermostat) return;
+  state.thermostat = thermostat
   let temp = remote.attributes.find(a => a.key === "thermostat")
   if (temp) {
     let val = JSON.parse(temp.value) as {
@@ -78,17 +92,25 @@ function update() {
   }
 }
 
+
 </script>
 
 <template>
-  <List class="scrollable-fixed" scroll-y>
+  <List scroll-y>
     <Element>
       <List>
 
-        <ElementLink v-for="sensor in state.entities"
+        <ElementHeader title="Sensors"></ElementHeader>
+        <ElementLink v-for="sensor in state.devices"
+                     :alt="sensor.type"
+                     :title="sensor.alias?sensor.alias:sensor.name"
+                     :to="`/apps/uhidv2/${sensor.id}`" icon="􁔊"></ElementLink>
+        <ElementHeader title="Hubs"></ElementHeader>
+        <ElementLink v-for="sensor in state.hubs"
                      :title="sensor.alias?sensor.alias:sensor.name"
                      :to="`/apps/uhidv2/${sensor.id}`"
-                     icon="􁔊"></ElementLink>
+                     :alt="sensor.type" icon="􁅏">
+        </ElementLink>
       </List>
     </Element>
 

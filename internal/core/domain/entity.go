@@ -12,9 +12,9 @@ type Entity struct {
 	Module    string `json:"module"`             // Parent Module name
 	Locked    bool   `json:"locked"`             // Is the Entity state locked?
 	Config    string `json:"config"`
-	Position  string `json:"position" gorm:"default:'{}'"`
+	Position  string `json:"-" gorm:"default:'{}'"`
 	Icon      string `json:"icon" gorm:"default:'􀛮'"` // The icon to represent this entity
-	Frequency int    `json:"frequency" gorm:"default:3000"`
-	Neural    string `json:"neural" gorm:"default:'inactive'"` // Parent Module name
-	Predicted string `gorm:"-" json:"predicted"`               // scalar
+	Frequency int    `json:"-" gorm:"default:3000"`
+	Neural    string `json:"-" gorm:"default:'inactive'"` // Parent Module name
+	Predicted string `gorm:"-" json:"predicted"`          // scalar
 }

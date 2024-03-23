@@ -28,9 +28,8 @@ func (a *attributeOperator) Register(attribute *domain.Attribute) error {
 	if attribute.Id == "" {
 		return fmt.Errorf("invalid attribute id")
 	}
-	a.mutex.Lock()
+
 	a.hooks[attribute.Id] = attribute.Channel
-	a.mutex.Unlock()
 	return nil
 }
 
@@ -38,25 +37,15 @@ func (a *attributeOperator) Request(attribute *domain.Attribute, s string) error
 	attribute.Requested = time.Now()
 	attribute.Request = s
 
-	if attribute.Request != attribute.Value || time.Since(attribute.UpdatedAt) >= time.Millisecond*1000 {
-		var channel chan domain.Attribute
-
-		a.mutex.Lock()
-		channel = a.hooks[attribute.Id]
-		a.mutex.Unlock()
-
-		if channel == nil {
-			return fmt.Errorf("channel is not set")
-		}
-
-		channel <- *attribute
-		attribute.Requested = time.Now()
-
-		err := a.Set(attribute, s)
-		if err != nil {
-			return err
-		}
+	// Find the correct channel
+	channel, ok := a.hooks[attribute.Id]
+	if !ok {
+		return fmt.Errorf("channel is not set")
 	}
+
+	// Send the request to the module for processing
+	channel <- *attribute
+
 	return nil
 }
 
@@ -75,6 +64,7 @@ func (a *attributeOperator) Update(attribute *domain.Attribute, val string, stam
 	//	return nil
 	//}
 	// Set the value
+
 	attribute.Updated = stamp
 	err := a.Set(attribute, val)
 	if err != nil {

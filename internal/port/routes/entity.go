@@ -26,10 +26,29 @@ func (r entityRouter) RouteInternal(router chi.Router) {
 		local.Post("/icon", r.changeIcon)
 		local.Post("/alias", r.changeAlias)
 		local.Post("/update", r.update)
+		local.Post("/delete", r.delete)
 	})
 }
 
 func (r entityRouter) RouteExternal(_ chi.Router) {
+}
+
+func (r entityRouter) delete(w http.ResponseWriter, req *http.Request) {
+
+	id := chi.URLParam(req, "id")
+	if id != "" {
+		result, err := r.service.FindById(id)
+		if err != nil {
+			http.Error(w, "invalid entity id", 401)
+			return
+		}
+		err = r.service.Delete(result)
+		if err != nil {
+			http.Error(w, "invalid entity id", 401)
+			return
+		}
+	}
+	w.WriteHeader(200)
 }
 
 func (r entityRouter) update(w http.ResponseWriter, req *http.Request) {

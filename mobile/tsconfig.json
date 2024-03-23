@@ -18,12 +18,17 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "udap-ui/*": [
+        "./common/*"
       ]
     },
     "skipLibCheck": true,
     "noEmit": true
   },
   "include": [
+    "udap-ui/**/*.css",
+    "udap-ui/**/*.scss",
     "udap-ui/**/*.ts",
     "udap-ui/**/*.vue",
     "src/**/*.ts",

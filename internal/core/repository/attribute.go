@@ -18,6 +18,15 @@ type attributeRepo struct {
 	db    *gorm.DB
 }
 
+func (u *attributeRepo) FindRecent() (*[]domain.Attribute, error) {
+	var logs []domain.Attribute
+	err := u.db.Model(&domain.Attribute{}).Order("updated desc").Limit(100).Find(&logs).Error
+	if err != nil {
+		return nil, err
+	}
+	return &logs, nil
+}
+
 func (u *attributeRepo) FindRecentLogs() (*[]domain.AttributeLog, error) {
 	var logs []domain.AttributeLog
 	err := u.db.Model(&domain.AttributeLog{}).Limit(100).Find(&logs).Error

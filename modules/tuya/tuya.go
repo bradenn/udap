@@ -120,24 +120,25 @@ type statusCmd struct {
 }
 
 type Light struct {
-	Ip         string `json:"ip"`
-	GwId       string `json:"gwId"`
-	DevId      string `json:"devId"`
-	LocalId    string `json:"localId"`
-	Active     int    `json:"active"`
-	Mode       string
-	Hue        int
-	Dim        int
-	UUID       string `json:"uid"`
-	Encrypt    bool   `json:"encrypt"`
-	ProductKey string `json:"productKey"`
-	Version    string `json:"version"`
-	Seq        int
-	Latest     DpsPayload `json:"latest"`
-	Reconnects int
-	lastStatus time.Time
-	mutex      sync.Mutex
-	socket     net.Conn
+	Ip          string `json:"ip"`
+	GwId        string `json:"gwId"`
+	DevId       string `json:"devId"`
+	LocalId     string `json:"localId"`
+	Active      int    `json:"active"`
+	Mode        string
+	Hue         int
+	Dim         int
+	UUID        string `json:"uid"`
+	Encrypt     bool   `json:"encrypt"`
+	ProductKey  string `json:"productKey"`
+	Version     string `json:"version"`
+	Seq         int
+	Latest      DpsPayload `json:"latest"`
+	Reconnects  int
+	lastStatus  time.Time
+	lastRequest time.Time
+	mutex       sync.Mutex
+	socket      net.Conn
 }
 
 const (
@@ -183,6 +184,8 @@ func (l *Light) sendModeCommandDps(mode string, key int, value any) error {
 	if err != nil {
 		return err
 	}
+
+	l.lastRequest = time.Now()
 	//countdown := time.NewTimer(time.Second)
 	//
 	//select {
@@ -448,9 +451,10 @@ func (l *Light) parsePayload(payload []byte) error {
 	if err != nil {
 		return err
 	}
-	//fmt.Println(string(payload))
+
 	l.Mode = data.Dps.Mode
 	l.Latest = data
+	l.lastStatus = time.Now()
 
 	return nil
 }
@@ -550,7 +554,7 @@ func (l *Light) ConnectSocket() (net.Conn, error) {
 	for attempts < 3 {
 		socket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", l.Ip, 6668))
 		if err != nil {
-			time.Sleep(time.Millisecond * 250)
+			time.Sleep(500 * time.Millisecond)
 			attempts++
 			continue
 		}
@@ -564,12 +568,7 @@ func (l *Light) WritePacket(packet []byte, read bool) error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	//start := time.Now()
 	var err error
-
-	//defer func() {
-	//	log.Event("%s => %s", l.Ip, time.Since(start))
-	//}()
 
 	if l.socket == nil {
 		l.socket, err = l.ConnectSocket()
@@ -577,50 +576,47 @@ func (l *Light) WritePacket(packet []byte, read bool) error {
 			l.socket = nil
 			return err
 		}
+	}
+
+	err = l.socket.SetDeadline(time.Now().Add(500 * time.Millisecond))
+	if err != nil {
 		return err
 	}
 
-	// Increment the sequence number
-	err = l.socket.SetWriteDeadline(time.Now().Add(time.Second * 1))
-	var n int
-	n, err = l.socket.Write(packet)
-	if err != nil {
-		err = l.socket.Close()
+	expected := len(packet)
+	n := 0
+	for n < expected {
+		var sent int
+		sent, err = l.socket.Write(packet[n:])
 		if err != nil {
-			return err
-		}
-		l.socket, err = l.ConnectSocket()
-		if err != nil {
+			err = l.socket.Close()
 			l.socket = nil
-			return err
+			if err != nil {
+				return err
+			}
+
 		}
-
-		if n <= 0 {
-			return err
+		if sent == 0 {
+			break
 		}
-
-	}
-
-	// Increment the sequence number
-	err = l.socket.SetReadDeadline(time.Now().Add(time.Second * 1))
-	if err != nil {
-		return err
+		n += sent
 	}
 
 	// Craft a buffer to contain the incoming data
 	response := make([]byte, 512)
-
+	if l.socket == nil {
+		return nil
+	}
 	// Wait for and read the response from the device
 	n, err = l.socket.Read(response)
 	if err != nil {
 		return err
 	}
-
 	// Cut off the unused bits
 	response = response[:n]
 
 	// Decode/Decrypt the data
-	processed, err := l.decodePayload(response[:n], !read)
+	processed, err := l.decodePayload(response, !read)
 	if err != nil {
 		return nil
 	}
@@ -764,11 +760,89 @@ func init() {
 }
 
 func (t *Tuya) Setup() (plugin.Config, error) {
-	err := t.UpdateInterval(1000 * 2)
+	err := t.UpdateInterval(1000 * 5)
 	if err != nil {
 		return plugin.Config{}, err
 	}
 	return t.Config, nil
+}
+
+func (t *Tuya) updateOne(light *Light) error {
+
+	err := light.sendStatusPayload()
+	if err != nil {
+		log.Err(err)
+		return err
+	}
+
+	eid, _ := t.findEntityIdByLightId(light.GwId)
+	h := int(0)
+	s := int(0)
+	v := int(0)
+	_, err = fmt.Sscanf(light.Latest.Dps.Color, "%04x%04x%04x", &h, &s, &v)
+	if err != nil {
+		//log.Event("Failed to parse color: '%s'", light.Latest.Dps.Color)
+		return err
+	}
+
+	//if light.lastStatus.Before(light.lastRequest) {
+	//	return err
+	//}
+
+	_ = t.Attributes.Set(eid, "hue", fmt.Sprintf("%d", h))
+	light.Hue = h
+	light.Dim = v
+	if err != nil {
+		return err
+	}
+
+	if light.Latest.Dps.On {
+		err = t.Attributes.Set(eid, "on", "true")
+		if err != nil {
+			return err
+		}
+	} else {
+		err = t.Attributes.Set(eid, "on", "false")
+		if err != nil {
+			return err
+		}
+	}
+
+	if light.Mode == "colour" {
+		err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Dim/10))
+		if err != nil {
+			return err
+		}
+	} else {
+		err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Latest.Dps.Dim/10))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = t.Attributes.Set(eid, "cct", fmt.Sprintf("%d", int(convertRange(float64(light.Latest.Dps.Cct), 0, 1000, 2700, 6500))))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func (t *Tuya) updateAll() error {
+	wg := sync.WaitGroup{}
+	wg.Add(len(t.Lights))
+	for _, l := range t.Lights {
+		go func(light *Light) {
+			defer wg.Done()
+			err := t.updateOne(light)
+			if err != nil {
+				return
+			}
+		}(l)
+	}
+
+	wg.Wait()
+	t.LastUpdate = time.Now()
+	return nil
 }
 
 func (t *Tuya) Update() error {
@@ -777,68 +851,10 @@ func (t *Tuya) Update() error {
 	}
 
 	if t.Ready() {
-
-		wg := sync.WaitGroup{}
-		for _, l := range t.Lights {
-			go func(light *Light) {
-				wg.Add(1)
-				defer wg.Done()
-				eid, _ := t.findEntityIdByLightId(light.GwId)
-				err := light.sendStatusPayload()
-				if err != nil {
-					log.Err(err)
-					return
-				}
-
-				h := int(0)
-				s := int(0)
-				v := int(0)
-				_, err = fmt.Sscanf(light.Latest.Dps.Color, "%04x%04x%04x", &h, &s, &v)
-				if err != nil {
-					//log.Event("Failed to parse color: '%s'", light.Latest.Dps.Color)
-					return
-				}
-
-				_ = t.Attributes.Set(eid, "hue", fmt.Sprintf("%d", h))
-				light.Hue = h
-				light.Dim = v
-				if err != nil {
-					log.Err(err)
-				}
-
-				if light.Latest.Dps.On {
-					err = t.Attributes.Set(eid, "on", "true")
-					if err != nil {
-						log.Err(err)
-					}
-				} else {
-					err = t.Attributes.Set(eid, "on", "false")
-					if err != nil {
-						log.Err(err)
-					}
-				}
-
-				if light.Mode == "colour" {
-					err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Dim/10))
-					if err != nil {
-						log.Err(err)
-					}
-				} else {
-					err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Latest.Dps.Dim/10))
-					if err != nil {
-						log.Err(err)
-					}
-				}
-
-				err = t.Attributes.Set(eid, "cct", fmt.Sprintf("%d", int(convertRange(float64(light.Latest.Dps.Cct), 0, 1000, 2700, 6500))))
-				if err != nil {
-					log.Err(err)
-				}
-			}(l)
+		err := t.updateAll()
+		if err != nil {
+			return err
 		}
-
-		wg.Wait()
-
 	}
 	return nil
 }
@@ -982,10 +998,14 @@ func (t *Tuya) handleRequest(attribute domain.Attribute) error {
 		return fmt.Errorf("invalid attribute key")
 	}
 
-	err = t.Attributes.Set(attribute.Entity, attribute.Key, attribute.Request)
-	if err != nil {
-		return err
-	}
+	//err = t.updateOne(light)
+	//if err == nil {
+	//	t.LastUpdate = time.Now()
+	//}
+	////err = t.Attributes.Set(attribute.Entity, attribute.Key, attribute.Request)
+	////if err != nil {
+	////	return err
+	////}
 	return nil
 }
 
@@ -1003,6 +1023,7 @@ func (t *Tuya) mux(index int) error {
 					log.Err(err)
 				}
 			}()
+			break
 		}
 	}
 }
@@ -1107,7 +1128,7 @@ func (t *Tuya) runScan() error {
 func (t *Tuya) Run() error {
 	t.ready = false
 
-	t.receiver = make(chan domain.Attribute, 10)
+	t.receiver = make(chan domain.Attribute, 8)
 
 	go func() {
 		for {

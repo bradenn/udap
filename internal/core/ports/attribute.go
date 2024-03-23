@@ -16,6 +16,7 @@ type AttributeRepository interface {
 	Register(*domain.Attribute) error
 	StateUpdate(*domain.Attribute) error
 	FindRecentLogs() (*[]domain.AttributeLog, error)
+	FindRecent() (*[]domain.Attribute, error)
 }
 
 type AttributeOperator interface {

@@ -12,7 +12,6 @@ import List from "udap-ui/components/List.vue";
 
 import SensorDOM, {SensorData} from "@/views/apps/Sensor.vue";
 import triggerService from "udap-ui/services/triggerService";
-import attributeService from "@/services/attributeService";
 
 const remote = core.remote();
 
@@ -70,10 +69,6 @@ onUpdated(() => {
   calculateDeltas();
 })
 
-watchEffect(() => {
-  calculateDeltas()
-  return props.alignment
-})
 
 function calculateDeltas() {
   if (props.alignment) {
@@ -178,39 +173,57 @@ function createDeviceState(): Warning[] {
 
 function update() {
   state.entityId = props.entityId
-  state.entity = remote.entities.find(e => e.type.includes("uhidv2") && e.id == state.entityId)
-  if (!state.entity) return
+  let entity = remote.entities.find(e => (e.type.includes("uhidv2") || e.type.includes("vradarv4")) && e.id == state.entityId)
+  if (!entity) return
+
+  state.entity = entity
+
   state.attributes = remote.attributes.filter(a => a.entity == state.entityId)
   let sensor = state.attributes.find(a => a.key == "sensor")
   if (!sensor) return
 
-  state.sensor = JSON.parse(sensor?.value || "{}") as SensorData || {} as SensorData
+
+  try {
+    state.sensor = JSON.parse(sensor?.value || "{}") as SensorData || {} as SensorData
+  } catch {
+    state.sensor = {} as SensorData
+  }
+
 
   state.attributes = remote.attributes.filter(a => a.entity == state.entityId)
   let alignment = state.attributes.find(a => a.key == "alignment")
   if (!alignment) {
     alignment = sensor
   }
-  let protoAlignment = JSON.parse(alignment?.value || "{}") as SensorData
+  try {
+    let protoAlignment = JSON.parse(alignment?.value || "{}") as SensorData
 
-  state.alignment = protoAlignment
-  if (Object.keys(protoAlignment).length != 0) {
-    applyAlignment()
+    state.alignment = protoAlignment
+    if (Object.keys(protoAlignment).length != 0) {
+      applyAlignment()
 
-  } else {
-    reset()
-    applyAlignment()
+    } else {
+      reset()
+      applyAlignment()
+
+    }
+    state.alignedTo = protoAlignment
+  } catch {
 
   }
 
-  state.alignedTo = protoAlignment
+
   state.alignmentAttribute = alignment
   let metadata = state.attributes.find(a => a.key == "metadata")
   if (!metadata) return
-  state.metadata = JSON.parse(metadata?.value || "{}") as UHIDv2 || {} as UHIDv2
+  try {
+    state.metadata = JSON.parse(metadata?.value || "{}") as UHIDv2 || {} as UHIDv2
+  } catch {
+    state.metadata = {} as UHIDv2
+  }
   let now = new Date().valueOf()
-  if (state.sensor) {
-    state.lastUpdate = Math.max(new Date(sensor?.updated | 0).valueOf(), new Date(metadata?.updated | 0).valueOf())
+  if (sensor && metadata) {
+    state.lastUpdate = Math.max(new Date(sensor.updated || 0).valueOf(), new Date(metadata.updated || 0).valueOf())
   }
   state.triggers = remote.triggers.filter(t => t.name.includes(state.entity.name))
 
@@ -223,6 +236,8 @@ function reset() {
   let keys = Object.keys(state.sensor);
   for (let i = 0; i < keys.length; i++) {
     let name = keys[i]
+    if (!alignment.hasOwnProperty(name)) return
+    //@ts-ignore
     alignment[name] = 0
   }
   state.alignment = alignment
@@ -240,10 +255,14 @@ function alignData(data: SensorData, alignment: SensorData): SensorData {
   let aligned: SensorData = {} as SensorData
   Object.keys(data).forEach((key: string) => {
 
+    if (!data.hasOwnProperty(key)) return
+
     let offset = 0
-    if (alignment) {
+    if (alignment && alignment.hasOwnProperty(key)) {
+      //@ts-ignore
       aligned[key] = data[key] + alignment[key]
     } else {
+      //@ts-ignore
       aligned[key] = data[key]
     }
 
@@ -252,20 +271,32 @@ function alignData(data: SensorData, alignment: SensorData): SensorData {
   return aligned
 }
 
+// Typescript is a fucking asshole, let me index a fucking type
 function deltaData(data: SensorData, alignment: SensorData): SensorData {
   let aligned: SensorData = {} as SensorData
   Object.keys(data).forEach((key: string) => {
     if (key == "lux" || key == "coreTemp") {
       if (key == "coreTemp") {
+        //@ts-ignore
         aligned[key] = -(5 / 9) * 32
       } else {
+        //@ts-ignore
         aligned[key] = 0
       }
 
       return
     }
+    //@ts-ignore
+    if (!data.hasOwnProperty(key)) return
+    //@ts-ignore
+    if (!alignment.hasOwnProperty(key)) {
+      //@ts-ignore
+      aligned[key] = data[key]
+    } else {
+      //@ts-ignore
+      aligned[key] = (data[key] - alignment[key])
+    }
 
-    aligned[key] = (data[key] - alignment[key])
     if (key == "temp") {
       // aligned[key] -= 32
       // aligned[key] *= 5 / 9
@@ -309,9 +340,9 @@ function updateAlignment() {
   alignment.humidity = -state.alignedTo.humidity
   state.alignmentAttribute.request = JSON.stringify(alignment)
   // state.alignment = alignment
-  attributeService.request(state.alignmentAttribute).then(() => {
-  }).catch(() => {
-  })
+  // attributeService.request(state.alignmentAttribute).then(() => {
+  // }).catch(() => {
+  // })
 }
 
 
@@ -330,7 +361,7 @@ function updateAlignment() {
         </div>
       </div>
       <List class="scrollable-fixed">
-        <SensorDOM :sensor-data="state.aligned" refined></SensorDOM>
+        <SensorDOM :sensor-data="state.sensor" refined></SensorDOM>
         <!--        <SensorDOM raw refined :sensor-data="state.alignment"></SensorDOM>-->
         <!--        <SensorDOM raw refined :sensor-data="state.alignedTo"></SensorDOM>-->
         <!--        -->

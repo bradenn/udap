@@ -29,7 +29,7 @@ func (a *attributeService) Watch(ref chan<- domain.Mutation) {
 }
 
 func (a *attributeService) EmitAll() error {
-	all, err := a.FindAll()
+	all, err := a.repository.FindRecent()
 	if err != nil {
 		return err
 	}
@@ -39,16 +39,16 @@ func (a *attributeService) EmitAll() error {
 			return err
 		}
 	}
-	logs, err := a.FindRecentLogs()
-	if err != nil {
-		return err
-	}
-	for _, log := range *logs {
-		err = a.Logs.Emit(log)
-		if err != nil {
-			return err
-		}
-	}
+	//logs, err := a.FindRecentLogs()
+	//if err != nil {
+	//	return err
+	//}
+	//for _, log := range *logs {
+	//	err = a.Logs.Emit(log)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
@@ -88,15 +88,6 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 	//if err != nil {
 	//	return err
 	//}
-
-	if key == "dim" {
-		//isPos := strings.HasPrefix(value, "+")
-		//isNeg := strings.HasPrefix(value, "-")
-		//if isPos || isNeg {
-		//
-		//}
-
-	}
 
 	err = a.operator.Request(e, value)
 	if err != nil {

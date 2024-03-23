@@ -70,25 +70,25 @@ func (c *Controller) EmitAll() error {
 		return err
 	}
 
-	err = c.Networks.EmitAll()
-	if err != nil {
-		return err
-	}
+	//err = c.Networks.EmitAll()
+	//if err != nil {
+	//	return err
+	//}
 
-	err = c.Devices.EmitAll()
-	if err != nil {
-		return err
-	}
+	//err = c.Devices.EmitAll()
+	//if err != nil {
+	//	return err
+	//}
 
 	err = c.Notifications.EmitAll()
 	if err != nil {
 		return err
 	}
 
-	err = c.Logs.EmitAll()
-	if err != nil {
-		return err
-	}
+	//err = c.Logs.EmitAll()
+	//if err != nil {
+	//	return err
+	//}
 
 	err = c.Macros.EmitAll()
 	if err != nil {
