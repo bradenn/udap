@@ -13,7 +13,7 @@ import (
 func NewAttribute(sys srv.System) {
 	// Initialize service
 	service := services.NewAttributeService(
-		repository.NewAttributeRepository(sys.DB()),
+		repository.NewAttributeRepository(sys.DB(), sys.Store()),
 		operators.NewAttributeOperator())
 	// Enroll routes
 	sys.WithWatch(service)

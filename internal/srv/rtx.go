@@ -7,6 +7,7 @@ import (
 	"udap/internal/controller"
 	"udap/internal/core/domain"
 	"udap/internal/port/routes"
+	"udap/internal/srv/store"
 )
 
 type Watch interface {
@@ -29,12 +30,14 @@ type System interface {
 	WithRoute(route routes.Routable)
 	UseModules(modules ...func(sys System))
 	DB() *gorm.DB
+	Store() *store.Store
 	Loaded()
 	Ctrl() *controller.Controller
 }
 
 type sys struct {
-	db *gorm.DB
+	db    *gorm.DB
+	store *store.Store
 	*Server
 	ctrl   *controller.Controller
 	onLoad chan bool
@@ -70,6 +73,10 @@ func (r *sys) DB() *gorm.DB {
 	return r.db
 }
 
+func (r *sys) Store() *store.Store {
+	return r.store
+}
+
 func (r *sys) Ctrl() *controller.Controller {
 	return r.ctrl
 }
@@ -84,11 +91,12 @@ func (r *sys) UseModules(modules ...func(sys System)) {
 	}
 }
 
-func NewRtx(server *Server, ctrl *controller.Controller, db *gorm.DB) System {
+func NewRtx(server *Server, ctrl *controller.Controller, db *gorm.DB, str *store.Store) System {
 	return &sys{
 		db:     db,
 		Server: server,
 		ctrl:   ctrl,
+		store:  str,
 		onLoad: make(chan bool),
 	}
 }

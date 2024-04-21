@@ -419,6 +419,7 @@ func (u *moduleService) LoadAll() error {
 			defer wg.Done()
 			err = u.Load(mod.Id)
 			if err != nil {
+				log.Err(err)
 				return
 			}
 		}(module)

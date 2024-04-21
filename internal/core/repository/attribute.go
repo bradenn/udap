@@ -3,18 +3,21 @@
 package repository
 
 import (
+	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
 	"sync"
 	"udap/internal/core/domain"
 	"udap/internal/core/generic"
 	"udap/internal/core/ports"
+	"udap/internal/srv/store"
 )
 
 type attributeRepo struct {
 	generic.Store[domain.Attribute]
 	cache map[string]domain.Attribute
 	mutex sync.Mutex
+	store *store.Store
 	db    *gorm.DB
 }
 
@@ -36,25 +39,85 @@ func (u *attributeRepo) FindRecentLogs() (*[]domain.AttributeLog, error) {
 	return &logs, nil
 }
 
-func NewAttributeRepository(db *gorm.DB) ports.AttributeRepository {
+func NewAttributeRepository(db *gorm.DB, str *store.Store) ports.AttributeRepository {
 	return &attributeRepo{
 		db:    db,
+		store: str,
 		Store: generic.NewStore[domain.Attribute](db),
 		mutex: sync.Mutex{},
 		cache: make(map[string]domain.Attribute),
 	}
 }
 
-func (u *attributeRepo) Log(attribute *domain.Attribute) (*domain.AttributeLog, error) {
-	if attribute.Type == "media" {
-		return nil, nil
+//
+//func (u *attributeRepo) Log(attribute *domain.Attribute) error {
+//	if attribute.Key == "sensor" {
+//		return nil
+//	}
+//
+//	payload := map[string]json.RawMessage{}
+//
+//	err := json.Unmarshal([]byte(attribute.Value), &payload)
+//	if err != nil {
+//		return nil
+//	}
+//
+//	for key, data := range payload {
+//		fl := 0.0
+//		err = json.Unmarshal(data, &fl)
+//		if err != nil {
+//			continue
+//		}
+//		rootKey := fmt.Sprintf("%s-%s", attribute.Id, key)
+//		err = u.store.Push(rootKey, fl)
+//		if err != nil {
+//			continue
+//		}
+//	}
+//}
+func (u *attributeRepo) Summary(key string, start int64, stop int64, window int, mode string) (map[int64]float64, error) {
+	return u.store.Summary(key, start, stop, window, mode)
+}
+
+func (u *attributeRepo) Log(attribute *domain.Attribute) error {
+
+	if attribute.Key != "sensor" {
+		return nil
 	}
-	//log := attribute.ToLog()
-	//err := u.db.Model(&log).Create(&log).Error
-	//if err != nil {
-	//	return nil, err
+
+	payload := map[string]json.RawMessage{}
+	//e := domain.Entity{}
+	//u.db.Model(domain.Entity{}).Where("id = ?", attribute.Entity).First(&e)
+	//
+	//if e.Alias != "" {
+	//	attribute.Serial = e.Alias
+	//} else {
+	//	attribute.Serial = e.Name
 	//}
-	return nil, nil
+	//
+	//u.Update(attribute)
+
+	err := json.Unmarshal([]byte(attribute.Value), &payload)
+	if err != nil {
+		return nil
+	}
+
+	for key, data := range payload {
+		fl := 0.0
+		err = json.Unmarshal(data, &fl)
+		if err != nil {
+			continue
+		}
+		rootKey := fmt.Sprintf("%s-%s", attribute.Id, key)
+		d := map[string]string{"type": "sensor", "class": key, "entity": attribute.Entity, "model": attribute.Type, "serial": attribute.Serial}
+		err = u.store.Push(rootKey, d, fl)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+	}
+
+	return nil
 }
 
 func (u *attributeRepo) StateUpdate(attribute *domain.Attribute) error {
@@ -101,10 +164,17 @@ func (u *attributeRepo) CachedValue(entity string, key string) (*domain.Attribut
 }
 
 func (u *attributeRepo) Register(attribute *domain.Attribute) error {
+	//serial := attribute.Serial
+
 	err := u.db.Model(&domain.Attribute{}).Where("entity = ? AND key = ?", attribute.Entity, attribute.Key).FirstOrCreate(attribute).Error
 	if err != nil {
 		return err
 	}
+
+	//if attribute.Serial != serial {
+	//	attribute.Serial = serial
+	//	u.Update(attribute)
+	//}
 	return nil
 }
 

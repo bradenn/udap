@@ -55,10 +55,6 @@ func (s *Server) AddRoutes(routable ...routes.Routable) {
 }
 
 func (s *Server) Run() error {
-	//err := s.server.ListenAndServeTLS("./certs/udap.crt", "./certs/udap.key")
-	//if err != nil {
-	//	return err
-	//}
 	err := s.server.ListenAndServe()
 	if err != nil {
 		return err

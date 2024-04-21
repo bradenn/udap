@@ -23,6 +23,10 @@ type attributeService struct {
 	Logs generic.Watchable[domain.AttributeLog]
 }
 
+func (a *attributeService) Summary(key string, start int64, stop int64, window int, mode string) (map[int64]float64, error) {
+	return a.repository.Summary(key, start, stop, window, mode)
+}
+
 func (a *attributeService) Watch(ref chan<- domain.Mutation) {
 	a.Watchable.Watch(ref)
 	//a.Logs.Watch(ref)
@@ -125,7 +129,10 @@ func (a *attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
-
+	err = a.repository.Log(e)
+	if err != nil {
+		return err
+	}
 	err = a.repository.Update(e)
 	if err != nil {
 		return err

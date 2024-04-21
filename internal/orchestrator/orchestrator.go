@@ -18,19 +18,20 @@ import (
 	"udap/internal/modules"
 	"udap/internal/pulse"
 	"udap/internal/srv"
+	"udap/internal/srv/store"
 	"udap/platform/database"
 )
 
 type orchestrator struct {
 	db         *gorm.DB
 	controller *controller.Controller
-
-	server    srv.Server
-	maxTick   time.Duration
-	done      chan bool
-	ready     bool
-	sys       srv.System
-	mutations chan domain.Mutation
+	store      *store.Store
+	server     srv.Server
+	maxTick    time.Duration
+	done       chan bool
+	ready      bool
+	sys        srv.System
+	mutations  chan domain.Mutation
 }
 
 type Orchestrator interface {
@@ -69,10 +70,14 @@ func NewOrchestrator() (Orchestrator, error) {
 	}
 	// Initialize Server
 	server := srv.NewServer()
+
+	str := store.NewStore()
+
 	// Initialize Orchestrator
 	return &orchestrator{
 		db:         db,
 		server:     server,
+		store:      str,
 		done:       make(chan bool),
 		controller: nil,
 		maxTick:    time.Second * 1,
@@ -113,10 +118,10 @@ func (o *orchestrator) Start() error {
 
 	o.ready = false
 
-	o.sys = srv.NewRtx(&o.server, o.controller, o.db)
+	o.sys = srv.NewRtx(&o.server, o.controller, o.db, o.store)
 
 	o.sys.UseModules(
-		modules.NewModule)
+		modules.NewModule, modules.NewTrace)
 
 	o.sys.UseModules(
 		modules.NewEntity,
