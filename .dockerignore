@@ -3,4 +3,5 @@ app/
 pkg/
 **/*.crt
 **/*.key
-embeded/
+embeded/**/*
+modules/**/*.so

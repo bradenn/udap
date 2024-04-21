@@ -10,8 +10,6 @@ import core from "udap-ui/core";
 import List from "udap-ui/components/List.vue";
 
 import type {SensorData} from "@/views/apps/Sensor.vue";
-import SensorDOM from "@/views/apps/Sensor.vue";
-import UHIDv2Preview from "@/views/apps/UHIDv2Preview.vue";
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
 
 const remote = core.remote();
@@ -35,7 +33,7 @@ const state = reactive({
   alignments: [] as Attribute[],
   devices: [] as Entity[],
   hubs: [] as Entity[],
-
+  data: [] as number[][]
 
 })
 
@@ -61,6 +59,7 @@ function update() {
   state.attributes = remote.attributes.filter(a => entityIds.includes(a.entity))
   state.sensors = state.attributes.filter(a => a.key == "sensor")
   state.alignments = state.attributes.filter(a => a.key == "alignment")
+
 
   state.devices = []
   state.hubs = []
@@ -100,6 +99,7 @@ function update() {
     <Element>
       <List>
 
+
         <ElementHeader title="Sensors"></ElementHeader>
         <ElementLink v-for="sensor in state.devices"
                      :alt="sensor.type"
@@ -114,7 +114,7 @@ function update() {
       </List>
     </Element>
 
-    <List class="scrollable-fixed">
+    <List v-if="false" class="scrollable-fixed">
       <Element class="d-flex flex-column gap-1">
         <div class="d-flex justify-content-between align-items-center">
           <div class="label-c4 label-o5 label-w600 px-1 mono" style="">
@@ -124,12 +124,12 @@ function update() {
 
           </div>
         </div>
-        <SensorDOM :sensor-data="state.baseline" refined></SensorDOM>
+        <!--        <SensorDOM :sensor-data="state.baseline" refined></SensorDOM>-->
       </Element>
       <List>
-        <div v-for="item in state.sensors">
-          <UHIDv2Preview :alignment="state.baseline" :entity-id="item.entity"></UHIDv2Preview>
-        </div>
+        <!--        <div v-for="item in state.sensors">-->
+        <!--          <UHIDv2Preview :alignment="state.baseline" :entity-id="item.entity"></UHIDv2Preview>-->
+        <!--        </div>-->
       </List>
     </List>
     <!--      <PanTiltVisualizer v-for="sensor in state.sensors" :time="sensor.time" :x="sensor.ax" :y="sensor.ax"-->

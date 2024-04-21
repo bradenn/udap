@@ -17,7 +17,7 @@ let headers = {
 
 export default {
 
-    async post(url: string, data?: {} | undefined): Promise<void> {
+    async post(url: string, data?: {} | undefined): Promise<any> {
 
 
         const response = await axios.post(`https://${endpoint}${url}`, data, headers)
@@ -27,6 +27,8 @@ export default {
             // core.notify().show(`Request HTTPS ${response.status}`, resp, 2, 1000 * 8)
 
         }
+
+        return response
     }
 }
 

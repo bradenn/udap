@@ -17,6 +17,7 @@ import SensorDOM from "@/views/apps/Sensor.vue";
 import entityService from "udap-ui/services/entityService";
 import attributeService from "@/services/attributeService";
 import ElementHeader from "udap-ui/components/ElementHeader.vue";
+import Slider from "udap-ui/components/Slider.vue";
 
 const remote = core.remote();
 
@@ -42,17 +43,37 @@ const state = reactive({
   live: true,
   entity: {} as Entity,
   config: {} as Attribute,
+  sensorConfig: {
+    nightlight: 0,
+    indicator: 0,
+    sensorRate: 1,
+  } as UHIDv2SensorConfig,
+  uncommittedConfig: {
+    nightlight: 0,
+    indicator: 0,
+    sensorRate: 1,
+  } as UHIDv2SensorConfig,
+  configMutex: false,
   attributes: [] as Attribute[],
   triggers: [] as Trigger[],
   sensor: {} as SensorData,
   metadata: {} as UHIDv2,
+  configString: "",
   lastUpdate: 0,
   deviceState: [] as Warning[],
   settings: false,
+  timestamps: [] as number[],
+  data: [] as number[],
 })
+
+interface TimeData {
+
+}
 
 onMounted(() => {
   update()
+  // let sensor = state.attributes.find(a => a.key == "sensor")
+
 })
 
 onBeforeUnmount(() => {
@@ -159,7 +180,14 @@ function createDeviceState(): Warning[] {
   return errors
 }
 
+interface UHIDv2SensorConfig {
+  nightlight: number,
+  indicator: number,
+  sensorRate: number
+}
+
 function update() {
+
   state.entityId = <string>router.currentRoute.value.params["entityId"];
 
   let entity = remote.entities.find(e => (e.type.includes("uhidv2") || e.type.includes("vradarv4")) && e.id == state.entityId)
@@ -176,6 +204,7 @@ function update() {
   } catch {
     state.sensor = {} as SensorData
   }
+  state.sensor.attributeId = sensor.id
   let metadata = state.attributes.find(a => a.key == "metadata")
   if (!metadata) return
   try {
@@ -191,6 +220,20 @@ function update() {
   let config = state.attributes.find(a => a.key == "config")
   if (!config) return
   state.config = config
+  let sensorConfig = JSON.parse(state.config.value) as UHIDv2SensorConfig
+  if (sensorConfig.sensorRate > 0) {
+    state.sensorConfig = sensorConfig
+
+  }
+
+  if (!state.configMutex) {
+    state.uncommittedConfig = state.sensorConfig
+  }
+
+  let localString = JSON.stringify(state.sensorConfig)
+  if (state.configString == "") {
+    state.configString = localString
+  }
   state.triggers = remote.triggers.filter(t => t.name.includes(state.entity.name))
 
   if (state.metadata.updateStatus == "startup") {
@@ -251,6 +294,27 @@ function beginUpdate() {
   }).catch()
 }
 
+function pushConfig() {
+  attributeService.request({
+    id: state.config.id,
+    key: "config",
+    entity: state.entityId,
+    request: JSON.stringify(state.uncommittedConfig)
+  } as Attribute).then(() => {
+    state.configMutex = false
+  }).catch()
+}
+
+function updateConfig(nightlight: number, indicator: number) {
+  state.configMutex = state.sensorConfig.nightlight != nightlight || state.sensorConfig.indicator != indicator
+  state.uncommittedConfig = {
+    indicator: indicator,
+    nightlight: nightlight,
+    sensorRate: 1
+  } as UHIDv2SensorConfig
+
+}
+
 function deleteDevice() {
   Promise.all(state.attributes.filter(a => a.entity == state.entityId).map(e => attributeService.delete(e.id))).then(res => {
     entityService.delete(state.entityId).then(() => {
@@ -279,6 +343,7 @@ function restartNow() {
 </script>
 
 <template>
+
 
   <div class="scrollable-fixed d-flex flex-column gap-1">
     <Element class="flex-shrink-0">
@@ -349,6 +414,7 @@ function restartNow() {
 
       <Element>
         <List>
+
           <SensorDOM :sensor-data="state.sensor"></SensorDOM>
         </List>
       </Element>
@@ -363,6 +429,36 @@ function restartNow() {
           </Element>
         </List>
       </Element>
+
+      <Element>
+        <List>
+          <div class="d-flex justify-content-between align-items-baseline">
+            <ElementHeader title="Indicator"></ElementHeader>
+            <div class="label-o4 label-c5 label-w600 px-2">{{ state.uncommittedConfig.indicator }} / 2048</div>
+          </div>
+
+          <Slider :change="(v) => updateConfig(state.uncommittedConfig.nightlight, v)" :max="2048" :min="1" :step="1"
+                  :value="state.uncommittedConfig.indicator || 0"
+                  bg="dim"></Slider>
+          <div class="d-flex justify-content-between align-items-baseline">
+            <ElementHeader title="Buttons"></ElementHeader>
+            <div class="label-o4 label-c5 label-w600 px-2">{{ state.uncommittedConfig.nightlight }} / 2048</div>
+          </div>
+
+          <Slider :change="(v) => updateConfig(v, state.uncommittedConfig.indicator)" :max="2048" :min="1" :step="1"
+                  :value="state.uncommittedConfig.nightlight || 0"
+                  bg="dim"></Slider>
+          <ElementHeader title="Commit Changes"></ElementHeader>
+          <Element :accent="state.configMutex" :cb="() => pushConfig()"
+                   class="d-flex align-items-center justify-content-center gap-1 ox-2"
+                   foreground
+                   mutable>
+            Save Changes
+
+          </Element>
+        </List>
+      </Element>
+
     </List>
   </div>
 
@@ -399,6 +495,7 @@ function restartNow() {
           </Element>
         </List>
       </Element>
+
     </List>
   </div>
 

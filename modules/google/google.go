@@ -616,6 +616,11 @@ type Thermostat struct {
 	EcoHeat     float64 `json:"ecoHeat"`
 }
 
+type ThermostatSensor struct {
+	Humidity float64 `json:"humidity"`
+	Temp     float64 `json:"temp"`
+}
+
 func (c *Google) updateValues(qr QueryResponse) error {
 
 	for _, device := range qr.Devices {
@@ -646,6 +651,21 @@ func (c *Google) updateValues(qr QueryResponse) error {
 		}
 
 		err = c.Attributes.Set(c.entityId, "heat", fmt.Sprintf("%f", convertCToF(device.Traits.SdmDevicesTraitsThermostatTemperatureSetpoint.HeatCelsius)))
+		if err != nil {
+			return err
+		}
+
+		sensorData := ThermostatSensor{
+			Temp:     device.Traits.SdmDevicesTraitsTemperature.AmbientTemperatureCelsius,
+			Humidity: ts.Humidity,
+		}
+
+		sensorJSON, err := json.Marshal(sensorData)
+		if err != nil {
+			return err
+		}
+
+		err = c.Attributes.Set(c.entityId, "sensor", string(sensorJSON))
 		if err != nil {
 			return err
 		}
@@ -713,6 +733,21 @@ func (c *Google) initDevices() error {
 			Channel: channel,
 		}
 		err = c.Attributes.Register(media)
+		if err != nil {
+			return err
+		}
+
+		sensor := &domain.Attribute{
+			Key:     "sensor",
+			Value:   "{\"temp\": 0, \"humidity\": 0}",
+			Request: "{\"temp\": 0, \"humidity\": 0}",
+			Order:   0,
+			Type:    "media",
+			Serial:  dev.Name,
+			Entity:  dev.Id,
+			Channel: channel,
+		}
+		err = c.Attributes.Register(sensor)
 		if err != nil {
 			return err
 		}
