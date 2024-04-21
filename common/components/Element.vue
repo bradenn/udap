@@ -182,7 +182,7 @@ function pointerUp(event: TouchEvent | MouseEvent) {
 
   <div :id="`${state.uuid}`"
        :class="`${props.layout?'element-layout':''} ${props.foreground?(props.link?(state.active?'subplot px-2 py-2':'subplot  px-2 py-2'):'subplot px-2 py-2'):`element back`} ${props.surface?'subplot-surface':''} `"
-       :style="`box-shadow: inset 0 0 0.5px 1px ${state.active||props.accent?preferences.accent+'':'transparent'}; ${props.accent?'background-color: rgba(255,255,255,0.05);':''} ${props.mutable?'transform: scale(' + state.position.w + `); filter: drop-shadow(0 0 2px rgba(255,255,255,0.1)) !important;`:'filter: drop-shadow(0 0 2px rgba(255,255,255,0.1)) !important;'}  ${props.foreground?`${state.position.w!=1?'background-color: rgba(255,255,255,0.05);':''} `:`backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`}`"
+       :style="`box-shadow: inset 0 0 0.5px 1px ${state.active||props.accent?preferences.accent+'':'transparent'}; ${props.accent?'background-color: rgba(255,255,255,0.05);':''} ${props.mutable?'transform: scale(' + state.position.w + `);`:''}  ${props.foreground?`${state.position.w!=1?'background-color: rgba(255,255,255,0.05);':''} `:`backdrop-filter: blur(${preferences.blur}px); -webkit-backdrop-filter: blur(${preferences.blur}px);`}`"
 
        @touchend.passive="pointerUp"
        @touchleave.passive="pointerUp"
@@ -246,9 +246,9 @@ $border-element: hsla(0deg, 0%, 20%, 0.4);
   //background-blend-mode: overlay !important;
 
   > .subplot {
-    backdrop-filter: brightness(190%) !important;
-
-    -webkit-backdrop-filter: brightness(190%) !important;
+    //backdrop-filter: brightness(190%) !important;
+    //
+    //-webkit-backdrop-filter: brightness(190%) !important;
   }
 }
 
@@ -258,7 +258,7 @@ $border-element: hsla(0deg, 0%, 20%, 0.4);
   -webkit-user-select: none !important;
   transform: translate3d(0, 0, 0);
 
-  //z-index: 0 !important;
+  z-index: 0 !important;
   //margin-inline: 0;
   //padding: 0 !important;
   border-radius: calc(1rem - 0.375rem) !important;

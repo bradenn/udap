@@ -1,11 +1,11 @@
 <!-- Copyright (c) 2024 Braden Nicholson -->
 
-<script setup lang="ts">
+<script lang="ts" setup>
 
 import {inject, onMounted, onUnmounted, reactive, watchEffect} from "vue";
 import {v4 as uuidv4} from "uuid";
 import {PreferencesRemote} from "udap-ui/persistent";
-import {Trace} from "../services/traceService";
+import {Trace} from "../../services/traceService";
 
 interface DataObject {
   name: string,
@@ -427,12 +427,12 @@ function draw() {
 <template>
   <div class="h-100">
     <canvas :id="`linechart-${state.uuid}`"
-            style="font-family: 'JetBrains Mono',serif; aspect-ratio: 2/1; width: 100%"></canvas>
+            style="font-family: 'JetBrains Mono',serif; aspect-ratio: 1/1 !important; width: 100%;"></canvas>
 
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 #loadFont {
 
 }

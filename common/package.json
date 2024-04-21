@@ -1,0 +1,21 @@
+{
+  "name": "udap-ui",
+  "version": "1.0.0",
+  "description": "Shared components for udap interfaces",
+  "type": "module",
+  "author": "Braden Nicholson",
+  "license": "Copyright 2024",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "moment": "2.29.4",
+    "uuid": "^9.0.1",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.2"
+  },
+  "resolutions": {
+    "moment": "2.29.4"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.4"
+  }
+}
