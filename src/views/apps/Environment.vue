@@ -162,18 +162,18 @@ function cToF(degC: number): number {
 <template>
   <div class="scrollable-fixed">
     <List scroll-y>
-      <Timeline :traces="state.historical"></Timeline>
+      <!--      <Timeline :traces="state.historical"></Timeline>-->
       <Element class="d-flex flex-column gap-1">
         <MultiChart :traces="state.traces"
                     :transforms="[(c: number) => (c-6.5),(c: number) => ((c * (9.0 / 5.0)) + 32)]"
                     style="">
         </MultiChart>
-        <Floorplan :traces="state.traces"
-                   :transforms="[(c: number) => (c-6.5),(c: number) => ((c * (9.0 / 5.0)) + 32)]"></Floorplan>
-        <RadialChart v-if=false :traces="state.traces"
-                     :transforms="[(c: number) => (c-6.5),(c: number) => ((c * (9.0 / 5.0)) + 32)]"
-                     style="height: 40rem">
-        </RadialChart>
+        <!--        <Floorplan :traces="state.traces"-->
+        <!--                   :transforms="[(c: number) => (c-6.5),(c: number) => ((c * (9.0 / 5.0)) + 32)]"></Floorplan>-->
+        <!--        <RadialChart v-if=false :traces="state.traces"-->
+        <!--                     :transforms="[(c: number) => (c-6.5),(c: number) => ((c * (9.0 / 5.0)) + 32)]"-->
+        <!--                     style="height: 40rem">-->
+        <!--        </RadialChart>-->
 
         <div class="label-c4 label-o4 label-w500">Period</div>
         <ElementSelect

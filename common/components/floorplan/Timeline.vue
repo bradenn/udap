@@ -977,6 +977,10 @@ function groupByDay(t: Trace[]): Trace[] {
   return []
 }
 
+function cellOffsetAt(x: number, y: number): { x: number, y: number } {
+  return {x: x, y: y}
+}
+
 function draw() {
   let ctx = state.ctx;
   if (!ctx.canvas) return
@@ -1002,11 +1006,27 @@ function draw() {
 
 
   let len = transformed.length
-  let rows = 8
-  let dx = h / rows
-  let offsetIndex = 0
-  for (let i = 0; i < days; i++) {
-    let x = dx * i
+  let span = 8
+  let spanDuration = (24 / span)
+  let rowOffset = new Date(transformed[0].time[0]).getHours() / spanDuration
+  let offsetIndex = new Date(transformed[0].time[0]).getDay()
+
+  let cy = Math.floor(h / span)
+  let cx = w / Math.floor(w / cy)
+
+  let dayCount = days;
+
+  let padX = 4
+  let padY = 4
+
+  let daySpans: { day: number, span: number[], times: number[] }[] = []
+  let reduce: number[] = []
+  let times: number[] = []
+  let day = new Date(transformed[0].data[0]).getDay();
+  let last = 0;
+  for (let i = 0; i < dayCount; i++) {
+    ctx.fillStyle = viridisRGB(map_range(0, metadata.valueMin, metadata.valueMax, 0, 1))
+
 
     let val = 0
     let time = 0
@@ -1014,21 +1034,78 @@ function draw() {
       val += transformed[j].data[i]
       time = transformed[j].time[i]
     }
-    val /= len
-    ctx.font = "16px SF Pro Display"
-    let dayIndex = Math.floor(i / rows)
-    let xx = dayIndex * dx
-    let xy = ((offsetIndex + i) % rows) * dx
-    let weekday = `${weekdays[dayIndex % 7]}`
-    let mx = ctx.measureText(weekday)
+    val /= Math.max(len, 1)
+    let hour = new Date(time).getHours()
+    let current = new Date(time).getDay()
+    if (day != current) {
+      daySpans.push({day: current, span: reduce, times: times})
+      last += 1
+      day = current
+      reduce = []
+      times = []
+    }
 
-    let pad = 2
-    ctx.fillStyle = "rgba(0,0,0,1)"
-    ctx.fillText(new Date(time).getUTCDate().toString(), xx + pad + (dx - pad * 2) / 2 - mx.width / 2, 20 + xy + pad - 10)
-    ctx.fillStyle = viridisRGB(map_range(val, metadata.valueMin, metadata.valueMax, 0, 1))
-    ctx.fillText(weekday, xx + pad + (dx - pad * 2) / 2 - mx.width / 2, 16)
-    ctx.fillRect(xx + pad, 20 + xy + pad, dx - pad * 2, dx - pad * 2)
+    let slot = (spanDuration - 1) + (reduce.length) * spanDuration
+
+    while (slot != hour && reduce.length < span) {
+      times.push(new Date(time).setHours(slot))
+      reduce.push(-1)
+      slot = (spanDuration - 1) + (reduce.length) * spanDuration
+    }
+    reduce.push(val)
+    times.push(time)
+
   }
+
+  console.log(daySpans)
+
+  for (let i = 0; i < daySpans.length; i++) {
+    let dayCollection = daySpans[i]
+    for (let j = 0; j < dayCollection.span.length; j++) {
+      let value = dayCollection.span[i]
+      let time = dayCollection.times[i]
+
+      let xi = i
+      let yi = j
+      let x = xi * cx + padX / 2
+      let y = yi * cy + padY / 2
+      ctx.fillRect(x, y, cx - padX, cy - padY)
+      ctx.fillStyle = "rgba(255,255,255,1)"
+      let str = `${new Date(time).getDay()}`
+      let mx = ctx.measureText(str)
+      ctx.fillText(str, x + (cx - padX) / 2 - mx.width / 2, y + (cy - padY) / 2 + mx.actualBoundingBoxAscent / 2)
+      ctx.fillStyle = "rgba(0,0,0,1)"
+    }
+
+  }
+  // for (let i = 0; i < days; i++) {
+  //
+  //   let val = 0
+  //   let time = 0
+  //   for (let j = 0; j < len; j++) {
+  //     val += transformed[j].data[i]
+  //     time = transformed[j].time[i]
+  //   }
+  //   val /= len
+  //
+  //
+  //   ctx.font = "16px SF Pro Display"
+  //
+  //   let dayIndex = Math.floor(i / rows)
+  //
+  //   let xx = dayIndex * dx
+  //   let xy = ((offsetIndex + i) % rows) * dx
+  //
+  //   let weekday = `${weekdays[dayIndex % 7]}`
+  //   let mx = ctx.measureText(weekday)
+  //
+  //   let pad = 2
+  //   ctx.fillStyle = "rgba(0,0,0,1)"
+  //   ctx.fillText(new Date(time).getDate().toString(), xx + pad + (dx - pad * 2) / 2 - mx.width / 2, 20 + xy + pad - 10)
+  //   ctx.fillStyle = viridisRGB(map_range(val, metadata.valueMin, metadata.valueMax, 0, 1))
+  //   ctx.fillText(weekday, xx + pad + (dx - pad * 2) / 2 - mx.width / 2, 16)
+  //   ctx.fillRect(xx + pad, 20 + xy + pad, dx - pad * 2, dx - pad * 2)
+  // }
 }
 
 
@@ -1036,9 +1113,9 @@ function draw() {
 
 <template>
   <Element class=""
-           style="width: 100%; display: flex; justify-content: center; align-items: center; padding: 0">
+           style="width: 100%; display: flex; justify-content: center; align-items: center; padding: 1rem">
     <canvas :id="`linechart-${state.uuid}`"
-            style="font-family: 'JetBrains Mono',serif; height: 8rem; width: 100%; padding: 0.8rem"></canvas>
+            style="font-family: 'JetBrains Mono',serif; width: 100%;  aspect-ratio: 28/8; box-shadow: inset 0 0 1px 1px rgba(255,255,255,0.1)"></canvas>
 
   </Element>
 </template>
