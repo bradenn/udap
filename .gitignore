@@ -1,4 +1,5 @@
 .env
+.env.*
 selfsigned.cert
 selfsigned.key
 *.css
