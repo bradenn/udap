@@ -11,11 +11,14 @@ import (
 
 func NewEntity(sys srv.System) {
 	// Initialize service
+
 	service := services.NewEntityService(
 		repository.NewEntityRepository(sys.DB()))
 	// Enroll routes
 
 	sys.Ctrl().Entities = service
+
 	sys.WithWatch(service)
+
 	sys.WithRoute(routes.NewEntityRouter(service))
 }

@@ -187,7 +187,7 @@ function timeSince(time: string): string {
 
 <template>
   <div class="remote-grid h-100 mt-4">
-    <div style="grid-column: 2 / span 3; grid-row: 1 / span 6; ">
+    <div style="grid-column: 2 / span 3; grid-row: 1 / span 6;">
       <!--            <FixedScroll style="overflow-y: scroll">-->
       <div class="d-flex flex-column" style="">
         <!--        <div style="width: 6rem">-->
@@ -207,7 +207,7 @@ function timeSince(time: string): string {
       </div>
       <!--            </FixedScroll>-->
     </div>
-    <div style="grid-column: 5 / span 7; grid-row: 1 / span 8;">
+    <div style="grid-column: 5 / span 7; grid-row: 1 / span 8; ">
       <MenuSection v-if="state.selected.length > 0" :title="'Control'">
         <div class="d-flex gap-1 flex-column">
           <div v-for="attribute in state.attributes" :key="`${attribute.id}`">
@@ -216,7 +216,7 @@ function timeSince(time: string): string {
                     :change="(val) => attributeRequestAll(attribute.key, `${val?'true':'false'}`)"
                     name="Power"></Switch>
             <Slider v-else-if="attribute.key === 'dim'"
-                    :change="(val) => {attributeRequestAll(attribute.key, `${val}`)}"
+                    :change="(val) => {attributeRequestAll(attribute.key, `${Math.max(val, 1)}`)}"
                     :live="false"
                     :max="100"
                     :min="0"
@@ -245,7 +245,7 @@ function timeSince(time: string): string {
           </div>
         </div>
       </MenuSection>
-      <MenuSection v-else :title="`Macros`">
+      <MenuSection v-else-if="false" :title="`Macros`">
         <div style="grid-column: 2 / span 3; grid-row: 1 / span 6; ">
           <!--            <FixedScroll style="overflow-y: scroll">-->
           <div class="entity-grid mb-1">

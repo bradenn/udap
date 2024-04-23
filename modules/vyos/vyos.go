@@ -7,7 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
@@ -78,9 +78,13 @@ func (r *RemoteSocket) connect(w http.ResponseWriter, req *http.Request) {
 		select {
 		case r.export <- res:
 			continue
-		case <-time.After(time.Millisecond * 100):
+		case <-time.After(time.Millisecond * 500):
 			log.Err(fmt.Errorf("utilization export timed out"))
-			continue
+			err = conn.Close()
+			if err != nil {
+				return
+			}
+
 		}
 
 	}
@@ -109,6 +113,8 @@ func (r *RemoteSocket) Run() error {
 type Vyos struct {
 	plugin.Module
 	devicesIds          map[string]string
+	staticHostEntityId  string
+	staticHosts         map[string]string
 	pingQueue           chan domain.Device
 	pingResolver        chan domain.Device
 	utilizationResolver chan domain.Utilization
@@ -254,10 +260,13 @@ func (v *Vyos) Setup() (plugin.Config, error) {
 	v.pingQueue = make(chan domain.Device, 8)
 	v.pingResolver = make(chan domain.Device, 8)
 	v.done = make(chan bool)
-	v.utilizationResolver = make(chan domain.Utilization)
+	v.utilizationResolver = make(chan domain.Utilization, 10)
 	v.devicesIds = map[string]string{}
+	v.staticHosts = map[string]string{}
 	v.sockets = NewRemoteSocket(v.utilizationResolver)
-	err := v.UpdateInterval(1000 * 30)
+	v.staticHostEntityId = ""
+
+	err := v.UpdateInterval(1000 * 60 * 5)
 	if err != nil {
 		return plugin.Config{}, err
 	}
@@ -295,6 +304,7 @@ func (v *Vyos) listen() error {
 		// 		return err
 		// 	}
 		case <-v.done:
+
 			v.sockets.done <- true
 			return nil
 		}
@@ -357,35 +367,70 @@ func (v *Vyos) beginListening() (err error) {
 
 func (v *Vyos) Update() error {
 	if v.Ready() {
-		for _, network := range v.networks {
-			err := v.arpScan(network)
-			if err != nil {
-				return err
-			}
+		err := v.fetchStaticHostMapping()
+		if err != nil {
+			fmt.Println(err)
+			return err
 		}
+		//for _, network := range v.networks {
+		//	err := v.arpScan(network)
+		//	if err != nil {
+		//		return err
+		//	}
+		//}
 
 	}
 	return nil
 }
 
 func (v *Vyos) Run() error {
-	go func() {
-		err := v.listen()
-		if err != nil {
-			log.Err(err)
-		}
-	}()
-	go func() {
-		err := v.fetchNetworks()
-		if err != nil {
-			log.Err(err)
-		}
-		err = v.sockets.Run()
-		if err != nil {
-			log.Err(err)
-			return
-		}
-	}()
+
+	staticHosts := domain.Entity{
+		Name:   "vyos-system",
+		Type:   "media",
+		Module: "vyos",
+	}
+
+	err := v.Entities.Register(&staticHosts)
+	if err != nil {
+		return err
+	}
+	v.staticHostEntityId = staticHosts.Id
+	handle := make(chan domain.Attribute, 20)
+	staticHostsAttribute := domain.Attribute{
+		Value:     "{}",
+		Updated:   time.Time{},
+		Request:   "{}",
+		Requested: time.Time{},
+		Entity:    staticHosts.Id,
+		Key:       "static-routes",
+		Type:      "media",
+		Order:     0,
+		Channel:   handle,
+	}
+
+	err = v.Attributes.Register(&staticHostsAttribute)
+	if err != nil {
+		return err
+	}
+
+	//go func() {
+	//	err := v.listen()
+	//	if err != nil {
+	//		log.Err(err)
+	//	}
+	//}()
+	//go func() {
+	//	err := v.fetchNetworks()
+	//	if err != nil {
+	//		log.Err(err)
+	//	}
+	//	err = v.sockets.Run()
+	//	if err != nil {
+	//		log.Err(err)
+	//		return
+	//	}
+	//}()
 
 	return nil
 }
@@ -435,6 +480,12 @@ type Response struct {
 	Error   interface{} `json:"error"`
 }
 
+type StaticRouteResponse struct {
+	Success bool         `json:"success"`
+	Data    StaticRoutes `json:"data"`
+	Error   interface{}  `json:"error"`
+}
+
 type Dhcp struct {
 	Networks map[string]Lan `json:"shared-network-name"`
 }
@@ -455,7 +506,67 @@ type Subnet struct {
 	Range         map[int]Range `json:"range"`
 }
 
+type Host struct {
+	Inet string `json:"inet"`
+}
+
+type StaticRoutes struct {
+	HostName map[string]Host `json:"host-name"`
+}
+
+func (v *Vyos) fetchStaticHostMapping() error {
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	client := http.Client{
+		Transport: transport,
+		Timeout:   time.Second * 10,
+	}
+
+	val := url.Values{}
+	val.Set("key", "toor")
+	val.Set("data", "{\"op\": \"showConfig\", \"path\": [\"system\", \"static-host-mapping\"]}")
+
+	routerApi := "https://10.0.1.1:8005/retrieve"
+	request, err := client.PostForm(routerApi, val)
+	if err != nil {
+		return fmt.Errorf("vyos index is non-existance")
+	}
+	buffer := bytes.Buffer{}
+	_, err = buffer.ReadFrom(request.Body)
+	if err != nil {
+		return err
+	}
+
+	payload := StaticRouteResponse{}
+	err = json.Unmarshal(buffer.Bytes(), &payload)
+	if err != nil {
+		return err
+	}
+
+	v.staticHosts = map[string]string{}
+	for key, host := range payload.Data.HostName {
+		v.staticHosts[key] = host.Inet
+	}
+
+	marshal, err := json.Marshal(v.staticHosts)
+	if err != nil {
+		return err
+	}
+
+	err = v.Attributes.Set(v.staticHostEntityId, "static-routes", string(marshal))
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (v *Vyos) fetchNetworks() error {
+
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}

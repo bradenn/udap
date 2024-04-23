@@ -11,14 +11,16 @@ import (
 )
 
 type attributeOperator struct {
-	hooks map[string]chan domain.Attribute
-	mutex sync.RWMutex
+	hooks   map[string]chan domain.Attribute
+	request chan domain.Attribute
+	mutex   sync.RWMutex
 }
 
 func NewAttributeOperator() ports.AttributeOperator {
 	return &attributeOperator{
-		hooks: map[string]chan domain.Attribute{},
-		mutex: sync.RWMutex{},
+		hooks:   map[string]chan domain.Attribute{},
+		mutex:   sync.RWMutex{},
+		request: make(chan domain.Attribute, 8),
 	}
 }
 
@@ -26,34 +28,24 @@ func (a *attributeOperator) Register(attribute *domain.Attribute) error {
 	if attribute.Id == "" {
 		return fmt.Errorf("invalid attribute id")
 	}
-	a.mutex.Lock()
+
 	a.hooks[attribute.Id] = attribute.Channel
-	a.mutex.Unlock()
 	return nil
 }
 
 func (a *attributeOperator) Request(attribute *domain.Attribute, s string) error {
-	var channel chan domain.Attribute
+	attribute.Requested = time.Now()
+	attribute.Request = s
 
-	a.mutex.Lock()
-	channel = a.hooks[attribute.Id]
-	a.mutex.Unlock()
-
-	if channel == nil {
+	// Find the correct channel
+	channel, ok := a.hooks[attribute.Id]
+	if !ok {
 		return fmt.Errorf("channel is not set")
 	}
 
-	attribute.Request = s
-	if attribute.Request != attribute.Value || time.Since(attribute.UpdatedAt) >= time.Second*1 {
+	// Send the request to the module for processing
+	channel <- *attribute
 
-		channel <- *attribute
-		attribute.Requested = time.Now()
-
-		err := a.Set(attribute, s)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -62,18 +54,18 @@ func (a *attributeOperator) Set(attribute *domain.Attribute, s string) error {
 
 	attribute.Request = s
 	attribute.Value = s
-	attribute.UpdatedAt = time.Now()
 
 	return nil
 }
 
 func (a *attributeOperator) Update(attribute *domain.Attribute, val string, stamp time.Time) error {
-	// If a request has been made in the last five seconds, and has been unresolved, ignore this update
-	// if attribute.Requested.Before(stamp) && attribute.Request != val && time.Since(attribute.Requested) < 200*time.
-	// 	Millisecond {
-	// 	return fmt.Errorf("OVERWRITES REQUEST")
-	// }
+	//// If a request has been made in the last five seconds, and has been unresolved, ignore this update
+	//if attribute.Requested.Before(stamp) && attribute.Request != val && time.Since(attribute.Requested) < 300*time.Millisecond {
+	//	return nil
+	//}
 	// Set the value
+
+	attribute.Updated = stamp
 	err := a.Set(attribute, val)
 	if err != nil {
 		return err

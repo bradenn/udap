@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "jsx": "preserve",
+
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": [
+      "ESNext",
+      "DOM",
+      "WebWorker"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "udap-ui/*": [
+        "./common/*"
+      ]
+    },
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": [
+    "udap-ui/**/*.css",
+    "udap-ui/**/*.scss",
+    "udap-ui/**/*.ts",
+    "udap-ui/**/*.vue",
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}

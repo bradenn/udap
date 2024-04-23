@@ -17,7 +17,7 @@ function host(): string {
     if (ctrl) {
         return ctrl
     } else {
-        return ""
+        return "api.udap.app"
     }
 }
 

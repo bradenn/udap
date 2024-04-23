@@ -19,6 +19,10 @@ type entityService struct {
 	generic.Watchable[domain.Entity]
 }
 
+func (u *entityService) FindAllByModule(name string) (*[]domain.Entity, error) {
+	return u.repository.FindAllByModule(name)
+}
+
 func (u *entityService) EmitAll() error {
 	all, err := u.repository.FindAll()
 	if err != nil {
@@ -94,6 +98,19 @@ func (u *entityService) ChangeIcon(id string, icon string) error {
 		return err
 	}
 	byId.Icon = icon
+	err = u.mutate(byId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *entityService) SetPrediction(id string, predicted string) error {
+	byId, err := u.repository.FindById(id)
+	if err != nil {
+		return err
+	}
+	byId.Predicted = predicted
 	err = u.mutate(byId)
 	if err != nil {
 		return err

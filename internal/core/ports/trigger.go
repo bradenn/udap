@@ -15,11 +15,14 @@ type TriggerRepository interface {
 
 type TriggerOperator interface {
 	Run(trigger domain.Trigger) error
+	RunCustom(trigger domain.Trigger, key string, value string) error
 }
 
 type TriggerService interface {
 	domain.Observable
 	Trigger(name string) error
+	TriggerCustom(name string, key string, value string) error
+
 	Register(*domain.Trigger) error
 	FindById(id string) (*domain.Trigger, error)
 	Create(*domain.Trigger) error

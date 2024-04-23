@@ -5,6 +5,7 @@ package controller
 import (
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
+	"udap/internal/pulse"
 )
 
 type Controller struct {
@@ -21,6 +22,7 @@ type Controller struct {
 	Macros        ports.MacroService
 	Triggers      ports.TriggerService
 	SubRoutines   ports.SubRoutineService
+	Actions       ports.ActionService
 	RX            chan<- domain.Mutation
 }
 
@@ -68,25 +70,25 @@ func (c *Controller) EmitAll() error {
 		return err
 	}
 
-	err = c.Networks.EmitAll()
-	if err != nil {
-		return err
-	}
+	//err = c.Networks.EmitAll()
+	//if err != nil {
+	//	return err
+	//}
 
-	err = c.Devices.EmitAll()
-	if err != nil {
-		return err
-	}
+	//err = c.Devices.EmitAll()
+	//if err != nil {
+	//	return err
+	//}
 
 	err = c.Notifications.EmitAll()
 	if err != nil {
 		return err
 	}
 
-	err = c.Logs.EmitAll()
-	if err != nil {
-		return err
-	}
+	//err = c.Logs.EmitAll()
+	//if err != nil {
+	//	return err
+	//}
 
 	err = c.Macros.EmitAll()
 	if err != nil {
@@ -101,6 +103,21 @@ func (c *Controller) EmitAll() error {
 	err = c.SubRoutines.EmitAll()
 	if err != nil {
 		return err
+	}
+
+	err = c.Actions.EmitAll()
+	if err != nil {
+		return err
+	}
+
+	timings := pulse.Timings.AllTimings()
+	for s, proc := range timings {
+		c.RX <- domain.Mutation{
+			Status:    "update",
+			Operation: "timing",
+			Body:      proc,
+			Id:        s,
+		}
 	}
 
 	return nil

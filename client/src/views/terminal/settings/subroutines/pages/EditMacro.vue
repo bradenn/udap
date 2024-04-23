@@ -77,6 +77,10 @@ function setOptions() {
           value: 'on',
           description: "Change the power state"
         }, {
+          title: "Spectral",
+          description: "Change the variables of a light",
+          value: "spectral"
+        }, {
           title: "Brightness",
           value: 'dim',
           description: "Change the brightness"

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -19,8 +20,10 @@ import (
 
 func NewModuleService(repository ports.ModuleRepository, runtime ports.ModuleOperator) ports.ModuleService {
 	return &moduleService{
-		repository: repository,
-		operator:   runtime,
+		repository:    repository,
+		operator:      runtime,
+		timeoutsMutex: sync.RWMutex{},
+		timeouts:      map[string]*time.Timer{},
 	}
 }
 
@@ -38,8 +41,10 @@ const (
 )
 
 type moduleService struct {
-	repository ports.ModuleRepository
-	operator   ports.ModuleOperator
+	repository    ports.ModuleRepository
+	operator      ports.ModuleOperator
+	timeouts      map[string]*time.Timer
+	timeoutsMutex sync.RWMutex
 	generic.Watchable[domain.Module]
 }
 
@@ -97,15 +102,34 @@ func (u *moduleService) Update(id string) error {
 			}
 		}
 	}()
+	addr := fmt.Sprintf("module.%s.update", module.UUID)
 	// Mark the time that the update begins
-	pulse.Begin(module.Id)
+	pulse.Begin(addr)
 	// End the pulse when the update concludes or errors out
-	defer pulse.End(module.Id)
+	defer pulse.End(addr)
 	// Attempt to update the modules
 	err = u.operator.Update(module.UUID)
 	if err != nil {
 		return err
 	}
+
+	go func(mod *domain.Module) {
+		duration := mod.Interval
+		if duration < time.Second {
+			return
+		}
+		timer := time.NewTimer(duration)
+		u.timeoutsMutex.Lock()
+		u.timeouts[mod.UUID] = timer
+		u.timeoutsMutex.Unlock()
+		select {
+		case _ = <-timer.C:
+			err = u.Update(id)
+			if err != nil {
+				return
+			}
+		}
+	}(module)
 	// Return normally
 	return nil
 }
@@ -134,6 +158,11 @@ func (u *moduleService) Run(id string) error {
 			}
 		}
 	}()
+	addr := fmt.Sprintf("module.%s.run", module.UUID)
+	// Mark the time that the update begins
+	pulse.Begin(addr)
+	// End the pulse when the update concludes or errors out
+	defer pulse.End(addr)
 	// Attempt to run the module
 	err = u.operator.Run(module.UUID)
 	if err != nil {
@@ -155,6 +184,13 @@ func (u *moduleService) Run(id string) error {
 	if err != nil {
 		return err
 	}
+	if module.Enabled && module.Running {
+		err = u.Update(module.Id)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -182,11 +218,12 @@ func (u *moduleService) Load(id string) error {
 	module.Variables = config.Variables
 	module.Version = config.Version
 	module.Description = config.Description
+	module.Interval = config.Interval
 	module.Type = config.Type
 	module.Author = config.Author
 	module.Running = false
 	log.Event("Module '%s' @ 0x%s loaded. (%s)", module.Name, module.SessionId(),
-		time.Since(start).Truncate(time.Millisecond).String())
+		time.Since(start).String())
 	err = u.repository.Update(module)
 	if err != nil {
 		return err
@@ -256,26 +293,27 @@ func (u *moduleService) Dispose(id string) error {
 }
 
 func (u *moduleService) UpdateAll() error {
-	modules, err := u.repository.FindAll()
-	if err != nil {
-		return err
-	}
-	wg := sync.WaitGroup{}
-	ref := *modules
-	for _, module := range ref {
-		if !module.Running || !module.Enabled {
-			continue
-		}
-		wg.Add(1)
-		go func(mod domain.Module) {
-			defer wg.Done()
-			err = u.Update(mod.Id)
-			if err != nil {
-				log.Err(err)
-			}
-		}(module)
-	}
-	wg.Wait()
+	//modules, err := u.repository.FindAll()
+	//if err != nil {
+	//	return err
+	//}
+	//wg := sync.WaitGroup{}
+	//ref := *modules
+	//for _, module := range ref {
+	//	if !module.Running || !module.Enabled {
+	//		continue
+	//	}
+	//	wg.Add(1)
+	//
+	//	go func(mod domain.Module) {
+	//		defer wg.Done()
+	//		err = u.Update(mod.Id)
+	//		if err != nil {
+	//			log.Err(err)
+	//		}
+	//	}(module)
+	//}
+	//wg.Wait()
 	return nil
 }
 
@@ -344,6 +382,29 @@ func (u *moduleService) DisposeAll() error {
 	return nil
 }
 
+func (u *moduleService) Loader(wg *sync.WaitGroup) chan domain.Module {
+	threads := 8
+	channel := make(chan domain.Module, threads)
+
+	for i := 0; i < threads; i++ {
+		go func() {
+			for module := range channel {
+
+				err := u.Build(module.Id)
+				if err != nil {
+					wg.Done()
+					log.Err(err)
+					continue
+				}
+				log.Event("Loaded module '%s'", module.Name)
+				wg.Done()
+			}
+		}()
+	}
+
+	return channel
+}
+
 func (u *moduleService) LoadAll() error {
 	modules, err := u.repository.FindAll()
 	if err != nil {
@@ -351,16 +412,23 @@ func (u *moduleService) LoadAll() error {
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(len(*modules))
+	//channel := u.Loader(&wg)
 	for _, module := range *modules {
+		//channel <- module
 		go func(mod domain.Module) {
 			defer wg.Done()
 			err = u.Load(mod.Id)
 			if err != nil {
+				log.Err(err)
 				return
 			}
 		}(module)
 	}
+
 	wg.Wait()
+
+	log.Event("All modules loaded")
+
 	return nil
 }
 
@@ -384,11 +452,44 @@ func (u *moduleService) Discover() error {
 			target.State = DISCOVERED
 			err = u.repository.Create(target)
 			if err != nil {
-				return err
+				continue
 			}
 		}
 	}
 	return nil
+}
+
+func (u *moduleService) Builder(wg *sync.WaitGroup) chan domain.Module {
+	threads := runtime.NumCPU()
+	channel := make(chan domain.Module, threads)
+
+	for i := 0; i < threads; i++ {
+		go func() {
+			for module := range channel {
+				start := time.Now()
+
+				err := u.Build(module.Id)
+				if err != nil {
+					wg.Done()
+					log.Err(err)
+					err = u.setState(module.Id, ERROR)
+					continue
+				}
+
+				err = u.setState(module.Id, UNINITIALIZED)
+				if err != nil {
+					continue
+				}
+
+				log.Event("Module '%s' @ 0x%s compiled. (%s)", module.Name, module.SessionId(),
+					time.Since(start).String())
+
+				wg.Done()
+			}
+		}()
+	}
+
+	return channel
 }
 
 func (u *moduleService) BuildAll() error {
@@ -398,26 +499,13 @@ func (u *moduleService) BuildAll() error {
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(len(*modules))
+	builder := u.Builder(&wg)
 	for _, module := range *modules {
-		go func(mod domain.Module) {
-			defer wg.Done()
-			mod.Running = false
-			err = u.Build(mod.Id)
-			if err != nil {
-				log.Err(err)
-				err = u.setState(mod.Id, ERROR)
-				if err != nil {
-					return
-				}
-				return
-			}
-			err = u.setState(mod.Id, UNINITIALIZED)
-			if err != nil {
-				return
-			}
-		}(module)
+		module.Running = false
+		builder <- module
 	}
 	wg.Wait()
+	close(builder)
 	return nil
 }
 
@@ -455,8 +543,8 @@ func (u *moduleService) InitConfig(id string, key string, value string) error {
 		values = map[string]string{}
 	}
 
-	val := values[key]
-	if val != "" {
+	val, ok := values[key]
+	if val != "" && ok {
 		return nil
 	}
 

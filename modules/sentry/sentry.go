@@ -14,6 +14,7 @@ import (
 	"udap/internal/core/domain"
 	"udap/internal/log"
 	"udap/internal/plugin"
+	"udap/internal/pulse"
 )
 
 var Module Sentry
@@ -75,20 +76,32 @@ func (v *Sentry) connect() error {
 	u := url.URL{Scheme: "ws", Host: sentryUrl, Path: "/ws"}
 
 	var err error
-	v.session, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
+	dd := websocket.DefaultDialer
+	dd.HandshakeTimeout = time.Second * 1
+	v.session, _, err = dd.Dial(u.String(), nil)
 	if err != nil {
 		return err
 	}
+	v.session.SetCloseHandler(func(code int, text string) error {
+		v.session = nil
+		return nil
+	})
 
 	go func() {
 		for {
 			if v.session == nil {
 				return
 			}
-			_, _, err = v.session.ReadMessage()
+			_, data, err := v.session.ReadMessage()
 			if err != nil {
+				v.session.Close()
 				v.session = nil
 				return
+			}
+
+			err = v.UpdateData(*bytes.NewBuffer(data))
+			if err != nil {
+				continue
 			}
 		}
 	}()
@@ -97,7 +110,7 @@ func (v *Sentry) connect() error {
 }
 
 func (v *Sentry) Setup() (plugin.Config, error) {
-	err := v.UpdateInterval(2000)
+	err := v.UpdateInterval(20000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
@@ -160,16 +173,20 @@ func (v *Sentry) requestPosition(position SetPosition) error {
 	//_ = resp.Body.Close()
 
 	if v.session == nil {
+		log.Event("Reconnecting...")
 		err := v.connect()
 		if err != nil {
 			return err
 		}
 	}
 
+	ref := fmt.Sprintf("module.%s.mux.handle", v.UUID)
+	pulse.Begin(ref)
 	err := v.session.WriteJSON(position)
 	if err != nil {
 		return err
 	}
+	pulse.End(ref)
 
 	return nil
 }
@@ -185,7 +202,7 @@ func (v *Sentry) requestBeam(beam Beam) error {
 	v.beam = beam
 
 	client := http.Client{}
-	client.Timeout = time.Millisecond * 250
+	client.Timeout = time.Millisecond * 5000
 	defer client.CloseIdleConnections()
 	resp, err := client.Post(fmt.Sprintf("http://%s/beam", sentryUrl), "application/json", reader)
 	if err != nil {
@@ -262,26 +279,27 @@ func (v *Sentry) listen() error {
 }
 
 func (v *Sentry) pull() error {
-
-	client := http.Client{}
-	client.Timeout = time.Millisecond * 250
-	get, err := client.Get(fmt.Sprintf("http://%s/status", sentryUrl))
-	if err != nil {
-		return nil
-	}
-
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(get.Body)
-	if err != nil {
-		return err
-	}
-
-	err = v.UpdateData(buf)
-	if err != nil {
-		return err
-	}
-
 	return nil
+	//client := http.Client{}
+	//client.Timeout = time.Millisecond * 750
+	//get, err := client.Get(fmt.Sprintf("http://%s/status", sentryUrl))
+	//if err != nil {
+	//	return nil
+	//}
+	//
+	//var buf bytes.Buffer
+	//_, err = buf.ReadFrom(get.Body)
+	//if err != nil {
+	//	return err
+	//}
+	//client.CloseIdleConnections()
+	//
+	//err = v.UpdateData(buf)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//return nil
 }
 
 func (v *Sentry) UpdateData(buf bytes.Buffer) error {
@@ -291,6 +309,7 @@ func (v *Sentry) UpdateData(buf bytes.Buffer) error {
 		return err
 	}
 	p := Position{}
+	//fmt.Printf("IN  => Sentry: P %d T %d\n", s.Servos.Pan, s.Servos.Tilt)
 	p.Pan = int(mapRange(float64(s.Servos.Pan), -90, 90, 0, 180))
 	p.Tilt = int(mapRange(float64(s.Servos.Tilt), -90, 90, 0, 180))
 	marshal, err := json.Marshal(p)
@@ -378,9 +397,16 @@ func (v *Sentry) Run() error {
 	v.eId = e.Id
 
 	go func() {
-		err = v.listen()
-		if err != nil {
-			return
+		for {
+			err = v.listen()
+			if err != nil {
+				err = v.session.Close()
+				if err != nil {
+					continue
+				}
+				v.session = nil
+				continue
+			}
 		}
 	}()
 

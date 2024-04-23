@@ -3,9 +3,9 @@
 package generic
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/log"
@@ -16,13 +16,18 @@ type Identifiable interface {
 }
 
 type Watchable[T Identifiable] struct {
-	channel chan<- domain.Mutation
+	channels []chan<- domain.Mutation
+	channel  chan<- domain.Mutation
+	mutex    sync.RWMutex
 }
 
 func (w *Watchable[T]) Emit(element T) error {
-	if w.channel == nil {
-		return fmt.Errorf("channel is null")
+
+	w.mutex.Lock()
+	if w.channels == nil {
+		w.channels = make([]chan<- domain.Mutation, 0)
 	}
+	w.mutex.Unlock()
 	classification := strings.ToLower(reflect.TypeOf(element).Name())
 
 	eId := element.GetId()
@@ -34,23 +39,33 @@ func (w *Watchable[T]) Emit(element T) error {
 		Id:        eId,
 	}
 
-	// Set a timer to cancel sending after 100 milliseconds
-	timer := time.NewTimer(time.Millisecond * 500)
-	select {
-	// Attempt to push the payload to the channel
-	case w.channel <- payload:
-		// Cancel the timer if payload is sent
-		timer.Stop()
-		// Exit normally
-		return nil
-	case <-timer.C:
-		log.Event("emit failed for '%s'", classification)
-		// Exit quietly if the payload could not be sent
-		return nil
-	}
+	w.mutex.RLock()
+	for _, channel := range w.channels {
 
+		// Set a timer to cancel sending after 100 milliseconds
+		timer := time.NewTimer(time.Millisecond * 500)
+		select {
+		// Attempt to push the payload to the channel
+		case channel <- payload:
+			// Cancel the timer if payload is sent
+			timer.Stop()
+			continue
+		case <-timer.C:
+			log.Event("emit failed for '%s'", payload)
+			continue
+		}
+	}
+	w.mutex.RUnlock()
+	return nil
 }
 
 func (w *Watchable[T]) Watch(ref chan<- domain.Mutation) {
-	w.channel = ref
+
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	if w.channels == nil {
+		w.channels = make([]chan<- domain.Mutation, 0)
+	}
+
+	w.channels = append(w.channels, ref)
 }

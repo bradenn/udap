@@ -48,6 +48,27 @@ func (u *triggerService) Trigger(name string) error {
 	return nil
 }
 
+func (u *triggerService) TriggerCustom(name string, key string, value string) error {
+	trigger, err := u.repository.FindByName(name)
+	if err != nil {
+		return err
+	}
+	err = u.operator.RunCustom(*trigger, key, value)
+	if err != nil {
+		return err
+	}
+	trigger.LastTrigger = time.Now()
+	err = u.Update(trigger)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*trigger)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *triggerService) EmitAll() error {
 	all, err := u.repository.FindAll()
 	if err != nil {

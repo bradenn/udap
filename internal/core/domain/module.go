@@ -5,34 +5,37 @@ package domain
 import (
 	"fmt"
 	"strings"
+	"time"
 	"udap/internal/core/domain/common"
 )
 
 type ModuleConfig struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"` // Module, Daemon, etc.
-	Description string `json:"description"`
-	Version     string `json:"version"`
-	Author      string `json:"author"`
-	Variables   string `json:"variables"`
+	Name        string        `json:"name"`
+	Type        string        `json:"type"` // Module, Daemon, etc.
+	Description string        `json:"description"`
+	Interval    time.Duration `json:"interval"`
+	Version     string        `json:"version"`
+	Author      string        `json:"author"`
+	Variables   string        `json:"variables"`
 }
 
 type Module struct {
 	common.Persistent
-	Name        string      `json:"name"`
-	Path        string      `json:"path"`
-	UUID        string      `json:"uuid"`
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Version     string      `json:"version"`
-	Author      string      `json:"author"`
-	Variables   string      `json:"variables"`
-	Channel     chan Module `json:"-" gorm:"-"`
-	Config      string      `json:"config" gorm:"default:'{}'"`
-	State       string      `json:"state"`
-	Running     bool        `json:"running" gorm:"default:false"`
-	Enabled     bool        `json:"enabled" gorm:"default:true"`
-	Recover     int         `json:"recover"`
+	Name        string        `json:"name"`
+	Path        string        `json:"path"`
+	UUID        string        `json:"uuid"`
+	Type        string        `json:"type"`
+	Description string        `json:"description"`
+	Interval    time.Duration `json:"interval"`
+	Version     string        `json:"version"`
+	Author      string        `json:"author"`
+	Variables   string        `json:"variables"`
+	Channel     chan Module   `json:"-" gorm:"-"`
+	Config      string        `json:"config" gorm:"default:'{}'"`
+	State       string        `json:"state"`
+	Running     bool          `json:"running" gorm:"default:false"`
+	Enabled     bool          `json:"enabled" gorm:"default:true"`
+	Recover     int           `json:"recover"`
 }
 
 func (m *Module) SessionId() string {

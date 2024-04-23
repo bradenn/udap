@@ -5,7 +5,7 @@ package routes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
@@ -17,6 +17,8 @@ type triggerRouter struct {
 
 func (r *triggerRouter) RouteInternal(router chi.Router) {
 	router.Post("/triggers/create", r.create)
+	router.Post("/triggers/{triggerId}/invoke", r.invoke)
+
 }
 
 func (r *triggerRouter) RouteExternal(_ chi.Router) {
@@ -27,6 +29,23 @@ func NewTriggerRouter(service ports.TriggerService) Routable {
 	return &triggerRouter{
 		service: service,
 	}
+}
+
+func (r *triggerRouter) invoke(w http.ResponseWriter, req *http.Request) {
+
+	id := chi.URLParam(req, "triggerId")
+
+	byId, err := r.service.FindById(id)
+	if err != nil {
+		return
+	}
+
+	err = r.service.Trigger(byId.Name)
+	if err != nil {
+		return
+	}
+
+	w.WriteHeader(200)
 }
 
 func (r *triggerRouter) create(w http.ResponseWriter, req *http.Request) {

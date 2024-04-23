@@ -27,6 +27,34 @@ func (u *endpointService) SendAll(target string, operation string, payload any) 
 	return nil
 }
 
+func (u *endpointService) RegisterPush(id string, push string) error {
+	endpoint, err := u.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	endpoint.Push = push
+	endpoint.Notifications = true
+
+	err = u.mutate(endpoint)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *endpointService) mutate(endpoint *domain.Endpoint) error {
+	err := u.repository.Update(endpoint)
+	if err != nil {
+		return err
+	}
+	err = u.Emit(*endpoint)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *endpointService) EmitAll() error {
 	all, err := u.FindAll()
 	if err != nil {
@@ -67,7 +95,7 @@ func (u *endpointService) Enroll(id string, conn *websocket.Conn) error {
 		return err
 	}
 	endpoint.Connected = true
-	err = u.repository.Update(endpoint)
+	err = u.mutate(endpoint)
 	if err != nil {
 		return err
 	}
@@ -85,6 +113,10 @@ func (u *endpointService) Unenroll(id string) error {
 	}
 	endpoint.Connected = false
 	err = u.repository.Update(endpoint)
+	if err != nil {
+		return err
+	}
+	err = u.mutate(endpoint)
 	if err != nil {
 		return err
 	}

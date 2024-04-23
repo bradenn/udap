@@ -5,13 +5,14 @@ package database
 import (
 	"fmt"
 	"gorm.io/driver/postgres"
-	_ "gorm.io/driver/postgres"
+
 	"gorm.io/gorm"
 	"os"
 )
 
 func New() (*gorm.DB, error) {
 	pg := postgres.Open(dbURL())
+
 	db, err := gorm.Open(pg, &gorm.Config{})
 	if err != nil {
 		return nil, err

@@ -18,19 +18,20 @@ import (
 	"udap/internal/modules"
 	"udap/internal/pulse"
 	"udap/internal/srv"
+	"udap/internal/srv/store"
 	"udap/platform/database"
 )
 
 type orchestrator struct {
 	db         *gorm.DB
 	controller *controller.Controller
-
-	server    srv.Server
-	maxTick   time.Duration
-	done      chan bool
-	ready     bool
-	sys       srv.System
-	mutations chan domain.Mutation
+	store      *store.Store
+	server     srv.Server
+	maxTick    time.Duration
+	done       chan bool
+	ready      bool
+	sys        srv.System
+	mutations  chan domain.Mutation
 }
 
 type Orchestrator interface {
@@ -39,10 +40,25 @@ type Orchestrator interface {
 }
 
 func (o *orchestrator) Terminate() {
-	_ = o.controller.Modules.DisposeAll()
-	_ = o.controller.Endpoints.CloseAll()
+
+	go func() {
+		err := o.controller.Endpoints.CloseAll()
+		if err != nil {
+			log.Err(err)
+		}
+	}()
+
+	go func() {
+		err := o.controller.Modules.DisposeAll()
+		if err != nil {
+			log.Err(err)
+		}
+	}()
+
 	close(o.mutations)
+
 	fmt.Printf("\nThreads at exit: %d\n", runtime.NumGoroutine())
+
 	os.Exit(0)
 }
 
@@ -54,14 +70,18 @@ func NewOrchestrator() (Orchestrator, error) {
 	}
 	// Initialize Server
 	server := srv.NewServer()
+
+	str := store.NewStore()
+
 	// Initialize Orchestrator
 	return &orchestrator{
 		db:         db,
 		server:     server,
+		store:      str,
 		done:       make(chan bool),
 		controller: nil,
-		maxTick:    time.Second,
-		mutations:  make(chan domain.Mutation, 16),
+		maxTick:    time.Second * 1,
+		mutations:  make(chan domain.Mutation, 512),
 	}, nil
 }
 
@@ -98,10 +118,10 @@ func (o *orchestrator) Start() error {
 
 	o.ready = false
 
-	o.sys = srv.NewRtx(&o.server, o.controller, o.db)
+	o.sys = srv.NewRtx(&o.server, o.controller, o.db, o.store)
 
 	o.sys.UseModules(
-		modules.NewModule)
+		modules.NewModule, modules.NewTrace)
 
 	o.sys.UseModules(
 		modules.NewEntity,
@@ -122,6 +142,8 @@ func (o *orchestrator) Start() error {
 		modules.NewLog,
 	)
 
+	o.sys.UseModules(modules.NewAction)
+
 	o.sys.Loaded()
 	o.ready = true
 
@@ -132,15 +154,16 @@ func (o *orchestrator) Update() error {
 	if !o.ready {
 		return nil
 	}
-	err := o.controller.Modules.UpdateAll()
-	if err != nil {
-		return err
-	}
+	//err := o.controller.Modules.UpdateAll()
+	//if err != nil {
+	//	return err
+	//}
 	return nil
 }
 
 func (o *orchestrator) broadcastTimings() error {
 	timings := pulse.Timings.Timings()
+
 	for s, proc := range timings {
 		o.mutations <- domain.Mutation{
 			Status:    "update",
@@ -155,8 +178,8 @@ func (o *orchestrator) broadcastTimings() error {
 func (o *orchestrator) handleMutations() error {
 	for response := range o.mutations {
 		// o.modules.HandleEmits(response)
-		if !o.ready {
-			continue
+		for !o.ready {
+			time.Sleep(time.Millisecond * 250)
 		}
 
 		err := o.controller.Endpoints.SendAll(response.Id, response.Operation, response.Body)
@@ -173,10 +196,13 @@ func (o *orchestrator) tick() <-chan error {
 	go func() {
 		start := time.Now()
 		err := o.Update()
+		pulse.End("update")
+		_ = o.broadcastTimings()
 		if err != nil {
 			out <- err
 			return
 		}
+
 		delta := time.Since(start)
 		if delta < o.maxTick {
 			// log.Tick("Elapsed: %s", delta.String())
@@ -214,7 +240,7 @@ func (o *orchestrator) Run() error {
 
 		for {
 			pulse.Begin("update")
-			t.Reset(o.maxTick + time.Millisecond*500)
+			t.Reset(o.maxTick + time.Second*500)
 			select {
 			case <-o.done:
 				log.Event("Event loop exiting...")
@@ -223,19 +249,14 @@ func (o *orchestrator) Run() error {
 			case <-t.C:
 				log.Event("Orchestrator event loop timed out (%s)", (o.maxTick + time.Millisecond*500).String())
 				log.Event("Currently %d threads.", runtime.NumGoroutine())
-				pulse.End("update")
-				continue
+
 			case err := <-o.tick():
 				t.Stop()
 				if err != nil {
 					log.Err(err)
 				}
 			}
-			pulse.End("update")
-			err := o.broadcastTimings()
-			if err != nil {
-				log.Err(err)
-			}
+
 		}
 	}()
 

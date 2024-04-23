@@ -24,23 +24,27 @@ func NewModule(sys srv.System) {
 	err := service.Discover()
 	if err != nil {
 		log.Err(err)
-		return
+
 	}
+
 	// Build local modules
 	err = service.BuildAll()
 	if err != nil {
 		log.Err(err)
-		return
 	}
+
 	// Load all modules
 	err = service.LoadAll()
 	if err != nil {
-		return
+		log.Err(err)
 	}
 	// Assign routes
+
 	sys.WithRoute(routes.NewModuleRouter(service))
 	// Start all modules
+
 	sys.WhenLoaded(func() {
+		log.Event("Starting modules...")
 		err = service.RunAll()
 		if err != nil {
 			return

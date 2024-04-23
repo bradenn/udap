@@ -23,13 +23,17 @@ type attributeService struct {
 	Logs generic.Watchable[domain.AttributeLog]
 }
 
+func (a *attributeService) Summary(key string, start int64, stop int64, window int, mode string) (map[int64]float64, error) {
+	return a.repository.Summary(key, start, stop, window, mode)
+}
+
 func (a *attributeService) Watch(ref chan<- domain.Mutation) {
 	a.Watchable.Watch(ref)
-	a.Logs.Watch(ref)
+	//a.Logs.Watch(ref)
 }
 
 func (a *attributeService) EmitAll() error {
-	all, err := a.FindAll()
+	all, err := a.repository.FindRecent()
 	if err != nil {
 		return err
 	}
@@ -39,16 +43,16 @@ func (a *attributeService) EmitAll() error {
 			return err
 		}
 	}
-	logs, err := a.FindRecentLogs()
-	if err != nil {
-		return err
-	}
-	for _, log := range *logs {
-		err = a.Logs.Emit(log)
-		if err != nil {
-			return err
-		}
-	}
+	//logs, err := a.FindRecentLogs()
+	//if err != nil {
+	//	return err
+	//}
+	//for _, log := range *logs {
+	//	err = a.Logs.Emit(log)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
@@ -82,29 +86,32 @@ func (a *attributeService) Request(entity string, key string, value string) erro
 		return err
 	}
 
+	e.Requested = time.Now()
 	e.Request = value
-	log, err := a.repository.Log(&(*e))
-	if err != nil {
-		return err
-	}
+	//log, err := a.repository.Log(&(*e))
+	//if err != nil {
+	//	return err
+	//}
 
 	err = a.operator.Request(e, value)
 	if err != nil {
 		return err
 	}
 
-	e.UpdatedAt = time.Now()
+	e.Value = value
+
+	//e.UpdatedAt = time.Now()
 	err = a.repository.Update(e)
 	if err != nil {
 		return err
 	}
-
-	if log != nil {
-		err = a.Logs.Emit(*log)
-		if err != nil {
-			return err
-		}
-	}
+	//
+	//if log != nil {
+	//	err = a.Logs.Emit(*log)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	err = a.Emit(*e)
 	if err != nil {
 		return err
@@ -117,7 +124,12 @@ func (a *attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
+
 	err = a.operator.Update(e, value, time.Now())
+	if err != nil {
+		return err
+	}
+	err = a.repository.Log(e)
 	if err != nil {
 		return err
 	}
@@ -125,6 +137,7 @@ func (a *attributeService) Set(entity string, key string, value string) error {
 	if err != nil {
 		return err
 	}
+
 	err = a.Emit(*e)
 	if err != nil {
 		return err
@@ -175,5 +188,7 @@ func (a *attributeService) FindOrCreate(attribute *domain.Attribute) error {
 }
 
 func (a *attributeService) Delete(attribute *domain.Attribute) error {
+	attribute.Deleted = true
+	_ = a.Emit(*attribute)
 	return a.repository.Delete(attribute)
 }

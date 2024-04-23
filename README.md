@@ -1,4 +1,4 @@
-# UDAP v2.18.1
+# UDAP v2.18.6
 
 [![Go](https://github.com/bradenn/udap/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/go.yml)
 [![Go CodeQL](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/bradenn/udap/actions/workflows/codeql-analysis.yml)
@@ -10,6 +10,13 @@ Udap aims to efficiently link and aggregate many unlike interfaces into a heuris
 supplemented from add-on plugins called modules. These modules are written in go and compile during Udap's runtime.
 Modules can be configured to control computer settings, lights, music, air conditioners, phone systems, access points,
 media, or even spaceships.
+
+## Local Domain Configurations
+
+Udap uses a certificate signed by its own certificate authority. New devices need to install a CA root certificate in
+order to access the UDAP platform.
+
+**Routing & Network Details**
 
 ## Entities & Attributes
 
@@ -29,13 +36,12 @@ resolving each attribute's status.
 
 ## Glossary
 
-| Command  | Description |
-|----------| --- |
-| U.D.A.P. | Universal Device Aggregation Platform (encompasses all below terms) |
-| Core     | The physical running UDAP program instance |
-| Nexus    | The front-end interface for all of UDAP |
-| Terminal | An authoritative nexus instance (Used for configuration and management) |
-| Pad      | A general use nexus instance, can be used by anyone without authentication if configured by terminal. |
+| Phrase   | Description                                                                                    |
+|----------|------------------------------------------------------------------------------------------------|
+| UDAP     | Universal Device Aggregation Platform (encompasses all below terms)                            |
+| Core     | The primary UDAP program instance, though there can be multiple core instances.                |
+| Terminal | An authoritative udap interface instance (Used for configuration, management, and primary use) |
+| Mobile   | The general purpose mobile app used for interacting with the UDAP platform.                    |
 
 ### Terminal Screenshots
 
@@ -102,4 +108,13 @@ Plots are best used for providing many buttons for easy selection.
 
 ![Plot Buttons](./docs/images/plot_multi.png)
 
+#### Utilities
+
+Line Count
+
+```git ls-files ./**/*.go ./**/*.vue ./client/src/**/*.ts ./embeded/**/*.cpp ./embeded/**/*.h ./embeded/**/*.c ./pkg/**/*.py ./client/**/*.scss | xargs wc -l```
+
+`> 46603`
+
 #### Copyright &copy; 2019-2022 Braden Nicholson
+

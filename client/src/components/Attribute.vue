@@ -7,6 +7,7 @@ import {onMounted, reactive} from "vue";
 import {useRouter} from "vue-router";
 import core from "@/core";
 import Radio from "@/components/plot/Radio.vue";
+import moment from "moment";
 
 interface AttributeProps {
   attribute: Attribute,
@@ -31,6 +32,7 @@ interface KeyPayload {
 
 const typeMap = new Map<string, KeyPayload>([
   ["on", {icon: "􀆨", unit: ""}],
+  ["media", {icon: "􁇵", unit: ""}],
   ["dim", {icon: "􀇮", unit: "%"}],
   ["cct", {icon: "􀆭", unit: "K"}],
   ["hue", {icon: "􀟗", unit: "°"}],
@@ -65,26 +67,39 @@ function cctToRgb(cct: number) {
 
     <div :class="props.selected?'accent-selected':''"
          class="element p-1 h-100 d-flex justify-content-between">
-      <div class="d-flex justify-content-between align-items-center gap-1">
+      <div class="d-flex justify-content-between align-items-center gap-1 w-100">
         <div
             class="label-c1 label-o2 label-w500 px-1 d-flex justify-content-center"
             style="width: 1.5rem">
-          {{ typeMap.get(props.attribute.key)?.icon }}
+          {{ typeMap.get(props.attribute.key)?.icon || typeMap.get(props.attribute.type)?.icon }}
         </div>
-        <div class="d-flex flex-column gap-0"
-        >
-          <div class="label-c2 label-o4 label-w700 lh-1">
-            {{ props.attribute.key }}
+        <div class="d-flex justify-content-between w-100 align-items-center">
+          <div class="d-flex flex-column gap-0">
+            <div class="label-c2 label-o4 label-w700 lh-1 d-flex justify-content-between">
+              <div>{{ props.attribute.key }}</div>
+
+            </div>
+
+            <div v-if="props.attribute.type !== 'media'"
+                 class="label-c3 label-o3 label-w400 lh-sm"
+                 style="max-width: 7rem;  white-space: nowrap ; overflow: hidden; text-overflow: ellipsis; padding-right: 0.125rem">
+              {{
+                props.attribute.value
+              }}{{ typeMap.get(props.attribute.key)?.unit }}
+            </div>
           </div>
-          <div class="label-c3 label-o3 label-w400 lh-sm"
-               style="max-width: 7rem;  white-space: nowrap ; overflow: hidden; text-overflow: ellipsis; padding-right: 0.125rem">
-            {{
-              props.attribute.value
-            }}{{ typeMap.get(props.attribute.key)?.unit }}
+          <div class="px-2">
+            <div class=" label-c3 label-o4 label-w600 ">Updated:</div>
+            <div class=" label-c3 label-o3 label-w500 lh-1">
+              {{
+                moment(props.attribute.lastUpdated).fromNow()
+              }}
+            </div>
           </div>
         </div>
       </div>
-      <div class="d-flex gap-1" style="min-height: 1.6rem;">
+
+      <div class="d-flex gap-1" style="min-height: 1.6rem; max-height: 1.6rem;">
         <Radio :active="false" :disabled="props.attribute.type === 'media'"
                :fn="() => {}" sf="􁎵"
                style="width: 3rem;"
@@ -92,6 +107,17 @@ function cctToRgb(cct: number) {
         <Radio :active="false" :fn="() => {}" sf="􀈑"
                style="width: 3rem;"
                title=""></Radio>
+      </div>
+    </div>
+    <div v-if="props.attribute.type === 'media'"
+         class="label-c3 label-o3 label-w400 lh-sm d-flex flex-column gap-1 py-1" style="padding-left: 0.5rem;">
+      <div v-for="key in Object.keys(JSON.parse(props.attribute.value))"
+           class="element p-2 w-100 d-flex justify-content-between">
+        <div class="label-c2 label-o3 label-w600 lh-sm text-capitalize">{{ key }}</div>
+        <div class="label-c2 label-o3 label-w500 lh-sm text-accent" style="overflow-x: clip; max-width: 75%">
+          {{ JSON.parse(props.attribute.value)[key] }}
+        </div>
+
       </div>
     </div>
     <div v-if="state.toggle" class="element element-menu">
@@ -108,9 +134,9 @@ div.element {
 
 }
 
-div.element:active {
-  transform: scale(98%) !important;
-}
+//div.element:active {
+//  transform: scale(98%) !important;
+//}
 
 .element-menu {
   position: absolute;

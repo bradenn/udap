@@ -3,7 +3,7 @@
 package routes
 
 import (
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"udap/internal/core/ports"
 	"udap/internal/log"

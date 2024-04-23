@@ -11,6 +11,9 @@ import FixedScroll from "@/components/scroll/FixedScroll.vue";
 import type {Remote} from "@/remote";
 import Toolbar from "@/components/toolbar/Toolbar.vue";
 import ToolbarButton from "@/components/ToolbarButton.vue";
+import core from "@/core";
+import zoneService from "@/services/zoneService";
+import EditZone from "@/views/terminal/settings/zone/EditZone.vue";
 
 let remote = inject("remote") as Remote
 let preferences = inject('preferences')
@@ -29,6 +32,7 @@ let state = reactive({
   model: "",
   ctx: {} as CanvasRenderingContext2D,
   width: 0,
+  edit: false,
   height: 0,
   runner: 0,
   tick: 0
@@ -37,21 +41,21 @@ let state = reactive({
 onMounted(() => {
   state.loading = true
   handleUpdates()
-  state.selectedZone = state.zones[0]
+  if (state.zones.length > 0)
+    state.selectedZone = state.zones[0]
   setupCanvas()
   state.loading = false
 })
 
 
 onUnmounted(() => {
-  state.ctx.canvas.remove()
   cancelAnimationFrame(state.animationFrame)
 })
 
 
 watchEffect(() => {
   handleUpdates()
-  return state.zones
+  return remote.zones
 })
 
 function sortZones(a: Zone, b: Zone): number {
@@ -68,7 +72,9 @@ function sortZones(a: Zone, b: Zone): number {
 }
 
 function handleUpdates() {
-  state.zones = remote.zones.sort((a, b) => sortZones(a, b))
+
+  state.zones = remote.zones
+
   state.entities = remote.entities
 
 }
@@ -78,10 +84,15 @@ function setMode(mode: string) {
 }
 
 function selectZone(id: string) {
-  state.selected = id
-  let target = state.zones.find(z => z.id === id)
-  if (!target) return
+  if (state.selected === id) {
+    state.selected = ""
+    state.selectedZone = {} as Zone
+    return;
+  }
+  let target = remote.zones.find(z => z.id === id)
+  if (!target) return;
   state.selectedZone = target
+  state.selected = target.id
 }
 
 function toggleShowDeleted() {
@@ -92,14 +103,18 @@ function setListMode(value: string) {
   state.listMode = value
 }
 
+const notify = core.notify()
+
 function deleteZone() {
   let local = state.selectedZone
   if (!local) return
-  axios.post(`http://10.0.1.2:3020/zones/${local.id}/delete`)
+  zoneService.setDeleted(local.id, true)
       .then((r) => {
-        state.selectedZone.deleted = true
+        notify.success("Zone Deleted", `Zone '${local.name}' has been deleted.`)
+
       })
       .catch((r) => {
+        notify.fail("Zone Deleted", `Zone '${local.name}' has not been deleted. `, r)
         console.log(r)
       })
 }
@@ -107,7 +122,7 @@ function deleteZone() {
 function restoreZone() {
   let local = state.selectedZone
   if (!local) return
-  axios.post(`http://10.0.1.2:3020/zones/${local.id}/restore`).then((r) => {
+  axios.post(`https://api.udap.app/zones/${local.id}/restore`).then((r) => {
     state.selectedZone.deleted = false
   }).catch((r) => {
     console.log(r)
@@ -116,22 +131,27 @@ function restoreZone() {
 
 function pinZone() {
   let local = state.selectedZone
-  if (!local) return
-  axios.post(`http://10.0.1.2:3020/zones/${local.id}/pin`)
+  if (!local.id) return
+  zoneService.setPinned(state.selected, false)
       .then((r) => {
-        state.selectedZone.pinned = true
+        console.log(r)
+        // notify.show("Zone", "Zone Pinned.", 1, 4000)
       })
       .catch((r) => {
+        // notify.fail("Zone", "Could not pin the zone.", r)
         console.log(r)
       })
 }
 
 function unpinZone() {
   let local = state.selectedZone
-  if (!local) return
-  axios.post(`http://10.0.1.2:3020/zones/${local.id}/unpin`).then((r) => {
-    state.selectedZone.pinned = false
-  }).catch((r) => {
+  if (!local.id) return
+  zoneService.setPinned(state.selected, true)
+      .then((r) => {
+        console.log(r)
+        // notify.show("Zone", "Zone Unpinned.", 1, 4000)
+      }).catch((r) => {
+    // notify.fail("Zone", "Could not unpin the zone.", r)
     console.log(r)
   })
 }
@@ -140,12 +160,12 @@ function toggleEntity(entity: Entity) {
   let target = state.selectedZone.entities.find(e => e.id === entity.id)
   if (!target) {
     state.selectedZone.entities.push(entity)
-    axios.post(`http://locahost:3020/zones/${state.selectedZone.id}/entities/${entity.id}/add`).then((r) => {
+    axios.post(`https://api.udap.app/zones/${state.selectedZone.id}/entities/${entity.id}/add`).then((r) => {
     }).catch((r) => {
     })
   } else {
     state.selectedZone.entities = state.selectedZone.entities.filter(e => e.id !== entity.id)
-    axios.post(`http://locahost:3020/zones/${state.selectedZone.id}/entities/${entity.id}/remove`).then((r) => {
+    axios.post(`https://api.udap.app/zones/${state.selectedZone.id}/entities/${entity.id}/remove`).then((r) => {
     }).catch((r) => {
     })
   }
@@ -202,7 +222,8 @@ function drawZone() {
 
   state.ctx.fillStyle = "rgba(255,255,255,0.25)"
   ctx.font = "500 32px SF Pro Display"
-  ctx.fillText(state.selectedZone.name, 10, 36)
+  if (!state.selectedZone) return
+  ctx.fillText(state.selectedZone?.name || "", 10, 36)
 
   for (let i = 0; i < state.selectedZone.entities.length; i++) {
     let ent = state.selectedZone.entities[i]
@@ -281,6 +302,10 @@ function drawGrid() {
 
 }
 
+function showEdit() {
+  state.edit = true
+}
+
 function redraw() {
   state.ctx.clearRect(0, 0, state.width, state.height)
   drawGrid()
@@ -325,8 +350,20 @@ function setupCanvas() {
     <ToolbarButton :active="false" :disabled="state.selected.length === 0"
                    class="  px-3"
                    style="height: 1.5rem"
+                   text="Edit"
+                   @click="() => {showEdit()}"></ToolbarButton>
+    <ToolbarButton :active="false" :disabled="state.selected.length === 0"
+                   class="  px-3"
+                   style="height: 1.5rem"
                    text="Delete"
-                   to="/terminal/settings/subroutines/create"></ToolbarButton>
+                   @click="() => {deleteZone()}"></ToolbarButton>
+    <ToolbarButton v-if="state.selectedZone" :active="false" :disabled="state.selected.length === 0"
+                   :text="`${state.selectedZone.pinned?'Unpin':'Pin'}`"
+                   class="  px-3"
+                   style="height: 1.5rem"
+                   @click="() => {state.selectedZone.pinned?unpinZone
+                       ():pinZone()}"></ToolbarButton>
+
     <div class="flex-grow-1"></div>
 
     <div class="button-sep"></div>
@@ -355,7 +392,6 @@ function setupCanvas() {
 
     </div>
     <div v-if="state.loading">
-
       <div class="element p-2">
         <div class="label-c1 label-o4 d-flex align-content-center gap-1">
           <div>
@@ -378,10 +414,17 @@ function setupCanvas() {
                 <span class="label-c4 label-o2 lh-1 pt-1"
                       style="width: 0.4rem; margin-top: 6px;"><span
                     v-if="zone.pinned">􀎧</span></span>
+
                 <div class="py-1 px-1">
                   <div
                       class="label-c1 text-capitalize label-w600 label-o5 lh-1">
                     {{ zone.name }}
+                    <div v-if="true"
+                         class="label-c2 label-o4 label-w500 text-accent">􀷙
+                    </div>
+                    <div v-else
+                         class="label-c2 label-o1 label-w500">􀓞
+                    </div>
                   </div>
 
                   <div class="label-c3 label-w600 label-o3">
@@ -406,10 +449,11 @@ function setupCanvas() {
 
               <div class="info-bar">
                 <div
-                    class="label-c1 lh-1 label-r label-w500 label-o4">Pinned</div>
+                    class="label-c1 lh-1 label-r label-w500 label-o4">Pinned
+                </div>
                 <div
                     class="label-c2 label-o2 lh-1">A pinned zone will show up first on any list of
-                                                   zones.
+                  zones.
                 </div>
               </div>
               <div v-if="state.selectedZone">
@@ -428,9 +472,11 @@ function setupCanvas() {
             <div class="d-flex justify-content-between mb-1">
               <div class="info-bar">
                 <div
-                    class="label-c1 lh-1 label-r label-w500 label-o4">Entities</div>
+                    class="label-c1 lh-1 label-r label-w500 label-o4">Entities
+                </div>
                 <div
-                    class="label-c2 label-o2">The following entities are included in this zone.</div>
+                    class="label-c2 label-o2">The following entities are included in this zone.
+                </div>
               </div>
               <div>
                 <div v-if="state.listMode === 'view'"
@@ -485,7 +531,7 @@ function setupCanvas() {
                 <div class="label-c1 label-w500 label-o4">Visibility</div>
                 <div
                     class="label-c2 label-o2 label-w500">Deleted zones will be made invisible, but
-                                                         can be recovered later.
+                  can be recovered later.
                 </div>
               </div>
               <div v-if="state.selectedZone">
@@ -511,27 +557,40 @@ function setupCanvas() {
       </CreateZone>
     </div>
     <div class="zone-grid">
-      <div v-for="z in state.zones" :key="z.id"
-           class="element d-flex gap-1 flex-column  p-2"
+      <div v-for="z in remote.zones" :key="z.id"
+           :class="state.selected === z.id?'accent-selected':''"
+           class="element haptic d-flex gap-1 flex-column  p-2"
            style="grid-column: span 2;"
            @click="() => selectZone(z.id)">
         <div class="d-flex gap-1">
-          <div>
-            <div class="label-c2 label-o3 label-w500 text-capitalize">􀟻</div>
-          </div>
-          <div class="d-flex flex-column justify-content-between h-100">
-            <div class="label-c2 label-o5 label-w500 label-r text-capitalize">
-              {{ z.name }}
+          <div class="d-flex flex-row justify-content-between w-100">
+
+            <div v-if=z.name class="label-c2 label-o4 label-w500 label-r text-capitalize"
+                 style="">
+                           <span class="label-c4 label-o2 lh-1 pt-1"
+                                 style="width: 0.4rem; margin-top: 4px;"><span
+                               v-if="z.pinned">􀎧</span></span> {{ z.name }}
             </div>
-            <div class="label-c3 label-o3 label-w5002 ">
-              {{ z.entities.map(e => e.icon).join(' ') }}
+            <div v-else class="label-c2 label-o3 label-w500 label-r text-capitalize">
+              Unnamed
             </div>
+            <div v-if="state.selectedZone?.id === z.id"
+                 class="label-c2 label-o4 label-w500 text-accent">􀷙
+            </div>
+            <div v-else
+                 class="label-c2 label-o1 label-w500">􀓞
+            </div>
+
           </div>
 
+
+        </div>
+        <div class="label-c3 label-o3 label-w5002 ">
+          {{ z.entities.map(e => e.icon).join(' ') }}
         </div>
       </div>
     </div>
-    <div class="element " style="width: 40rem">
+    <div v-if=false class="element " style="width: 40rem">
 
       <div class="d-flex justify-content-between">
 
@@ -539,9 +598,18 @@ function setupCanvas() {
       <canvas id="zone-canvas" style="height: 24rem; width: 100%"></canvas>
     </div>
   </div>
+  <EditZone v-if="state.edit" :zone="state.selectedZone"></EditZone>
 </template>
 
 <style lang="scss" scoped>
+div.element {
+
+}
+
+div.haptic.element:active {
+  transform: scale(98%) !important;
+}
+
 .zone-grid {
   width: 100%;
   display: grid;

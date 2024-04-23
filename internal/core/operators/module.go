@@ -35,14 +35,16 @@ func newLifeCycle(iface plugin.ModuleInterface) *lifeCycle {
 }
 
 type moduleRuntime struct {
-	ctrl    *controller.Controller
-	runtime map[string]*lifeCycle
+	ctrl        *controller.Controller
+	runtime     map[string]*lifeCycle
+	moduleMutex sync.RWMutex
 }
 
 func NewModuleOperator(ctrl *controller.Controller) ports.ModuleOperator {
 	return &moduleRuntime{
-		ctrl:    ctrl,
-		runtime: map[string]*lifeCycle{},
+		ctrl:        ctrl,
+		runtime:     map[string]*lifeCycle{},
+		moduleMutex: sync.RWMutex{},
 	}
 }
 
@@ -62,12 +64,31 @@ func (m *moduleRuntime) getModule(id string) (plugin.ModuleInterface, error) {
 	runtime.mutex.Lock()
 	iface = runtime.iface
 	runtime.mutex.Unlock()
-
 	if iface == nil {
+
 		return nil, fmt.Errorf("module not found")
 	}
 
 	return iface, nil
+}
+
+func (m *moduleRuntime) returnModule(id string, moduleInterface plugin.ModuleInterface) error {
+
+	runtime := m.runtime[id]
+	if runtime == nil {
+		return fmt.Errorf("module lifecycle not found")
+	}
+
+	var iface plugin.ModuleInterface
+	runtime.mutex.Lock()
+	runtime.iface = moduleInterface
+	runtime.mutex.Unlock()
+
+	if iface == nil {
+		return fmt.Errorf("module not found")
+	}
+
+	return nil
 }
 
 func (m *moduleRuntime) setModule(id string, moduleInterface plugin.ModuleInterface) error {
@@ -214,6 +235,7 @@ func (m *moduleRuntime) Load(module string, uuid string) (domain.ModuleConfig, e
 		Name:        setup.Name,
 		Type:        setup.Type,
 		Description: setup.Description,
+		Interval:    setup.Interval,
 		Version:     setup.Version,
 		Author:      setup.Author,
 		Variables:   string(marshal),
@@ -228,6 +250,7 @@ func (m *moduleRuntime) Dispose(module string, uuid string) error {
 	if err != nil {
 		return err
 	}
+
 	binaryPath := generateBuildPath(module, uuid)
 	// Confirm that the binary file exists
 	if _, err = os.Stat(binaryPath); err != nil {
@@ -250,6 +273,7 @@ func (m *moduleRuntime) Dispose(module string, uuid string) error {
 			return
 		}
 	}()
+
 	err = m.removeModule(uuid)
 	if err != nil {
 		return err
@@ -265,6 +289,12 @@ func (m *moduleRuntime) Run(uuid string) error {
 	if err != nil {
 		return err
 	}
+	//defer func() {
+	//	err = m.returnModule(uuid, local)
+	//	if err != nil {
+	//		log.Err(err)
+	//	}
+	//}()
 	// Run the local module
 	err = local.Run()
 	if err != nil {
@@ -280,6 +310,12 @@ func (m *moduleRuntime) Update(uuid string) error {
 	if err != nil {
 		return err
 	}
+	//defer func() {
+	//	err = m.returnModule(uuid, local)
+	//	if err != nil {
+	//		log.Err(err)
+	//	}
+	//}()
 	// Run the update
 	err = local.Update()
 	if err != nil {

@@ -5,7 +5,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"time"
 	"udap/internal/core/domain"
 	"udap/internal/plugin"
@@ -19,7 +21,7 @@ type Weather struct {
 	eId      string
 }
 
-const weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=39.73&longitude=-121.85&hourly=temperature_2m,relativehumidity_2m,precipitation,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timeformat=unixtime&timezone=America%2FLos_Angeles"
+const weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&hourly=temperature_2m,relativehumidity_2m,precipitation,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timeformat=unixtime&timezone=America%%2FLos_Angeles"
 
 type WeatherAPI struct {
 	UtcOffsetSeconds int     `json:"utc_offset_seconds"`
@@ -38,6 +40,14 @@ type WeatherAPI struct {
 	Daily       Daily       `json:"daily"`
 	HourlyUnits HourlyUnits `json:"hourly_units"`
 	DailyUnits  DailyUnits  `json:"daily_units"`
+}
+
+type CurrentWeather struct {
+	Temperature     float64 `json:"temperature"`
+	TemperatureNext float64 `json:"temperatureNext"`
+	Humidity        float64 `json:"humidity"`
+	Min             float64 `json:"min"`
+	Max             float64 `json:"max"`
 }
 
 type Daily struct {
@@ -98,6 +108,33 @@ func init() {
 	Module.eId = ""
 	Module.Config = config
 }
+func (v *Weather) currentBuffer() (string, error) {
+
+	index := time.Now().Hour()
+
+	if len(v.forecast.Hourly.Temperature2M) < index {
+		cw := CurrentWeather{}
+		marshal, err := json.Marshal(cw)
+		if err != nil {
+			return "", err
+		}
+		return string(marshal), nil
+	}
+
+	cw := CurrentWeather{
+		Temperature:     v.forecast.Hourly.Temperature2M[index],
+		TemperatureNext: v.forecast.Hourly.Temperature2M[(index+1)%24],
+		Humidity:        v.forecast.Hourly.Relativehumidity2M[index],
+		Min:             v.forecast.Daily.Temperature2MMin[0],
+		Max:             v.forecast.Daily.Temperature2MMax[0],
+	}
+
+	marshal, err := json.Marshal(cw)
+	if err != nil {
+		return "", err
+	}
+	return string(marshal), nil
+}
 
 func (v *Weather) forecastBuffer() (string, error) {
 	marshal, err := json.Marshal(v.forecast)
@@ -109,14 +146,24 @@ func (v *Weather) forecastBuffer() (string, error) {
 
 func (v *Weather) fetchWeather() error {
 
-	request, err := http.NewRequest("GET", weatherUrl, nil)
+	lat, flat := os.LookupEnv("weatherLat")
+	if !flat {
+		return fmt.Errorf("WEATHER: env weatherLat not set")
+	}
+	lon, flon := os.LookupEnv("weatherLon")
+	if !flon {
+		return fmt.Errorf("WEATHER: env weatherLat not set")
+	}
+
+	request, err := http.NewRequest("GET", fmt.Sprintf(weatherUrl, lat, lon), nil)
 	if err != nil {
 		return err
 	}
 
 	cli := http.Client{}
-	cli.Timeout = time.Second * 2
+	cli.Timeout = time.Second * 5
 	defer cli.CloseIdleConnections()
+
 	do, err := cli.Do(request)
 	if err != nil {
 		return err
@@ -163,6 +210,15 @@ func (v *Weather) pull() error {
 	if err != nil {
 		return err
 	}
+
+	current, err := v.currentBuffer()
+	if err != nil {
+		return err
+	}
+	err = v.Attributes.Set(v.eId, "weather", current)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 func (v *Weather) Update() error {
@@ -193,6 +249,20 @@ func (v *Weather) Run() error {
 		return err
 	}
 
+	currentBuffer, err := v.currentBuffer()
+	if err != nil {
+		return err
+	}
+
+	current := &domain.Attribute{
+		Key:     "weather",
+		Value:   currentBuffer,
+		Request: currentBuffer,
+		Type:    "media",
+		Order:   0,
+		Entity:  e.Id,
+	}
+
 	forecast := &domain.Attribute{
 		Key:     "forecast",
 		Value:   buffer,
@@ -204,6 +274,10 @@ func (v *Weather) Run() error {
 	v.eId = e.Id
 
 	err = v.Attributes.Register(forecast)
+	if err != nil {
+		return err
+	}
+	err = v.Attributes.Register(current)
 	if err != nil {
 		return err
 	}

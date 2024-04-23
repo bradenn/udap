@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto
+    hostname: mosquitto
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto:/etc/mosquitto
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+  db:
+    image: 'postgres:latest'
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./local/db/:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_PASSWORD: udap
+      POSTGRES_USER: udap
+      POSTGRES_DB: udap
+  client:
+    build:
+      context: ./mobile
+      dockerfile: ./Dockerfile
+    ports:
+      - "5045:5045"
+volumes:
+  volume1:

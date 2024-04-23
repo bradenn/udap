@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"udap/internal/core/domain"
 	"udap/internal/core/ports"
@@ -30,6 +30,7 @@ func (r zoneRouter) RouteInternal(router chi.Router) {
 	router.Post("/zones/create", r.create)
 	router.Route("/zones/{id}", func(local chi.Router) {
 		local.Post("/delete", r.delete)
+		local.Post("/update", r.modify)
 		local.Post("/restore", r.restore)
 		local.Post("/pin", r.pin)
 		local.Post("/unpin", r.unpin)
@@ -64,16 +65,18 @@ func (r zoneRouter) removeEntity(w http.ResponseWriter, req *http.Request) {
 	id := chi.URLParam(req, "id")
 	if id == "" {
 		http.Error(w, "invalid id", 400)
+		return
 	}
 
 	entity := chi.URLParam(req, "entityId")
 	if id == "" {
-		http.Error(w, "invalid id", 400)
+		http.Error(w, "invalid entity", 400)
+		return
 	}
 
 	err := r.service.RemoveEntity(id, entity)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("could not pin zone: %s", err.Error()), 400)
+		http.Error(w, fmt.Sprintf("could not remove zone: %s", err.Error()), 400)
 		return
 	}
 
@@ -117,6 +120,7 @@ func (r zoneRouter) delete(w http.ResponseWriter, req *http.Request) {
 	id := chi.URLParam(req, "id")
 	if id == "" {
 		http.Error(w, "invalid id", 400)
+		return
 	}
 
 	err := r.service.Delete(id)

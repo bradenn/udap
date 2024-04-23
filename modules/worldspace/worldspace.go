@@ -7,11 +7,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 	"time"
 	"udap/internal/core/domain"
+	"udap/internal/log"
 	"udap/internal/plugin"
 )
 
@@ -20,6 +21,7 @@ var Module Worldspace
 type Worldspace struct {
 	plugin.Module
 	server   http.Server
+	timers   map[string]*time.Timer
 	entityId string
 }
 
@@ -65,12 +67,13 @@ func init() {
 		Description: "worldspace integration",
 		Version:     "0.1.2",
 		Author:      "Braden Nicholson",
+		Interval:    time.Second,
 	}
 	Module.Config = config
 }
 
 func (w *Worldspace) Setup() (plugin.Config, error) {
-	err := w.UpdateInterval(2000)
+	err := w.UpdateInterval(10000)
 	if err != nil {
 		return plugin.Config{}, err
 	}
@@ -78,9 +81,45 @@ func (w *Worldspace) Setup() (plugin.Config, error) {
 }
 
 func (w *Worldspace) Update() error {
-	if w.Ready() {
+	//log.Event("Updating worldspace")
+	//srv := http.Server{}
+	//sm := http.NewServeMux()
+	//srv.Handler = sm
+	//srv.Addr = "0.0.0.0:6969"
+	//sm.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+	//	writer.WriteHeader(200)
+	//	_, err := writer.Write([]byte("Hello"))
+	//	if err != nil {
+	//		return
+	//	}
+	//
+	//})
+	//
+	//go func() {
+	//	_ = srv.ListenAndServe()
+	//}()
+	//
+	//time.Sleep(time.Second)
+	//
+	//request, err := w.NewPostRequest("http://localhost:6969", nil)
+	//if err != nil {
+	//	return err
+	//}
+	//request.WithTimeout(time.Second)
+	//log.Event("WS->SRV")
+	//start := time.Now()
+	//err = request.Execute(nil)
+	//if err != nil {
+	//	return err
+	//}
+	//end := time.Since(start)
+	//log.Event("SRV->WS")
+	//err = srv.Close()
+	//if err != nil {
+	//	log.Err(err)
+	//}
+	//log.Event(end.String())
 
-	}
 	return nil
 }
 
@@ -122,6 +161,35 @@ type Arrival struct {
 	Time string `json:"time"`
 }
 
+func (w *Worldspace) tldTrigger(writer http.ResponseWriter, request *http.Request) {
+	// id := chi.URLParam(request, "id")
+
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(request.Body)
+	if err != nil {
+		return
+	}
+
+	//err = json.Unmarshal(buf.Bytes(), &a)
+	//if err != nil {
+	//	return
+	//}
+	value := request.Header.Get("id")
+	if value == "" {
+		writer.WriteHeader(403)
+		return
+	}
+
+	err = w.Triggers.Trigger(value)
+	if err != nil {
+		log.Err(err)
+		writer.WriteHeader(404)
+		return
+	}
+
+	writer.WriteHeader(200)
+
+}
 func (w *Worldspace) handleArrival(writer http.ResponseWriter, request *http.Request) {
 	// id := chi.URLParam(request, "id")
 	a := Arrival{}
@@ -209,14 +277,36 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string
 		if err != nil {
 			return
 		}
+		t := w.timers[fmt.Sprintf("ws-%s", name)]
+		t.Stop()
+		t.Reset(5 * time.Minute)
 		_, err = writer.Write([]byte("OK"))
 		if err != nil {
 			return
 		}
 	})
 
+	w.timers[fmt.Sprintf("ws-%s", name)] = time.NewTimer(time.Hour * 128)
+
+	go func() {
+		for {
+			select {
+			case <-w.timers[fmt.Sprintf("ws-%s", name)].C:
+				err := w.Triggers.Trigger(fmt.Sprintf("ws-%s-off", name))
+				if err != nil {
+				}
+			}
+		}
+	}()
+
 	err := w.Triggers.Register(&domain.Trigger{
 		Name:        fmt.Sprintf("ws-%s", name),
+		Type:        "module",
+		Description: desc,
+	})
+
+	err = w.Triggers.Register(&domain.Trigger{
+		Name:        fmt.Sprintf("ws-%s-off", name),
 		Type:        "module",
 		Description: desc,
 	})
@@ -227,9 +317,13 @@ func (w *Worldspace) endpointTrigger(router chi.Router, name string, desc string
 }
 
 func (w *Worldspace) Run() error {
+	w.timers = map[string]*time.Timer{}
+
 	w.server = http.Server{}
 	w.server.Addr = "0.0.0.0:5058"
 	router := chi.NewRouter()
+
+	router.Get("/", w.tldTrigger)
 	err := w.endpointTrigger(router, "motion", "dummy motion")
 	if err != nil {
 		return err
@@ -266,7 +360,11 @@ func (w *Worldspace) Run() error {
 		Type:   "media",
 		Module: "worldspace",
 	}
-
+	err = w.Triggers.Register(&domain.Trigger{
+		Name:        "braden-arrives",
+		Type:        "module",
+		Description: "homekit braden arrives",
+	})
 	err = w.Entities.Register(&entity)
 	if err != nil {
 		return err
