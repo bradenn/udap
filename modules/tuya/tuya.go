@@ -289,6 +289,7 @@ func (l *Light) setDimFine(dim int) error {
 	}
 	return l.sendCommandDps(Brightness, dim)
 }
+
 func (l *Light) setDim(dim int) error {
 
 	if dim > 100 || dim < 0 {
@@ -300,18 +301,6 @@ func (l *Light) setDim(dim int) error {
 	}
 	return l.sendCommandDps(Brightness, dim*10)
 }
-
-//func (l *Light) setRealTimeAdjustment(on bool, hue int, dim int, cct int) error {
-//
-//	if dim > 100 || dim < 0 {
-//		return fmt.Errorf("dim value must be a value betweeen 0 and 100 inclusive")
-//	}
-//	if l.Mode == "colour" {
-//		l.Dim = dim
-//		return l.setHueDim(l.Hue, dim)
-//	}
-//	return l.sendRealTimeCommand(on, hue, dim, cct)
-//}
 
 // setCCT sets the bulb's color corrected value on a scale from 2700 to 6500.
 func (l *Light) setCCT(cct int) error {
@@ -507,7 +496,11 @@ func (l *Light) sendStatusPayload() error {
 	// Add the new buffer to the end of the packet
 	packet = append(packet, buf.Bytes()...)
 
-	return l.WritePacket(packet, true)
+	//s := time.Now()
+	err = l.WritePacket(packet, true)
+	//log.Log("%s = %s", l.Ip, time.Since(s))
+
+	return err
 
 }
 
@@ -549,15 +542,28 @@ func (l *Light) sendCommandPayload(data []byte) error {
 
 }
 
-func (l *Light) ConnectSocket() (net.Conn, error) {
+func (l *Light) ConnectSocket(read bool) (net.Conn, error) {
+	if l.socket != nil {
+		err := l.socket.SetWriteDeadline(time.Now().Add(time.Millisecond * 200))
+		if err != nil {
+			return nil, err
+		}
+		_, err = l.socket.Write([]byte{})
+		if err == nil {
+			return l.socket, nil
+		}
+		l.socket = nil
+	}
+
 	attempts := 0
 	for attempts < 3 {
 		socket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", l.Ip, 6668))
 		if err != nil {
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			attempts++
 			continue
 		}
+		l.socket = socket
 		return socket, err
 	}
 
@@ -569,16 +575,24 @@ func (l *Light) WritePacket(packet []byte, read bool) error {
 	defer l.mutex.Unlock()
 
 	var err error
+	socket, err := l.ConnectSocket(read)
+	//if !read {
+	//	defer socket.Close()
+	//}
 
-	if l.socket == nil {
-		l.socket, err = l.ConnectSocket()
-		if err != nil {
-			l.socket = nil
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
-	err = l.socket.SetDeadline(time.Now().Add(500 * time.Millisecond))
+	//if l.socket == nil {
+	//	l.socket, err = l.ConnectSocket()
+	//	if err != nil {
+	//		l.socket = nil
+	//		return err
+	//	}
+	//}
+
+	err = socket.SetDeadline(time.Now().Add(500 * time.Millisecond))
 	if err != nil {
 		return err
 	}
@@ -587,14 +601,9 @@ func (l *Light) WritePacket(packet []byte, read bool) error {
 	n := 0
 	for n < expected {
 		var sent int
-		sent, err = l.socket.Write(packet[n:])
+		sent, err = socket.Write(packet[n:])
 		if err != nil {
-			err = l.socket.Close()
-			l.socket = nil
-			if err != nil {
-				return err
-			}
-
+			return err
 		}
 		if sent == 0 {
 			break
@@ -604,11 +613,11 @@ func (l *Light) WritePacket(packet []byte, read bool) error {
 
 	// Craft a buffer to contain the incoming data
 	response := make([]byte, 512)
-	if l.socket == nil {
+	if socket == nil {
 		return nil
 	}
 	// Wait for and read the response from the device
-	n, err = l.socket.Read(response)
+	n, err = socket.Read(response)
 	if err != nil {
 		return err
 	}
@@ -630,12 +639,6 @@ func (l *Light) WritePacket(packet []byte, read bool) error {
 
 	return nil
 }
-
-//func (l *Light) sendRealTimeCommand(on bool, hue int, dim int, cct int) error {
-//
-//	fmt.Sprintf("")
-//	l.sendCommandDps(28)
-//}
 
 func (t *Tuya) updateLight(light *Light) error {
 
@@ -769,9 +772,9 @@ func (t *Tuya) Setup() (plugin.Config, error) {
 
 func (t *Tuya) updateOne(light *Light) error {
 
+	stamp := time.Now()
 	err := light.sendStatusPayload()
 	if err != nil {
-		log.Err(err)
 		return err
 	}
 
@@ -789,7 +792,7 @@ func (t *Tuya) updateOne(light *Light) error {
 	//	return err
 	//}
 
-	_ = t.Attributes.Set(eid, "hue", fmt.Sprintf("%d", h))
+	_ = t.Attributes.Update(eid, "hue", fmt.Sprintf("%d", h), stamp)
 	light.Hue = h
 	light.Dim = v
 	if err != nil {
@@ -797,36 +800,37 @@ func (t *Tuya) updateOne(light *Light) error {
 	}
 
 	if light.Latest.Dps.On {
-		err = t.Attributes.Set(eid, "on", "true")
+		err = t.Attributes.Update(eid, "on", "true", stamp)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = t.Attributes.Set(eid, "on", "false")
+		err = t.Attributes.Update(eid, "on", "false", stamp)
 		if err != nil {
 			return err
 		}
 	}
 
 	if light.Mode == "colour" {
-		err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Dim/10))
+		err = t.Attributes.Update(eid, "dim", fmt.Sprintf("%d", light.Dim/10), stamp)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = t.Attributes.Set(eid, "dim", fmt.Sprintf("%d", light.Latest.Dps.Dim/10))
+		err = t.Attributes.Update(eid, "dim", fmt.Sprintf("%d", light.Latest.Dps.Dim/10), stamp)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = t.Attributes.Set(eid, "cct", fmt.Sprintf("%d", int(convertRange(float64(light.Latest.Dps.Cct), 0, 1000, 2700, 6500))))
+	err = t.Attributes.Update(eid, "cct", fmt.Sprintf("%d", int(convertRange(float64(light.Latest.Dps.Cct), 0, 1000, 2700, 6500))), stamp)
 	if err != nil {
 		return err
 	}
 
 	return nil
 }
+
 func (t *Tuya) updateAll() error {
 	wg := sync.WaitGroup{}
 	wg.Add(len(t.Lights))
@@ -841,7 +845,7 @@ func (t *Tuya) updateAll() error {
 	}
 
 	wg.Wait()
-	t.LastUpdate = time.Now()
+	//t.LastUpdate = time.Now()
 	return nil
 }
 
@@ -998,14 +1002,11 @@ func (t *Tuya) handleRequest(attribute domain.Attribute) error {
 		return fmt.Errorf("invalid attribute key")
 	}
 
-	//err = t.updateOne(light)
-	//if err == nil {
-	//	t.LastUpdate = time.Now()
-	//}
-	////err = t.Attributes.Set(attribute.Entity, attribute.Key, attribute.Request)
-	////if err != nil {
-	////	return err
-	////}
+	err = t.Attributes.Set(attribute.Entity, attribute.Key, attribute.Request)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
